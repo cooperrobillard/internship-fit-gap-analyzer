@@ -1,0 +1,9 @@
+{
+  "programming": ["python", "matlab", "typescript", "javascript", "java", "r"],
+  "data": ["sql", "pandas", "jupyter", "power bi", "tableau", "excel", "data cleaning", "regression"],
+  "ai_ml": ["openai api", "rag", "langchain", "llamaindex", "pytorch", "machine learning", "vector database", "embeddings"],
+  "cloud_backend": ["aws", "docker", "fastapi", "rest api", "json", "supabase", "postgres"],
+  "software_tools": ["git", "github", "vs code", "linux", "terminal"],
+  "responsible_ai": ["responsible ai", "ai governance", "privacy", "evaluation", "limitations", "human review"],
+  "communication": ["documentation", "training", "stakeholder", "requirements", "technical writing"]
+}

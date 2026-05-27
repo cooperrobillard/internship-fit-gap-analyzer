@@ -1,0 +1,137 @@
+Cooper Robillard
+
+Tewksbury, MA | (978) 866-0409 | robilla@bc.edu | linkedin.com/in/cooperrobillard | github.com/cooperrobillard  
+Creative Portfolio: cooperrobillard.com
+
+#Profile
+
+Engineering student at Boston College and Systems Engineering Intern at MITRE with experience across software development, AI-assisted tools, signal processing, data analysis, simulation, and prototyping. Interested in systems engineering, applied AI/software, and human-centered technology that connects technical work with real-world impact.
+
+#Education
+
+Boston College, Morrissey College of Arts and Sciences - Chestnut Hill, MA  
+B.S., Human-Centered Engineering | GPA: 3.83 | Major GPA: 3.90 | Expected May 2027  
+Fall 2024-Present
+
+Tewksbury Memorial High School - Tewksbury, MA  
+High School Diploma | GPA: 4.00 / 4.00 UW | 4.54 / 5.00 W  
+June 2024
+
+##Relevant Courses
+
+Boston College: Digital Signal Processing; Engineering Computation & Programming; Multivariable Calculus; Discrete Mathematics (Proof-Based); Physics; EFS I (Statics & Mechanics); EFS II (Circuits & Electronics); EFS III (Thermofluids & Chemical Systems); EFS IV (Statistics & Data Analysis); EFS V (Engineering Modeling & Validation); General Chemistry + Lab; Innovation Through Engineering Design
+
+Advanced Placement: Completed 10 AP courses (all scores 4-5): Calculus AB; Physics C: Mechanics; Computer Science Principles; plus 7 additional APs across sciences & humanities
+
+#Engineering Experience
+
+Systems Engineering Intern, MITRE - Bedford, MA  
+May 2026-Present
+
+- Supporting the Software & Applications team on systems engineering work related to C3BM/ABMS command-and-control modernization and software integration in a defense R&D environment
+- Building technical foundation in command-line/OS workflows, Python, REST APIs, JSON, technical documentation, and data/interface concepts for cloud-based C2 applications
+
+#Selected Engineering & Computing Projects
+
+Reinforcement Learning Thermostat Controller Comparison  
+Jan-May 2026
+
+- Compared Q-learning, SARSA, DQN, rule-based, and proportional thermostat controllers in a Python simulation environment modeling room temperature, HVAC action, ambient heat exchange, and noise
+- Evaluated controller performance using reward, temperature error, energy use, and action-switching metrics; DQN achieved the strongest comfort-energy tradeoff with 0.408°C average temperature error
+
+Wind Resource Analysis at Nantucket Memorial Airport  
+Apr 2026
+
+- Processed 17,302 hourly NOAA ASOS observations in MATLAB to analyze wind speed, direction, temperature, humidity, and pressure patterns for KACK Nantucket (2022-2023)
+- Modeled seasonal wind-resource potential using Weibull fitting, wind power density estimates, regression, and nonparametric hypothesis testing; found strongest energy potential in winter and spring
+
+Counter-Flow Heat Exchanger CFD Analysis  
+Apr 2026
+
+- Analyzed a single-tube counter-flow shell-and-tube heat exchanger using ε-NTU hand calculations and ANSYS Fluent CFD simulations for 0.5 m/s and 0.05 m/s inlet velocity cases
+- Compared theoretical outlet temperatures and heat transfer rates with CFD temperature, velocity, and static enthalpy contours; identified design changes to improve heat transfer through increased surface area, residence time, and shell-side mixing
+
+Over-the-Air Acoustic Modem for Text Transmission  
+Dec 2025
+
+- Designed a MATLAB-based acoustic communication system that transmits text between laptops using speakers/microphones, implementing sampling, modulation, FIR filtering, and preamble-based synchronization
+- Validated performance through over-the-air experiments, achieving 0% BER in controlled trials and <3% payload BER in final demo conditions
+
+AI-Assisted LinkedIn Connection Notes (Chrome Extension)  
+Oct 2025
+
+- Built a minimal Manifest V3 Chrome extension that drafts a single concise LinkedIn connection note in-tab using visible profile text, a background service worker, and a saved default intro
+- Simplified the UX to a clean Generate/Copy flow and added privacy/reliability guardrails including local settings storage, user-triggered operation, fallback handling, and robust duplicate-intro cleanup
+
+Wair - AI-Powered Outfit Generator (Web App MVP)  
+Oct 2025-Present
+
+- Developing a full-stack wardrobe and outfit generator (Next.js 15 + TypeScript, Supabase, Clerk) that lets users upload or link clothing items, automatically cleans backgrounds, and parses text into structured wardrobe data
+- Built MVP features including image background removal, metadata scraping, and AI-based text-to-tags parsing, forming the foundation for future outfit generation and personalization
+
+Global Infrastructure & Disease Burden Data Analysis  
+Mar 2026
+
+- Built a MATLAB data pipeline merging WHO infrastructure/exposure data with IHME disease burden data into a 7,848-row country-year dataset for statistical analysis
+- Used visualization, correlation, and multiple regression to evaluate associations between WASH access, PM2.5, polluting cooking exposure, and DALY rates for diarrheal and respiratory infections
+
+Smile Detection & Premier League Logo Classification  
+Mar-May 2025
+
+- Implemented a MATLAB linear classifier for smile detection (requirements definition, data prep) achieving 90.4% test accuracy with real-time webcam inference
+- Trained ResNet-18 on 5 EPL logos to 100% test accuracy; performed robustness validation (rotation/crop/noise) with confusion-matrix/ROC analyses
+
+Assistive Nose-Wiping Device for Hiking  
+Mar-May 2025
+
+- Collaborated with the end user to convert functional needs into engineering requirements & specs; conducted user research and planned tests using HCD principles
+- Designed and constructed two functional prototypes (upper-arm; forearm w/ rotating handkerchief); executed environmental & drop testing; evaluated usability vs. manufacturability trade-offs; documented resulting design modifications
+
+Wind Turbine Generator for Power Generation  
+Dec 2025
+
+- Designed and fabricated a small-scale wind-powered generator using a rotating 80-turn coil, neodymium magnets, and carbon-brush contacts; integrated mechanical, electrical, and magnetic subsystems to generate measurable AC voltage
+- Modeled EMF using Faraday's Law and validated experimentally via oscilloscope measurements, achieving 14-67 mV output across wind speeds and analyzing deviations due to non-uniform fields, friction, and contact resistance
+
+Carbon Emissions Calculator for Sustainable Transportation  
+Oct-Dec 2024
+
+- Conducted user research, interviews, and ecosystem mapping to identify transportation challenges at Boston College, including shuttle crowding, accessibility gaps, and low sustainability awareness
+- Built and tested a MATLAB-based carbon emissions calculator for commuting comparisons; received 100% positive usability feedback, with users rating ease of use 5/5 and reporting greater motivation to adopt sustainable options
+
+Communication Switch Stand (Assistive Tech)  
+Sep-Nov 2024
+
+- Led user research (teacher/student interviews) to define requirements; performed concept evaluation via decision matrices and free-body reasoning
+- Designed and constructed a height-adjustable stand with tiltable tray and reinforced base; performed classroom usability testing with safety/risk analysis; recorded revisions
+
+#Additional Work Experience
+
+- Summer Facilities Assistant, Tyngsborough Elementary School - Tyngsborough, MA (Jun 2025-Aug 2025)
+- Ice Cream Scooper/Server, Meadowlands Ice Cream Stand - Tewksbury, MA (Jun 2023-Aug 2024)
+- Independent Math Tutor (Algebra I-II) - Tewksbury, MA (Mar 2024-Jul 2024)
+- Cashier & Bagger, Market Basket - Lowell, MA (Jun 2020-Sep 2020)
+
+#Leadership & Service
+
+- Student Leader, Boston College Emerging Leader Program (ELP) - Chestnut Hill, MA (Aug 2024-May 2025)
+- Founder & Coordinator, "My Jersey, Your Impact" (TMHS) - Tewksbury, MA (Dec 2023-Feb 2024)
+- President, National Honor Society (TMHS) - Tewksbury, MA (Mar 2023-May 2024)
+- Captain, Varsity Hockey (TMHS) - Tewksbury, MA (Mar 2023-Mar 2024)
+- Creator, "YourSATPrep" (TikTok) - step-by-step SAT solutions; 10K+ views - Remote (Aug-Oct 2023)
+
+#Awards & Recognition
+
+Advanced Standing, Boston College (approved for accelerated 3-year graduation); Principal's Award (TMHS - top senior for academics/leadership/service); AP Scholar w/ Distinction; Summa Cum Laude; John & Abigail Adams Scholarship; WBZ-TV "MVP of the Week" (led teacher-appreciation jersey program); MIAA D2 Hockey State Champion (2022)
+
+#Skills & Interests
+
+Programming & AI Tools: Python; MATLAB; JavaScript/TypeScript; Next.js; REST APIs; JSON; Git & GitHub; OpenAI API; AI-assisted software development; LLM-assisted prototyping
+
+Data, Modeling & ML: NumPy; Matplotlib; PyTorch; regression; hypothesis testing; Weibull modeling; CNNs/ResNet-18; confusion matrix/ROC analysis
+
+Engineering Tools & Methods: ANSYS Fluent; CFD; heat transfer; fluid mechanics; DOE; CAD; 3D printing; laser cutting; oscilloscopes; multimeters; technical documentation
+
+Creative Tools & Interests: Blender; Adobe After Effects; Photoshop; film production/VFX; graphic design; music & sound engineering; hockey; fitness
+
+Creative reel/portfolio: cooperrobillard.com

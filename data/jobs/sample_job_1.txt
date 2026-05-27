@@ -1,0 +1,59 @@
+
+Infineon Technologies
+Internship - Applied AI Engineer
+Andover, MA · Reposted 2 weeks ago · Over 100 people clicked apply
+Promoted by hirer · Responses managed off LinkedIn
+Full-time
+Apply
+Save
+Your profile and resume match some required qualifications
+
+
+Show match details
+BETA • Is this information helpful?
+People you can reach out to
+
+School alumni from Boston College
+Show all
+About the job
+#WeAreIn to create tiny chips and big careers. Are you ready to take the first step of your career? Let's shape the future together! Whether you join as a student, intern or trainee, you'll be part of something real - real projects, real impact, and real opportunities to grow. Are you in?
+
+Your Role
+
+Key responsibilities in your new role
+
+
+Agentic AI Development: Build agentic AI tools to enhance software and firmware development workflows\
+Data Mining: Analyze and extract insights from configuration data stored in data lake repositories
+LLM/SLM Tools: Develop application-level large/small language models for device configuration automation
+Machine Learning/NLP: Leverage ML and NLP algorithms to solve real-world engineering problems
+Database Expertise: Utilize SQL/NoSQL databases for data storage, access, and analysis
+Programming Languages: Apply Python, JavaScript, and other tools for AI and software development tasks
+Your Profile Qualifications And Skills To Help You Succeed
+Education: Pursuing Bachelor’s or Master’s in Computer Science, Electrical Engineering, or Data Science
+Programming Languages: Proficiency in Python, JavaScript/TypeScript, or MATLAB
+AI Frameworks: Familiarity with tools such as Hugging Face or LangChain for LLM/SLM development
+Multidisciplinary Focus: Interest in embedded systems, power electronics, or configuration workflows
+Database Knowledge: Experience with SQL/NoSQL databases and data analysis workflows
+Collaboration Skills: Strong communication skills for teamwork and agile development environments
+Find out what we are looking for in your CV
+Find out how the student application process works with us
+Discover our student website
+
+
+#WeAreIn for driving decarbonization and digitalization. As a global leader in semiconductor solutions in power systems and IoT, Infineon enables game-changing solutions for green and efficient energy, clean and safe mobility, as well as smart and secure IoT. Together, we drive innovation and customer success, while caring for our people and empowering them to reach ambitious goals. Be a part of making life easier, safer and greener.
+
+
+Are you in? We are on a journey to create the best Infineon for everyone. This means we embrace diversity and inclusion and welcome everyone for who they are. At Infineon, we offer a working environment characterized by trust, openness, respect and tolerance and are committed to give all applicants and employees equal opportunities. We base our recruiting decisions on the applicant´s experience and skills. Learn more about our various contact channels.
+
+
+We look forward to receiving your resume, even if you do not entirely meet all the requirements of the job posting.
+
+
+Please let your recruiter know if they need to pay special attention to something in order to enable your participation in the interview process.
+
+
+Click here for more information about Diversity & Inclusion at Infineon.
+
+
+Driving decarbonization and digitalization. Together. Infineon Technologies Americas Corp., is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex (including pregnancy, childbirth, or related medical conditions), gender identity, national origin, ancestry, citizenship, age, physical or mental disability, legally protected medical condition, family care status, military or veteran status, marital status, domestic partner status, sexual orientation, or any other basis protected by local, state, or federal laws. Employment at Infineon is contingent upon proof of your legal right to work in the United States under applicable law, verification of satisfactory references and successful completion of a background check and drug test, and signing all your on-boarding documents. In some instances, if applicable, U.S. export control laws require that Infineon obtain a U.S. government export license prior to releasing technologies to certain persons. This offer is contingent upon Infineon's ability to satisfy these export control laws as related to your employment and anticipated job activities. The decision whether or not to submit and/or pursue an export license to satisfy this contingency, if applicable, shall be at Infineon's sole discretion. Infineon Technologies takes data privacy and identity theft very seriously. As such, we do not request personally-identifiable information (PII) from applicants over the internet or electronically. Please kindly refrain from disclosing your PII electronically during the application process or to unauthorized websites that may purport to be Infineon or any of our affiliates. Wage range that the company expects to pay for a qualified candidate: Minimum of $29.00 per hour Maximum of $39.00 per hour Hourly rate will depend on the highest level of education completed.
