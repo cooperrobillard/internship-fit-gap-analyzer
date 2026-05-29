@@ -1,5 +1,5 @@
 {
-  "programming": ["python", "matlab", "typescript", "javascript", "java", "r"],
+  "programming": ["python", "matlab", "typescript", "javascript", "java"],
   "data": ["sql", "pandas", "jupyter", "power bi", "tableau", "excel", "data cleaning", "regression"],
   "ai_ml": ["openai api", "rag", "langchain", "llamaindex", "pytorch", "machine learning", "vector database", "embeddings"],
   "cloud_backend": ["aws", "docker", "fastapi", "rest api", "json", "supabase", "postgres"],

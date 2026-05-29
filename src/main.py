@@ -12,6 +12,9 @@ from extract_keywords import find_skills
 # Import our gap-finding function from src/compare_resume.py.
 from compare_resume import find_gaps
 
+# Import our report-writing function from src/report_writer.py.
+from report_writer import write_gap_report
+
 # Create a Path object that points to the resume text file.
 resume_path = Path("data/resume/resume.txt")
 
@@ -33,16 +36,17 @@ taxonomy = json.loads(taxonomy_text)
 resume_skills = find_skills(resume_text, taxonomy)
 
 
-# Print the skills found in the resume.
-print("Skills found in resume:")
-print(resume_skills)
-
-
 # Create a Path object that points to the folder with job descriptions.
 job_folder = Path("data/jobs")
 
 # Find every .txt file inside the jobs folder.
 job_files = job_folder.glob("*.txt")
+
+
+# Create an empty list to store the analysis results for all job files.
+#
+# Each item in this list will be a dictionary for one job description.
+job_results = []
 
 
 # Loop through each job description file.
@@ -58,13 +62,25 @@ for job_file in job_files:
     # This finds skills in the job that are missing from the resume.
     skill_gaps = find_gaps(job_skills, resume_skills)
 
-    # Print which job file we are analyzing.
-    print(f"\nAnalyzing job file: {job_file.name}")
+    # Store this job's results in a dictionary.
+    #
+    # This keeps the job name, job skills, and gaps together.
+    job_result = {
+        "job_name": job_file.name,
+        "job_skills": job_skills,
+        "skill_gaps": skill_gaps,
+    }
 
-    # Print the skills found in this job description.
-    print("\nSkills found in job:")
-    print(job_skills)
+    # Add this job's result dictionary to the full job_results list.
+    job_results.append(job_result)
 
-    # Print the missing skills for this job.
-    print("\nSkill gaps:")
-    print(skill_gaps)
+
+# Create a Path object for where the final report should be saved.
+output_path = Path("data/outputs/gap_report.md")
+
+# Write the markdown gap report.
+write_gap_report(output_path, resume_skills, job_results)
+
+
+# Print a simple success message in the terminal.
+print(f"Gap report written to {output_path}")

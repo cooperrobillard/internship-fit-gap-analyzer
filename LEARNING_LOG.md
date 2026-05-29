@@ -131,3 +131,35 @@ The goal of this project is not just to create a finished repo. The goal is to i
 * Build a simple comparison function in `src/compare_resume.py`.
 * The function should compare skills found in a job description against skills found in my resume.
 * The goal is to identify skills that appear in the job but not in the resume.
+
+## 2026-05-29 — Generated first markdown gap report
+
+### What I built
+- Added `src/report_writer.py`.
+- Created a `write_gap_report(output_path, resume_skills, job_results)` function.
+- Updated `src/main.py` to collect job analysis results and write them into `data/outputs/gap_report.md`.
+
+### What I practiced
+- Creating a report-writing helper file.
+- Passing dictionaries and lists into a function.
+- Building a markdown file as text.
+- Using `.append()` to add sections to a list.
+- Using `"".join(lines)` to combine many text sections into one report.
+- Using `.write_text()` to save text to a file.
+- Creating an output folder with `.mkdir()`.
+
+### What AI helped with
+- AI helped structure the report writer and explain each line.
+- I copied the code, but I reviewed the comments to understand how the report is built from the resume skills and job results.
+
+### What I understand now
+- `main.py` controls the full workflow.
+- `extract_keywords.py` finds skills in text.
+- `compare_resume.py` finds gaps between job skills and resume skills.
+- `report_writer.py` turns the results into a markdown report.
+- The project now has a basic input → analysis → output flow.
+
+### What I still want to understand better
+- How to make the report cleaner and easier to read.
+- How to save results to CSV.
+- How to avoid false keyword matches.
