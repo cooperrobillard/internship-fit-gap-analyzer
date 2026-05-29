@@ -163,3 +163,35 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to make the report cleaner and easier to read.
 - How to save results to CSV.
 - How to avoid false keyword matches.
+
+## 2026-05-29 — Added CSV gap summary output
+
+### What I built
+- Added `src/csv_writer.py`.
+- Created a `write_gap_csv(output_path, job_results)` function.
+- Updated `src/main.py` so the project now writes both a markdown report and a CSV summary.
+- The CSV file saves one missing skill per row with the job name, category, and gap skill.
+
+### What I practiced
+- Importing Python's built-in `csv` module.
+- Creating a new helper file.
+- Writing rows to a CSV file.
+- Using `csv.DictWriter`.
+- Looping through nested data.
+- Saving structured output to `data/outputs/gap_summary.csv`.
+
+### What AI helped with
+- AI helped write the first version of the CSV writer and explain how the nested loops work.
+- I reviewed the comments to understand how `job_results` turns into CSV rows.
+
+### What I understand now
+- The markdown report is better for reading.
+- The CSV file is better for later analysis.
+- `job_results` stores all job analysis results in one list.
+- Each job result contains the job name, skills found in the job, and skill gaps.
+- The CSV writer loops through those results and saves each missing skill as its own row.
+
+### What I still want to understand better
+- How to summarize recurring gaps across multiple jobs.
+- How to sort or count the most common missing skills.
+- How to make the project output cleaner.

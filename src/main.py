@@ -12,8 +12,11 @@ from extract_keywords import find_skills
 # Import our gap-finding function from src/compare_resume.py.
 from compare_resume import find_gaps
 
-# Import our report-writing function from src/report_writer.py.
+# Import our markdown report-writing function from src/report_writer.py.
 from report_writer import write_gap_report
+
+# Import our CSV-writing function from src/csv_writer.py.
+from csv_writer import write_gap_csv
 
 # Create a Path object that points to the resume text file.
 resume_path = Path("data/resume/resume.txt")
@@ -44,8 +47,6 @@ job_files = job_folder.glob("*.txt")
 
 
 # Create an empty list to store the analysis results for all job files.
-#
-# Each item in this list will be a dictionary for one job description.
 job_results = []
 
 
@@ -59,12 +60,9 @@ for job_file in job_files:
     job_skills = find_skills(job_text, taxonomy)
 
     # Compare this job's skills against the resume skills.
-    # This finds skills in the job that are missing from the resume.
     skill_gaps = find_gaps(job_skills, resume_skills)
 
     # Store this job's results in a dictionary.
-    #
-    # This keeps the job name, job skills, and gaps together.
     job_result = {
         "job_name": job_file.name,
         "job_skills": job_skills,
@@ -75,12 +73,20 @@ for job_file in job_files:
     job_results.append(job_result)
 
 
-# Create a Path object for where the final report should be saved.
-output_path = Path("data/outputs/gap_report.md")
+# Create a Path object for where the markdown report should be saved.
+report_output_path = Path("data/outputs/gap_report.md")
 
 # Write the markdown gap report.
-write_gap_report(output_path, resume_skills, job_results)
+write_gap_report(report_output_path, resume_skills, job_results)
 
 
-# Print a simple success message in the terminal.
-print(f"Gap report written to {output_path}")
+# Create a Path object for where the CSV summary should be saved.
+csv_output_path = Path("data/outputs/gap_summary.csv")
+
+# Write the CSV gap summary.
+write_gap_csv(csv_output_path, job_results)
+
+
+# Print simple success messages in the terminal.
+print(f"Gap report written to {report_output_path}")
+print(f"Gap CSV written to {csv_output_path}")
