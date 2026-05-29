@@ -38,8 +38,19 @@ taxonomy_text = skills_taxonomy_path.read_text(encoding="utf-8")
 taxonomy = json.loads(taxonomy_text)
 
 
+# Create a Path object that points to the skill aliases JSON file.
+skill_aliases_path = Path("data/skill_aliases.json")
+
+# Read the aliases file as plain text.
+aliases_text = skill_aliases_path.read_text(encoding="utf-8")
+
+# Convert the JSON text into a Python dictionary.
+aliases = json.loads(aliases_text)
+
+
 # Find skills from the taxonomy that appear in the resume.
-resume_skills = find_skills(resume_text, taxonomy)
+# We now pass aliases too, so the matcher can check alternate phrases.
+resume_skills = find_skills(resume_text, taxonomy, aliases)
 
 
 # Create a Path object that points to the folder with job descriptions.
@@ -60,7 +71,8 @@ for job_file in job_files:
     job_text = job_file.read_text(encoding="utf-8")
 
     # Find taxonomy skills that appear in this job description.
-    job_skills = find_skills(job_text, taxonomy)
+    # We pass aliases here too.
+    job_skills = find_skills(job_text, taxonomy, aliases)
 
     # Compare this job's skills against the resume skills.
     skill_gaps = find_gaps(job_skills, resume_skills)

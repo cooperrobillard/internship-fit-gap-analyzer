@@ -1,0 +1,17 @@
+{
+  "rest api": ["rest api", "rest apis", "restful api"],
+  "openai api": ["openai api", "openai"],
+  "rag": ["rag", "retrieval-augmented generation", "retrieval augmented generation"],
+  "langchain": ["langchain", "lang chain"],
+  "llamaindex": ["llamaindex", "llama index"],
+  "machine learning": ["machine learning", "ml"],
+  "vector database": ["vector database", "vector databases"],
+  "embeddings": ["embeddings", "embedding"],
+  "fastapi": ["fastapi", "fast api"],
+  "postgres": ["postgres", "postgresql"],
+  "sql": ["sql", "sql databases", "sql/nosql"],
+  "github": ["github", "git hub"],
+  "vs code": ["vs code", "visual studio code"],
+  "ai governance": ["ai governance", "ai safety", "responsible ai governance"],
+  "human review": ["human review", "human-in-the-loop", "human in the loop"]
+}

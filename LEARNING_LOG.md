@@ -253,3 +253,32 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How regular expressions work.
 - How to handle related terms like `api` and `apis`.
 - How to add aliases for skills that can be written in multiple ways.
+
+## 2026-05-29 — Added skill aliases
+
+### What I built
+- Added `data/skill_aliases.json`.
+- Updated `find_skills()` so it can search for multiple phrases for one official skill.
+- Updated `src/main.py` to load the aliases file and pass it into the skill matcher.
+
+### What I practiced
+- Creating another JSON input file.
+- Loading multiple JSON files in `main.py`.
+- Passing an optional third argument into a function.
+- Using helper functions to keep matching logic easier to read.
+- Avoiding duplicate matches by using `break`.
+
+### What AI helped with
+- AI helped design the alias structure and update the matching function.
+- I reviewed the comments to understand the difference between official skill names and search phrases.
+
+### What I understand now
+- The taxonomy controls which skills the project reports.
+- The aliases file controls extra phrases the project searches for.
+- One official skill can have multiple search phrases.
+- This makes the analyzer more realistic without adding AI yet.
+
+### What I still want to understand better
+- How to decide which aliases are too broad.
+- How to test whether aliases improve or hurt the matching.
+- How to make matching accurate without making it too complicated.
