@@ -195,3 +195,33 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to summarize recurring gaps across multiple jobs.
 - How to sort or count the most common missing skills.
 - How to make the project output cleaner.
+
+## 2026-05-29 — Added recurring gap summary
+
+### What I built
+- Added `src/summarize_gaps.py`.
+- Created a `count_recurring_gaps(job_results)` function.
+- Updated the markdown report to show the most common skill gaps near the top.
+- Added `data/outputs/recurring_gaps.csv`, which counts how often each missing skill appears across all analyzed jobs.
+
+### What I practiced
+- Counting repeated values with a dictionary.
+- Turning nested job results into a simpler summary.
+- Sorting a list of dictionaries by count.
+- Writing a second CSV output file.
+- Passing the same analysis results into multiple output functions.
+
+### What AI helped with
+- AI helped structure the recurring gap counter and explain the loops.
+- I reviewed the comments to understand how job-level gaps become an overall frequency summary.
+
+### What I understand now
+- `gap_summary.csv` shows each missing skill for each job.
+- `recurring_gaps.csv` summarizes which missing skills appear most often.
+- A dictionary can be used to count repeated values.
+- Sorting lets the most common gaps appear first.
+
+### What I still want to understand better
+- How to clean up false matches from simple keyword searching.
+- How to improve the report formatting.
+- How to eventually use pandas to summarize this more easily.

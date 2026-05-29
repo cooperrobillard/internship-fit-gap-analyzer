@@ -14,31 +14,24 @@ from pathlib import Path
 def write_gap_csv(output_path, job_results):
 
     # Convert output_path into a Path object.
-    # This makes sure Python treats it like a file path.
     output_path = Path(output_path)
 
     # Make sure the output folder exists.
-    # For data/outputs/gap_summary.csv, this creates data/outputs if needed.
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Open the CSV file in write mode.
-    #
-    # "w" means write.
-    # newline="" helps prevent extra blank rows in CSV files.
-    # encoding="utf-8" keeps text handling consistent with the rest of the project.
     with open(output_path, "w", newline="", encoding="utf-8") as csv_file:
 
         # Define the column names for the CSV file.
         fieldnames = ["job_name", "category", "gap_skill"]
 
-        # Create a DictWriter.
-        # This lets us write each CSV row as a dictionary.
+        # Create a CSV writer that writes dictionary rows.
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
-        # Write the first row of the CSV file with the column names.
+        # Write the header row.
         writer.writeheader()
 
-        # Loop through each job result in the full job_results list.
+        # Loop through each job result.
         for job_result in job_results:
 
             # Get the job file name.
@@ -47,13 +40,13 @@ def write_gap_csv(output_path, job_results):
             # Get the skill gaps dictionary for this job.
             skill_gaps = job_result["skill_gaps"]
 
-            # Loop through each category in the skill gaps dictionary.
+            # Loop through each category and list of gaps.
             for category, gaps in skill_gaps.items():
 
-                # Loop through each missing skill in this category.
+                # Loop through each missing skill.
                 for gap_skill in gaps:
 
-                    # Write one row to the CSV file.
+                    # Write one row for each missing skill.
                     writer.writerow(
                         {
                             "job_name": job_name,
@@ -61,3 +54,41 @@ def write_gap_csv(output_path, job_results):
                             "gap_skill": gap_skill,
                         }
                     )
+
+
+# Define a function that writes recurring gap counts to a CSV file.
+#
+# Inputs:
+# 1. output_path: where the CSV file should be saved
+# 2. recurring_gaps: the sorted recurring gaps list from summarize_gaps.py
+def write_recurring_gap_csv(output_path, recurring_gaps):
+
+    # Convert output_path into a Path object.
+    output_path = Path(output_path)
+
+    # Make sure the output folder exists.
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Open the recurring gaps CSV file in write mode.
+    with open(output_path, "w", newline="", encoding="utf-8") as csv_file:
+
+        # Define the columns for the recurring gaps CSV.
+        fieldnames = ["gap_skill", "category", "count"]
+
+        # Create a CSV writer that writes dictionary rows.
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+        # Write the header row.
+        writer.writeheader()
+
+        # Loop through each recurring gap result.
+        for gap in recurring_gaps:
+
+            # Write one row for this recurring gap.
+            writer.writerow(
+                {
+                    "gap_skill": gap["gap_skill"],
+                    "category": gap["category"],
+                    "count": gap["count"],
+                }
+            )

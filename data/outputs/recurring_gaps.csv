@@ -1,0 +1,7 @@
+gap_skill,category,count
+sql,data,2
+langchain,ai_ml,2
+machine learning,ai_ml,2
+aws,cloud_backend,2
+vector database,ai_ml,1
+fastapi,cloud_backend,1

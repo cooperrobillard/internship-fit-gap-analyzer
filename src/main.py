@@ -15,8 +15,11 @@ from compare_resume import find_gaps
 # Import our markdown report-writing function from src/report_writer.py.
 from report_writer import write_gap_report
 
-# Import our CSV-writing function from src/csv_writer.py.
-from csv_writer import write_gap_csv
+# Import our CSV-writing functions from src/csv_writer.py.
+from csv_writer import write_gap_csv, write_recurring_gap_csv
+
+# Import our recurring gap counting function from src/summarize_gaps.py.
+from summarize_gaps import count_recurring_gaps
 
 # Create a Path object that points to the resume text file.
 resume_path = Path("data/resume/resume.txt")
@@ -73,20 +76,32 @@ for job_file in job_files:
     job_results.append(job_result)
 
 
+# Count which skill gaps appear most often across all jobs.
+recurring_gaps = count_recurring_gaps(job_results)
+
+
 # Create a Path object for where the markdown report should be saved.
 report_output_path = Path("data/outputs/gap_report.md")
 
 # Write the markdown gap report.
-write_gap_report(report_output_path, resume_skills, job_results)
+write_gap_report(report_output_path, resume_skills, job_results, recurring_gaps)
 
 
-# Create a Path object for where the CSV summary should be saved.
-csv_output_path = Path("data/outputs/gap_summary.csv")
+# Create a Path object for where the detailed CSV summary should be saved.
+gap_csv_output_path = Path("data/outputs/gap_summary.csv")
 
-# Write the CSV gap summary.
-write_gap_csv(csv_output_path, job_results)
+# Write the detailed gap CSV summary.
+write_gap_csv(gap_csv_output_path, job_results)
+
+
+# Create a Path object for where the recurring gaps CSV should be saved.
+recurring_csv_output_path = Path("data/outputs/recurring_gaps.csv")
+
+# Write the recurring gaps CSV summary.
+write_recurring_gap_csv(recurring_csv_output_path, recurring_gaps)
 
 
 # Print simple success messages in the terminal.
 print(f"Gap report written to {report_output_path}")
-print(f"Gap CSV written to {csv_output_path}")
+print(f"Gap CSV written to {gap_csv_output_path}")
+print(f"Recurring gaps CSV written to {recurring_csv_output_path}")
