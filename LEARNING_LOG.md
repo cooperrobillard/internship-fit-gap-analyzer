@@ -225,3 +225,31 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to clean up false matches from simple keyword searching.
 - How to improve the report formatting.
 - How to eventually use pandas to summarize this more easily.
+
+## 2026-05-29 — Improved keyword matching accuracy
+
+### What I built
+- Updated `src/extract_keywords.py` to use a helper function called `skill_appears_in_text(skill, normalized_text)`.
+- Replaced simple substring matching with a basic regular expression search.
+- The goal was to reduce false matches, such as matching `java` inside `javascript`.
+
+### What I practiced
+- Importing Python's built-in `re` module.
+- Creating a helper function.
+- Using a return value of `True` or `False`.
+- Separating small pieces of logic into simpler functions.
+- Improving the matching logic without changing the rest of the project pipeline.
+
+### What AI helped with
+- AI helped write the first version of the improved matching function.
+- I reviewed the comments to understand why simple substring matching can create false matches.
+
+### What I understand now
+- `if skill in text` is simple but can accidentally match text inside larger words.
+- A word-boundary pattern can make matching more careful.
+- Improving one helper function can improve the whole project because `main.py` already uses `find_skills()` everywhere.
+
+### What I still want to understand better
+- How regular expressions work.
+- How to handle related terms like `api` and `apis`.
+- How to add aliases for skills that can be written in multiple ways.

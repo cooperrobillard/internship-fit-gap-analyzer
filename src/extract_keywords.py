@@ -1,5 +1,43 @@
+# Import Python's built-in re module.
+# re lets us search text using patterns instead of only simple substring checks.
+import re
+
+
+# Define a small helper function that checks whether one skill appears in text.
+#
+# This is separated into its own function so find_skills() stays easier to read.
+def skill_appears_in_text(skill, normalized_text):
+
+    # Convert the skill to lowercase so it matches the lowercase text.
+    normalized_skill = skill.lower()
+
+    # Escape the skill text so special characters are treated like normal text.
+    #
+    # Example:
+    # "c++" has plus signs, which mean something special in regex.
+    # re.escape() protects those characters.
+    escaped_skill = re.escape(normalized_skill)
+
+    # Build a search pattern.
+    #
+    # \b means "word boundary."
+    # This helps match "java" as its own word, but not inside "javascript."
+    pattern = r"\b" + escaped_skill + r"\b"
+
+    # Search the text for the pattern.
+    #
+    # re.search(...) returns a match object if found.
+    # It returns None if not found.
+    match = re.search(pattern, normalized_text)
+
+    # Convert the result into True or False.
+    #
+    # True means the skill appeared in the text.
+    # False means it did not.
+    return match is not None
+
+
 # Define a function called find_skills.
-# A function is a reusable block of code that performs one specific job.
 #
 # This function needs two inputs:
 # 1. text: the resume text or job description text we want to search
@@ -17,70 +55,30 @@ def find_skills(text, taxonomy):
     """
 
     # Create an empty dictionary where we will store the final results.
-    #
-    # Example of what this will eventually look like:
-    # {
-    #     "programming": ["python", "matlab"],
-    #     "data": ["regression"],
-    #     "software_tools": ["git", "github"]
-    # }
     found_skills = {}
 
     # Convert the full input text to lowercase.
-    #
-    # This makes matching easier because Python treats "Python" and "python"
-    # as different unless we normalize the capitalization.
     normalized_text = text.lower()
 
     # Loop through each category in the taxonomy dictionary.
-    #
-    # taxonomy.items() gives us both:
-    # - category: the dictionary key, like "programming"
-    # - skills_list: the dictionary value, like ["python", "matlab"]
     for category, skills_list in taxonomy.items():
 
         # Create an empty list for this category's matched skills.
-        #
-        # Example: if category is "programming", this list might become:
-        # ["python", "matlab"]
         matched_skills = []
 
         # Loop through each skill inside the current category's skill list.
-        #
-        # Example: if skills_list is ["python", "matlab", "typescript"],
-        # then this loop checks one skill at a time.
         for skill in skills_list:
 
-            # Convert the skill to lowercase before checking for it.
+            # Check whether this skill appears in the text.
             #
-            # This makes the comparison match the lowercase version of the text.
-            # Example: "Python" becomes "python".
-            normalized_skill = skill.lower()
+            # This now uses our helper function instead of simple substring matching.
+            if skill_appears_in_text(skill, normalized_text):
 
-            # Check whether the normalized skill appears anywhere
-            # inside the normalized text.
-            #
-            # Example:
-            # "python" in "i built a python project"  -> True
-            # "sql" in "i built a python project"     -> False
-            if normalized_skill in normalized_text:
-
-                # If the skill was found in the text, add the original skill
-                # to the matched_skills list.
-                #
-                # We append skill, not normalized_skill, so the output keeps
-                # the same formatting as the taxonomy file.
+                # If the skill was found, add it to the matched skills list.
                 matched_skills.append(skill)
 
-        # After checking every skill in this category, store the category's
-        # matched skills in the found_skills dictionary.
-        #
-        # Example:
-        # found_skills["programming"] = ["python", "matlab"]
+        # Store this category's matched skills in the final dictionary.
         found_skills[category] = matched_skills
 
     # Return the full dictionary of matched skills.
-    #
-    # This is what lets main.py use the result later.
-    # Without return, the function would give back None.
     return found_skills
