@@ -282,3 +282,29 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to decide which aliases are too broad.
 - How to test whether aliases improve or hurt the matching.
 - How to make matching accurate without making it too complicated.
+
+## 2026-05-29 — Added initial README documentation
+
+### What I built
+- Added the first real `README.md` for the project.
+- Documented what the project does, how to run it, the input files, output files, source files, current limitations, and planned next steps.
+
+### What I practiced
+- Writing project documentation.
+- Explaining how separate Python files work together.
+- Describing inputs, processing steps, and outputs.
+- Documenting limitations honestly.
+
+### What AI helped with
+- AI helped draft the README structure and wording.
+- I reviewed the README to make sure I understand what each project file does and how the full workflow fits together.
+
+### What I understand now
+- A README helps make the project easier to understand for other people and for my future self.
+- Documentation is part of making a project professional.
+- The project currently has a working pure-Python input → analysis → output pipeline.
+
+### What I still want to understand better
+- How to make the project easier to run from the command line.
+- How to add tests for the helper functions.
+- How to decide when Version 1 is complete.
