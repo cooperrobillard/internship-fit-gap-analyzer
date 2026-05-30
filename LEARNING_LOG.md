@@ -308,3 +308,31 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to make the project easier to run from the command line.
 - How to add tests for the helper functions.
 - How to decide when Version 1 is complete.
+
+## 2026-05-29 — Added basic core logic tests
+
+### What I built
+- Added `tests/test_core_logic.py`.
+- Created simple tests for `find_skills()`, `find_gaps()`, and `count_recurring_gaps()`.
+- Used small fake examples to check that the helper functions return expected results.
+
+### What I practiced
+- Writing test functions.
+- Using `assert` statements.
+- Testing functions with small sample inputs.
+- Running a test file from the terminal.
+- Checking that the main project still works after adding tests.
+
+### What AI helped with
+- AI helped write the first basic test file and explain what each test checks.
+- I reviewed the test inputs and expected outputs so I understand what the tests are proving.
+
+### What I understand now
+- Tests help catch mistakes when the code changes later.
+- A good test gives a function known input and checks for expected output.
+- Testing small helper functions is easier than testing the whole program at once.
+
+### What I still want to understand better
+- How pytest works.
+- How to organize tests as the project grows.
+- How to test file outputs like markdown and CSV files.
