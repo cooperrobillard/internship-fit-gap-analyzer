@@ -1,0 +1,35 @@
+Student Name
+
+City, State | email@example.com | linkedin.com/in/example | github.com/example
+
+# Profile
+
+Engineering student interested in software, data analysis, applied AI, and human-centered technology. Experience with Python, MATLAB, technical documentation, and project-based engineering work.
+
+# Education
+
+Example University  
+B.S. Engineering | Expected 2027
+
+# Projects
+
+Python Data Analysis Project
+
+- Built a Python script to analyze sample datasets and generate summary outputs.
+- Used Python, JSON, CSV files, and basic data visualization.
+
+AI-Assisted Web Tool
+
+- Built a small web-based tool using JavaScript and API concepts.
+- Documented limitations, privacy considerations, and user-facing behavior.
+
+Engineering Design Project
+
+- Worked with users to define requirements, build prototypes, and document design decisions.
+
+# Skills
+
+Programming: Python, MATLAB, JavaScript  
+Data: regression, Excel  
+Tools: Git, GitHub, terminal  
+Communication: documentation, requirements, technical writing

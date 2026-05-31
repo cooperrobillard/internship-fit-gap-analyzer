@@ -1,0 +1,19 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local environment files
+.env
+.venv/
+venv/
+
+# Mac system files
+.DS_Store
+
+# Generated output files
+data/outputs/*.md
+data/outputs/*.csv
+
+# Private local inputs
+data/resume/resume.txt
+data/jobs/private_*.txt

@@ -1,0 +1,22 @@
+Sample AI Engineering Internship
+
+We are looking for an intern to support AI and software development projects.
+
+Responsibilities:
+- Build Python tools for internal workflows.
+- Work with REST APIs and JSON data.
+- Help analyze data and summarize recurring patterns.
+- Support prototype development for AI-assisted applications.
+- Document technical decisions and limitations.
+
+Qualifications:
+- Experience with Python.
+- Familiarity with SQL, pandas, or data cleaning.
+- Interest in machine learning and large language models.
+- Familiarity with Git and GitHub.
+- Strong communication and documentation skills.
+
+Preferred:
+- Experience with FastAPI.
+- Exposure to LangChain or retrieval-augmented generation.
+- Interest in responsible AI, evaluation, and human review.

@@ -628,3 +628,31 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - Whether to add more pure-Python cleanup before moving to pandas and SQLite.
 - How to decide when a project is portfolio-ready.
 - How to describe this project honestly on a resume after each phase.
+
+## 2026-05-31 — Added sample data and gitignore
+
+### What I built
+- Added a `.gitignore` file.
+- Added a safe sample resume file at `data/resume/sample_resume.txt`.
+- Added a safe sample job description at `data/jobs/sample_ai_internship.txt`.
+- Tested the analyzer with the sample resume using a command-line argument.
+
+### What I practiced
+- Separating private local files from public sample files.
+- Using `.gitignore` to avoid tracking generated files and private inputs.
+- Running the analyzer with a custom resume path.
+- Thinking about what should and should not be committed to GitHub.
+
+### What AI helped with
+- AI helped create a safe sample resume and sample job description.
+- AI helped explain how `.gitignore` protects future commits.
+
+### What I understand now
+- A portfolio repo should include sample data so other people can run it.
+- My real resume and private job files should usually stay local.
+- `.gitignore` prevents future tracking, but it does not automatically erase files that were already committed.
+
+### What I still want to understand better
+- How to safely stop tracking files that were already committed.
+- How to structure sample data for a public portfolio project.
+- How to prepare the repo before moving into pandas or SQLite.

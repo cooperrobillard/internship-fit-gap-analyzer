@@ -1,9 +1,0 @@
-job_name,category,gap_skill
-sample_job_1.txt,data,sql
-sample_job_1.txt,ai_ml,langchain
-sample_job_2.txt,data,sql
-sample_job_2.txt,ai_ml,rag
-sample_job_2.txt,ai_ml,langchain
-sample_job_2.txt,ai_ml,vector database
-sample_job_2.txt,cloud_backend,aws
-sample_job_2.txt,cloud_backend,fastapi
