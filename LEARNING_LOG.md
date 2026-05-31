@@ -487,3 +487,31 @@ The goal of this project is not just to create a finished repo. The goal is to i
 * How pytest would simplify running multiple test files.
 * How to test command-line arguments.
 * How to organize tests as the project grows.
+
+## 2026-05-31 — Added simple test runner
+
+### What I built
+- Added `run_tests.py`.
+- The script runs the current test files from one command.
+- It stops if any test file fails and prints a success message if all tests pass.
+
+### What I practiced
+- Running Python files from another Python script.
+- Using `subprocess.run()`.
+- Using `sys.executable` to run tests with the current Python interpreter.
+- Checking command success with `returncode`.
+- Making the project easier to test.
+
+### What AI helped with
+- AI helped write the first simple test runner and explain how it works.
+- I reviewed the comments to understand how the script runs each test file.
+
+### What I understand now
+- A test runner saves time because I do not have to run every test file manually.
+- `returncode` tells the script whether a test passed or failed.
+- This is a small step toward more professional testing, even before using pytest.
+
+### What I still want to understand better
+- How pytest discovers and runs tests automatically.
+- How to test command-line arguments.
+- How to organize tests as the project grows.

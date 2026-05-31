@@ -161,6 +161,35 @@ Gap report written to data/outputs/gap_report.md
 Gap CSV written to data/outputs/gap_summary.csv
 Recurring gaps CSV written to data/outputs/recurring_gaps.csv
 ```
+## How to run tests
+
+From the project root folder, run:
+
+```bash
+python3 run_tests.py
+
+This runs the current basic test files:
+
+tests/test_core_logic.py
+tests/test_output_writers.py
+
+This helps anyone viewing the repo know how to check the project.
+
+---
+
+# What to check
+
+After running:
+
+```bash
+python3 run_tests.py
+
+check that:
+
+both test files run,
+the final message says All tests passed.,
+no new unwanted files appear,
+python3 src/main.py still works.
 
 ## Output files
 
