@@ -333,3 +333,19 @@ Possible next improvements:
 * build a Streamlit dashboard.
 
 The project will only move to later phases after the current pure-Python version is stable and understandable.
+
+By default, the project uses the safe sample resume at `data/resume/sample_resume.txt`.
+
+To run the analyzer with a private local resume that is not tracked by Git, use:
+
+```bash
+python3 src/main.py --resume data/resume/resume.txt
+
+---
+
+## Commands to test
+
+After updating `src/main.py` and `README.md`, run:
+
+```bash
+python3 src/main.py

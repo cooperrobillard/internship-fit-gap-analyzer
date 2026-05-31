@@ -656,3 +656,26 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to safely stop tracking files that were already committed.
 - How to structure sample data for a public portfolio project.
 - How to prepare the repo before moving into pandas or SQLite.
+
+## 2026-05-31 — Made default resume path public-safe
+
+### What I built
+- Changed the default resume path from my private resume file to the safe sample resume.
+- Updated the README to explain how to run the analyzer with the sample resume or a private local resume.
+
+### What I practiced
+- Using command-line options to switch between sample and private inputs.
+- Keeping public repo defaults safe.
+- Making the project easier for someone else to clone and run.
+
+### What AI helped with
+- AI helped identify that the default path should point to sample data after removing the private resume from Git tracking.
+
+### What I understand now
+- `.gitignore` keeps private files local, but the program should still have safe defaults for public use.
+- A GitHub project should run with tracked sample files by default.
+- Private local files can still be used through command-line arguments.
+
+### What I still want to understand better
+- How to remove sensitive data from old Git history if needed.
+- How to structure sample data for a public portfolio repo.

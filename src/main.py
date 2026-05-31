@@ -30,7 +30,7 @@ from console_summary import print_run_summary
 # Default file and folder paths.
 #
 # These are used when the user does not provide custom paths in the terminal.
-DEFAULT_RESUME_PATH = Path("data/resume/resume.txt")
+DEFAULT_RESUME_PATH = Path("data/resume/sample_resume.txt")
 DEFAULT_SKILLS_TAXONOMY_PATH = Path("data/skills_taxonomy.json")
 DEFAULT_SKILL_ALIASES_PATH = Path("data/skill_aliases.json")
 DEFAULT_JOBS_FOLDER = Path("data/jobs")
