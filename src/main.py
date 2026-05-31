@@ -2,6 +2,9 @@
 # Path helps us work with file and folder locations.
 from pathlib import Path
 
+# Import argparse so the user can pass options in the terminal.
+import argparse
+
 # Import Python's built-in json module.
 # This lets us convert JSON text into Python dictionaries/lists.
 import json
@@ -21,30 +24,91 @@ from csv_writer import write_gap_csv, write_recurring_gap_csv
 # Import our recurring gap counting function from src/summarize_gaps.py.
 from summarize_gaps import count_recurring_gaps
 
+# Import our terminal summary function from src/console_summary.py.
 from console_summary import print_run_summary
 
-# Store important file/folder paths in variables near the top.
-# This makes them easier to find and change later.
-RESUME_PATH = Path("data/resume/resume.txt")
-SKILLS_TAXONOMY_PATH = Path("data/skills_taxonomy.json")
-SKILL_ALIASES_PATH = Path("data/skill_aliases.json")
-JOBS_FOLDER = Path("data/jobs")
+# Default file and folder paths.
+#
+# These are used when the user does not provide custom paths in the terminal.
+DEFAULT_RESUME_PATH = Path("data/resume/resume.txt")
+DEFAULT_SKILLS_TAXONOMY_PATH = Path("data/skills_taxonomy.json")
+DEFAULT_SKILL_ALIASES_PATH = Path("data/skill_aliases.json")
+DEFAULT_JOBS_FOLDER = Path("data/jobs")
+DEFAULT_OUTPUTS_FOLDER = Path("data/outputs")
 
-GAP_REPORT_OUTPUT_PATH = Path("data/outputs/gap_report.md")
-GAP_CSV_OUTPUT_PATH = Path("data/outputs/gap_summary.csv")
-RECURRING_GAPS_CSV_OUTPUT_PATH = Path("data/outputs/recurring_gaps.csv")
+
+# Define a function that reads command-line options.
+#
+# This lets the user customize paths or settings without editing the code.
+def parse_args():
+
+    # Create the argument parser.
+    #
+    # The description shows up when the user runs:
+    # python3 src/main.py --help
+    parser = argparse.ArgumentParser(
+        description="Analyze internship job descriptions against a resume."
+    )
+
+    # Optional resume path.
+    parser.add_argument(
+        "--resume",
+        default=str(DEFAULT_RESUME_PATH),
+        help="Path to the resume text file.",
+    )
+
+    # Optional jobs folder path.
+    parser.add_argument(
+        "--jobs",
+        default=str(DEFAULT_JOBS_FOLDER),
+        help="Path to the folder containing job description .txt files.",
+    )
+
+    # Optional skills taxonomy path.
+    parser.add_argument(
+        "--taxonomy",
+        default=str(DEFAULT_SKILLS_TAXONOMY_PATH),
+        help="Path to the skills taxonomy JSON file.",
+    )
+
+    # Optional skill aliases path.
+    parser.add_argument(
+        "--aliases",
+        default=str(DEFAULT_SKILL_ALIASES_PATH),
+        help="Path to the skill aliases JSON file.",
+    )
+
+    # Optional outputs folder path.
+    parser.add_argument(
+        "--outputs",
+        default=str(DEFAULT_OUTPUTS_FOLDER),
+        help="Path to the folder where output files should be saved.",
+    )
+
+    # Optional number of top recurring gaps to print in the terminal.
+    parser.add_argument(
+        "--top-gaps",
+        type=int,
+        default=5,
+        help="Number of top recurring gaps to show in the terminal summary.",
+    )
+
+    # Return the user's command-line choices.
+    return parser.parse_args()
 
 
 # Check that the project has the required input files and folders.
 #
-# This helps catch missing files early with clearer error messages.
-def validate_inputs():
+# These paths are passed in so the function works with either:
+# - the default paths
+# - custom paths from command-line arguments
+def validate_inputs(resume_path, taxonomy_path, aliases_path, jobs_folder):
 
     # Create a list of files that must exist for the project to run.
     required_files = [
-        RESUME_PATH,
-        SKILLS_TAXONOMY_PATH,
-        SKILL_ALIASES_PATH,
+        resume_path,
+        taxonomy_path,
+        aliases_path,
     ]
 
     # Loop through each required file path.
@@ -57,28 +121,28 @@ def validate_inputs():
             raise FileNotFoundError(f"Missing required file: {file_path}")
 
     # Check whether the jobs folder exists.
-    if not JOBS_FOLDER.exists():
+    if not jobs_folder.exists():
 
         # Stop the program if the jobs folder is missing.
-        raise FileNotFoundError(f"Missing jobs folder: {JOBS_FOLDER}")
+        raise FileNotFoundError(f"Missing jobs folder: {jobs_folder}")
 
     # Check whether the jobs path is actually a folder.
-    if not JOBS_FOLDER.is_dir():
+    if not jobs_folder.is_dir():
 
-        # Stop the program if data/jobs exists but is not a folder.
+        # Stop the program if the jobs path exists but is not a folder.
         raise NotADirectoryError(
-            f"Expected a folder but found something else: {JOBS_FOLDER}"
+            f"Expected a folder but found something else: {jobs_folder}"
         )
 
     # Find all .txt job files.
-    job_files = list(JOBS_FOLDER.glob("*.txt"))
+    job_files = list(jobs_folder.glob("*.txt"))
 
     # Check whether there is at least one job description file.
     if not job_files:
 
         # Stop the program if the jobs folder has no .txt files.
         raise FileNotFoundError(
-            f"No .txt job description files found in: {JOBS_FOLDER}"
+            f"No .txt job description files found in: {jobs_folder}"
         )
 
 
@@ -158,50 +222,68 @@ def analyze_jobs(job_folder, resume_skills, taxonomy, aliases):
 # Define the main workflow for the program.
 #
 # This function controls the full project flow:
-# load inputs -> analyze jobs -> write outputs.
+# command-line options -> load inputs -> analyze jobs -> write outputs.
 def main():
 
+    # Read command-line options.
+    args = parse_args()
+
+    # Convert command-line path strings into Path objects.
+    resume_path = Path(args.resume)
+    jobs_folder = Path(args.jobs)
+    taxonomy_path = Path(args.taxonomy)
+    aliases_path = Path(args.aliases)
+    outputs_folder = Path(args.outputs)
+
+    # Build output file paths using the selected outputs folder.
+    gap_report_output_path = outputs_folder / "gap_report.md"
+    gap_csv_output_path = outputs_folder / "gap_summary.csv"
+    recurring_gaps_csv_output_path = outputs_folder / "recurring_gaps.csv"
+
     # Check that required files and folders exist before running the analysis.
-    validate_inputs()
+    validate_inputs(resume_path, taxonomy_path, aliases_path, jobs_folder)
 
     # Load the resume text.
-    resume_text = load_text_file(RESUME_PATH)
+    resume_text = load_text_file(resume_path)
 
     # Load the skills taxonomy dictionary.
-    taxonomy = load_json_file(SKILLS_TAXONOMY_PATH)
+    taxonomy = load_json_file(taxonomy_path)
 
     # Load the skill aliases dictionary.
-    aliases = load_json_file(SKILL_ALIASES_PATH)
+    aliases = load_json_file(aliases_path)
 
     # Find skills from the taxonomy that appear in the resume.
     resume_skills = find_skills(resume_text, taxonomy, aliases)
 
     # Analyze all job descriptions.
-    job_results = analyze_jobs(JOBS_FOLDER, resume_skills, taxonomy, aliases)
+    job_results = analyze_jobs(jobs_folder, resume_skills, taxonomy, aliases)
 
     # Count which skill gaps appear most often across all jobs.
     recurring_gaps = count_recurring_gaps(job_results)
 
     # Write the markdown gap report.
-    write_gap_report(GAP_REPORT_OUTPUT_PATH, resume_skills, job_results, recurring_gaps)
+    write_gap_report(gap_report_output_path, resume_skills, job_results, recurring_gaps)
 
     # Write the detailed gap CSV summary.
-    write_gap_csv(GAP_CSV_OUTPUT_PATH, job_results)
+    write_gap_csv(gap_csv_output_path, job_results)
 
     # Write the recurring gaps CSV summary.
-    write_recurring_gap_csv(RECURRING_GAPS_CSV_OUTPUT_PATH, recurring_gaps)
+    write_recurring_gap_csv(recurring_gaps_csv_output_path, recurring_gaps)
 
     # Store the output file paths in a list.
-    #
-    # This makes it easy to print all created files in the terminal summary.
     output_paths = [
-        GAP_REPORT_OUTPUT_PATH,
-        GAP_CSV_OUTPUT_PATH,
-        RECURRING_GAPS_CSV_OUTPUT_PATH,
+        gap_report_output_path,
+        gap_csv_output_path,
+        recurring_gaps_csv_output_path,
     ]
 
     # Print a clean summary of the run in the terminal.
-    print_run_summary(job_results, recurring_gaps, output_paths)
+    print_run_summary(
+        job_results,
+        recurring_gaps,
+        output_paths,
+        max_gaps=args.top_gaps,
+    )
 
 
 # This checks whether this file is being run directly.

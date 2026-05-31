@@ -422,3 +422,34 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to make the command line more flexible.
 - How to let the user choose folders or output paths.
 - How to test printed terminal output.
+
+## 2026-05-31 — Added command-line options
+
+### What I built
+- Added command-line options to `src/main.py` using Python's built-in `argparse` module.
+- The analyzer can still run with default paths using `python3 src/main.py`.
+- The analyzer can now accept optional paths for the resume, jobs folder, taxonomy file, aliases file, and outputs folder.
+- Added a `--top-gaps` option to control how many recurring gaps appear in the terminal summary.
+
+### What I practiced
+- Using `argparse`.
+- Creating command-line arguments.
+- Using default values.
+- Converting command-line path strings into `Path` objects.
+- Passing selected paths into validation, loading, analysis, and output-writing functions.
+- Keeping the program flexible without changing the core analysis logic.
+
+### What AI helped with
+- AI helped update the structure of `main.py` and explain how command-line arguments fit into the workflow.
+- I reviewed the comments to understand how terminal options become variables inside the program.
+
+### What I understand now
+- Hardcoded paths are simple, but command-line options make the tool more flexible.
+- Defaults let the project still run normally without extra options.
+- `argparse` creates a help screen and reads user-provided options.
+- The same analysis code can run on different input files if the paths are passed in.
+
+### What I still want to understand better
+- How to test command-line behavior.
+- How to decide which settings should be command-line options.
+- How real Python packages make command-line tools easier to install and run.
