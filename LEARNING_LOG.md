@@ -515,3 +515,32 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How pytest discovers and runs tests automatically.
 - How to test command-line arguments.
 - How to organize tests as the project grows.
+
+## 2026-05-31 — Added command-line behavior tests
+
+### What I built
+- Added `tests/test_cli.py`.
+- Tested that `python3 src/main.py --help` works.
+- Tested that the analyzer can run with a custom output folder using `--outputs`.
+- Updated `run_tests.py` so it runs the new CLI test file.
+
+### What I practiced
+- Running terminal commands from Python with `subprocess.run()`.
+- Capturing command output with `capture_output=True`.
+- Checking terminal output with `result.stdout`.
+- Checking command success with `result.returncode`.
+- Using `TemporaryDirectory()` so tests do not affect the real output folder.
+
+### What AI helped with
+- AI helped write the first CLI test file and explain how the subprocess test works.
+- I reviewed the comments to understand how the test runs the project from the command line.
+
+### What I understand now
+- Tests can check both helper functions and full command-line behavior.
+- Temporary folders make output tests safer.
+- The project is easier to trust when the main command and options are tested.
+
+### What I still want to understand better
+- How pytest would make these tests easier to run.
+- How to test error cases for missing input files.
+- How larger projects organize CLI tests.

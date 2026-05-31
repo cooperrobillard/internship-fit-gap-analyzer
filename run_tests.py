@@ -1,5 +1,4 @@
 # Import subprocess so this file can run other Python files.
-# We will use it to run each test file from this one script.
 import subprocess
 
 # Import sys so we can use the same Python program that is running this file.
@@ -14,6 +13,7 @@ from pathlib import Path
 test_files = [
     Path("tests/test_core_logic.py"),
     Path("tests/test_output_writers.py"),
+    Path("tests/test_cli.py"),
 ]
 
 
@@ -24,17 +24,9 @@ for test_file in test_files:
     print(f"\nRunning {test_file}...")
 
     # Run the test file using the current Python interpreter.
-    #
-    # sys.executable means:
-    # "Use the same Python that is running this script."
-    #
-    # str(test_file) turns the Path object into a string path.
     result = subprocess.run([sys.executable, str(test_file)])
 
     # Check whether the test file failed.
-    #
-    # returncode is 0 when the command worked.
-    # returncode is not 0 when something went wrong.
     if result.returncode != 0:
 
         # Print a clear failure message.
