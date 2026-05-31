@@ -16,4 +16,7 @@ data/outputs/*.csv
 
 # Private local inputs
 data/resume/resume.txt
-data/jobs/private_*.txt
+data/jobs/*.txt
+
+# Private local job descriptions
+data/jobs/*.txt

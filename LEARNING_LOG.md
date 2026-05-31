@@ -701,3 +701,26 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - A useful project should explain its limits clearly.
 - Keyword matching can help find patterns, but it does not fully understand job descriptions.
 - Documentation helps make the project more trustworthy and easier to explain.
+
+## 2026-05-31 — Made default job inputs public-safe
+
+### What I built
+- Added a `data/sample_jobs/` folder with a safe sample job description.
+- Changed the default jobs folder from `data/jobs/` to `data/sample_jobs/`.
+- Updated `.gitignore` so real local job descriptions in `data/jobs/` are not tracked by Git.
+- Updated the README to explain the difference between sample jobs and private local jobs.
+
+### What I practiced
+- Separating public sample data from private local data.
+- Updating default command-line paths.
+- Using command-line options to run the analyzer on different input folders.
+- Thinking about what belongs in a public portfolio repo.
+
+### What AI helped with
+- AI helped identify that the default jobs folder should also be sample-safe.
+- AI helped explain how to keep private local inputs separate from tracked sample inputs.
+
+### What I understand now
+- A public repo should run with safe sample files by default.
+- Private resume and job files can still be used locally through command-line options.
+- `.gitignore` helps prevent private inputs from being accidentally committed.

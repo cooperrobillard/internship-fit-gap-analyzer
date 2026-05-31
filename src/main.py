@@ -33,7 +33,7 @@ from console_summary import print_run_summary
 DEFAULT_RESUME_PATH = Path("data/resume/sample_resume.txt")
 DEFAULT_SKILLS_TAXONOMY_PATH = Path("data/skills_taxonomy.json")
 DEFAULT_SKILL_ALIASES_PATH = Path("data/skill_aliases.json")
-DEFAULT_JOBS_FOLDER = Path("data/jobs")
+DEFAULT_JOBS_FOLDER = Path("data/sample_jobs")
 DEFAULT_OUTPUTS_FOLDER = Path("data/outputs")
 
 

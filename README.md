@@ -31,6 +31,8 @@ It does not currently use pandas, SQLite, OpenAI API, Streamlit, FastAPI, Docker
 internship-fit-gap-analyzer/
   data/
     jobs/
+      private local job files go here
+    sample_jobs/
       sample_job_1.txt
       sample_job_2.txt
     outputs/
@@ -38,9 +40,12 @@ internship-fit-gap-analyzer/
       gap_summary.csv
       recurring_gaps.csv
     resume/
+      sample_resume.txt
       resume.txt
     skill_aliases.json
     skills_taxonomy.json
+  docs/
+    LIMITATIONS.md
   src/
     compare_resume.py
     console_summary.py
@@ -64,7 +69,7 @@ internship-fit-gap-analyzer/
 At a high level, the project follows this flow:
 
 ```text
-resume.txt + job descriptions + skills taxonomy + skill aliases
+resume text + job descriptions + skills taxonomy + skill aliases
 → find skills in resume
 → find skills in each job description
 → compare job skills against resume skills
@@ -75,13 +80,21 @@ resume.txt + job descriptions + skills taxonomy + skill aliases
 
 ## Input files
 
+### `data/resume/sample_resume.txt`
+
+This file contains the safe sample resume used by default.
+
 ### `data/resume/resume.txt`
 
-This file contains the resume text used as the comparison baseline.
+This file can be used locally for a private real resume. This file is ignored by Git.
+
+### `data/sample_jobs/`
+
+This folder contains safe sample job descriptions that are tracked in Git and used by default.
 
 ### `data/jobs/`
 
-This folder contains job descriptions as `.txt` files. Each file is treated as one job posting.
+This folder can be used locally for private real job descriptions. Files in this folder are ignored by Git.
 
 ### `data/skills_taxonomy.json`
 
@@ -162,6 +175,14 @@ From the project root folder, run:
 python3 src/main.py
 ```
 
+By default, the analyzer runs on the sample resume and sample job descriptions.
+
+To run it with private local inputs:
+
+```bash
+python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
+```
+
 Expected terminal output will look similar to:
 
 ```text
@@ -199,6 +220,12 @@ Use a custom output folder:
 
 ```bash
 python3 src/main.py --outputs data/outputs_test
+```
+
+Use private local inputs:
+
+```bash
+python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
 ```
 
 Available options include:
@@ -275,6 +302,20 @@ Expected final output:
 All tests passed.
 ```
 
+## Commands to test
+
+After updating `src/main.py` and `README.md`, run the default sample-data version:
+
+```bash
+python3 src/main.py
+```
+
+Then run the tests:
+
+```bash
+python3 run_tests.py
+```
+
 ## Current limitations
 
 This version uses rule-based keyword matching.
@@ -295,13 +336,13 @@ Current limitations include:
 
 The output should be treated as a helpful first-pass analysis, not a final judgment.
 
-```md
 ## Limitations documentation
 
 A more detailed explanation of the tool's current limitations is available in:
 
 ```text
 docs/LIMITATIONS.md
+```
 
 ## Learning purpose
 
@@ -341,19 +382,3 @@ Possible next improvements:
 * build a Streamlit dashboard.
 
 The project will only move to later phases after the current pure-Python version is stable and understandable.
-
-By default, the project uses the safe sample resume at `data/resume/sample_resume.txt`.
-
-To run the analyzer with a private local resume that is not tracked by Git, use:
-
-```bash
-python3 src/main.py --resume data/resume/resume.txt
-
----
-
-## Commands to test
-
-After updating `src/main.py` and `README.md`, run:
-
-```bash
-python3 src/main.py
