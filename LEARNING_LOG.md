@@ -544,3 +544,33 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How pytest would make these tests easier to run.
 - How to test error cases for missing input files.
 - How larger projects organize CLI tests.
+
+## 2026-05-31 — Added input validation tests
+
+### What I built
+- Added `tests/test_validation.py`.
+- Tested that `validate_inputs()` works when all required files and folders exist.
+- Tested that `validate_inputs()` catches a missing resume file.
+- Tested that `validate_inputs()` catches an empty jobs folder.
+- Updated `run_tests.py` so the validation tests run with the rest of the test suite.
+
+### What I practiced
+- Testing both successful cases and error cases.
+- Using `try` / `except` to check expected errors.
+- Creating fake input files with `.write_text()`.
+- Using `TemporaryDirectory()` to avoid changing real project files.
+- Adding a new test file to the test runner.
+
+### What AI helped with
+- AI helped write the first validation test file and explain how the error tests work.
+- I reviewed the comments to understand how temporary files are used to test missing or invalid inputs.
+
+### What I understand now
+- Good tests should check both when code works and when code should fail clearly.
+- Input validation is useful because it catches problems before the full analysis runs.
+- Temporary test folders help test file-related code safely.
+
+### What I still want to understand better
+- How pytest would make error testing cleaner.
+- How to test more command-line error cases.
+- How to organize tests if the project keeps growing.
