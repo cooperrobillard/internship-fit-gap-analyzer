@@ -574,3 +574,57 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How pytest would make error testing cleaner.
 - How to test more command-line error cases.
 - How to organize tests if the project keeps growing.
+
+## 2026-05-31 — Updated README after MVP improvements
+
+### What I built
+- Updated `README.md` to match the current state of the project.
+- Documented the project structure, input files, source files, output files, command-line options, tests, limitations, and planned next steps.
+
+### What I practiced
+- Writing project documentation.
+- Explaining how the full system works.
+- Documenting command-line usage.
+- Documenting tests and output files.
+- Keeping documentation consistent with the actual code.
+
+### What AI helped with
+- AI helped draft the updated README based on the current project state.
+- I reviewed the README to make sure I understand what each file does and how the project fits together.
+
+### What I understand now
+- A README should explain how to run the project, what files matter, and what the current limitations are.
+- Documentation is part of making a project professional.
+- The project now has enough working pieces that the README needs to stay updated as the code changes.
+
+### What I still want to understand better
+- How to decide when Version 1 is complete.
+- How to write stronger project documentation over time.
+- How to prepare the repo for future pandas or SQLite phases.
+
+## 2026-05-31 — Added Version 1 MVP checklist
+
+### What I built
+- Added `docs/VERSION_1_CHECKLIST.md`.
+- Documented what the pure-Python MVP currently does.
+- Listed the current input files, source files, output files, tests, commands, limitations, and possible cleanup tasks.
+
+### What I practiced
+- Creating project documentation.
+- Defining what counts as a completed MVP.
+- Separating Version 1 goals from future pandas, SQLite, OpenAI, and dashboard work.
+- Reviewing the project as a full system instead of only individual files.
+
+### What AI helped with
+- AI helped draft the checklist structure.
+- I reviewed the checklist to make sure it matches the actual project and helps me understand when Version 1 is complete.
+
+### What I understand now
+- A project milestone should have a clear definition of done.
+- Version 1 is mainly about a working pure-Python input → analysis → output pipeline.
+- Future tools should only be added after the current version is stable and understandable.
+
+### What I still want to understand better
+- Whether to add more pure-Python cleanup before moving to pandas and SQLite.
+- How to decide when a project is portfolio-ready.
+- How to describe this project honestly on a resume after each phase.
