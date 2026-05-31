@@ -21,6 +21,8 @@ from csv_writer import write_gap_csv, write_recurring_gap_csv
 # Import our recurring gap counting function from src/summarize_gaps.py.
 from summarize_gaps import count_recurring_gaps
 
+from console_summary import print_run_summary
+
 # Store important file/folder paths in variables near the top.
 # This makes them easier to find and change later.
 RESUME_PATH = Path("data/resume/resume.txt")
@@ -189,10 +191,17 @@ def main():
     # Write the recurring gaps CSV summary.
     write_recurring_gap_csv(RECURRING_GAPS_CSV_OUTPUT_PATH, recurring_gaps)
 
-    # Print simple success messages in the terminal.
-    print(f"Gap report written to {GAP_REPORT_OUTPUT_PATH}")
-    print(f"Gap CSV written to {GAP_CSV_OUTPUT_PATH}")
-    print(f"Recurring gaps CSV written to {RECURRING_GAPS_CSV_OUTPUT_PATH}")
+    # Store the output file paths in a list.
+    #
+    # This makes it easy to print all created files in the terminal summary.
+    output_paths = [
+        GAP_REPORT_OUTPUT_PATH,
+        GAP_CSV_OUTPUT_PATH,
+        RECURRING_GAPS_CSV_OUTPUT_PATH,
+    ]
+
+    # Print a clean summary of the run in the terminal.
+    print_run_summary(job_results, recurring_gaps, output_paths)
 
 
 # This checks whether this file is being run directly.

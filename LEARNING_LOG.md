@@ -393,3 +393,32 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to handle errors without showing a traceback.
 - How to test error cases automatically.
 - How command-line options could make the project more flexible.
+
+## 2026-05-31 — Added terminal run summary
+
+### What I built
+- Added `src/console_summary.py`.
+- Created a `print_run_summary(job_results, recurring_gaps, output_paths)` function.
+- Updated `src/main.py` so the terminal prints a cleaner summary after each run.
+
+### What I practiced
+- Creating another helper file.
+- Passing lists into a function.
+- Using `len()` to count analyzed jobs.
+- Using list slicing to show only the top recurring gaps.
+- Using `enumerate()` to number printed results.
+- Keeping display/printing logic separate from analysis logic.
+
+### What AI helped with
+- AI helped structure the terminal summary function and explain each part.
+- I reviewed the comments to understand how the summary uses the existing `job_results` and `recurring_gaps` data.
+
+### What I understand now
+- The analyzer can create useful output files and also show a quick terminal summary.
+- Separating terminal printing into its own helper file keeps `main.py` cleaner.
+- The same analysis results can be reused in multiple ways: markdown, CSV, recurring gap counts, and terminal summaries.
+
+### What I still want to understand better
+- How to make the command line more flexible.
+- How to let the user choose folders or output paths.
+- How to test printed terminal output.
