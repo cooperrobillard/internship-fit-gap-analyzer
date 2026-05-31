@@ -33,6 +33,53 @@ GAP_CSV_OUTPUT_PATH = Path("data/outputs/gap_summary.csv")
 RECURRING_GAPS_CSV_OUTPUT_PATH = Path("data/outputs/recurring_gaps.csv")
 
 
+# Check that the project has the required input files and folders.
+#
+# This helps catch missing files early with clearer error messages.
+def validate_inputs():
+
+    # Create a list of files that must exist for the project to run.
+    required_files = [
+        RESUME_PATH,
+        SKILLS_TAXONOMY_PATH,
+        SKILL_ALIASES_PATH,
+    ]
+
+    # Loop through each required file path.
+    for file_path in required_files:
+
+        # Check whether this file path actually exists.
+        if not file_path.exists():
+
+            # Stop the program with a clear error message.
+            raise FileNotFoundError(f"Missing required file: {file_path}")
+
+    # Check whether the jobs folder exists.
+    if not JOBS_FOLDER.exists():
+
+        # Stop the program if the jobs folder is missing.
+        raise FileNotFoundError(f"Missing jobs folder: {JOBS_FOLDER}")
+
+    # Check whether the jobs path is actually a folder.
+    if not JOBS_FOLDER.is_dir():
+
+        # Stop the program if data/jobs exists but is not a folder.
+        raise NotADirectoryError(
+            f"Expected a folder but found something else: {JOBS_FOLDER}"
+        )
+
+    # Find all .txt job files.
+    job_files = list(JOBS_FOLDER.glob("*.txt"))
+
+    # Check whether there is at least one job description file.
+    if not job_files:
+
+        # Stop the program if the jobs folder has no .txt files.
+        raise FileNotFoundError(
+            f"No .txt job description files found in: {JOBS_FOLDER}"
+        )
+
+
 # Define a helper function for reading text files.
 #
 # Input:
@@ -111,6 +158,9 @@ def analyze_jobs(job_folder, resume_skills, taxonomy, aliases):
 # This function controls the full project flow:
 # load inputs -> analyze jobs -> write outputs.
 def main():
+
+    # Check that required files and folders exist before running the analysis.
+    validate_inputs()
 
     # Load the resume text.
     resume_text = load_text_file(RESUME_PATH)

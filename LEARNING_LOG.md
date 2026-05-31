@@ -309,7 +309,7 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to add tests for the helper functions.
 - How to decide when Version 1 is complete.
 
-## 2026-05-29 — Added basic core logic tests
+## 2026-05-30 — Added basic core logic tests
 
 ### What I built
 - Added `tests/test_core_logic.py`.
@@ -337,7 +337,7 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to organize tests as the project grows.
 - How to test file outputs like markdown and CSV files.
 
-## 2026-05-29 — Refactored main workflow into helper functions
+## 2026-05-31 — Refactored main workflow into helper functions
 
 ### What I built
 - Refactored `src/main.py` into smaller helper functions.
@@ -365,3 +365,31 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How Python decides where imports come from.
 - How to test helper functions that read and write files.
 - How command-line options could make the script more flexible later.
+
+## 2026-05-31 — Added input validation
+
+### What I built
+- Added a `validate_inputs()` function in `src/main.py`.
+- The function checks that the resume file, skills taxonomy file, skill aliases file, and jobs folder exist.
+- It also checks that the jobs folder contains at least one `.txt` job description file.
+
+### What I practiced
+- Checking whether files and folders exist.
+- Using `.exists()` and `.is_dir()`.
+- Using `raise` to stop the program with a clearer error message.
+- Using `list()` with `.glob("*.txt")` to check for job files.
+- Making the program safer before it runs the full analysis.
+
+### What AI helped with
+- AI helped design the validation function and explain how each check works.
+- I reviewed the code so I understand why validation happens before loading files.
+
+### What I understand now
+- Input validation catches missing files early.
+- Clear error messages make debugging easier.
+- A project should check its assumptions before running the main workflow.
+
+### What I still want to understand better
+- How to handle errors without showing a traceback.
+- How to test error cases automatically.
+- How command-line options could make the project more flexible.
