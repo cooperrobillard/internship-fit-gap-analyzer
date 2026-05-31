@@ -679,3 +679,25 @@ The goal of this project is not just to create a finished repo. The goal is to i
 ### What I still want to understand better
 - How to remove sensitive data from old Git history if needed.
 - How to structure sample data for a public portfolio repo.
+
+## 2026-05-31 — Added limitations documentation
+
+### What I built
+- Added `docs/LIMITATIONS.md`.
+- Documented the current limits of the pure-Python keyword-matching approach.
+- Added notes about false positives, false negatives, privacy, and how to interpret the outputs.
+
+### What I practiced
+- Writing honest technical documentation.
+- Explaining what the tool can and cannot do.
+- Thinking about privacy and responsible use.
+- Separating project limitations from future improvements.
+
+### What AI helped with
+- AI helped draft the limitations document.
+- I reviewed the wording to make sure it honestly describes the current project instead of overstating what it can do.
+
+### What I understand now
+- A useful project should explain its limits clearly.
+- Keyword matching can help find patterns, but it does not fully understand job descriptions.
+- Documentation helps make the project more trustworthy and easier to explain.

@@ -295,6 +295,14 @@ Current limitations include:
 
 The output should be treated as a helpful first-pass analysis, not a final judgment.
 
+```md
+## Limitations documentation
+
+A more detailed explanation of the tool's current limitations is available in:
+
+```text
+docs/LIMITATIONS.md
+
 ## Learning purpose
 
 This project is being built to improve my understanding of:
