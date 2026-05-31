@@ -336,3 +336,32 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How pytest works.
 - How to organize tests as the project grows.
 - How to test file outputs like markdown and CSV files.
+
+## 2026-05-29 — Refactored main workflow into helper functions
+
+### What I built
+- Refactored `src/main.py` into smaller helper functions.
+- Added `load_text_file()` for reading text files.
+- Added `load_json_file()` for reading JSON files.
+- Added `analyze_jobs()` for analyzing all job description files.
+- Moved the full workflow into a `main()` function.
+
+### What I practiced
+- Organizing a Python script into smaller functions.
+- Reusing helper functions instead of repeating code.
+- Using constants for important file paths.
+- Understanding the basic purpose of `if __name__ == "__main__"`.
+
+### What AI helped with
+- AI helped reorganize the existing working script into smaller sections.
+- I reviewed the comments to understand how the workflow still follows the same input → analysis → output process.
+
+### What I understand now
+- `main.py` is easier to read when each function has one clear job.
+- The project still does the same thing, but the workflow is cleaner.
+- Helper functions make future changes easier because repeated logic is in one place.
+
+### What I still want to understand better
+- How Python decides where imports come from.
+- How to test helper functions that read and write files.
+- How command-line options could make the script more flexible later.
