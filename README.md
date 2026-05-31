@@ -1,39 +1,29 @@
 # Internship Fit & Skill-Gap Analyzer
 
-A beginner-friendly Python project that compares internship job descriptions against my resume to identify skill gaps and recurring learning priorities.
+A pure-Python tool that compares internship job descriptions against a resume, identifies skill gaps, and summarizes recurring learning priorities across multiple roles.
 
-The goal of this project is not just to make a finished tool. The goal is to build real Python and software-development understanding while creating honest portfolio evidence for internship and co-op applications.
+This project is being built as both a practical internship-search tool and a learning project to strengthen my Python, software-development, testing, documentation, and data-analysis fundamentals.
 
-## What the project does
-
-The current version:
-
-* reads my resume from a text file,
-* reads job descriptions from a folder,
-* loads a skills taxonomy from JSON,
-* uses keyword matching to find skills in the resume and job descriptions,
-* compares job skills against resume skills,
-* identifies missing skills,
-* writes a markdown gap report,
-* writes a CSV file of all missing skills,
-* writes a CSV file summarizing recurring gaps across jobs.
-
-## Current version
+## Current status
 
 This is the pure-Python MVP.
 
-It does not use:
+The project currently:
 
-* OpenAI API,
-* pandas,
-* SQLite,
-* Streamlit,
-* FastAPI,
-* Docker,
-* RAG,
-* vector databases.
+* reads a resume from a text file,
+* reads multiple job descriptions from a folder,
+* loads a skills taxonomy from JSON,
+* loads skill aliases from JSON,
+* finds skills mentioned in the resume and job descriptions,
+* compares job skills against resume skills,
+* identifies missing skills for each job,
+* counts recurring gaps across all jobs,
+* writes a markdown gap report,
+* writes CSV summary files,
+* prints a clean terminal summary,
+* includes basic tests for core logic, output writers, CLI behavior, and input validation.
 
-Those may be added later after the basic version is working and understood.
+It does not currently use pandas, SQLite, OpenAI API, Streamlit, FastAPI, Docker, or RAG. Those are possible future phases after the pure-Python version is stable and understandable.
 
 ## Project structure
 
@@ -53,31 +43,49 @@ internship-fit-gap-analyzer/
     skills_taxonomy.json
   src/
     compare_resume.py
+    console_summary.py
     csv_writer.py
     extract_keywords.py
     main.py
     report_writer.py
     summarize_gaps.py
   tests/
+    test_cli.py
+    test_core_logic.py
+    test_output_writers.py
+    test_validation.py
   LEARNING_LOG.md
   README.md
+  run_tests.py
+```
+
+## How it works
+
+At a high level, the project follows this flow:
+
+```text
+resume.txt + job descriptions + skills taxonomy + skill aliases
+→ find skills in resume
+→ find skills in each job description
+→ compare job skills against resume skills
+→ identify gaps
+→ count recurring gaps
+→ write markdown and CSV outputs
 ```
 
 ## Input files
 
 ### `data/resume/resume.txt`
 
-This file contains the resume text that the analyzer compares against job descriptions.
+This file contains the resume text used as the comparison baseline.
 
 ### `data/jobs/`
 
-This folder contains job descriptions as `.txt` files.
-
-Each `.txt` file is treated as one job posting.
+This folder contains job descriptions as `.txt` files. Each file is treated as one job posting.
 
 ### `data/skills_taxonomy.json`
 
-This file defines which skills the analyzer looks for.
+This file defines the official skills the analyzer looks for.
 
 Example:
 
@@ -90,7 +98,7 @@ Example:
 
 ### `data/skill_aliases.json`
 
-This file defines alternate phrases for certain skills.
+This file defines alternate phrases for official skill names.
 
 Example:
 
@@ -101,37 +109,33 @@ Example:
 }
 ```
 
-The official skill name is what appears in the report. The aliases are extra phrases the program searches for.
+The official skill name is what appears in the output. The aliases are extra phrases the program searches for.
 
 ## Source files
 
 ### `src/main.py`
 
-Controls the full workflow.
+Controls the full program workflow.
 
-It loads the resume, taxonomy, aliases, and job descriptions, then calls the helper functions that perform the analysis and write the outputs.
+It reads command-line options, validates inputs, loads files, analyzes jobs, writes outputs, and prints the terminal summary.
 
 ### `src/extract_keywords.py`
 
-Finds skills from the taxonomy that appear in a block of text.
+Finds taxonomy skills in a block of text.
 
-This is used for both the resume and job descriptions.
+It uses skill aliases and basic pattern matching to reduce some false matches.
 
 ### `src/compare_resume.py`
 
-Compares skills found in a job description against skills found in the resume.
-
-It returns the skills that appear in the job description but not in the resume.
+Compares job skills against resume skills and returns the missing skills.
 
 ### `src/summarize_gaps.py`
 
 Counts how often each missing skill appears across all analyzed jobs.
 
-This helps identify recurring skill gaps.
-
 ### `src/report_writer.py`
 
-Writes the markdown report at:
+Writes the markdown report:
 
 ```text
 data/outputs/gap_report.md
@@ -146,6 +150,10 @@ data/outputs/gap_summary.csv
 data/outputs/recurring_gaps.csv
 ```
 
+### `src/console_summary.py`
+
+Prints a clean terminal summary after the analysis runs.
+
 ## How to run
 
 From the project root folder, run:
@@ -154,42 +162,55 @@ From the project root folder, run:
 python3 src/main.py
 ```
 
-Expected terminal output:
+Expected terminal output will look similar to:
 
 ```text
-Gap report written to data/outputs/gap_report.md
-Gap CSV written to data/outputs/gap_summary.csv
-Recurring gaps CSV written to data/outputs/recurring_gaps.csv
+Analysis complete.
+
+Jobs analyzed: 2
+
+Top recurring gaps:
+1. sql (data): 2 job(s)
+2. langchain (ai_ml): 2 job(s)
+
+Output files:
+- data/outputs/gap_report.md
+- data/outputs/gap_summary.csv
+- data/outputs/recurring_gaps.csv
 ```
-## How to run tests
 
-From the project root folder, run:
+## Command-line options
 
-```bash
-python3 run_tests.py
+The project supports optional command-line arguments.
 
-This runs the current basic test files:
-
-tests/test_core_logic.py
-tests/test_output_writers.py
-
-This helps anyone viewing the repo know how to check the project.
-
----
-
-# What to check
-
-After running:
+Show help:
 
 ```bash
-python3 run_tests.py
+python3 src/main.py --help
+```
 
-check that:
+Show only the top 3 recurring gaps in the terminal:
 
-both test files run,
-the final message says All tests passed.,
-no new unwanted files appear,
-python3 src/main.py still works.
+```bash
+python3 src/main.py --top-gaps 3
+```
+
+Use a custom output folder:
+
+```bash
+python3 src/main.py --outputs data/outputs_test
+```
+
+Available options include:
+
+```text
+--resume
+--jobs
+--taxonomy
+--aliases
+--outputs
+--top-gaps
+```
 
 ## Output files
 
@@ -197,10 +218,10 @@ python3 src/main.py still works.
 
 A human-readable markdown report showing:
 
+* most common skill gaps,
 * skills found in the resume,
-* skills found in each job description,
-* skill gaps for each job,
-* most common recurring skill gaps.
+* skills found in each job,
+* gaps for each job.
 
 ### `data/outputs/gap_summary.csv`
 
@@ -209,34 +230,68 @@ A detailed CSV file with one row per missing skill per job.
 Columns:
 
 ```text
-job_name, category, gap_skill
+job_name,category,gap_skill
 ```
 
 ### `data/outputs/recurring_gaps.csv`
 
-A summary CSV file showing which missing skills appear most often across jobs.
+A summary CSV file showing which missing skills appear most often across job descriptions.
 
 Columns:
 
 ```text
-gap_skill, category, count
+gap_skill,category,count
+```
+
+## How to run tests
+
+Run all tests:
+
+```bash
+python3 run_tests.py
+```
+
+This runs:
+
+```text
+tests/test_core_logic.py
+tests/test_output_writers.py
+tests/test_cli.py
+tests/test_validation.py
+```
+
+The tests currently check:
+
+* skill matching,
+* gap comparison,
+* recurring gap counting,
+* markdown and CSV output writing,
+* command-line behavior,
+* input validation.
+
+Expected final output:
+
+```text
+All tests passed.
 ```
 
 ## Current limitations
 
 This version uses rule-based keyword matching.
 
-That means it can miss skills if a job uses wording that is not in the taxonomy or alias file.
+That means it can miss skills if a job description uses wording that is not included in the taxonomy or alias file.
 
-It can also make imperfect matches because it does not truly understand the meaning of the text.
+It can also make imperfect matches because it does not truly understand meaning or context.
 
-For example:
+Current limitations include:
 
-* it may miss a skill if the wording is too different,
-* it does not distinguish required skills from preferred skills yet,
-* it does not judge skill strength,
-* it does not understand whether resume evidence is strong or weak,
-* it does not use AI extraction yet.
+* does not distinguish required skills from preferred skills,
+* does not evaluate how strong resume evidence is,
+* does not understand synonyms unless they are manually added as aliases,
+* does not use AI extraction yet,
+* does not use pandas or SQL yet,
+* does not store historical runs in a database,
+* does not have a dashboard yet.
 
 The output should be treated as a helpful first-pass analysis, not a final judgment.
 
@@ -244,7 +299,7 @@ The output should be treated as a helpful first-pass analysis, not a final judgm
 
 This project is being built to improve my understanding of:
 
-* Python basics,
+* Python fundamentals,
 * file paths,
 * reading and writing files,
 * JSON,
@@ -253,26 +308,28 @@ This project is being built to improve my understanding of:
 * functions,
 * loops,
 * imports,
+* command-line arguments,
 * CSV writing,
-* basic text matching,
+* simple testing,
 * project organization,
 * documentation,
 * Git/GitHub workflow.
 
-AI tools are helping me write and understand the code, but I am using the project to learn how the pieces fit together and to build more independent software-development fluency.
+AI tools are helping me build and understand the code, but I am using the project to learn how the system works piece by piece and to develop more independent software-development fluency.
 
 ## Planned next steps
 
 Possible next improvements:
 
-* clean up the terminal output,
-* add simple tests,
-* improve skill matching,
-* distinguish required vs. preferred skills,
+* decide when the pure-Python MVP is complete,
+* clean up sample data,
+* add more realistic job descriptions,
+* improve matching accuracy,
+* convert tests to pytest,
 * add pandas summaries,
-* store job results in SQLite,
+* add SQLite storage,
 * add OpenAI API structured extraction,
-* build a Streamlit dashboard,
-* add responsible AI and limitations documentation.
+* add responsible AI / limitations documentation,
+* build a Streamlit dashboard.
 
-The project will only move to these later phases after the current pure-Python MVP is working and understandable.
+The project will only move to later phases after the current pure-Python version is stable and understandable.
