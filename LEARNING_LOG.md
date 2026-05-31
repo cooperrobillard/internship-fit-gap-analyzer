@@ -453,3 +453,37 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How to test command-line behavior.
 - How to decide which settings should be command-line options.
 - How real Python packages make command-line tools easier to install and run.
+
+## 2026-05-31 — Added tests for output writer functions
+
+### What I built
+
+* Added `tests/test_output_writers.py`.
+* Created tests for the markdown report writer and CSV writer functions.
+* Tested that the project can create markdown and CSV files with expected content.
+
+### What I practiced
+
+* Testing file-writing functions.
+* Using `TemporaryDirectory()` to create temporary test folders.
+* Checking whether a file exists with `.exists()`.
+* Reading generated markdown text back into Python.
+* Reading generated CSV files with `csv.DictReader`.
+* Using `assert` statements to check expected output.
+
+### What AI helped with
+
+* AI helped write the first version of the output writer tests.
+* I reviewed the fake test data and comments to understand what each test is checking.
+
+### What I understand now
+
+* Tests can check not only logic, but also whether files are created correctly.
+* Temporary folders let me test output files without changing my real project outputs.
+* Reading generated files back into Python helps confirm that the writer functions worked.
+
+### What I still want to understand better
+
+* How pytest would simplify running multiple test files.
+* How to test command-line arguments.
+* How to organize tests as the project grows.
