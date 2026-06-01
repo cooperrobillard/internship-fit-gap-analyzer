@@ -880,3 +880,25 @@ Tested with:
 - `python3 tests/test_database.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added recurring gap database query
+
+Added a `query_recurring_gaps()` function to `src/database.py`.
+
+What I added:
+- A function that reads recurring skill gaps from the SQLite `skill_gaps` table.
+- A test that inserts multiple skill gaps and checks that SQL counts them correctly.
+- A query that returns results in the same general shape as the existing pure-Python recurring gap summary.
+
+Key concepts:
+- `SELECT` chooses the data to return from a database table.
+- `WHERE run_id = ?` filters results to one analysis run.
+- `GROUP BY skill, category` combines repeated skill-gap rows.
+- `COUNT(*)` counts how many rows are in each group.
+- `ORDER BY COUNT(*) DESC` sorts the most common gaps first.
+- SQL can summarize data that was previously stored row by row.
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
