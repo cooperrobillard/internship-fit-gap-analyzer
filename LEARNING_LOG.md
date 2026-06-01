@@ -925,3 +925,26 @@ Tested with:
 - `python3 tests/test_database.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added full analysis database save helper
+
+Added a `save_analysis_results()` function to `src/database.py`.
+
+What I added:
+- A helper that saves one full analysis result into SQLite.
+- The helper inserts one analysis run.
+- It inserts one job result row for each analyzed job.
+- It inserts one skill gap row for each missing skill.
+- A database test confirms the saved rows can be queried correctly.
+
+Key concepts:
+- A helper function can coordinate smaller helper functions.
+- `len(job_results)` gives the number of jobs analyzed.
+- Nested loops can turn job result dictionaries into database rows.
+- `run_id` connects all saved job results and skill gaps back to one analysis run.
+- This creates the bridge between the existing Python analysis structure and the SQLite database structure.
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
