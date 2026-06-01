@@ -9,6 +9,7 @@ sys.path.append(str(src_folder))
 
 from database import initialize_database, insert_analysis_run, insert_job_result
 from database import insert_skill_gap
+from database import query_recurring_gaps
 
 
 def table_exists(connection, table_name):
@@ -218,11 +219,78 @@ def test_insert_skill_gap_adds_row_and_returns_id():
         connection.close()
 
 
+def test_query_recurring_gaps_returns_sorted_counts():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=2,
+        )
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_one.txt",
+            matched_skills_count=2,
+            missing_skills_count=1,
+        )
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_two.txt",
+            matched_skills_count=1,
+            missing_skills_count=2,
+        )
+
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_one.txt",
+            skill="sql",
+            category="data",
+        )
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_two.txt",
+            skill="sql",
+            category="data",
+        )
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_two.txt",
+            skill="fastapi",
+            category="backend",
+        )
+
+        recurring_gaps = query_recurring_gaps(connection, run_id)
+
+        assert recurring_gaps[0]["gap_skill"] == "sql"
+        assert recurring_gaps[0]["count"] == 2
+        assert recurring_gaps[0]["category"] == "data"
+
+        assert recurring_gaps[1]["gap_skill"] == "fastapi"
+        assert recurring_gaps[1]["count"] == 1
+        assert recurring_gaps[1]["category"] == "backend"
+
+        connection.close()
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
     test_insert_analysis_run_adds_row_and_returns_id()
     test_insert_job_result_adds_row_and_returns_id()
     test_insert_skill_gap_adds_row_and_returns_id()
+    test_query_recurring_gaps_returns_sorted_counts()
 
     print("All database tests passed.")

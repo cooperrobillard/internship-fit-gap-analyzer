@@ -200,3 +200,42 @@ def insert_skill_gap(
     connection.commit()
 
     return cursor.lastrowid
+
+
+def query_recurring_gaps(connection, run_id):
+    """
+    Query recurring skill gaps for one analysis run.
+
+    The result is sorted by:
+    - highest count first
+    - then skill name in alphabetical order
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            skill,
+            category,
+            COUNT(*)
+        FROM skill_gaps
+        WHERE run_id = ?
+        GROUP BY skill, category
+        ORDER BY COUNT(*) DESC, skill ASC;
+        """,
+        (run_id,),
+    )
+
+    rows = cursor.fetchall()
+
+    recurring_gaps = []
+    for row in rows:
+        recurring_gaps.append(
+            {
+                "gap_skill": row[0],
+                "category": row[1],
+                "count": row[2],
+            }
+        )
+
+    return recurring_gaps
