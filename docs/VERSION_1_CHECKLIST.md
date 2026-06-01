@@ -22,11 +22,17 @@ Version 1 should not depend on pandas, SQLite, OpenAI API, Streamlit, FastAPI, D
 
 ## Current input files
 
-* [x] `data/resume/resume.txt`
-* [x] `data/jobs/sample_job_1.txt`
-* [x] `data/jobs/sample_job_2.txt`
+Public sample inputs used by default:
+
+* [x] `data/resume/sample_resume.txt`
+* [x] `data/sample_jobs/sample_ai_engineering_internship.txt`
 * [x] `data/skills_taxonomy.json`
 * [x] `data/skill_aliases.json`
+
+Private local inputs supported through command-line options:
+
+* [x] `data/resume/resume.txt`
+* [x] `data/jobs/`
 
 ## Current source files
 
@@ -108,18 +114,18 @@ python3 run_tests.py
 
 ## Before moving to Version 2
 
-Before adding pandas or SQLite, I should confirm:
+Before adding pandas or SQLite, I confirmed:
 
-* [ ] `python3 src/main.py` works.
-* [ ] `python3 src/main.py --help` works.
-* [ ] `python3 src/main.py --top-gaps 3` works.
-* [ ] `python3 run_tests.py` passes.
-* [ ] `README.md` matches the current project.
-* [ ] `LEARNING_LOG.md` is up to date.
-* [ ] Output files are readable and useful.
-* [ ] The sample job descriptions are realistic enough for testing.
-* [ ] I can explain what each source file does.
-* [ ] I can explain the overall input → analysis → output flow.
+* [x] `python3 src/main.py` works.
+* [x] `python3 src/main.py --help` works.
+* [x] `python3 src/main.py --top-gaps 3` works.
+* [x] `python3 run_tests.py` passes.
+* [x] `README.md` matches the current project.
+* [x] `LEARNING_LOG.md` is up to date.
+* [x] Output files are readable and useful.
+* [x] The sample job descriptions are realistic enough for testing.
+* [x] I can explain what each source file does.
+* [x] I can explain the overall input → analysis → output flow.
 
 ## Possible final Version 1 cleanup tasks
 
@@ -145,3 +151,11 @@ Version 2 should probably focus on:
 * improving the project’s data-analysis evidence.
 
 Do not start Version 2 until Version 1 is stable, tested, documented, and understandable.
+
+## Version 1 status
+
+Version 1 is complete enough to serve as a working pure-Python MVP.
+
+The project can be run from the command line, uses safe sample inputs by default, supports private local inputs through command-line options, generates markdown and CSV outputs, includes tests, and documents its current limitations.
+
+The next major phase should be Version 2: adding pandas and SQLite in small steps.

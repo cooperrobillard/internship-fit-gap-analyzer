@@ -724,3 +724,53 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - A public repo should run with safe sample files by default.
 - Private resume and job files can still be used locally through command-line options.
 - `.gitignore` helps prevent private inputs from being accidentally committed.
+
+## 2026-05-31 — Stopped tracking Python cache files
+
+### What I built
+- Removed Python cache files from Git tracking.
+- Confirmed that `.gitignore` ignores `__pycache__/` and `.pyc` files.
+
+### What I practiced
+- Using `git rm --cached` to stop tracking generated files.
+- Understanding that some files are created by Python automatically and should not be committed.
+- Keeping the repository cleaner for public use.
+
+### What AI helped with
+- AI helped identify that `src/__pycache__/main.cpython-313.pyc` should not be tracked.
+
+### What I understand now
+- `.gitignore` prevents new ignored files from being tracked.
+- If a file was already tracked, I need `git rm --cached` to remove it from Git tracking.
+- Python cache files are not source code and should stay out of the repo.
+
+## 2026-05-31 — Completed Version 1 checkpoint
+
+### What I built
+- Completed a final checkpoint for the pure-Python MVP.
+- Confirmed that the analyzer runs with sample data by default.
+- Confirmed that private local inputs can still be used with command-line options.
+- Confirmed that the test runner passes.
+- Updated the Version 1 checklist to mark the MVP as complete enough to move toward Version 2.
+
+### What I practiced
+- Running a full project smoke test.
+- Checking command-line behavior.
+- Checking tests before moving to a new phase.
+- Reviewing project documentation against the actual code.
+- Thinking about when a project version is stable enough to build on.
+
+### What AI helped with
+- AI helped define the final Version 1 checklist and what commands to run.
+- I used the checklist to confirm the project is working instead of blindly adding more features.
+
+### What I understand now
+- Version 1 is a working pure-Python command-line analyzer.
+- It has a clear input → analysis → output flow.
+- It is now safer for GitHub because it uses sample data by default.
+- The next phase should add pandas and SQLite carefully, not all at once.
+
+### What I still want to understand better
+- How pandas will improve recurring-gap summaries.
+- How SQLite will store job and gap history.
+- How to structure Version 2 without making the project too complicated.
