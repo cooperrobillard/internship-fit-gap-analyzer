@@ -121,3 +121,45 @@ def insert_analysis_run(
     connection.commit()
 
     return cursor.lastrowid
+
+
+def insert_job_result(
+    connection,
+    run_id,
+    job_filename,
+    matched_skills_count,
+    missing_skills_count,
+):
+    """
+    Insert one job result into the job_results table.
+
+    This records:
+    - which analysis run the job belongs to,
+    - which job file was analyzed,
+    - how many skills matched and how many were missing.
+
+    The function returns the ID of the new row.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO job_results (
+            run_id,
+            job_filename,
+            matched_skills_count,
+            missing_skills_count
+        )
+        VALUES (?, ?, ?, ?);
+        """,
+        (
+            run_id,
+            str(job_filename),
+            matched_skills_count,
+            missing_skills_count,
+        ),
+    )
+
+    connection.commit()
+
+    return cursor.lastrowid
