@@ -163,3 +163,40 @@ def insert_job_result(
     connection.commit()
 
     return cursor.lastrowid
+
+
+def insert_skill_gap(
+    connection,
+    run_id,
+    job_filename,
+    skill,
+    category,
+):
+    """
+    Insert one skill gap into the skill_gaps table.
+
+    The function returns the ID of the new row.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO skill_gaps (
+            run_id,
+            job_filename,
+            skill,
+            category
+        )
+        VALUES (?, ?, ?, ?);
+        """,
+        (
+            run_id,
+            str(job_filename),
+            str(skill),
+            str(category),
+        ),
+    )
+
+    connection.commit()
+
+    return cursor.lastrowid
