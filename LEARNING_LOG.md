@@ -790,3 +790,22 @@ Key takeaways:
 Tested with:
 - `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
 - `python3 run_tests.py`
+
+## Version 2 planning
+
+Created a `VERSION2_PLAN.md` file to outline the next phase of the project.
+
+Key takeaways:
+- Version 1 is now a stable pure-Python MVP.
+- Version 2 will focus on SQLite and pandas.
+- SQLite will store analysis runs, job results, and skill gaps.
+- pandas will later help summarize and export cleaner analysis tables.
+- Planning the database structure before coding helps avoid overbuilding or adding confusing features too early.
+
+Important database idea:
+- One analysis run can include many job results.
+- Each job result can include many skill gaps.
+
+Tested with:
+- `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
+- `python3 run_tests.py`
