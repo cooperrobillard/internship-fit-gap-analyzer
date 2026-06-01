@@ -948,3 +948,25 @@ Tested with:
 - `python3 tests/test_database.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added optional database CLI output
+
+Added an optional `--database` command-line argument to save analyzer results to SQLite.
+
+What I added:
+- A `--database` CLI option in `src/main.py`.
+- Logic that saves analysis results to SQLite only when a database path is provided.
+- A CLI test that confirms the analyzer can create normal outputs and a SQLite database file.
+- The default behavior remains unchanged when `--database` is not used.
+
+Key concepts:
+- Optional CLI arguments can add features without changing default behavior.
+- `None` can be used to represent that the user did not provide an optional value.
+- A `Path` object can represent the database file location.
+- The main analyzer can now reuse the database helper functions built earlier.
+- This connects the existing analysis workflow to SQLite while keeping database output optional.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db`
