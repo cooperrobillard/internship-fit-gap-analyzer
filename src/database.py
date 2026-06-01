@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime
 import sqlite3
 
 
@@ -71,3 +72,52 @@ def initialize_database(database_path):
     connection = connect_to_database(database_path)
     create_tables(connection)
     return connection
+
+
+def insert_analysis_run(
+    connection,
+    resume_path,
+    jobs_path,
+    taxonomy_path,
+    aliases_path,
+    total_jobs,
+):
+    """
+    Insert one analyzer run into the analysis_runs table.
+
+    This records:
+    - when the analyzer ran,
+    - which input paths were used,
+    - how many jobs were analyzed.
+
+    The function returns the ID of the new row.
+    """
+    cursor = connection.cursor()
+
+    run_timestamp = datetime.now().isoformat(timespec="seconds")
+
+    cursor.execute(
+        """
+        INSERT INTO analysis_runs (
+            run_timestamp,
+            resume_path,
+            jobs_path,
+            taxonomy_path,
+            aliases_path,
+            total_jobs
+        )
+        VALUES (?, ?, ?, ?, ?, ?);
+        """,
+        (
+            run_timestamp,
+            str(resume_path),
+            str(jobs_path),
+            str(taxonomy_path),
+            str(aliases_path),
+            total_jobs,
+        ),
+    )
+
+    connection.commit()
+
+    return cursor.lastrowid
