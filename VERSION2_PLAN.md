@@ -111,3 +111,71 @@ skill_gaps
   job_filename: sample_job_1.txt
   skill: sql
   category: data
+Version 2 development steps
+
+The planned steps are:
+
+Create a small database module.
+Learn how to connect to SQLite from Python.
+Create the first SQLite database file.
+Create the analysis_runs, job_results, and skill_gaps tables.
+Insert one analysis run into the database.
+Insert job-level results into the database.
+Insert missing skills into the database.
+Query recurring gaps using SQL.
+Add tests for database behavior.
+Add pandas summaries after the SQLite workflow works.
+What Version 2 should not do yet
+
+Version 2 should not add:
+
+OpenAI API
+Streamlit dashboard
+FastAPI backend
+Docker
+RAG
+authentication
+cloud deployment
+complex natural language understanding
+
+Those may be useful later, but they are not needed until the data storage and analysis foundation is stronger.
+
+Success criteria
+
+Version 2 will be successful when the project can:
+
+run the existing analysis,
+save results to SQLite,
+query recurring gaps from SQLite,
+summarize results with pandas,
+keep all existing Version 1 behavior working,
+pass all tests,
+remain understandable to a beginner Python learner.
+
+---
+
+# Explanation
+
+This is still a **real development step**, even though it is not Python code yet.
+
+Before adding a database, you need to understand what information belongs in the database.
+
+Important concepts:
+
+| Concept | Meaning |
+|---|---|
+| Database | A structured place to store data |
+| SQLite | A simple database stored in a local file |
+| Table | A spreadsheet-like structure inside a database |
+| Row | One record in a table |
+| Column | One field/category of information in a table |
+| Primary key | A unique ID for a row |
+| Relationship | A connection between rows in different tables |
+| `run_id` | A value that connects job results and skill gaps back to one analysis run |
+
+The most important idea is this:
+
+```text
+One run -> many jobs -> many skill gaps
+
+That is the structure Version 2 will build around.
