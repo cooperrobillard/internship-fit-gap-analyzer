@@ -859,3 +859,24 @@ Tested with:
 - `python3 tests/test_database.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added skill gap database insert
+
+Added an `insert_skill_gap()` function to `src/database.py`.
+
+What I added:
+- A function that inserts one row into the `skill_gaps` table.
+- A test that confirms the row is added correctly.
+- A check that the function returns the new skill gap ID.
+
+Key concepts:
+- The `skill_gaps` table stores one row for each missing skill found in a job.
+- `run_id` connects each skill gap back to the analysis run that produced it.
+- `job_filename` records which job description produced the gap.
+- `INSERT INTO` adds a row to a database table.
+- `cursor.lastrowid` returns the ID of the inserted row.
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
