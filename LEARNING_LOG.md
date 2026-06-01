@@ -774,3 +774,19 @@ The goal of this project is not just to create a finished repo. The goal is to i
 - How pandas will improve recurring-gap summaries.
 - How SQLite will store job and gap history.
 - How to structure Version 2 without making the project too complicated.
+
+## Version 1 limitations documentation
+
+Added a `LIMITATIONS.md` file to clearly explain what the current pure-Python MVP can and cannot do.
+
+Key takeaways:
+- The project currently uses rule-based keyword and alias matching.
+- It does not truly understand job descriptions yet.
+- It does not distinguish required vs. preferred skills.
+- It does not evaluate the strength of resume evidence.
+- These limitations are acceptable for Version 1 because the core workflow is working and tested.
+- Documenting limitations helps keep the project honest and sets up a clearer path for Version 2.
+
+Tested with:
+- `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
+- `python3 run_tests.py`
