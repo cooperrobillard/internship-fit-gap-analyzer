@@ -366,6 +366,12 @@ This project is being built to improve my understanding of:
 
 AI tools are helping me build and understand the code, but I am using the project to learn how the system works piece by piece and to develop more independent software-development fluency.
 
+## Limitations
+
+This is a rule-based Version 1 MVP. It uses keyword and alias matching to identify skills, so it does not fully understand job descriptions or evaluate the strength of resume evidence.
+
+For a more detailed explanation, see [LIMITATIONS.md](LIMITATIONS.md).
+
 ## Planned next steps
 
 Possible next improvements:
