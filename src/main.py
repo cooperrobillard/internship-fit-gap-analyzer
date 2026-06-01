@@ -27,6 +27,9 @@ from summarize_gaps import count_recurring_gaps
 # Import our terminal summary function from src/console_summary.py.
 from console_summary import print_run_summary
 
+# Import database helpers for optional SQLite saving.
+from database import initialize_database, save_analysis_results
+
 # Default file and folder paths.
 #
 # These are used when the user does not provide custom paths in the terminal.
@@ -91,6 +94,13 @@ def parse_args():
         type=int,
         default=5,
         help="Number of top recurring gaps to show in the terminal summary.",
+    )
+
+    # Optional database file path.
+    parser.add_argument(
+        "--database",
+        default=None,
+        help="Optional path to a SQLite database file where analysis results should be saved.",
     )
 
     # Return the user's command-line choices.
@@ -234,6 +244,7 @@ def main():
     taxonomy_path = Path(args.taxonomy)
     aliases_path = Path(args.aliases)
     outputs_folder = Path(args.outputs)
+    database_path = Path(args.database) if args.database is not None else None
 
     # Build output file paths using the selected outputs folder.
     gap_report_output_path = outputs_folder / "gap_report.md"
@@ -276,6 +287,24 @@ def main():
         gap_csv_output_path,
         recurring_gaps_csv_output_path,
     ]
+
+    # Save results to SQLite only if the user passed --database.
+    if database_path is not None:
+        connection = initialize_database(database_path)
+
+        try:
+            save_analysis_results(
+                connection=connection,
+                resume_path=resume_path,
+                jobs_path=jobs_folder,
+                taxonomy_path=taxonomy_path,
+                aliases_path=aliases_path,
+                job_results=job_results,
+            )
+        finally:
+            connection.close()
+
+        output_paths.append(database_path)
 
     # Print a clean summary of the run in the terminal.
     print_run_summary(

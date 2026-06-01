@@ -90,6 +90,43 @@ def test_main_runs_with_custom_outputs_folder():
         assert "## Job Analyses" in report_text
 
 
+def test_main_runs_with_database_option():
+
+    # Create temporary folders and files for this test.
+    with TemporaryDirectory() as temp_folder:
+        output_folder = Path(temp_folder) / "outputs"
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        # Run the main program with a custom outputs folder and database path.
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--outputs",
+                str(output_folder),
+                "--database",
+                str(database_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # Check that the command worked.
+        assert result.returncode == 0, result.stderr
+
+        # Check that the database file was created.
+        assert database_path.exists()
+
+        # Check that normal output files still exist.
+        gap_report_path = output_folder / "gap_report.md"
+        gap_summary_path = output_folder / "gap_summary.csv"
+        recurring_gaps_path = output_folder / "recurring_gaps.csv"
+
+        assert gap_report_path.exists()
+        assert gap_summary_path.exists()
+        assert recurring_gaps_path.exists()
+
+
 # This block runs the tests when we type:
 # python3 tests/test_cli.py
 if __name__ == "__main__":
@@ -97,6 +134,7 @@ if __name__ == "__main__":
     # Run each test function.
     test_help_command_runs()
     test_main_runs_with_custom_outputs_folder()
+    test_main_runs_with_database_option()
 
     # If no assert statement failed, print this success message.
     print("All CLI tests passed.")
