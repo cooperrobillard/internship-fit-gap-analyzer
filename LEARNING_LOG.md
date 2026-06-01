@@ -838,3 +838,24 @@ Tested with:
 - `python3 tests/test_database.py`
 - `python3 run_tests.py`
 - `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
+
+## Added analysis run database insert
+
+Added an `insert_analysis_run()` function to `src/database.py`.
+
+What I added:
+- A function that inserts one row into the `analysis_runs` table.
+- A test that confirms the row is added correctly.
+- A check that the function returns the new run ID.
+
+Key concepts:
+- `INSERT INTO` adds a new row to a database table.
+- `VALUES (?, ?, ?)` uses placeholders so Python can safely pass values into SQL.
+- `connection.commit()` saves the inserted row.
+- `cursor.lastrowid` returns the ID of the row that was just inserted.
+- The run ID will later connect job results and skill gaps back to one analyzer run.
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
