@@ -239,3 +239,58 @@ def query_recurring_gaps(connection, run_id):
         )
 
     return recurring_gaps
+
+
+def save_analysis_results(
+    connection,
+    resume_path,
+    jobs_path,
+    taxonomy_path,
+    aliases_path,
+    job_results,
+):
+    """
+    Save one full analysis run and its related results.
+
+    This adds:
+    - one row in analysis_runs
+    - one row per job in job_results
+    - one row per missing skill in skill_gaps
+    """
+    run_id = insert_analysis_run(
+        connection=connection,
+        resume_path=resume_path,
+        jobs_path=jobs_path,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        total_jobs=len(job_results),
+    )
+
+    for job_result in job_results:
+        matched_skills_count = 0
+        for skills_in_category in job_result["job_skills"].values():
+            matched_skills_count += len(skills_in_category)
+
+        missing_skills_count = 0
+        for gaps_in_category in job_result["skill_gaps"].values():
+            missing_skills_count += len(gaps_in_category)
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename=job_result["job_name"],
+            matched_skills_count=matched_skills_count,
+            missing_skills_count=missing_skills_count,
+        )
+
+        for category, missing_skills in job_result["skill_gaps"].items():
+            for skill in missing_skills:
+                insert_skill_gap(
+                    connection=connection,
+                    run_id=run_id,
+                    job_filename=job_result["job_name"],
+                    skill=skill,
+                    category=category,
+                )
+
+    return run_id

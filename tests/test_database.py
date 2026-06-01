@@ -10,6 +10,7 @@ sys.path.append(str(src_folder))
 from database import initialize_database, insert_analysis_run, insert_job_result
 from database import insert_skill_gap
 from database import query_recurring_gaps
+from database import save_analysis_results
 
 
 def table_exists(connection, table_name):
@@ -285,6 +286,75 @@ def test_query_recurring_gaps_returns_sorted_counts():
         connection.close()
 
 
+def test_save_analysis_results_inserts_related_rows():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+
+        connection = initialize_database(database_path)
+
+        fake_job_results = [
+            {
+                "job_name": "job_one.txt",
+                "job_skills": {
+                    "programming": ["python"],
+                    "data": ["sql", "pandas"],
+                },
+                "skill_gaps": {
+                    "programming": [],
+                    "data": ["sql"],
+                },
+            },
+            {
+                "job_name": "job_two.txt",
+                "job_skills": {
+                    "programming": ["python", "fastapi"],
+                    "data": ["sql"],
+                },
+                "skill_gaps": {
+                    "programming": ["fastapi"],
+                    "data": ["sql"],
+                },
+            },
+        ]
+
+        run_id = save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=fake_job_results,
+        )
+
+        assert run_id == 1
+
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM analysis_runs;")
+        analysis_runs_count = cursor.fetchone()[0]
+        assert analysis_runs_count == 1
+
+        cursor.execute("SELECT COUNT(*) FROM job_results;")
+        job_results_count = cursor.fetchone()[0]
+        assert job_results_count == 2
+
+        cursor.execute("SELECT COUNT(*) FROM skill_gaps;")
+        skill_gaps_count = cursor.fetchone()[0]
+        assert skill_gaps_count == 3
+
+        recurring_gaps = query_recurring_gaps(connection, run_id)
+
+        assert recurring_gaps[0]["gap_skill"] == "sql"
+        assert recurring_gaps[0]["count"] == 2
+        assert recurring_gaps[0]["category"] == "data"
+
+        assert recurring_gaps[1]["gap_skill"] == "fastapi"
+        assert recurring_gaps[1]["count"] == 1
+        assert recurring_gaps[1]["category"] == "programming"
+
+        connection.close()
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -292,5 +362,6 @@ if __name__ == "__main__":
     test_insert_job_result_adds_row_and_returns_id()
     test_insert_skill_gap_adds_row_and_returns_id()
     test_query_recurring_gaps_returns_sorted_counts()
+    test_save_analysis_results_inserts_related_rows()
 
     print("All database tests passed.")
