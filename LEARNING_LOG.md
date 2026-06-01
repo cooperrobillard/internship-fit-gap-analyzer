@@ -809,3 +809,32 @@ Important database idea:
 Tested with:
 - `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
 - `python3 run_tests.py`
+
+## Added initial SQLite database setup
+
+Added a new `src/database.py` module for Version 2.
+
+What I added:
+- A function to connect to a SQLite database.
+- A function to create the first database tables.
+- A function to initialize the database.
+- A new database test file.
+
+Key concepts:
+- SQLite is a lightweight database stored in a local file.
+- Python can use SQLite through the built-in `sqlite3` module.
+- A database connection lets Python communicate with the database.
+- A cursor runs SQL commands.
+- `CREATE TABLE IF NOT EXISTS` creates a table only if it does not already exist.
+- `commit()` saves database changes.
+- `close()` closes the database connection.
+
+Tables created:
+- `analysis_runs`
+- `job_results`
+- `skill_gaps`
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs`
