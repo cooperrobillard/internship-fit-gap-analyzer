@@ -1126,3 +1126,27 @@ Tested with:
 - `python3 run_tests.py`
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+
+## Added database inspection script
+
+Added a standalone database inspection script for checking SQLite output from the terminal.
+
+What I added:
+- A `scripts/inspect_database.py` script.
+- A test file for the inspection script.
+- The script prints database row counts, the latest run ID, recurring gaps, and jobs with the most gaps.
+- Updated the test runner so the inspection script test runs with the full suite.
+
+Key concepts:
+- A standalone script can help inspect project outputs without changing the main analyzer.
+- `subprocess.run()` can test a command-line script.
+- SQL row counts help verify that data was saved correctly.
+- Existing database query helpers can be reused in utility scripts.
+- Keeping this separate from `main.py` avoids changing the main CLI behavior.
+
+Tested with:
+- `python3 tests/test_inspect_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
