@@ -6,7 +6,16 @@ This project is being built as both a practical internship-search tool and a lea
 
 ## Current status
 
-This is the pure-Python MVP.
+Version 2 now includes optional SQLite and pandas features.
+
+The project can:
+
+* run the original pure-Python analysis,
+* generate markdown and CSV outputs,
+* optionally save analysis results to a SQLite database,
+* optionally generate pandas-based summary CSV files.
+
+It still does not use OpenAI API, Streamlit, FastAPI, Docker, or RAG.
 
 The project currently:
 
@@ -21,10 +30,7 @@ The project currently:
 * writes a markdown gap report,
 * writes CSV summary files,
 * prints a clean terminal summary,
-* includes basic tests for core logic, output writers, CLI behavior, and input validation.
-* It now includes optional SQLite output for storing analysis results.
-
-It does not currently use pandas, OpenAI API, Streamlit, FastAPI, Docker, or RAG. Those are possible future phases after the pure-Python version is stable and understandable.
+* includes tests for core logic, output writers, CLI behavior, input validation, database output, and pandas summaries.
 
 ## Project structure
 
@@ -51,17 +57,22 @@ internship-fit-gap-analyzer/
     compare_resume.py
     console_summary.py
     csv_writer.py
+    database.py
     extract_keywords.py
     main.py
+    pandas_summary.py
     report_writer.py
     summarize_gaps.py
   tests/
     test_cli.py
     test_core_logic.py
+    test_database.py
     test_output_writers.py
+    test_pandas_summary.py
     test_validation.py
   LEARNING_LOG.md
   README.md
+  requirements.txt
   run_tests.py
 ```
 
@@ -77,7 +88,23 @@ resume text + job descriptions + skills taxonomy + skill aliases
 → identify gaps
 → count recurring gaps
 → write markdown and CSV outputs
+→ optionally save to SQLite
+→ optionally write pandas summary CSV files
 ```
+
+## Setup
+
+This project uses Python 3.
+
+Install dependencies with:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+The main external dependency is:
+
+* pandas
 
 ## Input files
 
@@ -168,6 +195,14 @@ data/outputs/recurring_gaps.csv
 
 Prints a clean terminal summary after the analysis runs.
 
+### `src/database.py`
+
+Provides optional SQLite helpers for saving analysis runs, job-level results, and skill gaps.
+
+### `src/pandas_summary.py`
+
+Provides optional pandas helpers for loading gap CSV data and writing extra summary CSV files.
+
 ## How to run
 
 From the project root folder, run:
@@ -229,10 +264,31 @@ Use private local inputs:
 python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
 ```
 
-Save results to a SQLite database:
+Save analysis results to a SQLite database:
 
 ```bash
 python3 src/main.py --database data/outputs/analysis_results.db
+```
+
+When `--database` is provided, the analyzer saves the run, job-level results, and skill gaps to a local SQLite database file.
+
+Create extra pandas-generated summary files:
+
+```bash
+python3 src/main.py --pandas-summary
+```
+
+This creates two additional CSV files:
+
+```text
+data/outputs/gap_categories_pandas.csv
+data/outputs/top_recurring_gaps_pandas.csv
+```
+
+Use SQLite and pandas summaries together:
+
+```bash
+python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary
 ```
 
 Available options include:
@@ -245,7 +301,19 @@ Available options include:
 --outputs
 --top-gaps
 --database
+--pandas-summary
 ```
+
+Short descriptions:
+
+* `--resume` — path to the resume text file
+* `--jobs` — path to the folder containing job description `.txt` files
+* `--taxonomy` — path to the skills taxonomy JSON file
+* `--aliases` — path to the skill aliases JSON file
+* `--outputs` — path to the folder where output files should be saved
+* `--top-gaps` — number of top recurring gaps to show in the terminal summary
+* `--database` — optional path to a SQLite database file where analysis results should be saved
+* `--pandas-summary` — create extra pandas-generated summary CSV files
 
 ## Output files
 
@@ -278,6 +346,36 @@ Columns:
 gap_skill,category,count
 ```
 
+### `data/outputs/gap_categories_pandas.csv`
+
+A pandas-generated CSV that counts total gaps by category. Created only when `--pandas-summary` is used.
+
+Columns:
+
+```text
+category,gap_count
+```
+
+### `data/outputs/top_recurring_gaps_pandas.csv`
+
+A pandas-generated CSV showing the top recurring gaps. Created only when `--pandas-summary` is used.
+
+Columns:
+
+```text
+gap_skill,category,count
+```
+
+### `data/outputs/analysis_results.db`
+
+An optional SQLite database file created only when `--database` is used.
+
+This stores:
+
+* analysis runs,
+* job-level results,
+* skill gaps.
+
 ## How to run tests
 
 Run all tests:
@@ -293,6 +391,8 @@ tests/test_core_logic.py
 tests/test_output_writers.py
 tests/test_cli.py
 tests/test_validation.py
+tests/test_database.py
+tests/test_pandas_summary.py
 ```
 
 The tests currently check:
@@ -302,7 +402,9 @@ The tests currently check:
 * recurring gap counting,
 * markdown and CSV output writing,
 * command-line behavior,
-* input validation.
+* input validation,
+* SQLite database output,
+* pandas summary helpers and CLI behavior.
 
 Expected final output:
 
@@ -338,8 +440,6 @@ Current limitations include:
 * does not evaluate how strong resume evidence is,
 * does not understand synonyms unless they are manually added as aliases,
 * does not use AI extraction yet,
-* does not use pandas or SQL yet,
-* does not store historical runs in a database,
 * does not have a dashboard yet.
 
 The output should be treated as a helpful first-pass analysis, not a final judgment.
@@ -384,15 +484,12 @@ For a more detailed explanation, see [LIMITATIONS.md](LIMITATIONS.md).
 
 Possible next improvements:
 
-* decide when the pure-Python MVP is complete,
 * clean up sample data,
 * add more realistic job descriptions,
 * improve matching accuracy,
 * convert tests to pytest,
-* add pandas summaries,
-* add SQLite storage,
 * add OpenAI API structured extraction,
 * add responsible AI / limitations documentation,
 * build a Streamlit dashboard.
 
-The project will only move to later phases after the current pure-Python version is stable and understandable.
+The project will only move to later phases after the current version is stable and understandable.
