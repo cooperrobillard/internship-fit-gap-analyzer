@@ -16,6 +16,7 @@ test_files = [
     Path("tests/test_cli.py"),
     Path("tests/test_validation.py"),
     Path("tests/test_database.py"),
+    Path("tests/test_pandas_summary.py"),
 ]
 
 
