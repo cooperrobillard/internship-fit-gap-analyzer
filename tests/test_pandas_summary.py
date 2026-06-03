@@ -13,7 +13,12 @@ from tempfile import TemporaryDirectory
 # Add the src folder to Python's import path.
 sys.path.append(str(Path("src")))
 
-from pandas_summary import load_recurring_gaps_csv, get_top_recurring_gaps
+from pandas_summary import (
+    load_recurring_gaps_csv,
+    get_top_recurring_gaps,
+    load_gap_summary_csv,
+    summarize_gaps_by_category,
+)
 
 
 def write_fake_recurring_gaps_csv(csv_path, rows):
@@ -21,6 +26,20 @@ def write_fake_recurring_gaps_csv(csv_path, rows):
     Write fake recurring gap rows to a CSV file for testing.
     """
     fieldnames = ["gap_skill", "category", "count"]
+
+    with open(csv_path, "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for row in rows:
+            writer.writerow(row)
+
+
+def write_fake_gap_summary_csv(csv_path, rows):
+    """
+    Write fake detailed gap summary rows to a CSV file for testing.
+    """
+    fieldnames = ["job_name", "category", "gap_skill"]
 
     with open(csv_path, "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -77,8 +96,83 @@ def test_get_top_recurring_gaps_returns_sorted_top_rows():
         assert top_gaps.iloc[1]["count"] == 2
 
 
+def test_load_gap_summary_csv_loads_expected_columns():
+    with TemporaryDirectory() as temp_folder:
+        csv_path = Path(temp_folder) / "gap_summary.csv"
+
+        write_fake_gap_summary_csv(
+            csv_path,
+            [
+                {
+                    "job_name": "job_1.txt",
+                    "category": "data",
+                    "gap_skill": "sql",
+                },
+                {
+                    "job_name": "job_2.txt",
+                    "category": "ai_ml",
+                    "gap_skill": "langchain",
+                },
+            ],
+        )
+
+        gap_summary_dataframe = load_gap_summary_csv(csv_path)
+
+        assert list(gap_summary_dataframe.columns) == [
+            "job_name",
+            "category",
+            "gap_skill",
+        ]
+
+
+def test_summarize_gaps_by_category_returns_sorted_category_counts():
+    with TemporaryDirectory() as temp_folder:
+        csv_path = Path(temp_folder) / "gap_summary.csv"
+
+        write_fake_gap_summary_csv(
+            csv_path,
+            [
+                {
+                    "job_name": "job_1.txt",
+                    "category": "data",
+                    "gap_skill": "sql",
+                },
+                {
+                    "job_name": "job_1.txt",
+                    "category": "data",
+                    "gap_skill": "pandas",
+                },
+                {
+                    "job_name": "job_2.txt",
+                    "category": "ai_ml",
+                    "gap_skill": "langchain",
+                },
+                {
+                    "job_name": "job_2.txt",
+                    "category": "data",
+                    "gap_skill": "sql",
+                },
+            ],
+        )
+
+        gap_summary_dataframe = load_gap_summary_csv(csv_path)
+
+        category_summary = summarize_gaps_by_category(gap_summary_dataframe)
+
+        assert list(category_summary.columns) == ["category", "gap_count"]
+        assert len(category_summary) == 2
+
+        assert category_summary.iloc[0]["category"] == "data"
+        assert category_summary.iloc[0]["gap_count"] == 3
+
+        assert category_summary.iloc[1]["category"] == "ai_ml"
+        assert category_summary.iloc[1]["gap_count"] == 1
+
+
 if __name__ == "__main__":
     test_load_recurring_gaps_csv_loads_expected_columns()
     test_get_top_recurring_gaps_returns_sorted_top_rows()
+    test_load_gap_summary_csv_loads_expected_columns()
+    test_summarize_gaps_by_category_returns_sorted_category_counts()
 
     print("All pandas summary tests passed.")

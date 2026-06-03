@@ -37,3 +37,48 @@ def get_top_recurring_gaps(recurring_gaps_dataframe, limit=5):
     top_recurring_gaps = sorted_dataframe.head(limit)
 
     return top_recurring_gaps
+
+
+def load_gap_summary_csv(csv_path):
+    """
+    Load a detailed gap summary CSV file into a pandas DataFrame.
+
+    The CSV is expected to have these columns:
+    - job_name
+    - category
+    - gap_skill
+    """
+    csv_path = Path(csv_path)
+
+    gap_summary_dataframe = pd.read_csv(csv_path)
+
+    return gap_summary_dataframe
+
+
+def summarize_gaps_by_category(gaps_dataframe):
+    """
+    Count gap rows in each category from a detailed gap summary DataFrame.
+
+    The input DataFrame is expected to have these columns:
+    - job_name
+    - category
+    - gap_skill
+
+    Returns a DataFrame with:
+    - category
+    - gap_count
+
+    Rows are sorted by:
+    - gap_count (highest first)
+    - category (alphabetical order)
+    """
+    category_summary = gaps_dataframe.groupby("category").size().reset_index(
+        name="gap_count"
+    )
+
+    sorted_summary = category_summary.sort_values(
+        by=["gap_count", "category"],
+        ascending=[False, True],
+    )
+
+    return sorted_summary.reset_index(drop=True)
