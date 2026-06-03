@@ -127,6 +127,51 @@ def test_main_runs_with_database_option():
         assert recurring_gaps_path.exists()
 
 
+def test_main_runs_with_pandas_summary_option():
+
+    # Create a temporary output folder for this test.
+    with TemporaryDirectory() as temp_folder:
+        output_folder = Path(temp_folder) / "outputs"
+
+        # Run the main program with a custom outputs folder and --pandas-summary.
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--outputs",
+                str(output_folder),
+                "--pandas-summary",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # Check that the command worked.
+        assert result.returncode == 0, result.stderr
+
+        # Check that normal output files still exist.
+        gap_report_path = output_folder / "gap_report.md"
+        gap_summary_path = output_folder / "gap_summary.csv"
+        recurring_gaps_path = output_folder / "recurring_gaps.csv"
+
+        assert gap_report_path.exists()
+        assert gap_summary_path.exists()
+        assert recurring_gaps_path.exists()
+
+        # Check that pandas summary output files were created.
+        gap_categories_pandas_path = output_folder / "gap_categories_pandas.csv"
+        top_recurring_gaps_pandas_path = (
+            output_folder / "top_recurring_gaps_pandas.csv"
+        )
+
+        assert gap_categories_pandas_path.exists()
+        assert top_recurring_gaps_pandas_path.exists()
+
+        # Check that the terminal output lists the pandas output files.
+        assert "gap_categories_pandas.csv" in result.stdout
+        assert "top_recurring_gaps_pandas.csv" in result.stdout
+
+
 # This block runs the tests when we type:
 # python3 tests/test_cli.py
 if __name__ == "__main__":
@@ -135,6 +180,7 @@ if __name__ == "__main__":
     test_help_command_runs()
     test_main_runs_with_custom_outputs_folder()
     test_main_runs_with_database_option()
+    test_main_runs_with_pandas_summary_option()
 
     # If no assert statement failed, print this success message.
     print("All CLI tests passed.")

@@ -30,6 +30,9 @@ from console_summary import print_run_summary
 # Import database helpers for optional SQLite saving.
 from database import initialize_database, save_analysis_results
 
+# Import pandas summary output helper for optional extra CSV files.
+from pandas_summary import write_pandas_summary_outputs
+
 # Default file and folder paths.
 #
 # These are used when the user does not provide custom paths in the terminal.
@@ -101,6 +104,13 @@ def parse_args():
         "--database",
         default=None,
         help="Optional path to a SQLite database file where analysis results should be saved.",
+    )
+
+    # Optional pandas summary output files.
+    parser.add_argument(
+        "--pandas-summary",
+        action="store_true",
+        help="Create extra pandas-generated summary CSV files.",
     )
 
     # Return the user's command-line choices.
@@ -287,6 +297,16 @@ def main():
         gap_csv_output_path,
         recurring_gaps_csv_output_path,
     ]
+
+    # Create extra pandas summary CSV files only if the user passed --pandas-summary.
+    if args.pandas_summary:
+        pandas_output_paths = write_pandas_summary_outputs(
+            gap_summary_csv_path=gap_csv_output_path,
+            recurring_gaps_csv_path=recurring_gaps_csv_output_path,
+            outputs_folder=outputs_folder,
+        )
+
+        output_paths.extend(pandas_output_paths)
 
     # Save results to SQLite only if the user passed --database.
     if database_path is not None:
