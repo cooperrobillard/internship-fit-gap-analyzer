@@ -1012,3 +1012,26 @@ Tested with:
 - `python3 run_tests.py`
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db`
+
+## Added first pandas summary helper
+
+Added a new `src/pandas_summary.py` module to start using pandas in a small, isolated way.
+
+What I added:
+- A helper that loads `recurring_gaps.csv` into a pandas DataFrame.
+- A helper that sorts recurring gaps by count and returns the top rows.
+- A new pandas test file.
+- Added pandas to `requirements.txt`.
+
+Key concepts:
+- pandas is a Python library for working with table-like data.
+- A DataFrame is like a spreadsheet inside Python.
+- `read_csv()` loads CSV data into a DataFrame.
+- `sort_values()` sorts rows by one or more columns.
+- `head()` returns the first few rows.
+- `requirements.txt` lists external packages needed for the project.
+
+Tested with:
+- `python3 tests/test_pandas_summary.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
