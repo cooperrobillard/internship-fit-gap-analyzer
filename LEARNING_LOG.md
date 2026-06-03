@@ -991,3 +991,24 @@ Tested with:
 - `python3 run_tests.py`
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db`
+
+## Added jobs-with-most-gaps database query
+
+Added a `query_jobs_with_most_gaps()` function to `src/database.py`.
+
+What I added:
+- A SQL query helper that reads job-level results from the `job_results` table.
+- The helper returns jobs sorted by how many missing skills they had.
+- A database test that confirms jobs are returned from most gaps to fewest gaps.
+
+Key concepts:
+- `SELECT` chooses which columns to return from a database table.
+- `WHERE run_id = ?` filters results to one analysis run.
+- `ORDER BY missing_skills_count DESC` sorts jobs with the most gaps first.
+- SQL can help identify which job descriptions are the biggest reach based on missing skills.
+
+Tested with:
+- `python3 tests/test_database.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db`
