@@ -22,8 +22,9 @@ The project currently:
 * writes CSV summary files,
 * prints a clean terminal summary,
 * includes basic tests for core logic, output writers, CLI behavior, and input validation.
+* It now includes optional SQLite output for storing analysis results.
 
-It does not currently use pandas, SQLite, OpenAI API, Streamlit, FastAPI, Docker, or RAG. Those are possible future phases after the pure-Python version is stable and understandable.
+It does not currently use pandas, OpenAI API, Streamlit, FastAPI, Docker, or RAG. Those are possible future phases after the pure-Python version is stable and understandable.
 
 ## Project structure
 
@@ -228,6 +229,12 @@ Use private local inputs:
 python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
 ```
 
+Save results to a SQLite database:
+
+```bash
+python3 src/main.py --database data/outputs/analysis_results.db
+```
+
 Available options include:
 
 ```text
@@ -237,6 +244,7 @@ Available options include:
 --aliases
 --outputs
 --top-gaps
+--database
 ```
 
 ## Output files

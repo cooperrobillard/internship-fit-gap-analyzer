@@ -14,6 +14,11 @@ venv/
 data/outputs/*.md
 data/outputs/*.csv
 
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
 # Private local inputs
 data/resume/resume.txt
 data/jobs/*.txt
