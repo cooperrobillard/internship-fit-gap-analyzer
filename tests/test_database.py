@@ -10,6 +10,7 @@ sys.path.append(str(src_folder))
 from database import initialize_database, insert_analysis_run, insert_job_result
 from database import insert_skill_gap
 from database import query_recurring_gaps
+from database import query_jobs_with_most_gaps
 from database import save_analysis_results
 
 
@@ -355,6 +356,66 @@ def test_save_analysis_results_inserts_related_rows():
         connection.close()
 
 
+def test_query_jobs_with_most_gaps_returns_sorted_jobs():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=3,
+        )
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_alpha.txt",
+            matched_skills_count=2,
+            missing_skills_count=2,
+        )
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_bravo.txt",
+            matched_skills_count=4,
+            missing_skills_count=5,
+        )
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="job_charlie.txt",
+            matched_skills_count=6,
+            missing_skills_count=0,
+        )
+
+        jobs_with_gaps = query_jobs_with_most_gaps(connection, run_id)
+
+        assert jobs_with_gaps[0]["missing_skills_count"] == 5
+        assert jobs_with_gaps[0]["job_filename"] == "job_bravo.txt"
+        assert jobs_with_gaps[0]["matched_skills_count"] == 4
+
+        assert set(jobs_with_gaps[0].keys()) == {
+            "job_filename",
+            "matched_skills_count",
+            "missing_skills_count",
+        }
+
+        missing_counts = [
+            job["missing_skills_count"] for job in jobs_with_gaps
+        ]
+        assert missing_counts == sorted(missing_counts, reverse=True)
+
+        assert jobs_with_gaps[1]["missing_skills_count"] == 2
+        assert jobs_with_gaps[2]["missing_skills_count"] == 0
+
+        connection.close()
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -363,5 +424,6 @@ if __name__ == "__main__":
     test_insert_skill_gap_adds_row_and_returns_id()
     test_query_recurring_gaps_returns_sorted_counts()
     test_save_analysis_results_inserts_related_rows()
+    test_query_jobs_with_most_gaps_returns_sorted_jobs()
 
     print("All database tests passed.")

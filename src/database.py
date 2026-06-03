@@ -241,6 +241,44 @@ def query_recurring_gaps(connection, run_id):
     return recurring_gaps
 
 
+def query_jobs_with_most_gaps(connection, run_id):
+    """
+    Query job results for one analysis run, sorted by missing skills.
+
+    The result is sorted by:
+    - highest missing_skills_count first
+    - then job filename in alphabetical order
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            job_filename,
+            matched_skills_count,
+            missing_skills_count
+        FROM job_results
+        WHERE run_id = ?
+        ORDER BY missing_skills_count DESC, job_filename ASC;
+        """,
+        (run_id,),
+    )
+
+    rows = cursor.fetchall()
+
+    jobs_with_gaps = []
+    for row in rows:
+        jobs_with_gaps.append(
+            {
+                "job_filename": row[0],
+                "matched_skills_count": row[1],
+                "missing_skills_count": row[2],
+            }
+        )
+
+    return jobs_with_gaps
+
+
 def save_analysis_results(
     connection,
     resume_path,
