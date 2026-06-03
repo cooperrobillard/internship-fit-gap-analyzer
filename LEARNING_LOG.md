@@ -1035,3 +1035,25 @@ Tested with:
 - `python3 tests/test_pandas_summary.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added pandas gap category summary
+
+Added a pandas helper to summarize skill gaps by category.
+
+What I added:
+- A `load_gap_summary_csv()` function that loads the detailed gap summary CSV into a pandas DataFrame.
+- A `summarize_gaps_by_category()` function that groups gaps by category and counts them.
+- Tests that confirm pandas loads the CSV and produces the expected category counts.
+
+Key concepts:
+- A pandas DataFrame stores table-like data in Python.
+- `read_csv()` loads a CSV file into a DataFrame.
+- `groupby()` groups rows that share the same value in a column.
+- `size()` counts how many rows are in each group.
+- `reset_index()` turns grouped results back into a regular DataFrame.
+- `sort_values()` sorts rows by one or more columns.
+
+Tested with:
+- `python3 tests/test_pandas_summary.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
