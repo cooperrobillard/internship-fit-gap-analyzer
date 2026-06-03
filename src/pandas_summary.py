@@ -82,3 +82,39 @@ def summarize_gaps_by_category(gaps_dataframe):
     )
 
     return sorted_summary.reset_index(drop=True)
+
+
+def write_pandas_summary_outputs(
+    gap_summary_csv_path,
+    recurring_gaps_csv_path,
+    outputs_folder,
+    top_limit=5,
+):
+    """
+    Load gap CSV files, build pandas summaries, and write them to CSV files.
+
+    Creates these output files in outputs_folder:
+    - gap_categories_pandas.csv
+    - top_recurring_gaps_pandas.csv
+
+    Returns a list of the two output file paths.
+    """
+    outputs_folder = Path(outputs_folder)
+    outputs_folder.mkdir(parents=True, exist_ok=True)
+
+    gap_summary_dataframe = load_gap_summary_csv(gap_summary_csv_path)
+    recurring_gaps_dataframe = load_recurring_gaps_csv(recurring_gaps_csv_path)
+
+    category_summary = summarize_gaps_by_category(gap_summary_dataframe)
+    top_recurring_gaps = get_top_recurring_gaps(
+        recurring_gaps_dataframe,
+        limit=top_limit,
+    )
+
+    category_summary_path = outputs_folder / "gap_categories_pandas.csv"
+    top_recurring_gaps_path = outputs_folder / "top_recurring_gaps_pandas.csv"
+
+    category_summary.to_csv(category_summary_path, index=False)
+    top_recurring_gaps.to_csv(top_recurring_gaps_path, index=False)
+
+    return [category_summary_path, top_recurring_gaps_path]
