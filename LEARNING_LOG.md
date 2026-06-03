@@ -1057,3 +1057,28 @@ Tested with:
 - `python3 tests/test_pandas_summary.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added pandas summary output writer
+
+Added a pandas helper that writes pandas-generated summary CSV files.
+
+What I added:
+- A `write_pandas_summary_outputs()` function in `src/pandas_summary.py`.
+- The helper loads existing CSV outputs into pandas DataFrames.
+- It creates a category-level gap summary.
+- It creates a top recurring gaps summary.
+- It writes two pandas-generated CSV files:
+  - `gap_categories_pandas.csv`
+  - `top_recurring_gaps_pandas.csv`
+- Tests confirm that both files are created and contain expected sorted summary data.
+
+Key concepts:
+- pandas can read existing CSV outputs and create new summary tables.
+- `to_csv()` writes a DataFrame back to a CSV file.
+- Helper functions can combine smaller pandas operations into one reusable workflow.
+- Keeping this isolated from `main.py` makes it safer to test before adding CLI integration.
+
+Tested with:
+- `python3 tests/test_pandas_summary.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
