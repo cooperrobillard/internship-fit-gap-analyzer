@@ -1082,3 +1082,24 @@ Tested with:
 - `python3 tests/test_pandas_summary.py`
 - `python3 run_tests.py`
 - `python3 src/main.py`
+
+## Added optional pandas summary CLI output
+
+Added an optional `--pandas-summary` command-line flag to create pandas-generated summary CSV files.
+
+What I added:
+- A `--pandas-summary` CLI option in `src/main.py`.
+- Logic that creates pandas summary outputs only when the flag is used.
+- A CLI test that confirms the normal outputs and pandas outputs are created together.
+- The default analyzer behavior remains unchanged when `--pandas-summary` is not used.
+
+Key concepts:
+- A boolean CLI flag can turn an optional feature on or off.
+- `action="store_true"` means the argument becomes `True` only when the user includes the flag.
+- pandas can now be used as an optional analysis-output layer.
+- Keeping pandas optional avoids changing the core Version 1 behavior.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --pandas-summary`
