@@ -970,3 +970,24 @@ Tested with:
 - `python3 run_tests.py`
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db`
+
+## Documented optional SQLite output
+
+Updated project documentation after adding optional SQLite database output.
+
+What I updated:
+- Added SQLite database file patterns to `.gitignore`.
+- Updated the README to document the `--database` option.
+- Added an example command for saving analysis results to SQLite.
+- Clarified that SQLite is now optional output, while pandas and advanced tools are still future work.
+
+Key concepts:
+- Generated database files should usually not be committed to Git.
+- `.gitignore` helps prevent accidental tracking of local output files.
+- Documentation should stay aligned with actual project behavior.
+- Optional CLI features should be clearly explained so users know when they are active.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db`
