@@ -1103,3 +1103,26 @@ Tested with:
 - `python3 run_tests.py`
 - `python3 src/main.py`
 - `python3 src/main.py --pandas-summary`
+
+## Updated README for Version 2 outputs
+
+Updated the README to match the current Version 2 project behavior.
+
+What I updated:
+- Documented optional SQLite database output.
+- Documented optional pandas summary output.
+- Added command examples for `--database` and `--pandas-summary`.
+- Added setup instructions using `requirements.txt`.
+- Updated the project structure to include the database and pandas modules.
+- Updated the output files section to include SQLite and pandas-generated outputs.
+
+Key concepts:
+- Documentation should stay aligned with actual code behavior.
+- Optional CLI features should be clearly explained.
+- `requirements.txt` helps other people install project dependencies.
+- A README should help someone clone, install, run, test, and understand the project.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
