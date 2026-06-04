@@ -1337,3 +1337,11 @@ Tested with:
 - Clarified how the reusable analysis runner, single-job analysis support, `--job-file` mode, and structured results prepare the project for a future interface.
 - Practiced separating planning from implementation so the project does not jump prematurely into Streamlit, FastAPI, deployment, OpenAI API, or authentication.
 - Confirmed the full test suite and main CLI smoke commands still pass after the documentation update.
+
+## Dev Chat 4 - Local Streamlit UI Skeleton
+
+* Started Version 4 by adding a small local-only Streamlit UI skeleton.
+* Connected the UI prototype to the existing reusable analysis backend instead of duplicating CLI logic.
+* Displayed safe sample-data analysis results in a simple visual interface.
+* Practiced adding a new UI dependency carefully while preserving existing CLI behavior and tests.
+* Confirmed the full test suite and CLI smoke commands still pass after the UI skeleton was added.
