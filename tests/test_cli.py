@@ -27,6 +27,7 @@ def test_help_command_runs():
     # Check that the help text includes some expected command-line options.
     assert "--resume" in result.stdout
     assert "--jobs" in result.stdout
+    assert "--job-file" in result.stdout
     assert "--taxonomy" in result.stdout
     assert "--aliases" in result.stdout
     assert "--outputs" in result.stdout
@@ -229,6 +230,102 @@ def test_main_runs_with_database_and_pandas_summary_options():
         assert database_path.name in result.stdout
 
 
+def test_main_runs_with_job_file_option():
+
+    with TemporaryDirectory() as temp_folder:
+        output_folder = Path(temp_folder) / "outputs"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--job-file",
+                "data/sample_jobs/sample_ai_engineering_internship.txt",
+                "--outputs",
+                str(output_folder),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "Analysis complete." in result.stdout
+        assert "Jobs analyzed: 1" in result.stdout
+
+        gap_report_path = output_folder / "gap_report.md"
+        gap_summary_path = output_folder / "gap_summary.csv"
+        recurring_gaps_path = output_folder / "recurring_gaps.csv"
+
+        assert gap_report_path.exists()
+        assert gap_summary_path.exists()
+        assert recurring_gaps_path.exists()
+
+        report_text = gap_report_path.read_text(encoding="utf-8")
+        assert "sample_ai_engineering_internship.txt" in report_text
+
+
+def test_main_runs_with_jobs_folder_option():
+
+    with TemporaryDirectory() as temp_folder:
+        output_folder = Path(temp_folder) / "outputs"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--jobs",
+                "data/sample_jobs",
+                "--outputs",
+                str(output_folder),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "Analysis complete." in result.stdout
+        assert (output_folder / "gap_report.md").exists()
+
+
+def test_cli_reports_missing_job_file():
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "src/main.py",
+            "--job-file",
+            "data/sample_jobs/does_not_exist.txt",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Error: Missing required file:" in result.stderr
+    assert "does_not_exist.txt" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_jobs_and_job_file_conflict():
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "src/main.py",
+            "--jobs",
+            "data/sample_jobs",
+            "--job-file",
+            "data/sample_jobs/sample_ai_engineering_internship.txt",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Error: Use either --jobs or --job-file, not both." in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 def test_cli_reports_missing_resume_file():
 
     result = subprocess.run(
@@ -363,6 +460,10 @@ if __name__ == "__main__":
     test_main_runs_with_database_option()
     test_main_runs_with_pandas_summary_option()
     test_main_runs_with_database_and_pandas_summary_options()
+    test_main_runs_with_job_file_option()
+    test_main_runs_with_jobs_folder_option()
+    test_cli_reports_missing_job_file()
+    test_cli_reports_jobs_and_job_file_conflict()
     test_cli_reports_missing_resume_file()
     test_cli_reports_missing_jobs_folder()
     test_cli_reports_empty_jobs_folder()

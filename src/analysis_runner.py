@@ -196,6 +196,133 @@ def run_single_job_analysis(
     }
 
 
+def _write_analysis_outputs(
+    outputs_folder,
+    resume_path,
+    jobs_path,
+    taxonomy_path,
+    aliases_path,
+    resume_skills,
+    job_results,
+    recurring_gaps,
+    database_path=None,
+    pandas_summary=False,
+):
+    """Write markdown, CSV, and optional pandas/database outputs for a completed run."""
+    outputs_folder = Path(outputs_folder)
+    resume_path = Path(resume_path)
+    jobs_path = Path(jobs_path)
+    taxonomy_path = Path(taxonomy_path)
+    aliases_path = Path(aliases_path)
+
+    gap_report_output_path = outputs_folder / "gap_report.md"
+    gap_csv_output_path = outputs_folder / "gap_summary.csv"
+    recurring_gaps_csv_output_path = outputs_folder / "recurring_gaps.csv"
+
+    write_gap_report(
+        gap_report_output_path, resume_skills, job_results, recurring_gaps
+    )
+    write_gap_csv(gap_csv_output_path, job_results)
+    write_recurring_gap_csv(recurring_gaps_csv_output_path, recurring_gaps)
+
+    output_paths = [
+        gap_report_output_path,
+        gap_csv_output_path,
+        recurring_gaps_csv_output_path,
+    ]
+
+    if pandas_summary:
+        pandas_output_paths = write_pandas_summary_outputs(
+            gap_summary_csv_path=gap_csv_output_path,
+            recurring_gaps_csv_path=recurring_gaps_csv_output_path,
+            outputs_folder=outputs_folder,
+        )
+        output_paths.extend(pandas_output_paths)
+
+    if database_path is not None:
+        database_path = Path(database_path)
+        validate_database_path(database_path)
+        connection = initialize_database(database_path)
+
+        try:
+            save_analysis_results(
+                connection=connection,
+                resume_path=resume_path,
+                jobs_path=jobs_path,
+                taxonomy_path=taxonomy_path,
+                aliases_path=aliases_path,
+                job_results=job_results,
+            )
+        finally:
+            connection.close()
+
+        output_paths.append(database_path)
+
+    return output_paths
+
+
+def run_analysis_job_file(
+    resume_path,
+    job_path,
+    taxonomy_path,
+    aliases_path,
+    outputs_folder,
+    database_path=None,
+    pandas_summary=False,
+):
+    """
+    Run the full analysis workflow for one job description file.
+
+    Reuses run_single_job_analysis, then writes the same outputs as run_analysis.
+    """
+    resume_path = Path(resume_path)
+    job_path = Path(job_path)
+    taxonomy_path = Path(taxonomy_path)
+    aliases_path = Path(aliases_path)
+    outputs_folder = Path(outputs_folder)
+
+    if database_path is not None:
+        database_path = Path(database_path)
+
+    if not resume_path.exists():
+        raise FileNotFoundError(f"Missing required file: {resume_path}")
+
+    single_job_results = run_single_job_analysis(
+        resume_path=resume_path,
+        job_path=job_path,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+    )
+
+    output_paths = _write_analysis_outputs(
+        outputs_folder=outputs_folder,
+        resume_path=resume_path,
+        jobs_path=job_path,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        resume_skills=single_job_results["resume_skills"],
+        job_results=single_job_results["job_results"],
+        recurring_gaps=single_job_results["recurring_gaps"],
+        database_path=database_path,
+        pandas_summary=pandas_summary,
+    )
+
+    return {
+        "resume_path": resume_path,
+        "job_path": job_path,
+        "jobs_folder": job_path.parent,
+        "taxonomy_path": taxonomy_path,
+        "aliases_path": aliases_path,
+        "outputs_folder": outputs_folder,
+        "database_path": database_path,
+        "resume_skills": single_job_results["resume_skills"],
+        "job_results": single_job_results["job_results"],
+        "recurring_gaps": single_job_results["recurring_gaps"],
+        "output_paths": output_paths,
+        "jobs_analyzed_count": single_job_results["jobs_analyzed_count"],
+    }
+
+
 def run_analysis(
     resume_path,
     jobs_folder,
@@ -233,47 +360,18 @@ def run_analysis(
     job_results = analyze_jobs(jobs_folder, resume_skills, taxonomy, aliases)
     recurring_gaps = count_recurring_gaps(job_results)
 
-    gap_report_output_path = outputs_folder / "gap_report.md"
-    gap_csv_output_path = outputs_folder / "gap_summary.csv"
-    recurring_gaps_csv_output_path = outputs_folder / "recurring_gaps.csv"
-
-    write_gap_report(
-        gap_report_output_path, resume_skills, job_results, recurring_gaps
+    output_paths = _write_analysis_outputs(
+        outputs_folder=outputs_folder,
+        resume_path=resume_path,
+        jobs_path=jobs_folder,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        resume_skills=resume_skills,
+        job_results=job_results,
+        recurring_gaps=recurring_gaps,
+        database_path=database_path,
+        pandas_summary=pandas_summary,
     )
-    write_gap_csv(gap_csv_output_path, job_results)
-    write_recurring_gap_csv(recurring_gaps_csv_output_path, recurring_gaps)
-
-    output_paths = [
-        gap_report_output_path,
-        gap_csv_output_path,
-        recurring_gaps_csv_output_path,
-    ]
-
-    if pandas_summary:
-        pandas_output_paths = write_pandas_summary_outputs(
-            gap_summary_csv_path=gap_csv_output_path,
-            recurring_gaps_csv_path=recurring_gaps_csv_output_path,
-            outputs_folder=outputs_folder,
-        )
-        output_paths.extend(pandas_output_paths)
-
-    if database_path is not None:
-        validate_database_path(database_path)
-        connection = initialize_database(database_path)
-
-        try:
-            save_analysis_results(
-                connection=connection,
-                resume_path=resume_path,
-                jobs_path=jobs_folder,
-                taxonomy_path=taxonomy_path,
-                aliases_path=aliases_path,
-                job_results=job_results,
-            )
-        finally:
-            connection.close()
-
-        output_paths.append(database_path)
 
     return {
         "resume_path": resume_path,

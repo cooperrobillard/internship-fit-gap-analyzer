@@ -9,7 +9,7 @@ import argparse
 import sys
 
 # Import the reusable analysis workflow for CLI and future UI code.
-from analysis_runner import run_analysis, validate_inputs
+from analysis_runner import run_analysis, run_analysis_job_file, validate_inputs
 
 # Import our terminal summary function from src/console_summary.py.
 from console_summary import print_run_summary
@@ -22,6 +22,16 @@ DEFAULT_SKILLS_TAXONOMY_PATH = Path("data/skills_taxonomy.json")
 DEFAULT_SKILL_ALIASES_PATH = Path("data/skill_aliases.json")
 DEFAULT_JOBS_FOLDER = Path("data/sample_jobs")
 DEFAULT_OUTPUTS_FOLDER = Path("data/outputs")
+
+
+def _jobs_option_was_passed():
+    """Return True if the user passed --jobs on the command line."""
+    for index, argument in enumerate(sys.argv):
+        if argument == "--jobs":
+            return True
+        if argument.startswith("--jobs="):
+            return True
+    return False
 
 
 # Define a function that reads command-line options.
@@ -49,6 +59,13 @@ def parse_args():
         "--jobs",
         default=str(DEFAULT_JOBS_FOLDER),
         help="Path to the folder containing job description .txt files.",
+    )
+
+    # Optional single job description file path.
+    parser.add_argument(
+        "--job-file",
+        default=None,
+        help="Path to one job description .txt file (instead of using --jobs).",
     )
 
     # Optional skills taxonomy path.
@@ -107,16 +124,33 @@ def main():
     # Read command-line options.
     args = parse_args()
 
-    # Run the shared analysis workflow.
-    results = run_analysis(
-        resume_path=args.resume,
-        jobs_folder=args.jobs,
-        taxonomy_path=args.taxonomy,
-        aliases_path=args.aliases,
-        outputs_folder=args.outputs,
-        database_path=args.database,
-        pandas_summary=args.pandas_summary,
-    )
+    # Do not allow both --jobs and --job-file in the same command.
+    if args.job_file is not None and _jobs_option_was_passed():
+        raise ValueError("Use either --jobs or --job-file, not both.")
+
+    # Analyze one job file when --job-file is provided.
+    if args.job_file is not None:
+        results = run_analysis_job_file(
+            resume_path=args.resume,
+            job_path=args.job_file,
+            taxonomy_path=args.taxonomy,
+            aliases_path=args.aliases,
+            outputs_folder=args.outputs,
+            database_path=args.database,
+            pandas_summary=args.pandas_summary,
+        )
+
+    # Otherwise analyze every .txt file in the jobs folder.
+    else:
+        results = run_analysis(
+            resume_path=args.resume,
+            jobs_folder=args.jobs,
+            taxonomy_path=args.taxonomy,
+            aliases_path=args.aliases,
+            outputs_folder=args.outputs,
+            database_path=args.database,
+            pandas_summary=args.pandas_summary,
+        )
 
     # Print a clean summary of the run in the terminal.
     print_run_summary(
