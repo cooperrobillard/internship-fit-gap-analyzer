@@ -1353,3 +1353,11 @@ Tested with:
 * Used the safe sample resume as the default resume input while testing the pasted-job workflow.
 * Practiced separating UI input handling from backend analysis logic.
 * Confirmed the test suite and CLI smoke commands still pass after adding the pasted-job UI workflow.
+
+## Dev Chat 4 - Resume Source Selector
+
+* Added a safe local resume source selector to the Streamlit UI.
+* Kept the safe sample resume as the default input while allowing the app to use a private local resume file if it exists.
+* Practiced handling private local files carefully without committing or exposing private resume content.
+* Preserved the existing sample-job and pasted-job UI workflows.
+* Confirmed the test suite and CLI smoke commands still pass after adding the resume selector.
