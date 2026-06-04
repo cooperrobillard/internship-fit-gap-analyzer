@@ -1305,3 +1305,11 @@ Tested with:
 - Kept the analysis logic reusable and separate from folder-based CLI behavior.
 - Added or updated tests to confirm the single-job analysis workflow works directly from backend code.
 - Confirmed existing CLI behavior and the full test suite still pass after the change.
+
+## Dev Chat 3 - Single-Job CLI Mode
+
+- Added a `--job-file` CLI option so the analyzer can process one job description file directly.
+- Connected the command-line interface more closely to the reusable single-job analysis backend.
+- Practiced designing CLI options, handling conflicting arguments, and testing user-facing command behavior.
+- Preserved the existing folder-based job analysis workflow while preparing the project for a future paste/upload UI.
+- Confirmed the full test suite and main smoke-test commands still pass after the change.
