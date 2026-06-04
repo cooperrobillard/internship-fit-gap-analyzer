@@ -66,24 +66,134 @@ def load_json_file(file_path):
         raise ValueError(f"Invalid JSON in file: {file_path}") from error
 
 
+def analyze_job_text(job_text, job_name, resume_skills, taxonomy, aliases):
+    """
+    Analyze one job description text against resume skills already loaded.
+
+    This function does not read files. Future UI code can pass pasted job text here.
+    """
+    job_skills = find_skills(job_text, taxonomy, aliases)
+    skill_gaps = find_gaps(job_skills, resume_skills)
+
+    return {
+        "job_name": job_name,
+        "job_skills": job_skills,
+        "skill_gaps": skill_gaps,
+    }
+
+
 def analyze_jobs(job_folder, resume_skills, taxonomy, aliases):
 
     job_results = []
 
     for job_file in job_folder.glob("*.txt"):
         job_text = load_text_file(job_file)
-        job_skills = find_skills(job_text, taxonomy, aliases)
-        skill_gaps = find_gaps(job_skills, resume_skills)
-
         job_results.append(
-            {
-                "job_name": job_file.name,
-                "job_skills": job_skills,
-                "skill_gaps": skill_gaps,
-            }
+            analyze_job_text(job_text, job_file.name, resume_skills, taxonomy, aliases)
         )
 
     return job_results
+
+
+def _load_resume_text(resume_path=None, resume_text=None):
+
+    if resume_text is not None:
+        if not str(resume_text).strip():
+            raise ValueError("Resume text cannot be empty.")
+        return resume_text
+
+    if resume_path is None:
+        raise ValueError("Provide resume_path or resume_text.")
+
+    resume_path = Path(resume_path)
+
+    if not resume_path.exists():
+        raise FileNotFoundError(f"Missing required file: {resume_path}")
+
+    return load_text_file(resume_path)
+
+
+def _load_job_text(job_path=None, job_text=None):
+
+    if job_text is not None:
+        if not str(job_text).strip():
+            raise ValueError("Job description text cannot be empty.")
+        return job_text
+
+    if job_path is None:
+        raise ValueError("Provide job_path or job_text.")
+
+    job_path = Path(job_path)
+
+    if not job_path.exists():
+        raise FileNotFoundError(f"Missing required file: {job_path}")
+
+    return load_text_file(job_path)
+
+
+def _default_job_name(job_path=None, job_name=None):
+
+    if job_name is not None:
+        return job_name
+
+    if job_path is not None:
+        return Path(job_path).name
+
+    return "Job description"
+
+
+def run_single_job_analysis(
+    resume_path=None,
+    resume_text=None,
+    job_path=None,
+    job_text=None,
+    job_name=None,
+    taxonomy_path=Path("data/skills_taxonomy.json"),
+    aliases_path=Path("data/skill_aliases.json"),
+):
+    """
+    Analyze one job description against one resume.
+
+    Provide resume and job content from file paths or raw text strings.
+    Does not write report files or use a jobs folder.
+
+    Returns a dictionary with resume skills, one job result, and recurring gaps.
+    """
+    taxonomy_path = Path(taxonomy_path)
+    aliases_path = Path(aliases_path)
+
+    for file_path in [taxonomy_path, aliases_path]:
+        if not file_path.exists():
+            raise FileNotFoundError(f"Missing required file: {file_path}")
+
+    resume_path = Path(resume_path) if resume_path is not None else None
+    job_path = Path(job_path) if job_path is not None else None
+
+    resume_text_loaded = _load_resume_text(resume_path=resume_path, resume_text=resume_text)
+    job_text_loaded = _load_job_text(job_path=job_path, job_text=job_text)
+    job_name_used = _default_job_name(job_path=job_path, job_name=job_name)
+
+    taxonomy = load_json_file(taxonomy_path)
+    aliases = load_json_file(aliases_path)
+
+    resume_skills = find_skills(resume_text_loaded, taxonomy, aliases)
+    job_result = analyze_job_text(
+        job_text_loaded, job_name_used, resume_skills, taxonomy, aliases
+    )
+    recurring_gaps = count_recurring_gaps([job_result])
+
+    return {
+        "resume_path": resume_path,
+        "job_path": job_path,
+        "job_name": job_name_used,
+        "taxonomy_path": taxonomy_path,
+        "aliases_path": aliases_path,
+        "resume_skills": resume_skills,
+        "job_result": job_result,
+        "job_results": [job_result],
+        "recurring_gaps": recurring_gaps,
+        "jobs_analyzed_count": 1,
+    }
 
 
 def run_analysis(
