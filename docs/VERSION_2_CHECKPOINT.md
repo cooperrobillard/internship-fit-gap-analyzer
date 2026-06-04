@@ -2,6 +2,18 @@
 
 This document summarizes the current state of Version 2 of the Internship Fit & Skill-Gap Analyzer.
 
+For smoke-test commands, see [`VERSION_2_TEST_COMMANDS.md`](VERSION_2_TEST_COMMANDS.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
+
+## Data layout
+
+| Path | Role |
+|------|------|
+| `data/resume/sample_resume.txt` | Public sample resume (default) |
+| `data/sample_jobs/` | Public sample job descriptions (default) |
+| `data/resume/resume.txt` | Private local resume (Git-ignored) |
+| `data/jobs/` | Private local job descriptions (Git-ignored for new files) |
+| `data/outputs/` | Generated reports, CSVs, and optional SQLite DB (Git-ignored) |
+
 ## Version 2 goal
 
 Version 2 builds on the pure-Python Version 1 MVP by adding:

@@ -103,8 +103,10 @@ Private resumes and real job descriptions may contain personal or sensitive info
 For public GitHub use:
 
 - use `data/resume/sample_resume.txt` and `data/sample_jobs/` for sample inputs,
-- put private files in `data/resume/resume.txt` and `data/jobs/` (ignored by Git),
+- put private files in `data/resume/resume.txt` and `data/jobs/` (ignored by Git for new files),
 - keep generated outputs out of Git if they are based on private data.
+
+Some legacy sample job files may still be tracked under `data/jobs/` from before samples moved to `data/sample_jobs/`. They are not used by the default CLI run. See the README untracking recommendations if you want to remove them from Git.
 
 The `.gitignore` file helps avoid tracking private local files, generated outputs, and SQLite database files.
 

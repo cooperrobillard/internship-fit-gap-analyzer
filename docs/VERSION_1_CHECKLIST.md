@@ -1,6 +1,8 @@
 # Version 1 MVP Checklist
 
-This document tracks whether the pure-Python MVP is complete enough to move toward the next phase of the Internship Fit & Skill-Gap Analyzer project.
+> **Historical note:** This document records the Version 1 MVP milestone, which is complete. The project has since moved to Version 2 with optional SQLite and pandas features. For current project status, see [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md). For smoke-test commands, see [`VERSION_2_TEST_COMMANDS.md`](VERSION_2_TEST_COMMANDS.md).
+
+This document tracks whether the pure-Python MVP was complete enough to move toward the next phase of the Internship Fit & Skill-Gap Analyzer project.
 
 ## Version 1 goal
 
@@ -100,6 +102,8 @@ python3 run_tests.py
 
 ## Current limitations
 
+These were the limitations at the Version 1 checkpoint (before SQLite and pandas were added):
+
 * Matching is still rule-based and keyword-based.
 * The tool does not truly understand job descriptions.
 * It does not distinguish required skills from preferred skills.
@@ -154,8 +158,8 @@ Do not start Version 2 until Version 1 is stable, tested, documented, and unders
 
 ## Version 1 status
 
-Version 1 is complete enough to serve as a working pure-Python MVP.
+Version 1 is complete and served as the working pure-Python MVP.
 
 The project can be run from the command line, uses safe sample inputs by default, supports private local inputs through command-line options, generates markdown and CSV outputs, includes tests, and documents its current limitations.
 
-The next major phase should be Version 2: adding pandas and SQLite in small steps.
+Version 2 (pandas + SQLite) has since been implemented. See [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md) for the current state.

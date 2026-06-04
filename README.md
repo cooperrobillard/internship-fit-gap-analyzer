@@ -126,7 +126,9 @@ Optional private real resume. Pass with `--resume data/resume/resume.txt`.
 
 **`data/jobs/`**
 
-Optional folder for private real job descriptions. Pass with `--jobs data/jobs`. Files here are ignored by Git.
+Optional folder for private real job descriptions. Pass with `--jobs data/jobs`. New files here are ignored by Git.
+
+A few legacy sample job files may still be tracked under `data/jobs/` from before public samples moved to `data/sample_jobs/`. They are not used by the default run. See [Untracking recommendations](#untracking-recommendations) below if you want to clean that up.
 
 Do not commit private resume or job files. Generated outputs in `data/outputs/` and SQLite database files are also ignored by Git.
 
@@ -213,6 +215,23 @@ Provides optional pandas helpers for loading gap CSV data and writing extra summ
 
 Standalone script for inspecting a SQLite database created with `--database`.
 
+Example:
+
+```bash
+python3 scripts/inspect_database.py data/outputs/analysis_results.db
+```
+
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Canonical limitations and privacy notes |
+| [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Current Version 2 feature summary |
+| [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) | Full smoke-test command sequence |
+| [`docs/VERSION_1_CHECKLIST.md`](docs/VERSION_1_CHECKLIST.md) | Historical Version 1 MVP milestone |
+| [`VERSION2_PLAN.md`](VERSION2_PLAN.md) | Historical Version 2 planning notes |
+| [`LIMITATIONS.md`](LIMITATIONS.md) | Pointer to `docs/LIMITATIONS.md` |
+
 ## How to run
 
 From the project root folder, run:
@@ -234,11 +253,12 @@ Expected terminal output will look similar to:
 ```text
 Analysis complete.
 
-Jobs analyzed: 2
+Jobs analyzed: 1
 
 Top recurring gaps:
-1. sql (data): 2 job(s)
-2. langchain (ai_ml): 2 job(s)
+1. sql (data): 1 job(s)
+2. pandas (data): 1 job(s)
+3. langchain (ai_ml): 1 job(s)
 
 Output files:
 - data/outputs/gap_report.md
@@ -477,3 +497,23 @@ Possible next improvements:
 * build a private web UI for tracking runs over time.
 
 The project will only move to later phases after the current version is stable and understandable.
+
+## Untracking recommendations
+
+These items are optional Git hygiene steps. They do not affect program behavior.
+
+**Mac metadata** (if `.DS_Store` files appear in `git ls-files`):
+
+```bash
+git rm --cached .DS_Store data/.DS_Store
+```
+
+**Legacy sample jobs under `data/jobs/`** (optional — only if you want that folder to be private-only in Git):
+
+```bash
+git rm --cached data/jobs/sample_ai_internship.txt
+git rm --cached data/jobs/sample_job_1.txt
+git rm --cached data/jobs/sample_job_2.txt
+```
+
+The files stay on disk; Git stops tracking them. Consider moving any still-useful samples into `data/sample_jobs/` first if you want them in the public repo.

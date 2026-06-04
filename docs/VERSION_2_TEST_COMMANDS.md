@@ -137,7 +137,7 @@ data/outputs/analysis_results.db
 
 ## 7. Clean up generated database file
 
-Because SQLite database files are generated outputs, they should not be committed to Git.
+Because SQLite database files and other generated outputs are ignored by Git, they should not appear in `git status` after a smoke test.
 
 After testing database output, remove the local database file:
 
