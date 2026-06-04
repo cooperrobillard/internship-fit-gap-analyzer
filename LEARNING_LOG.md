@@ -1194,3 +1194,25 @@ Tested with:
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
 - `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
+
+## Added Version 2 test commands documentation
+
+Added `docs/VERSION_2_TEST_COMMANDS.md` to document the main commands used to verify Version 2 behavior.
+
+What I added:
+- A test command checklist for the full project.
+- Commands for default analysis, pandas summaries, SQLite output, and database inspection.
+- A full Version 2 smoke test sequence.
+- A reminder to remove generated SQLite database files after testing.
+
+Key concepts:
+- Smoke tests help quickly confirm that the project still works.
+- Documentation can make repeated testing easier and less error-prone.
+- Generated output files should not be committed to Git.
+- Version 2 now has enough optional behavior that a command checklist is useful.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
