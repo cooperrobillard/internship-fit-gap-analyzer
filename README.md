@@ -37,22 +37,21 @@ The project currently:
 ```text
 internship-fit-gap-analyzer/
   data/
-    jobs/
-      private local job files go here
-    sample_jobs/
-      sample_job_1.txt
-      sample_job_2.txt
-    outputs/
-      gap_report.md
-      gap_summary.csv
-      recurring_gaps.csv
+    jobs/                  private local job files (Git-ignored)
+    sample_jobs/           public sample job files (used by default)
+    outputs/               generated reports and CSV files (Git-ignored)
     resume/
-      sample_resume.txt
-      resume.txt
+      sample_resume.txt    public sample resume (used by default)
+      resume.txt           private local resume (Git-ignored)
     skill_aliases.json
     skills_taxonomy.json
   docs/
     LIMITATIONS.md
+    VERSION_1_CHECKLIST.md
+    VERSION_2_CHECKPOINT.md
+    VERSION_2_TEST_COMMANDS.md
+  scripts/
+    inspect_database.py
   src/
     compare_resume.py
     console_summary.py
@@ -67,6 +66,7 @@ internship-fit-gap-analyzer/
     test_cli.py
     test_core_logic.py
     test_database.py
+    test_inspect_database.py
     test_output_writers.py
     test_pandas_summary.py
     test_validation.py
@@ -108,21 +108,27 @@ The main external dependency is:
 
 ## Input files
 
-### `data/resume/sample_resume.txt`
+### Public sample inputs (tracked in Git, used by default)
 
-This file contains the safe sample resume used by default.
+**`data/resume/sample_resume.txt`**
 
-### `data/resume/resume.txt`
+Safe sample resume used when you run `python3 src/main.py` with no arguments.
 
-This file can be used locally for a private real resume. This file is ignored by Git.
+**`data/sample_jobs/`**
 
-### `data/sample_jobs/`
+Safe sample job descriptions used by default. The default jobs folder is `data/sample_jobs/`, not `data/jobs/`.
 
-This folder contains safe sample job descriptions that are tracked in Git and used by default.
+### Private local inputs (Git-ignored)
 
-### `data/jobs/`
+**`data/resume/resume.txt`**
 
-This folder can be used locally for private real job descriptions. Files in this folder are ignored by Git.
+Optional private real resume. Pass with `--resume data/resume/resume.txt`.
+
+**`data/jobs/`**
+
+Optional folder for private real job descriptions. Pass with `--jobs data/jobs`. Files here are ignored by Git.
+
+Do not commit private resume or job files. Generated outputs in `data/outputs/` and SQLite database files are also ignored by Git.
 
 ### `data/skills_taxonomy.json`
 
@@ -202,6 +208,10 @@ Provides optional SQLite helpers for saving analysis runs, job-level results, an
 ### `src/pandas_summary.py`
 
 Provides optional pandas helpers for loading gap CSV data and writing extra summary CSV files.
+
+### `scripts/inspect_database.py`
+
+Standalone script for inspecting a SQLite database created with `--database`.
 
 ## How to run
 
@@ -393,6 +403,7 @@ tests/test_cli.py
 tests/test_validation.py
 tests/test_database.py
 tests/test_pandas_summary.py
+tests/test_inspect_database.py
 ```
 
 The tests currently check:
@@ -404,7 +415,8 @@ The tests currently check:
 * command-line behavior,
 * input validation,
 * SQLite database output,
-* pandas summary helpers and CLI behavior.
+* pandas summary helpers and CLI behavior,
+* database inspection script.
 
 Expected final output:
 
@@ -414,43 +426,22 @@ All tests passed.
 
 ## Commands to test
 
-After updating `src/main.py` and `README.md`, run the default sample-data version:
+See [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) for the full Version 2 smoke-test sequence.
 
-```bash
-python3 src/main.py
-```
-
-Then run the tests:
+Quick check:
 
 ```bash
 python3 run_tests.py
+python3 src/main.py
 ```
 
 ## Current limitations
 
-This version uses rule-based keyword matching.
+This version uses rule-based keyword matching. It can miss skills when wording is not in the taxonomy or alias file, and it can make imperfect matches because it does not understand meaning or context.
 
-That means it can miss skills if a job description uses wording that is not included in the taxonomy or alias file.
+Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding.
 
-It can also make imperfect matches because it does not truly understand meaning or context.
-
-Current limitations include:
-
-* does not distinguish required skills from preferred skills,
-* does not evaluate how strong resume evidence is,
-* does not understand synonyms unless they are manually added as aliases,
-* does not use AI extraction yet,
-* does not have a dashboard yet.
-
-The output should be treated as a helpful first-pass analysis, not a final judgment.
-
-## Limitations documentation
-
-A more detailed explanation of the tool's current limitations is available in:
-
-```text
-docs/LIMITATIONS.md
-```
+For a detailed explanation, see [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Learning purpose
 
@@ -474,22 +465,15 @@ This project is being built to improve my understanding of:
 
 AI tools are helping me build and understand the code, but I am using the project to learn how the system works piece by piece and to develop more independent software-development fluency.
 
-## Limitations
-
-This is a rule-based Version 1 MVP. It uses keyword and alias matching to identify skills, so it does not fully understand job descriptions or evaluate the strength of resume evidence.
-
-For a more detailed explanation, see [LIMITATIONS.md](LIMITATIONS.md).
-
 ## Planned next steps
 
 Possible next improvements:
 
-* clean up sample data,
+* improve sample data organization,
 * add more realistic job descriptions,
 * improve matching accuracy,
 * convert tests to pytest,
 * add OpenAI API structured extraction,
-* add responsible AI / limitations documentation,
-* build a Streamlit dashboard.
+* build a private web UI for tracking runs over time.
 
 The project will only move to later phases after the current version is stable and understandable.

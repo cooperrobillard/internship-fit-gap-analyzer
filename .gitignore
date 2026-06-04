@@ -10,18 +10,15 @@ venv/
 # Mac system files
 .DS_Store
 
-# Generated output files
+# Generated output files (markdown reports and CSV summaries)
 data/outputs/*.md
 data/outputs/*.csv
 
-# SQLite database files
+# SQLite database files (generated when --database is used)
 *.db
 *.sqlite
 *.sqlite3
 
-# Private local inputs
+# Private local inputs (use --resume and --jobs to point at these)
 data/resume/resume.txt
-data/jobs/*.txt
-
-# Private local job descriptions
 data/jobs/*.txt

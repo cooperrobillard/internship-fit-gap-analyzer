@@ -1,5 +1,7 @@
 # Version 2 Plan: Pandas + SQLite
 
+> **Note:** This document is historical planning from before Version 2 was implemented. For the current project status, see [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md).
+
 Version 1 is a working pure-Python MVP. It reads a resume, reads job descriptions, finds skill matches, identifies missing skills, summarizes recurring gaps, and writes markdown/CSV outputs.
 
 Version 2 will build on that foundation by adding basic data storage and data analysis tools.
