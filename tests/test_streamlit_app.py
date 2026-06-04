@@ -1,6 +1,7 @@
 # Smoke tests for the local Streamlit app helpers (no Streamlit server required).
 import importlib.util
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
 def _load_streamlit_app_module():
@@ -20,8 +21,8 @@ def test_streamlit_app_imports_safely():
 
     assert hasattr(module, "run_sample_analysis")
     assert hasattr(module, "run_pasted_job_analysis")
-    assert hasattr(module, "validate_pasted_job_text")
-    assert hasattr(module, "build_display_summary")
+    assert hasattr(module, "get_resume_source_choices")
+    assert hasattr(module, "resolve_resume_path")
 
 
 def test_build_display_summary_for_sample_analysis():
@@ -36,6 +37,7 @@ def test_build_display_summary_for_sample_analysis():
     assert display["jobs"][0]["matched_skills_count"] >= 1
     assert len(display["recurring_gaps_lines"]) >= 1
     assert display["has_output_files"] is False
+    assert display["resume_path_label"] == "data/resume/sample_resume.txt"
 
 
 def test_validate_pasted_job_text_rejects_blank_input():
@@ -67,9 +69,61 @@ def test_run_pasted_job_analysis_returns_display_data():
     assert display["has_output_files"] is False
 
 
+def test_get_resume_source_choices_excludes_missing_private_file():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        sample_resume = temp_path / "sample_resume.txt"
+        private_resume = temp_path / "resume.txt"
+        sample_resume.write_text("Python and Git", encoding="utf-8")
+
+        choices = module.get_resume_source_choices(sample_resume, private_resume)
+
+        assert len(choices) == 1
+        assert choices[0]["key"] == module.RESUME_SOURCE_SAMPLE
+
+
+def test_get_resume_source_choices_includes_private_when_present():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        sample_resume = temp_path / "sample_resume.txt"
+        private_resume = temp_path / "resume.txt"
+        sample_resume.write_text("Python and Git", encoding="utf-8")
+        private_resume.write_text("MATLAB and Python", encoding="utf-8")
+
+        choices = module.get_resume_source_choices(sample_resume, private_resume)
+
+        assert len(choices) == 2
+        assert choices[1]["key"] == module.RESUME_SOURCE_PRIVATE
+
+
+def test_resolve_resume_path_uses_sample_by_default():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        sample_resume = temp_path / "sample_resume.txt"
+        private_resume = temp_path / "resume.txt"
+        sample_resume.write_text("Python", encoding="utf-8")
+
+        resolved = module.resolve_resume_path(
+            module.RESUME_SOURCE_SAMPLE,
+            sample_resume_path=sample_resume,
+            private_resume_path=private_resume,
+        )
+
+        assert resolved == sample_resume
+
+
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_build_display_summary_for_sample_analysis()
     test_validate_pasted_job_text_rejects_blank_input()
     test_run_pasted_job_analysis_returns_display_data()
+    test_get_resume_source_choices_excludes_missing_private_file()
+    test_get_resume_source_choices_includes_private_when_present()
+    test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")
