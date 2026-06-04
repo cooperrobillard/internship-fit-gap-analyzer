@@ -229,6 +229,130 @@ def test_main_runs_with_database_and_pandas_summary_options():
         assert database_path.name in result.stdout
 
 
+def test_cli_reports_missing_resume_file():
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "src/main.py",
+            "--resume",
+            "data/resume/does_not_exist.txt",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Error: Missing required file:" in result.stderr
+    assert "does_not_exist.txt" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_missing_jobs_folder():
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "src/main.py",
+            "--jobs",
+            "data/does_not_exist_jobs",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Error: Missing jobs folder:" in result.stderr
+    assert "does_not_exist_jobs" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_empty_jobs_folder():
+
+    with TemporaryDirectory() as temp_folder:
+        empty_jobs_folder = Path(temp_folder) / "empty_jobs"
+        empty_jobs_folder.mkdir()
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--jobs",
+                str(empty_jobs_folder),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 1
+        assert "Error: No .txt job description files found in:" in result.stderr
+        assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_invalid_taxonomy_json():
+
+    with TemporaryDirectory() as temp_folder:
+        bad_taxonomy_path = Path(temp_folder) / "bad_taxonomy.json"
+        bad_taxonomy_path.write_text("not valid json", encoding="utf-8")
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--taxonomy",
+                str(bad_taxonomy_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 1
+        assert "Error: Invalid JSON in file:" in result.stderr
+        assert bad_taxonomy_path.name in result.stderr
+        assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_invalid_aliases_json():
+
+    with TemporaryDirectory() as temp_folder:
+        bad_aliases_path = Path(temp_folder) / "bad_aliases.json"
+        bad_aliases_path.write_text("{bad json", encoding="utf-8")
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "src/main.py",
+                "--aliases",
+                str(bad_aliases_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 1
+        assert "Error: Invalid JSON in file:" in result.stderr
+        assert bad_aliases_path.name in result.stderr
+        assert "Traceback" not in result.stderr
+
+
+def test_cli_reports_invalid_database_path():
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "src/main.py",
+            "--database",
+            "data/outputs",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Error: Database path must be a file, not a folder:" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 # This block runs the tests when we type:
 # python3 tests/test_cli.py
 if __name__ == "__main__":
@@ -239,6 +363,12 @@ if __name__ == "__main__":
     test_main_runs_with_database_option()
     test_main_runs_with_pandas_summary_option()
     test_main_runs_with_database_and_pandas_summary_options()
+    test_cli_reports_missing_resume_file()
+    test_cli_reports_missing_jobs_folder()
+    test_cli_reports_empty_jobs_folder()
+    test_cli_reports_invalid_taxonomy_json()
+    test_cli_reports_invalid_aliases_json()
+    test_cli_reports_invalid_database_path()
 
     # If no assert statement failed, print this success message.
     print("All CLI tests passed.")

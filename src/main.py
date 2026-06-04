@@ -5,6 +5,9 @@ from pathlib import Path
 # Import argparse so the user can pass options in the terminal.
 import argparse
 
+# Import sys so we can exit with a clear error code when CLI input is invalid.
+import sys
+
 # Import Python's built-in json module.
 # This lets us convert JSON text into Python dictionaries/lists.
 import json
@@ -166,6 +169,18 @@ def validate_inputs(resume_path, taxonomy_path, aliases_path, jobs_folder):
         )
 
 
+# Check that the database path is a valid file location.
+#
+# SQLite needs a file path, not an existing folder.
+def validate_database_path(database_path):
+
+    # Stop the program if the user passed a folder instead of a file path.
+    if database_path.exists() and database_path.is_dir():
+        raise ValueError(
+            f"Database path must be a file, not a folder: {database_path}"
+        )
+
+
 # Define a helper function for reading text files.
 #
 # Input:
@@ -191,8 +206,13 @@ def load_json_file(file_path):
     # Read the JSON file as plain text.
     json_text = file_path.read_text(encoding="utf-8")
 
-    # Convert the JSON text into Python data and return it.
-    return json.loads(json_text)
+    # Convert the JSON text into Python data.
+    try:
+        return json.loads(json_text)
+
+    # Stop with a clear message if the file is not valid JSON.
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Invalid JSON in file: {file_path}") from error
 
 
 # Define a helper function that analyzes all job description files.
@@ -310,6 +330,7 @@ def main():
 
     # Save results to SQLite only if the user passed --database.
     if database_path is not None:
+        validate_database_path(database_path)
         connection = initialize_database(database_path)
 
         try:
@@ -342,4 +363,22 @@ def main():
 #
 # Python runs main().
 if __name__ == "__main__":
-    main()
+
+    # Run the main workflow and show clear messages for common input mistakes.
+    try:
+        main()
+
+    # Missing files, folders, or job description files.
+    except FileNotFoundError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
+
+    # A path that should be a folder but is not.
+    except NotADirectoryError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
+
+    # Invalid JSON files or database paths.
+    except ValueError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
