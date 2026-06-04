@@ -1216,3 +1216,29 @@ Tested with:
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
 - `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
+
+## Cleaned up Version 2 documentation and repo hygiene
+
+Completed a conservative cleanup pass after the SQLite and pandas Version 2 features were added.
+
+What I cleaned up:
+- Removed duplicate `.gitignore` patterns.
+- Clarified `.gitignore` comments for generated outputs, SQLite files, and private local inputs.
+- Made `docs/LIMITATIONS.md` the canonical limitations document.
+- Replaced the outdated root `LIMITATIONS.md` with a short pointer to the canonical limitations document.
+- Updated README sections that were outdated, repetitive, or still described the project as only Version 1.
+- Added a note to `VERSION2_PLAN.md` that it is a historical planning document.
+
+Key concepts:
+- Cleanup passes help keep a growing project understandable.
+- Documentation should match actual project behavior.
+- Generated outputs and private local inputs should not be committed.
+- Conservative cleanup is safer than broad refactoring when the program already works.
+- A future web UI will be easier to build if the repo clearly separates core analysis logic, storage, outputs, docs, and sample/private data.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --pandas-summary`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
