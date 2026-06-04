@@ -1,36 +1,42 @@
 # Internship Fit & Skill-Gap Analyzer
 
-A Python command-line tool that compares internship job descriptions against a resume, identifies skill gaps, and summarizes recurring learning priorities across multiple roles.
+A **rule-based** Python command-line tool that compares internship or co-op job descriptions against a resume, finds skills mentioned in each text, identifies **missing skills** (gaps), and summarizes **recurring gaps** across multiple postings.
 
-This project is being built as both a practical internship-search tool and a learning project to strengthen my Python, software-development, testing, documentation, and data-analysis fundamentals.
+This is a learning and portfolio project. It is **not** an AI-powered job matcher, a semantic search tool, or a deployed web application.
+
+## What the project does
+
+The analyzer:
+
+* loads a resume and one or more job descriptions (text files),
+* uses a JSON **skills taxonomy** and **skill aliases** to find known skills in each text,
+* reports skills found in the resume and in each job,
+* compares job skills against resume skills to list **gaps per job**,
+* counts **recurring gaps** across all analyzed jobs,
+* writes a markdown report and CSV summaries,
+* optionally saves results to SQLite and optional pandas summary CSVs,
+* prints a short terminal summary.
+
+Matching is **keyword- and alias-based**. It does not understand meaning, required vs. preferred skills, or how strong resume evidence is.
 
 ## Current status
 
-Version 2 now includes optional SQLite and pandas features.
+**Version 3** is in progress: CLI/backend polish and **UI-readiness** (reusable backend functions), on top of the Version 2 feature set.
 
 The project can:
 
-* run the original pure-Python analysis,
+* run analysis on a **folder of job files** (default sample data or private `--jobs` folder),
+* run analysis on a **single job file** with `--job-file`,
+* call shared backend functions (`src/analysis_runner.py`) that return structured results for future UI code,
 * generate markdown and CSV outputs,
-* optionally save analysis results to a SQLite database,
-* optionally generate pandas-based summary CSV files.
+* optionally save to SQLite (`--database`),
+* optionally create pandas summary CSVs (`--pandas-summary`),
+* inspect saved databases with `scripts/inspect_database.py`,
+* run automated tests for core logic, CLI behavior, validation, database, and pandas output.
 
-It still does not use OpenAI API, Streamlit, FastAPI, Docker, or RAG.
+It does **not** use OpenAI API, semantic matching, Streamlit, FastAPI, Docker, RAG, authentication, or production deployment.
 
-The project currently:
-
-* reads a resume from a text file,
-* reads multiple job descriptions from a folder,
-* loads a skills taxonomy from JSON,
-* loads skill aliases from JSON,
-* finds skills mentioned in the resume and job descriptions,
-* compares job skills against resume skills,
-* identifies missing skills for each job,
-* counts recurring gaps across all jobs,
-* writes a markdown gap report,
-* writes CSV summary files,
-* prints a clean terminal summary,
-* includes tests for core logic, output writers, CLI behavior, input validation, database output, and pandas summaries.
+There is **no web UI yet**. Version 3 prepares the backend so a future local UI can reuse the same analysis workflow.
 
 ## Project structure
 
@@ -47,28 +53,33 @@ internship-fit-gap-analyzer/
     skills_taxonomy.json
   docs/
     LIMITATIONS.md
+    PRODUCT_ROADMAP.md
     VERSION_1_CHECKLIST.md
     VERSION_2_CHECKPOINT.md
     VERSION_2_TEST_COMMANDS.md
+    VERSION_3_CHECKPOINT.md
   scripts/
     inspect_database.py
   src/
+    analysis_runner.py     reusable analysis workflow (CLI + future UI)
     compare_resume.py
     console_summary.py
     csv_writer.py
     database.py
     extract_keywords.py
-    main.py
+    main.py                CLI entry point
     pandas_summary.py
     report_writer.py
     summarize_gaps.py
   tests/
+    test_analysis_runner.py
     test_cli.py
     test_core_logic.py
     test_database.py
     test_inspect_database.py
     test_output_writers.py
     test_pandas_summary.py
+    test_single_job_analysis.py
     test_validation.py
   LEARNING_LOG.md
   README.md
@@ -78,175 +89,126 @@ internship-fit-gap-analyzer/
 
 ## How it works
 
-At a high level, the project follows this flow:
-
 ```text
-resume text + job descriptions + skills taxonomy + skill aliases
+resume + job description(s) + taxonomy + aliases
 → find skills in resume
-→ find skills in each job description
-→ compare job skills against resume skills
-→ identify gaps
+→ find skills in each job
+→ compare job skills vs resume skills → gaps per job
 → count recurring gaps
-→ write markdown and CSV outputs
-→ optionally save to SQLite
-→ optionally write pandas summary CSV files
+→ write markdown + CSV outputs
+→ optionally SQLite + pandas summaries
+→ terminal summary (CLI)
 ```
+
+Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. Backend functions can also analyze pasted text without the CLI (for a future UI).
 
 ## Setup
 
-This project uses Python 3.
-
-Install dependencies with:
+Python 3 is required.
 
 ```bash
 python3 -m pip install -r requirements.txt
 ```
 
-The main external dependency is:
+Main external dependency: **pandas** (optional summary CSVs only).
 
-* pandas
-
-## Input files
+## Input files and privacy
 
 ### Public sample inputs (tracked in Git, used by default)
 
-**`data/resume/sample_resume.txt`**
-
-Safe sample resume used when you run `python3 src/main.py` with no arguments.
-
-**`data/sample_jobs/`**
-
-Public sample job descriptions tracked in Git and used by default (`python3 src/main.py` reads from this folder).
+| Path | Role |
+|------|------|
+| `data/resume/sample_resume.txt` | Default resume when you run `python3 src/main.py` |
+| `data/sample_jobs/` | Default job descriptions folder |
 
 ### Private local inputs (Git-ignored)
 
-**`data/resume/resume.txt`**
+| Path | Role |
+|------|------|
+| `data/resume/resume.txt` | Your real resume — use `--resume data/resume/resume.txt` |
+| `data/jobs/` | Your real job `.txt` files — use `--jobs data/jobs` |
 
-Optional private real resume. Pass with `--resume data/resume/resume.txt`.
+**Do not commit** private resume or job files, generated files under `data/outputs/`, or SQLite `.db` files.
 
-**`data/jobs/`**
+### Taxonomy and aliases
 
-Folder for private real job descriptions. All `.txt` files here are ignored by Git. Pass with `--jobs data/jobs` to analyze them.
+**`data/skills_taxonomy.json`** — official skills grouped by category.
 
-Do not commit private resume or job files. Generated outputs in `data/outputs/` and SQLite database files (`.db`) are also ignored by Git and should not be committed.
+**`data/skill_aliases.json`** — alternate phrases mapped to official skill names.
 
-### `data/skills_taxonomy.json`
+## How to run (main commands)
 
-This file defines the official skills the analyzer looks for.
+Run all commands from the **project root**.
 
-Example:
-
-```json
-{
-  "programming": ["python", "matlab", "typescript", "javascript", "java"],
-  "data": ["sql", "pandas", "jupyter", "excel"]
-}
-```
-
-### `data/skill_aliases.json`
-
-This file defines alternate phrases for official skill names.
-
-Example:
-
-```json
-{
-  "fastapi": ["fastapi", "fast api"],
-  "rag": ["rag", "retrieval-augmented generation", "retrieval augmented generation"]
-}
-```
-
-The official skill name is what appears in the output. The aliases are extra phrases the program searches for.
-
-## Source files
-
-### `src/main.py`
-
-Controls the full program workflow.
-
-It reads command-line options, validates inputs, loads files, analyzes jobs, writes outputs, and prints the terminal summary.
-
-### `src/extract_keywords.py`
-
-Finds taxonomy skills in a block of text.
-
-It uses skill aliases and basic pattern matching to reduce some false matches.
-
-### `src/compare_resume.py`
-
-Compares job skills against resume skills and returns the missing skills.
-
-### `src/summarize_gaps.py`
-
-Counts how often each missing skill appears across all analyzed jobs.
-
-### `src/report_writer.py`
-
-Writes the markdown report:
-
-```text
-data/outputs/gap_report.md
-```
-
-### `src/csv_writer.py`
-
-Writes CSV output files:
-
-```text
-data/outputs/gap_summary.csv
-data/outputs/recurring_gaps.csv
-```
-
-### `src/console_summary.py`
-
-Prints a clean terminal summary after the analysis runs.
-
-### `src/database.py`
-
-Provides optional SQLite helpers for saving analysis runs, job-level results, and skill gaps.
-
-### `src/pandas_summary.py`
-
-Provides optional pandas helpers for loading gap CSV data and writing extra summary CSV files.
-
-### `scripts/inspect_database.py`
-
-Standalone script for inspecting a SQLite database created with `--database`.
-
-Example:
-
-```bash
-python3 scripts/inspect_database.py data/outputs/analysis_results.db
-```
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Canonical limitations and privacy notes |
-| [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Current Version 2 feature summary |
-| [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) | Full smoke-test command sequence |
-| [`docs/VERSION_1_CHECKLIST.md`](docs/VERSION_1_CHECKLIST.md) | Historical Version 1 MVP milestone |
-| [`VERSION2_PLAN.md`](VERSION2_PLAN.md) | Historical Version 2 planning notes |
-| [`LIMITATIONS.md`](LIMITATIONS.md) | Pointer to `docs/LIMITATIONS.md` |
-
-## How to run
-
-From the project root folder, run:
+### Default sample-data run
 
 ```bash
 python3 src/main.py
 ```
 
-By default, the analyzer runs on the sample resume and sample job descriptions.
+Uses `data/resume/sample_resume.txt` and all `.txt` files in `data/sample_jobs/`.
 
-To run it with private local inputs:
+### Private local resume and jobs folder
 
 ```bash
 python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
 ```
 
-Expected terminal output will look similar to:
+### Single job file (Version 3)
+
+Analyze one job description file without a jobs folder:
+
+```bash
+python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
+```
+
+Do **not** pass `--jobs` and `--job-file` together; the program exits with a clear error.
+
+### SQLite output
+
+```bash
+python3 src/main.py --database data/outputs/analysis_results.db
+```
+
+### pandas summary CSVs
+
+```bash
+python3 src/main.py --pandas-summary
+```
+
+Creates `gap_categories_pandas.csv` and `top_recurring_gaps_pandas.csv` under the outputs folder.
+
+### SQLite + pandas combined
+
+```bash
+python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary
+```
+
+### Inspect a saved database
+
+After a run with `--database`:
+
+```bash
+python3 scripts/inspect_database.py data/outputs/analysis_results.db
+```
+
+### Run tests
+
+```bash
+python3 run_tests.py
+```
+
+Expected final line: `All tests passed.`
+
+### Help and other options
+
+```bash
+python3 src/main.py --help
+python3 src/main.py --top-gaps 3
+python3 src/main.py --outputs data/outputs_test
+```
+
+Example terminal output:
 
 ```text
 Analysis complete.
@@ -256,7 +218,6 @@ Jobs analyzed: 1
 Top recurring gaps:
 1. sql (data): 1 job(s)
 2. pandas (data): 1 job(s)
-3. langchain (ai_ml): 1 job(s)
 
 Output files:
 - data/outputs/gap_report.md
@@ -266,231 +227,71 @@ Output files:
 
 ## Command-line options
 
-The project supports optional command-line arguments.
+| Option | Purpose |
+|--------|---------|
+| `--resume` | Path to resume text file |
+| `--jobs` | Folder of job description `.txt` files (folder mode) |
+| `--job-file` | Path to one job description file (single-job mode) |
+| `--taxonomy` | Skills taxonomy JSON path |
+| `--aliases` | Skill aliases JSON path |
+| `--outputs` | Output folder for reports and CSVs |
+| `--top-gaps` | Number of recurring gaps to show in the terminal |
+| `--database` | Optional SQLite database file path |
+| `--pandas-summary` | Create extra pandas summary CSV files |
 
-Show help:
+**Folder mode:** default, or explicit `--jobs data/sample_jobs`.
 
-```bash
-python3 src/main.py --help
-```
+**Single-job mode:** `--job-file path/to/job.txt` (do not also pass `--jobs`).
 
-Show only the top 3 recurring gaps in the terminal:
+## Source files (high level)
 
-```bash
-python3 src/main.py --top-gaps 3
-```
-
-Use a custom output folder:
-
-```bash
-python3 src/main.py --outputs data/outputs_test
-```
-
-Use private local inputs:
-
-```bash
-python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
-```
-
-Save analysis results to a SQLite database:
-
-```bash
-python3 src/main.py --database data/outputs/analysis_results.db
-```
-
-When `--database` is provided, the analyzer saves the run, job-level results, and skill gaps to a local SQLite database file.
-
-Create extra pandas-generated summary files:
-
-```bash
-python3 src/main.py --pandas-summary
-```
-
-This creates two additional CSV files:
-
-```text
-data/outputs/gap_categories_pandas.csv
-data/outputs/top_recurring_gaps_pandas.csv
-```
-
-Use SQLite and pandas summaries together:
-
-```bash
-python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary
-```
-
-Available options include:
-
-```text
---resume
---jobs
---taxonomy
---aliases
---outputs
---top-gaps
---database
---pandas-summary
-```
-
-Short descriptions:
-
-* `--resume` — path to the resume text file
-* `--jobs` — path to the folder containing job description `.txt` files
-* `--taxonomy` — path to the skills taxonomy JSON file
-* `--aliases` — path to the skill aliases JSON file
-* `--outputs` — path to the folder where output files should be saved
-* `--top-gaps` — number of top recurring gaps to show in the terminal summary
-* `--database` — optional path to a SQLite database file where analysis results should be saved
-* `--pandas-summary` — create extra pandas-generated summary CSV files
+| File | Role |
+|------|------|
+| `src/main.py` | Parses CLI arguments, calls the analysis runner, prints terminal summary |
+| `src/analysis_runner.py` | `run_analysis()`, `run_analysis_job_file()`, `run_single_job_analysis()` — shared workflow |
+| `src/extract_keywords.py` | Find taxonomy skills in text |
+| `src/compare_resume.py` | Job vs resume gap comparison |
+| `src/summarize_gaps.py` | Recurring gap counts |
+| `src/report_writer.py` / `src/csv_writer.py` | Markdown and CSV outputs |
+| `src/database.py` | Optional SQLite helpers |
+| `src/pandas_summary.py` | Optional pandas summary CSVs |
+| `scripts/inspect_database.py` | Inspect a saved `.db` file |
 
 ## Output files
 
-### `data/outputs/gap_report.md`
+| File | Description |
+|------|-------------|
+| `data/outputs/gap_report.md` | Human-readable report: recurring gaps, resume skills, per-job skills and gaps |
+| `data/outputs/gap_summary.csv` | One row per missing skill per job (`job_name`, `category`, `gap_skill`) |
+| `data/outputs/recurring_gaps.csv` | Gap counts across jobs (`gap_skill`, `category`, `count`) |
+| `data/outputs/gap_categories_pandas.csv` | Optional; gaps by category (`--pandas-summary`) |
+| `data/outputs/top_recurring_gaps_pandas.csv` | Optional; top recurring gaps (`--pandas-summary`) |
+| `data/outputs/analysis_results.db` | Optional; SQLite run history (`--database`) |
 
-A human-readable markdown report showing:
+## Documentation
 
-* most common skill gaps,
-* skills found in the resume,
-* skills found in each job,
-* gaps for each job.
-
-### `data/outputs/gap_summary.csv`
-
-A detailed CSV file with one row per missing skill per job.
-
-Columns:
-
-```text
-job_name,category,gap_skill
-```
-
-### `data/outputs/recurring_gaps.csv`
-
-A summary CSV file showing which missing skills appear most often across job descriptions.
-
-Columns:
-
-```text
-gap_skill,category,count
-```
-
-### `data/outputs/gap_categories_pandas.csv`
-
-A pandas-generated CSV that counts total gaps by category. Created only when `--pandas-summary` is used.
-
-Columns:
-
-```text
-category,gap_count
-```
-
-### `data/outputs/top_recurring_gaps_pandas.csv`
-
-A pandas-generated CSV showing the top recurring gaps. Created only when `--pandas-summary` is used.
-
-Columns:
-
-```text
-gap_skill,category,count
-```
-
-### `data/outputs/analysis_results.db`
-
-An optional SQLite database file created only when `--database` is used.
-
-This stores:
-
-* analysis runs,
-* job-level results,
-* skill gaps.
-
-## How to run tests
-
-Run all tests:
-
-```bash
-python3 run_tests.py
-```
-
-This runs:
-
-```text
-tests/test_core_logic.py
-tests/test_output_writers.py
-tests/test_cli.py
-tests/test_validation.py
-tests/test_database.py
-tests/test_pandas_summary.py
-tests/test_inspect_database.py
-```
-
-The tests currently check:
-
-* skill matching,
-* gap comparison,
-* recurring gap counting,
-* markdown and CSV output writing,
-* command-line behavior,
-* input validation,
-* SQLite database output,
-* pandas summary helpers and CLI behavior,
-* database inspection script.
-
-Expected final output:
-
-```text
-All tests passed.
-```
-
-## Commands to test
-
-See [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) for the full Version 2 smoke-test sequence.
-
-Quick check:
-
-```bash
-python3 run_tests.py
-python3 src/main.py
-```
+| Document | Purpose |
+|----------|---------|
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
+| [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
+| [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
+| [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) | Version 2 smoke-test sequence |
+| [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Future UI and milestone planning |
+| [`docs/VERSION_1_CHECKLIST.md`](docs/VERSION_1_CHECKLIST.md) | Version 1 MVP milestone |
+| [`LIMITATIONS.md`](LIMITATIONS.md) | Pointer to `docs/LIMITATIONS.md` |
 
 ## Current limitations
 
-This version uses rule-based keyword matching. It can miss skills when wording is not in the taxonomy or alias file, and it can make imperfect matches because it does not understand meaning or context.
+Rule-based matching can miss skills not in the taxonomy or aliases and may match keywords without real evidence. The tool does not judge overall job fit, seniority, or required vs. preferred skills.
 
-Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding.
+Optional SQLite and pandas features store and summarize results locally; they do not add semantic understanding.
 
-For a detailed explanation, see [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+Details: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Learning purpose
 
-This project is being built to improve my understanding of:
-
-* Python fundamentals,
-* file paths,
-* reading and writing files,
-* JSON,
-* dictionaries,
-* lists,
-* functions,
-* loops,
-* imports,
-* command-line arguments,
-* CSV writing,
-* simple testing,
-* project organization,
-* documentation,
-* Git/GitHub workflow.
-
-AI tools are helping me build and understand the code, but I am using the project to learn how the system works piece by piece and to develop more independent software-development fluency.
+This project supports learning Python, CLI design, testing, file I/O, JSON, project structure, documentation, Git workflow, and optional SQLite/pandas usage—while building something useful for internship search planning.
 
 ## Planned next steps
 
-Possible next improvements:
-
-* add more realistic job descriptions to `data/sample_jobs/`,
-* improve matching accuracy,
-* convert tests to pytest,
-* add OpenAI API structured extraction,
-* build a private web UI for tracking runs over time.
-
-The project will only move to later phases after the current version is stable and understandable.
+See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: finish Version 3 polish, keep the CLI stable, then consider a **local UI prototype** that calls the existing backend functions—not a full deployed app or AI pipeline yet.
