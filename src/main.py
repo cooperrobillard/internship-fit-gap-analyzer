@@ -8,33 +8,11 @@ import argparse
 # Import sys so we can exit with a clear error code when CLI input is invalid.
 import sys
 
-# Import Python's built-in json module.
-# This lets us convert JSON text into Python dictionaries/lists.
-import json
-
-# Import our skill-finding function from src/extract_keywords.py.
-from extract_keywords import find_skills
-
-# Import our gap-finding function from src/compare_resume.py.
-from compare_resume import find_gaps
-
-# Import our markdown report-writing function from src/report_writer.py.
-from report_writer import write_gap_report
-
-# Import our CSV-writing functions from src/csv_writer.py.
-from csv_writer import write_gap_csv, write_recurring_gap_csv
-
-# Import our recurring gap counting function from src/summarize_gaps.py.
-from summarize_gaps import count_recurring_gaps
+# Import the reusable analysis workflow for CLI and future UI code.
+from analysis_runner import run_analysis, validate_inputs
 
 # Import our terminal summary function from src/console_summary.py.
 from console_summary import print_run_summary
-
-# Import database helpers for optional SQLite saving.
-from database import initialize_database, save_analysis_results
-
-# Import pandas summary output helper for optional extra CSV files.
-from pandas_summary import write_pandas_summary_outputs
 
 # Default file and folder paths.
 #
@@ -120,238 +98,31 @@ def parse_args():
     return parser.parse_args()
 
 
-# Check that the project has the required input files and folders.
-#
-# These paths are passed in so the function works with either:
-# - the default paths
-# - custom paths from command-line arguments
-def validate_inputs(resume_path, taxonomy_path, aliases_path, jobs_folder):
-
-    # Create a list of files that must exist for the project to run.
-    required_files = [
-        resume_path,
-        taxonomy_path,
-        aliases_path,
-    ]
-
-    # Loop through each required file path.
-    for file_path in required_files:
-
-        # Check whether this file path actually exists.
-        if not file_path.exists():
-
-            # Stop the program with a clear error message.
-            raise FileNotFoundError(f"Missing required file: {file_path}")
-
-    # Check whether the jobs folder exists.
-    if not jobs_folder.exists():
-
-        # Stop the program if the jobs folder is missing.
-        raise FileNotFoundError(f"Missing jobs folder: {jobs_folder}")
-
-    # Check whether the jobs path is actually a folder.
-    if not jobs_folder.is_dir():
-
-        # Stop the program if the jobs path exists but is not a folder.
-        raise NotADirectoryError(
-            f"Expected a folder but found something else: {jobs_folder}"
-        )
-
-    # Find all .txt job files.
-    job_files = list(jobs_folder.glob("*.txt"))
-
-    # Check whether there is at least one job description file.
-    if not job_files:
-
-        # Stop the program if the jobs folder has no .txt files.
-        raise FileNotFoundError(
-            f"No .txt job description files found in: {jobs_folder}"
-        )
-
-
-# Check that the database path is a valid file location.
-#
-# SQLite needs a file path, not an existing folder.
-def validate_database_path(database_path):
-
-    # Stop the program if the user passed a folder instead of a file path.
-    if database_path.exists() and database_path.is_dir():
-        raise ValueError(
-            f"Database path must be a file, not a folder: {database_path}"
-        )
-
-
-# Define a helper function for reading text files.
-#
-# Input:
-# file_path: the location of a text file
-#
-# Output:
-# the text inside that file
-def load_text_file(file_path):
-
-    # Read the file and return its text.
-    return file_path.read_text(encoding="utf-8")
-
-
-# Define a helper function for reading JSON files.
-#
-# Input:
-# file_path: the location of a JSON file
-#
-# Output:
-# a Python dictionary or list created from the JSON text
-def load_json_file(file_path):
-
-    # Read the JSON file as plain text.
-    json_text = file_path.read_text(encoding="utf-8")
-
-    # Convert the JSON text into Python data.
-    try:
-        return json.loads(json_text)
-
-    # Stop with a clear message if the file is not valid JSON.
-    except json.JSONDecodeError as error:
-        raise ValueError(f"Invalid JSON in file: {file_path}") from error
-
-
-# Define a helper function that analyzes all job description files.
-#
-# Inputs:
-# job_folder: the folder where job .txt files are stored
-# resume_skills: the skills found in the resume
-# taxonomy: the skills taxonomy dictionary
-# aliases: the skill aliases dictionary
-#
-# Output:
-# a list of job result dictionaries
-def analyze_jobs(job_folder, resume_skills, taxonomy, aliases):
-
-    # Create an empty list to store the analysis results for all jobs.
-    job_results = []
-
-    # Find every .txt file inside the jobs folder.
-    job_files = job_folder.glob("*.txt")
-
-    # Loop through each job description file.
-    for job_file in job_files:
-
-        # Read the current job description file.
-        job_text = load_text_file(job_file)
-
-        # Find taxonomy skills that appear in this job description.
-        job_skills = find_skills(job_text, taxonomy, aliases)
-
-        # Compare this job's skills against the resume skills.
-        skill_gaps = find_gaps(job_skills, resume_skills)
-
-        # Store this job's results in a dictionary.
-        job_result = {
-            "job_name": job_file.name,
-            "job_skills": job_skills,
-            "skill_gaps": skill_gaps,
-        }
-
-        # Add this job's result dictionary to the full job_results list.
-        job_results.append(job_result)
-
-    # Return all job analysis results.
-    return job_results
-
-
 # Define the main workflow for the program.
 #
-# This function controls the full project flow:
-# command-line options -> load inputs -> analyze jobs -> write outputs.
+# This function reads CLI options, runs the shared analysis workflow,
+# and prints the terminal summary.
 def main():
 
     # Read command-line options.
     args = parse_args()
 
-    # Convert command-line path strings into Path objects.
-    resume_path = Path(args.resume)
-    jobs_folder = Path(args.jobs)
-    taxonomy_path = Path(args.taxonomy)
-    aliases_path = Path(args.aliases)
-    outputs_folder = Path(args.outputs)
-    database_path = Path(args.database) if args.database is not None else None
-
-    # Build output file paths using the selected outputs folder.
-    gap_report_output_path = outputs_folder / "gap_report.md"
-    gap_csv_output_path = outputs_folder / "gap_summary.csv"
-    recurring_gaps_csv_output_path = outputs_folder / "recurring_gaps.csv"
-
-    # Check that required files and folders exist before running the analysis.
-    validate_inputs(resume_path, taxonomy_path, aliases_path, jobs_folder)
-
-    # Load the resume text.
-    resume_text = load_text_file(resume_path)
-
-    # Load the skills taxonomy dictionary.
-    taxonomy = load_json_file(taxonomy_path)
-
-    # Load the skill aliases dictionary.
-    aliases = load_json_file(aliases_path)
-
-    # Find skills from the taxonomy that appear in the resume.
-    resume_skills = find_skills(resume_text, taxonomy, aliases)
-
-    # Analyze all job descriptions.
-    job_results = analyze_jobs(jobs_folder, resume_skills, taxonomy, aliases)
-
-    # Count which skill gaps appear most often across all jobs.
-    recurring_gaps = count_recurring_gaps(job_results)
-
-    # Write the markdown gap report.
-    write_gap_report(gap_report_output_path, resume_skills, job_results, recurring_gaps)
-
-    # Write the detailed gap CSV summary.
-    write_gap_csv(gap_csv_output_path, job_results)
-
-    # Write the recurring gaps CSV summary.
-    write_recurring_gap_csv(recurring_gaps_csv_output_path, recurring_gaps)
-
-    # Store the output file paths in a list.
-    output_paths = [
-        gap_report_output_path,
-        gap_csv_output_path,
-        recurring_gaps_csv_output_path,
-    ]
-
-    # Create extra pandas summary CSV files only if the user passed --pandas-summary.
-    if args.pandas_summary:
-        pandas_output_paths = write_pandas_summary_outputs(
-            gap_summary_csv_path=gap_csv_output_path,
-            recurring_gaps_csv_path=recurring_gaps_csv_output_path,
-            outputs_folder=outputs_folder,
-        )
-
-        output_paths.extend(pandas_output_paths)
-
-    # Save results to SQLite only if the user passed --database.
-    if database_path is not None:
-        validate_database_path(database_path)
-        connection = initialize_database(database_path)
-
-        try:
-            save_analysis_results(
-                connection=connection,
-                resume_path=resume_path,
-                jobs_path=jobs_folder,
-                taxonomy_path=taxonomy_path,
-                aliases_path=aliases_path,
-                job_results=job_results,
-            )
-        finally:
-            connection.close()
-
-        output_paths.append(database_path)
+    # Run the shared analysis workflow.
+    results = run_analysis(
+        resume_path=args.resume,
+        jobs_folder=args.jobs,
+        taxonomy_path=args.taxonomy,
+        aliases_path=args.aliases,
+        outputs_folder=args.outputs,
+        database_path=args.database,
+        pandas_summary=args.pandas_summary,
+    )
 
     # Print a clean summary of the run in the terminal.
     print_run_summary(
-        job_results,
-        recurring_gaps,
-        output_paths,
+        results["job_results"],
+        results["recurring_gaps"],
+        results["output_paths"],
         max_gaps=args.top_gaps,
     )
 
