@@ -1281,3 +1281,11 @@ Tested with:
 - Added or updated tests for invalid CLI inputs such as missing files or folders.
 - Practiced defensive programming with validation, nonzero exit behavior, and preserving successful CLI behavior.
 - Confirmed the full test suite and main CLI smoke tests still pass after the change.
+
+## Dev Chat 3 - Product Roadmap Planning
+
+- Added `docs/PRODUCT_ROADMAP.md` to define a phased future direction for the Internship Fit & Skill-Gap Analyzer.
+- Planned a conservative path from the current CLI/data-analysis project toward a future private web UI.
+- Defined possible Version 3, Version 4, Version 5, and Version 6 milestones without implementing premature features.
+- Compared future UI and deployment options while keeping privacy, testing, and learning goals central.
+- Practiced separating product planning from implementation so the project does not overbuild too early.
