@@ -1313,3 +1313,11 @@ Tested with:
 - Practiced designing CLI options, handling conflicting arguments, and testing user-facing command behavior.
 - Preserved the existing folder-based job analysis workflow while preparing the project for a future paste/upload UI.
 - Confirmed the full test suite and main smoke-test commands still pass after the change.
+
+## Dev Chat 3 - Version 3 Documentation Update
+
+- Updated project documentation to reflect the current Version 3 CLI/backend workflow.
+- Documented the reusable analysis runner, single-job analysis support, and `--job-file` command.
+- Created or updated a Version 3 checkpoint document explaining how the project is preparing for future UI work without adding a UI yet.
+- Practiced keeping documentation aligned with actual implemented features instead of overstating the project.
+- Confirmed the full test suite and main CLI smoke commands still pass after the documentation update.
