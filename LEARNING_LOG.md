@@ -1321,3 +1321,11 @@ Tested with:
 - Created or updated a Version 3 checkpoint document explaining how the project is preparing for future UI work without adding a UI yet.
 - Practiced keeping documentation aligned with actual implemented features instead of overstating the project.
 - Confirmed the full test suite and main CLI smoke commands still pass after the documentation update.
+
+## Dev Chat 3 - Structured Analysis Results
+
+- Cleaned up the reusable analysis runner so it returns clearer structured results for future UI use.
+- Practiced designing simple Python dictionaries/lists that can be inspected directly by tests and future interface code.
+- Preserved the existing CLI behavior while making the backend easier to call from non-CLI workflows.
+- Added or updated tests to check the returned analysis result directly.
+- Confirmed the full test suite, default CLI run, single-job CLI run, and SQLite/pandas smoke tests still pass.
