@@ -1289,3 +1289,11 @@ Tested with:
 - Defined possible Version 3, Version 4, Version 5, and Version 6 milestones without implementing premature features.
 - Compared future UI and deployment options while keeping privacy, testing, and learning goals central.
 - Practiced separating product planning from implementation so the project does not overbuild too early.
+
+## Dev Chat 3 - Reusable Analysis Runner
+
+- Refactored the project toward a cleaner backend structure by creating a reusable analysis workflow for the current CLI.
+- Preserved the existing command-line behavior while making the analysis logic easier for future UI code to call.
+- Practiced separating CLI argument handling from core application logic.
+- Added or updated tests to confirm the reusable analysis workflow works and the existing CLI behavior still passes.
+- Confirmed the full test suite and main smoke-test commands still pass after the refactor.
