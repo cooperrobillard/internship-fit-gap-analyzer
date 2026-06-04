@@ -27,6 +27,10 @@ def test_run_single_job_analysis_with_pasted_job_text():
     assert isinstance(results["resume_skills"], dict)
     assert isinstance(results["job_result"]["skill_gaps"], dict)
     assert isinstance(results["recurring_gaps"], list)
+    assert results["analysis_mode"] == "single_text"
+    assert len(results["jobs"]) == 1
+    assert results["jobs"][0]["job_name"] == "Pasted internship posting"
+    assert results["output_files"] == []
 
 
 def test_run_single_job_analysis_with_resume_and_job_files():
@@ -43,6 +47,8 @@ def test_run_single_job_analysis_with_resume_and_job_files():
         "data/sample_jobs/sample_ai_engineering_internship.txt"
     )
     assert len(results["recurring_gaps"]) >= 1
+    assert results["analysis_mode"] == "single_file"
+    assert results["jobs"][0]["matched_skills_count"] >= 1
 
 
 def test_analyze_job_text_matches_folder_workflow_shape():

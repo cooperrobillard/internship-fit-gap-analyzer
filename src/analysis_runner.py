@@ -2,6 +2,17 @@
 #
 # This module runs validation, analysis, and output writing.
 # It returns structured results instead of printing to the terminal.
+#
+# Main return shape (run_analysis / run_analysis_job_file / run_single_job_analysis):
+#   jobs_analyzed_count  - int
+#   jobs                 - list of per-job UI-friendly dicts (see _format_job_for_ui)
+#   job_results          - raw per-job dicts (job_name, job_skills, skill_gaps)
+#   resume_skills        - dict of skills found in the resume, by category
+#   recurring_gaps       - list of {gap_skill, category, count}
+#   output_paths         - list of Path objects (empty for run_single_job_analysis)
+#   output_files         - same paths as strings
+#   analysis_mode        - "folder", "single_file", or "single_text"
+#   plus input path fields (resume_path, jobs_folder, job_path, etc.)
 from pathlib import Path
 import json
 
@@ -64,6 +75,80 @@ def load_json_file(file_path):
 
     except json.JSONDecodeError as error:
         raise ValueError(f"Invalid JSON in file: {file_path}") from error
+
+
+def _count_skills_by_category(skills_by_category):
+
+    skill_count = 0
+
+    for skill_list in skills_by_category.values():
+        skill_count += len(skill_list)
+
+    return skill_count
+
+
+def _format_job_for_ui(job_result):
+    """
+    Build a simple per-job summary for future UI display.
+
+    matched_skills and missing_skills stay grouped by category.
+    """
+    matched_skills = job_result["job_skills"]
+    missing_skills = job_result["skill_gaps"]
+
+    return {
+        "job_name": job_result["job_name"],
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills,
+        "matched_skills_count": _count_skills_by_category(matched_skills),
+        "missing_skills_count": _count_skills_by_category(missing_skills),
+    }
+
+
+def _build_analysis_result(
+    analysis_mode,
+    resume_skills,
+    job_results,
+    recurring_gaps,
+    output_paths,
+    taxonomy_path,
+    aliases_path,
+    resume_path=None,
+    jobs_folder=None,
+    job_path=None,
+    job_name=None,
+    outputs_folder=None,
+    database_path=None,
+):
+    """Combine raw analysis data into one predictable result dictionary."""
+    output_paths = list(output_paths)
+    jobs_analyzed_count = len(job_results)
+
+    result = {
+        "analysis_mode": analysis_mode,
+        "jobs_analyzed_count": jobs_analyzed_count,
+        "jobs": [_format_job_for_ui(job_result) for job_result in job_results],
+        "resume_skills": resume_skills,
+        "job_results": job_results,
+        "recurring_gaps": recurring_gaps,
+        "output_paths": output_paths,
+        "output_files": [str(path) for path in output_paths],
+        "taxonomy_path": Path(taxonomy_path),
+        "aliases_path": Path(aliases_path),
+        "resume_path": Path(resume_path) if resume_path is not None else None,
+        "jobs_folder": Path(jobs_folder) if jobs_folder is not None else None,
+        "job_path": Path(job_path) if job_path is not None else None,
+        "outputs_folder": Path(outputs_folder) if outputs_folder is not None else None,
+        "database_path": Path(database_path) if database_path is not None else None,
+    }
+
+    if job_name is not None:
+        result["job_name"] = job_name
+
+    if len(job_results) == 1:
+        result["job_result"] = job_results[0]
+
+    return result
 
 
 def analyze_job_text(job_text, job_name, resume_skills, taxonomy, aliases):
@@ -181,19 +266,20 @@ def run_single_job_analysis(
         job_text_loaded, job_name_used, resume_skills, taxonomy, aliases
     )
     recurring_gaps = count_recurring_gaps([job_result])
+    analysis_mode = "single_text" if job_text is not None else "single_file"
 
-    return {
-        "resume_path": resume_path,
-        "job_path": job_path,
-        "job_name": job_name_used,
-        "taxonomy_path": taxonomy_path,
-        "aliases_path": aliases_path,
-        "resume_skills": resume_skills,
-        "job_result": job_result,
-        "job_results": [job_result],
-        "recurring_gaps": recurring_gaps,
-        "jobs_analyzed_count": 1,
-    }
+    return _build_analysis_result(
+        analysis_mode=analysis_mode,
+        resume_skills=resume_skills,
+        job_results=[job_result],
+        recurring_gaps=recurring_gaps,
+        output_paths=[],
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        resume_path=resume_path,
+        job_path=job_path,
+        job_name=job_name_used,
+    )
 
 
 def _write_analysis_outputs(
@@ -307,20 +393,21 @@ def run_analysis_job_file(
         pandas_summary=pandas_summary,
     )
 
-    return {
-        "resume_path": resume_path,
-        "job_path": job_path,
-        "jobs_folder": job_path.parent,
-        "taxonomy_path": taxonomy_path,
-        "aliases_path": aliases_path,
-        "outputs_folder": outputs_folder,
-        "database_path": database_path,
-        "resume_skills": single_job_results["resume_skills"],
-        "job_results": single_job_results["job_results"],
-        "recurring_gaps": single_job_results["recurring_gaps"],
-        "output_paths": output_paths,
-        "jobs_analyzed_count": single_job_results["jobs_analyzed_count"],
-    }
+    return _build_analysis_result(
+        analysis_mode="single_file",
+        resume_skills=single_job_results["resume_skills"],
+        job_results=single_job_results["job_results"],
+        recurring_gaps=single_job_results["recurring_gaps"],
+        output_paths=output_paths,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        resume_path=resume_path,
+        jobs_folder=job_path.parent,
+        job_path=job_path,
+        job_name=single_job_results.get("job_name"),
+        outputs_folder=outputs_folder,
+        database_path=database_path,
+    )
 
 
 def run_analysis(
@@ -373,16 +460,16 @@ def run_analysis(
         pandas_summary=pandas_summary,
     )
 
-    return {
-        "resume_path": resume_path,
-        "jobs_folder": jobs_folder,
-        "taxonomy_path": taxonomy_path,
-        "aliases_path": aliases_path,
-        "outputs_folder": outputs_folder,
-        "database_path": database_path,
-        "resume_skills": resume_skills,
-        "job_results": job_results,
-        "recurring_gaps": recurring_gaps,
-        "output_paths": output_paths,
-        "jobs_analyzed_count": len(job_results),
-    }
+    return _build_analysis_result(
+        analysis_mode="folder",
+        resume_skills=resume_skills,
+        job_results=job_results,
+        recurring_gaps=recurring_gaps,
+        output_paths=output_paths,
+        taxonomy_path=taxonomy_path,
+        aliases_path=aliases_path,
+        resume_path=resume_path,
+        jobs_folder=jobs_folder,
+        outputs_folder=outputs_folder,
+        database_path=database_path,
+    )

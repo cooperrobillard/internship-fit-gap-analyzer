@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 
 sys.path.append(str(Path("src")))
 
-from analysis_runner import run_analysis, validate_inputs
+from analysis_runner import run_analysis, run_analysis_job_file, validate_inputs
 
 
 def test_run_analysis_returns_structured_results():
@@ -35,6 +35,53 @@ def test_run_analysis_returns_structured_results():
         assert gap_summary_path.exists()
         assert recurring_gaps_path.exists()
         assert gap_report_path in results["output_paths"]
+
+        _assert_structured_result_shape(results, expected_mode="folder")
+
+
+def test_run_analysis_job_file_returns_structured_results():
+
+    with TemporaryDirectory() as temp_folder:
+        output_folder = Path(temp_folder) / "outputs"
+
+        results = run_analysis_job_file(
+            resume_path=Path("data/resume/sample_resume.txt"),
+            job_path=Path("data/sample_jobs/sample_ai_engineering_internship.txt"),
+            taxonomy_path=Path("data/skills_taxonomy.json"),
+            aliases_path=Path("data/skill_aliases.json"),
+            outputs_folder=output_folder,
+        )
+
+        assert results["analysis_mode"] == "single_file"
+        assert results["jobs_analyzed_count"] == 1
+        _assert_structured_result_shape(results, expected_mode="single_file")
+        assert results["jobs"][0]["job_name"] == "sample_ai_engineering_internship.txt"
+        assert results["jobs"][0]["missing_skills_count"] >= 1
+
+
+def _assert_structured_result_shape(results, expected_mode):
+
+    assert results["analysis_mode"] == expected_mode
+    assert results["jobs_analyzed_count"] == len(results["jobs"])
+    assert results["jobs_analyzed_count"] == len(results["job_results"])
+    assert isinstance(results["resume_skills"], dict)
+    assert isinstance(results["recurring_gaps"], list)
+    assert isinstance(results["output_files"], list)
+    assert len(results["output_files"]) == len(results["output_paths"])
+
+    for gap in results["recurring_gaps"]:
+        assert "gap_skill" in gap
+        assert "category" in gap
+        assert "count" in gap
+
+    for job in results["jobs"]:
+        assert "job_name" in job
+        assert "matched_skills" in job
+        assert "missing_skills" in job
+        assert "matched_skills_count" in job
+        assert "missing_skills_count" in job
+        assert isinstance(job["matched_skills"], dict)
+        assert isinstance(job["missing_skills"], dict)
 
 
 def test_run_analysis_with_database_and_pandas_summary():
@@ -83,6 +130,7 @@ def test_validate_inputs_still_available_from_main():
 
 if __name__ == "__main__":
     test_run_analysis_returns_structured_results()
+    test_run_analysis_job_file_returns_structured_results()
     test_run_analysis_with_database_and_pandas_summary()
     test_validate_inputs_still_available_from_main()
     print("All analysis runner tests passed.")
