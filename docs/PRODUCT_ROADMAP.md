@@ -78,6 +78,8 @@ Possible work (pick small slices per branch):
 
 **Goal:** Prove that the analysis workflow feels useful in a browser **on localhost only**.
 
+Detailed plan: [`LOCAL_UI_PLAN.md`](LOCAL_UI_PLAN.md). Version 3 completion: [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md).
+
 Likely direction (to be chosen after Version 3):
 
 - **Streamlit** or a **minimal FastAPI/Flask** app that reads local files or pasted text and displays gaps and recurring summaries.
