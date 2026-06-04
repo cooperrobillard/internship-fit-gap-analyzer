@@ -1274,3 +1274,10 @@ Tested with:
 - Summarized the project purpose, Version 1 MVP, Version 2 SQLite/pandas additions, testing coverage, privacy design, limitations, and future directions.
 - Practiced documenting technical work honestly without overstating the analyzer as AI-powered or production-ready.
 - Confirmed the project still passes the full test suite after the documentation update.
+
+## Dev Chat 3 - CLI Error Handling Polish
+
+- Improved the command-line interface so common invalid input cases produce clearer user-facing error messages.
+- Added or updated tests for invalid CLI inputs such as missing files or folders.
+- Practiced defensive programming with validation, nonzero exit behavior, and preserving successful CLI behavior.
+- Confirmed the full test suite and main CLI smoke tests still pass after the change.
