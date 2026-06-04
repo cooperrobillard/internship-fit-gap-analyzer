@@ -1242,3 +1242,28 @@ Tested with:
 - `python3 src/main.py --pandas-summary`
 - `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
 - `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
+
+## Cleaned up public/private data organization
+
+Completed a final repo hygiene cleanup for Version 2.
+
+What I cleaned up:
+- Stopped tracking `.DS_Store` files.
+- Stopped tracking legacy sample job files in `data/jobs/`.
+- Confirmed `data/jobs/` is now treated as a private local folder.
+- Confirmed `data/sample_jobs/` is the tracked public sample jobs folder.
+- Updated documentation so the data layout is clearer.
+- Confirmed generated outputs and SQLite database files stay ignored.
+
+Key concepts:
+- `.gitignore` prevents new ignored files from being tracked, but already-tracked files need `git rm --cached`.
+- `git rm --cached` removes a file from Git tracking while keeping it on the local computer.
+- Public sample data and private local data should be clearly separated in a portfolio repo.
+- Clean repo hygiene makes future development safer and easier to understand.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --pandas-summary`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
