@@ -1,6 +1,6 @@
 # Internship Fit & Skill-Gap Analyzer
 
-A pure-Python tool that compares internship job descriptions against a resume, identifies skill gaps, and summarizes recurring learning priorities across multiple roles.
+A Python command-line tool that compares internship job descriptions against a resume, identifies skill gaps, and summarizes recurring learning priorities across multiple roles.
 
 This project is being built as both a practical internship-search tool and a learning project to strengthen my Python, software-development, testing, documentation, and data-analysis fundamentals.
 
@@ -116,7 +116,7 @@ Safe sample resume used when you run `python3 src/main.py` with no arguments.
 
 **`data/sample_jobs/`**
 
-Safe sample job descriptions used by default. The default jobs folder is `data/sample_jobs/`, not `data/jobs/`.
+Public sample job descriptions tracked in Git and used by default (`python3 src/main.py` reads from this folder).
 
 ### Private local inputs (Git-ignored)
 
@@ -126,11 +126,9 @@ Optional private real resume. Pass with `--resume data/resume/resume.txt`.
 
 **`data/jobs/`**
 
-Optional folder for private real job descriptions. Pass with `--jobs data/jobs`. New files here are ignored by Git.
+Folder for private real job descriptions. All `.txt` files here are ignored by Git. Pass with `--jobs data/jobs` to analyze them.
 
-A few legacy sample job files may still be tracked under `data/jobs/` from before public samples moved to `data/sample_jobs/`. They are not used by the default run. See [Untracking recommendations](#untracking-recommendations) below if you want to clean that up.
-
-Do not commit private resume or job files. Generated outputs in `data/outputs/` and SQLite database files are also ignored by Git.
+Do not commit private resume or job files. Generated outputs in `data/outputs/` and SQLite database files (`.db`) are also ignored by Git and should not be committed.
 
 ### `data/skills_taxonomy.json`
 
@@ -489,31 +487,10 @@ AI tools are helping me build and understand the code, but I am using the projec
 
 Possible next improvements:
 
-* improve sample data organization,
-* add more realistic job descriptions,
+* add more realistic job descriptions to `data/sample_jobs/`,
 * improve matching accuracy,
 * convert tests to pytest,
 * add OpenAI API structured extraction,
 * build a private web UI for tracking runs over time.
 
 The project will only move to later phases after the current version is stable and understandable.
-
-## Untracking recommendations
-
-These items are optional Git hygiene steps. They do not affect program behavior.
-
-**Mac metadata** (if `.DS_Store` files appear in `git ls-files`):
-
-```bash
-git rm --cached .DS_Store data/.DS_Store
-```
-
-**Legacy sample jobs under `data/jobs/`** (optional — only if you want that folder to be private-only in Git):
-
-```bash
-git rm --cached data/jobs/sample_ai_internship.txt
-git rm --cached data/jobs/sample_job_1.txt
-git rm --cached data/jobs/sample_job_2.txt
-```
-
-The files stay on disk; Git stops tracking them. Consider moving any still-useful samples into `data/sample_jobs/` first if you want them in the public repo.

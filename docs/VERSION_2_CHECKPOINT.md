@@ -11,7 +11,7 @@ For smoke-test commands, see [`VERSION_2_TEST_COMMANDS.md`](VERSION_2_TEST_COMMA
 | `data/resume/sample_resume.txt` | Public sample resume (default) |
 | `data/sample_jobs/` | Public sample job descriptions (default) |
 | `data/resume/resume.txt` | Private local resume (Git-ignored) |
-| `data/jobs/` | Private local job descriptions (Git-ignored for new files) |
+| `data/jobs/` | Private local job descriptions (Git-ignored; use `--jobs data/jobs`) |
 | `data/outputs/` | Generated reports, CSVs, and optional SQLite DB (Git-ignored) |
 
 ## Version 2 goal

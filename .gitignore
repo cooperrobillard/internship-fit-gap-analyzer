@@ -22,6 +22,3 @@ data/outputs/*.csv
 # Private local inputs (use --resume and --jobs to point at these)
 data/resume/resume.txt
 data/jobs/*.txt
-
-# Note: .txt files under data/jobs/ that were committed before this rule
-# was added remain tracked until removed with: git rm --cached <path>
