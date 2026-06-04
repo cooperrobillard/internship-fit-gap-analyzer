@@ -1150,3 +1150,25 @@ Tested with:
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db`
 - `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
+
+## Added Version 2 checkpoint documentation
+
+Added `docs/VERSION_2_CHECKPOINT.md` to summarize the current Version 2 project state.
+
+What I added:
+- A checkpoint document explaining the SQLite and pandas features added in Version 2.
+- A list of commands that should work.
+- A summary of current outputs.
+- A list of current limitations.
+- Possible next development directions.
+
+Key concepts:
+- A checkpoint document helps pause and stabilize a project after many changes.
+- Documentation should explain what the project currently does, not just what it may do later.
+- Version checkpoints help make future development safer and easier to understand.
+
+Tested with:
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
