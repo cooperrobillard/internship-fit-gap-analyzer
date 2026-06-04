@@ -1297,3 +1297,11 @@ Tested with:
 - Practiced separating CLI argument handling from core application logic.
 - Added or updated tests to confirm the reusable analysis workflow works and the existing CLI behavior still passes.
 - Confirmed the full test suite and main smoke-test commands still pass after the refactor.
+
+## Dev Chat 3 - Single-Job Analysis Support
+
+- Added backend support for analyzing a single job description against a resume.
+- Practiced preparing the project for a future UI without adding any UI framework yet.
+- Kept the analysis logic reusable and separate from folder-based CLI behavior.
+- Added or updated tests to confirm the single-job analysis workflow works directly from backend code.
+- Confirmed existing CLI behavior and the full test suite still pass after the change.
