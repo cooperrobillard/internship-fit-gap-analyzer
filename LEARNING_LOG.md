@@ -1172,3 +1172,25 @@ Tested with:
 - `python3 src/main.py`
 - `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
 - `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
+
+## Added combined Version 2 CLI test
+
+Added a CLI test that runs the analyzer with both `--database` and `--pandas-summary`.
+
+What I added:
+- A test that confirms normal markdown and CSV outputs are still created.
+- A test that confirms pandas summary CSV files are created.
+- A test that confirms the SQLite database file is created.
+- A check that the terminal output lists the expected files.
+
+Key concepts:
+- Integration tests check whether multiple features work together.
+- `TemporaryDirectory()` keeps test outputs isolated from real project files.
+- Testing combined CLI options helps prevent future changes from breaking optional features.
+
+Tested with:
+- `python3 tests/test_cli.py`
+- `python3 run_tests.py`
+- `python3 src/main.py`
+- `python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary`
+- `python3 scripts/inspect_database.py data/outputs/analysis_results.db`
