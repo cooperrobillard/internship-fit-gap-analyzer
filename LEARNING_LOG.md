@@ -1345,3 +1345,11 @@ Tested with:
 * Displayed safe sample-data analysis results in a simple visual interface.
 * Practiced adding a new UI dependency carefully while preserving existing CLI behavior and tests.
 * Confirmed the full test suite and CLI smoke commands still pass after the UI skeleton was added.
+
+## Dev Chat 4 - Pasted Job Description UI
+
+* Added a local-only Streamlit workflow for pasting one job description into the UI.
+* Kept the analysis connected to the reusable backend instead of duplicating skill-matching logic in the interface.
+* Used the safe sample resume as the default resume input while testing the pasted-job workflow.
+* Practiced separating UI input handling from backend analysis logic.
+* Confirmed the test suite and CLI smoke commands still pass after adding the pasted-job UI workflow.
