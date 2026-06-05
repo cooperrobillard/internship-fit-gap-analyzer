@@ -11,7 +11,7 @@ from database import initialize_database, insert_analysis_run, insert_job_result
 from database import insert_skill_gap
 from database import query_recurring_gaps
 from database import query_jobs_with_most_gaps
-from database import save_analysis_results
+from database import get_database_summary, save_analysis_results
 
 
 def table_exists(connection, table_name):
@@ -416,6 +416,68 @@ def test_query_jobs_with_most_gaps_returns_sorted_jobs():
         connection.close()
 
 
+def test_get_database_summary_when_file_missing():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "missing_analysis_results.db"
+
+        summary = get_database_summary(database_path)
+
+        assert summary["exists"] is False
+        assert summary["database_path"] == database_path
+
+
+def test_get_database_summary_returns_counts_and_gaps():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        fake_job_results = [
+            {
+                "job_name": "job_one.txt",
+                "job_skills": {
+                    "programming": ["python"],
+                    "data": ["sql", "pandas"],
+                },
+                "skill_gaps": {
+                    "programming": [],
+                    "data": ["sql"],
+                },
+            },
+            {
+                "job_name": "job_two.txt",
+                "job_skills": {
+                    "programming": ["python", "fastapi"],
+                    "data": ["sql"],
+                },
+                "skill_gaps": {
+                    "programming": ["fastapi"],
+                    "data": ["sql"],
+                },
+            },
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=fake_job_results,
+        )
+
+        connection.close()
+
+        summary = get_database_summary(database_path)
+
+        assert summary["exists"] is True
+        assert summary["analysis_runs_count"] == 1
+        assert summary["job_results_count"] == 2
+        assert summary["skill_gaps_count"] == 3
+        assert summary["latest_run_id"] == 1
+        assert summary["top_recurring_gaps"][0]["gap_skill"] == "sql"
+        assert summary["top_recurring_gaps"][0]["count"] == 2
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -425,5 +487,7 @@ if __name__ == "__main__":
     test_query_recurring_gaps_returns_sorted_counts()
     test_save_analysis_results_inserts_related_rows()
     test_query_jobs_with_most_gaps_returns_sorted_jobs()
+    test_get_database_summary_when_file_missing()
+    test_get_database_summary_returns_counts_and_gaps()
 
     print("All database tests passed.")

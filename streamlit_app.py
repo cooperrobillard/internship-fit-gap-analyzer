@@ -12,6 +12,7 @@ SRC_FOLDER = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_FOLDER))
 
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
+from database import get_database_summary
 
 # Safe sample inputs (public repo paths).
 SAMPLE_RESUME_PATH = REPO_ROOT / "data/resume/sample_resume.txt"
@@ -291,6 +292,84 @@ def build_recurring_gap_highlights(recurring_gaps):
     }
 
 
+SAVED_HISTORY_MISSING_MESSAGE = (
+    "No saved analysis database found yet. "
+    "Run an analysis with SQLite saving enabled to create one."
+)
+
+
+def build_saved_history_display(
+    database_path=DEFAULT_DATABASE_PATH,
+    repo_root=REPO_ROOT,
+):
+    """
+    Build a display-friendly saved-history summary from the SQLite database.
+
+    Returns a dict for render_saved_analysis_history() and for tests.
+    """
+    summary = get_database_summary(database_path)
+
+    if not summary["exists"]:
+        return {
+            "database_exists": False,
+            "missing_message": SAVED_HISTORY_MISSING_MESSAGE,
+        }
+
+    top_recurring_gaps = summary["top_recurring_gaps"]
+
+    return {
+        "database_exists": True,
+        "database_path_label": resume_path_label(summary["database_path"], repo_root),
+        "analysis_runs_count": summary["analysis_runs_count"],
+        "job_results_count": summary["job_results_count"],
+        "skill_gaps_count": summary["skill_gaps_count"],
+        "latest_run_id": summary["latest_run_id"],
+        "top_recurring_gaps_rows": recurring_gaps_to_rows(top_recurring_gaps),
+        "top_recurring_gaps_lines": format_recurring_gaps(top_recurring_gaps),
+        "has_top_recurring_gaps": len(top_recurring_gaps) > 0,
+    }
+
+
+def render_saved_analysis_history(st, display):
+    """Show a read-only summary of saved analysis runs in SQLite."""
+    st.subheader("Saved Analysis History")
+
+    if not display["database_exists"]:
+        st.info(display["missing_message"])
+        return
+
+    st.caption(f"Database file: `{display['database_path_label']}`")
+
+    runs_col, jobs_col, gaps_col = st.columns(3)
+
+    with runs_col:
+        st.metric("Analysis runs", display["analysis_runs_count"])
+
+    with jobs_col:
+        st.metric("Job results", display["job_results_count"])
+
+    with gaps_col:
+        st.metric("Saved skill gaps", display["skill_gaps_count"])
+
+    if display["latest_run_id"] is not None:
+        st.caption(f"Latest run ID: {display['latest_run_id']}")
+
+    st.markdown("**Top recurring gaps (latest run)**")
+
+    if display["has_top_recurring_gaps"]:
+        st.dataframe(
+            display["top_recurring_gaps_rows"],
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        with st.expander("View top recurring gaps as a text list"):
+            for line in display["top_recurring_gaps_lines"]:
+                st.write(line)
+    else:
+        st.info("No recurring gaps saved yet.")
+
+
 def build_display_summary(analysis_result):
     """
     Build a plain dict of display-friendly lists/strings from a backend result.
@@ -546,6 +625,9 @@ def main():
         render_analysis_results(st, display)
     elif input_mode == MODE_PASTE_JOB:
         st.write("Paste a job description above, then click **Analyze pasted job**.")
+
+    saved_history_display = build_saved_history_display()
+    render_saved_analysis_history(st, saved_history_display)
 
 
 if __name__ == "__main__":

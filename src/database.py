@@ -241,6 +241,74 @@ def query_recurring_gaps(connection, run_id):
     return recurring_gaps
 
 
+def get_latest_run_id(connection):
+    """Return the highest analysis run ID in the database, or None when empty."""
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT MAX(id) FROM analysis_runs;")
+    latest_run_id = cursor.fetchone()[0]
+
+    return latest_run_id
+
+
+def _count_table_rows(connection, table_name):
+    """Count rows in one of the analysis database tables."""
+    allowed_tables = {
+        "analysis_runs": "SELECT COUNT(*) FROM analysis_runs;",
+        "job_results": "SELECT COUNT(*) FROM job_results;",
+        "skill_gaps": "SELECT COUNT(*) FROM skill_gaps;",
+    }
+
+    if table_name not in allowed_tables:
+        raise ValueError(f"Unsupported table name: {table_name}")
+
+    cursor = connection.cursor()
+    cursor.execute(allowed_tables[table_name])
+
+    return cursor.fetchone()[0]
+
+
+def get_database_summary(database_path):
+    """
+    Read a simple summary from a SQLite analysis database file.
+
+    If the file does not exist, returns {"exists": False, "database_path": ...}.
+    Otherwise returns table counts and top recurring gaps from the latest run.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "exists": False,
+            "database_path": database_path,
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        analysis_runs_count = _count_table_rows(connection, "analysis_runs")
+        job_results_count = _count_table_rows(connection, "job_results")
+        skill_gaps_count = _count_table_rows(connection, "skill_gaps")
+        latest_run_id = get_latest_run_id(connection)
+
+        top_recurring_gaps = []
+
+        if latest_run_id is not None:
+            top_recurring_gaps = query_recurring_gaps(connection, latest_run_id)
+
+        return {
+            "exists": True,
+            "database_path": database_path,
+            "analysis_runs_count": analysis_runs_count,
+            "job_results_count": job_results_count,
+            "skill_gaps_count": skill_gaps_count,
+            "latest_run_id": latest_run_id,
+            "top_recurring_gaps": top_recurring_gaps,
+        }
+    finally:
+        connection.close()
+
+
 def query_jobs_with_most_gaps(connection, run_id):
     """
     Query job results for one analysis run, sorted by missing skills.

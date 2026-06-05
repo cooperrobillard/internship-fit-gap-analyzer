@@ -191,6 +191,44 @@ def test_store_analysis_result_saves_when_enabled():
         assert str(database_path) in save_message
 
 
+def test_build_saved_history_display_when_database_missing():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        display = module.build_saved_history_display(database_path)
+
+        assert display["database_exists"] is False
+        assert "sqlite saving enabled" in display["missing_message"].lower()
+
+
+def test_build_saved_history_display_when_database_exists():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_saved_history_display(
+            database_path,
+            repo_root=Path(temp_folder),
+        )
+
+        assert display["database_exists"] is True
+        assert display["analysis_runs_count"] == 1
+        assert display["job_results_count"] == 1
+        assert display["skill_gaps_count"] >= 1
+        assert display["has_top_recurring_gaps"] is True
+        assert len(display["top_recurring_gaps_rows"]) >= 1
+
+
 def test_resolve_resume_path_uses_sample_by_default():
     module = _load_streamlit_app_module()
 
@@ -222,5 +260,7 @@ if __name__ == "__main__":
     test_format_database_save_message_uses_repo_relative_path()
     test_store_analysis_result_skips_save_when_disabled()
     test_store_analysis_result_saves_when_enabled()
+    test_build_saved_history_display_when_database_missing()
+    test_build_saved_history_display_when_database_exists()
     test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")
