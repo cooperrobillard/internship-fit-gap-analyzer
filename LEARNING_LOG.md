@@ -1369,3 +1369,11 @@ Tested with:
 * Practiced separating display formatting from backend analysis logic.
 * Preserved the existing sample-job, pasted-job, and resume selector workflows.
 * Confirmed the test suite and CLI smoke commands still pass after the UI display polish.
+
+## Dev Chat 4 - Version 4 Local UI Checkpoint
+
+* Documented the completed Version 4 local Streamlit UI workflow.
+* Added a Version 4 checkpoint covering the UI skeleton, pasted job analysis, resume source selector, and results display polish.
+* Updated the local UI plan to reflect completed work and remaining limitations.
+* Practiced keeping project documentation aligned with actual completed features instead of future plans.
+* Confirmed the test suite and CLI smoke commands still pass after the documentation update.
