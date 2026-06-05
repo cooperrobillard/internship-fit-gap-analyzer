@@ -1377,3 +1377,11 @@ Tested with:
 * Updated the local UI plan to reflect completed work and remaining limitations.
 * Practiced keeping project documentation aligned with actual completed features instead of future plans.
 * Confirmed the test suite and CLI smoke commands still pass after the documentation update.
+
+## Dev Chat 5 - SQLite Save Option in Local UI
+
+- Started Version 5 by adding an optional SQLite save setting to the local Streamlit UI.
+- Connected the UI to the existing local database workflow instead of creating a separate persistence system.
+- Preserved the sample-job, pasted-job, resume selector, and results display workflows.
+- Practiced keeping generated database files out of Git while testing local persistence.
+- Confirmed the test suite, CLI smoke commands, database inspection workflow, and local UI still work after the change.
