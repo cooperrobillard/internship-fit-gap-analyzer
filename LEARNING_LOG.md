@@ -1385,3 +1385,11 @@ Tested with:
 - Preserved the sample-job, pasted-job, resume selector, and results display workflows.
 - Practiced keeping generated database files out of Git while testing local persistence.
 - Confirmed the test suite, CLI smoke commands, database inspection workflow, and local UI still work after the change.
+
+## Dev Chat 5 - Saved SQLite Summary in Local UI
+
+- Added a read-only saved-history summary to the local Streamlit UI.
+- Practiced reading from the existing local SQLite database without adding a separate persistence system.
+- Displayed basic saved-run information such as analysis runs, job results, saved skill gaps, and top recurring gaps.
+- Kept the feature local-only and avoided overbuilding a full history browser or comparison tool.
+- Confirmed the UI, CLI smoke commands, database inspection workflow, and test suite still work.
