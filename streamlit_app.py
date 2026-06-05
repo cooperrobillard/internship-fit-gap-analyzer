@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 SRC_FOLDER = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_FOLDER))
 
-from analysis_runner import run_single_job_analysis
+from analysis_runner import run_single_job_analysis, save_analysis_to_database
 
 # Safe sample inputs (public repo paths).
 SAMPLE_RESUME_PATH = REPO_ROOT / "data/resume/sample_resume.txt"
@@ -22,6 +22,7 @@ DEFAULT_JOB_PATH = (
 )
 DEFAULT_TAXONOMY_PATH = REPO_ROOT / "data/skills_taxonomy.json"
 DEFAULT_ALIASES_PATH = REPO_ROOT / "data/skill_aliases.json"
+DEFAULT_DATABASE_PATH = REPO_ROOT / "data/outputs/analysis_results.db"
 
 RESUME_SOURCE_SAMPLE = "sample"
 RESUME_SOURCE_PRIVATE = "private"
@@ -124,6 +125,46 @@ def validate_pasted_job_text(job_text):
         return False, "Job description cannot be empty. Paste some text first."
 
     return True, None
+
+
+def get_default_database_path(repo_root=REPO_ROOT):
+    """Return the default SQLite database path for UI saves."""
+    return Path(repo_root) / "data/outputs/analysis_results.db"
+
+
+def format_database_save_message(database_path, repo_root=REPO_ROOT):
+    """Build a short success message showing where the run was saved."""
+    database_path = Path(database_path)
+
+    try:
+        path_label = str(database_path.relative_to(repo_root))
+    except ValueError:
+        path_label = str(database_path)
+
+    return (
+        "Analysis saved to the local SQLite database. "
+        f"Database file: `{path_label}`"
+    )
+
+
+def store_analysis_result(
+    analysis_result,
+    save_to_database,
+    database_path=DEFAULT_DATABASE_PATH,
+):
+    """
+    Optionally save an analysis result for session state.
+
+    Returns (result, save_message). save_message is None when nothing was saved.
+    """
+    if not save_to_database:
+        return analysis_result, None
+
+    saved_path = save_analysis_to_database(analysis_result, database_path)
+    updated_result = dict(analysis_result)
+    updated_result["database_path"] = Path(saved_path)
+
+    return updated_result, format_database_save_message(saved_path)
 
 
 def run_pasted_job_analysis(
@@ -425,6 +466,23 @@ def main():
         horizontal=True,
     )
 
+    save_to_database = st.checkbox(
+        "Save this analysis to local SQLite database",
+        value=False,
+    )
+
+    def apply_analysis_result(analysis_result):
+        result, save_message = store_analysis_result(
+            analysis_result,
+            save_to_database=save_to_database,
+        )
+        st.session_state["analysis_result"] = result
+
+        if save_message:
+            st.session_state["database_save_message"] = save_message
+        else:
+            st.session_state.pop("database_save_message", None)
+
     resume_or_mode_changed = (
         st.session_state.get("last_input_mode") != input_mode
         or st.session_state.get("last_resume_source") != resume_source_key
@@ -435,11 +493,12 @@ def main():
         st.session_state["last_resume_source"] = resume_source_key
 
         if input_mode == MODE_SAMPLE_JOB:
-            st.session_state["analysis_result"] = run_sample_analysis(
-                resume_path=selected_resume_path
+            apply_analysis_result(
+                run_sample_analysis(resume_path=selected_resume_path)
             )
         else:
             st.session_state.pop("analysis_result", None)
+            st.session_state.pop("database_save_message", None)
 
     if input_mode == MODE_SAMPLE_JOB:
         st.info(
@@ -448,13 +507,13 @@ def main():
         )
 
         if st.button("Run sample analysis", type="primary"):
-            st.session_state["analysis_result"] = run_sample_analysis(
-                resume_path=selected_resume_path
+            apply_analysis_result(
+                run_sample_analysis(resume_path=selected_resume_path)
             )
 
         if "analysis_result" not in st.session_state:
-            st.session_state["analysis_result"] = run_sample_analysis(
-                resume_path=selected_resume_path
+            apply_analysis_result(
+                run_sample_analysis(resume_path=selected_resume_path)
             )
 
     else:
@@ -472,10 +531,15 @@ def main():
             if not is_valid:
                 st.error(error_message)
             else:
-                st.session_state["analysis_result"] = run_pasted_job_analysis(
-                    pasted_job_text,
-                    resume_path=selected_resume_path,
+                apply_analysis_result(
+                    run_pasted_job_analysis(
+                        pasted_job_text,
+                        resume_path=selected_resume_path,
+                    )
                 )
+
+    if st.session_state.get("database_save_message"):
+        st.success(st.session_state["database_save_message"])
 
     if "analysis_result" in st.session_state:
         display = build_display_summary(st.session_state["analysis_result"])

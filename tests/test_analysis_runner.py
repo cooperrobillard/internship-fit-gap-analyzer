@@ -5,7 +5,13 @@ from tempfile import TemporaryDirectory
 
 sys.path.append(str(Path("src")))
 
-from analysis_runner import run_analysis, run_analysis_job_file, validate_inputs
+from analysis_runner import (
+    run_analysis,
+    run_analysis_job_file,
+    run_single_job_analysis,
+    save_analysis_to_database,
+    validate_inputs,
+)
 
 
 def test_run_analysis_returns_structured_results():
@@ -107,6 +113,42 @@ def test_run_analysis_with_database_and_pandas_summary():
         assert (output_folder / "top_recurring_gaps_pandas.csv").exists()
 
 
+def test_save_analysis_to_database_for_single_job_file():
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        analysis_result = run_single_job_analysis(
+            resume_path=Path("data/resume/sample_resume.txt"),
+            job_path=Path("data/sample_jobs/sample_ai_engineering_internship.txt"),
+            taxonomy_path=Path("data/skills_taxonomy.json"),
+            aliases_path=Path("data/skill_aliases.json"),
+        )
+
+        saved_path = save_analysis_to_database(analysis_result, database_path)
+
+        assert saved_path == database_path
+        assert database_path.exists()
+
+
+def test_save_analysis_to_database_for_pasted_job_text():
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        analysis_result = run_single_job_analysis(
+            resume_path=Path("data/resume/sample_resume.txt"),
+            job_text="Internship role requiring Python, SQL, and pandas.",
+            job_name="Pasted job description",
+            taxonomy_path=Path("data/skills_taxonomy.json"),
+            aliases_path=Path("data/skill_aliases.json"),
+        )
+
+        save_analysis_to_database(analysis_result, database_path)
+
+        assert database_path.exists()
+
+
 def test_validate_inputs_still_available_from_main():
 
     # test_validation.py imports validate_inputs from main.py.
@@ -132,5 +174,7 @@ if __name__ == "__main__":
     test_run_analysis_returns_structured_results()
     test_run_analysis_job_file_returns_structured_results()
     test_run_analysis_with_database_and_pandas_summary()
+    test_save_analysis_to_database_for_single_job_file()
+    test_save_analysis_to_database_for_pasted_job_text()
     test_validate_inputs_still_available_from_main()
     print("All analysis runner tests passed.")

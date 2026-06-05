@@ -61,6 +61,65 @@ def validate_database_path(database_path):
         )
 
 
+def _resolve_jobs_path_for_database(analysis_result):
+    """Pick the jobs_path value stored with an analysis run."""
+    job_path = analysis_result.get("job_path")
+
+    if job_path is not None:
+        return Path(job_path)
+
+    jobs_folder = analysis_result.get("jobs_folder")
+
+    if jobs_folder is not None:
+        return Path(jobs_folder)
+
+    job_name = analysis_result.get("job_name")
+
+    if job_name is not None:
+        return job_name
+
+    job_results = analysis_result.get("job_results", [])
+
+    if job_results:
+        return job_results[0]["job_name"]
+
+    raise ValueError("Cannot determine jobs_path for database save.")
+
+
+def save_analysis_to_database(analysis_result, database_path):
+    """
+    Save a completed analysis result dictionary to SQLite.
+
+    Works with results from run_single_job_analysis, run_analysis,
+    or run_analysis_job_file. Returns the database file path used.
+    """
+    database_path = Path(database_path)
+    validate_database_path(database_path)
+
+    resume_path = analysis_result.get("resume_path")
+
+    if resume_path is None:
+        raise ValueError("Cannot save analysis without resume_path.")
+
+    jobs_path = _resolve_jobs_path_for_database(analysis_result)
+
+    connection = initialize_database(database_path)
+
+    try:
+        save_analysis_results(
+            connection=connection,
+            resume_path=resume_path,
+            jobs_path=jobs_path,
+            taxonomy_path=analysis_result["taxonomy_path"],
+            aliases_path=analysis_result["aliases_path"],
+            job_results=analysis_result["job_results"],
+        )
+    finally:
+        connection.close()
+
+    return database_path
+
+
 def load_text_file(file_path):
 
     return file_path.read_text(encoding="utf-8")

@@ -131,6 +131,66 @@ def test_skills_by_category_to_rows_returns_sorted_table_data():
     ]
 
 
+def test_get_default_database_path_points_to_outputs_db():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        repo_root = Path(temp_folder)
+        expected = repo_root / "data/outputs/analysis_results.db"
+
+        assert module.get_default_database_path(repo_root) == expected
+
+
+def test_format_database_save_message_uses_repo_relative_path():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        repo_root = Path(temp_folder)
+        database_path = repo_root / "data/outputs/analysis_results.db"
+
+        message = module.format_database_save_message(database_path, repo_root)
+
+        assert "data/outputs/analysis_results.db" in message
+        assert "saved" in message.lower()
+
+
+def test_store_analysis_result_skips_save_when_disabled():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        result, save_message = module.store_analysis_result(
+            analysis_result,
+            save_to_database=False,
+            database_path=database_path,
+        )
+
+        assert result == analysis_result
+        assert save_message is None
+        assert not database_path.exists()
+
+
+def test_store_analysis_result_saves_when_enabled():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        result, save_message = module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        assert database_path.exists()
+        assert result["database_path"] == database_path
+        assert save_message is not None
+        assert str(database_path) in save_message
+
+
 def test_resolve_resume_path_uses_sample_by_default():
     module = _load_streamlit_app_module()
 
@@ -158,5 +218,9 @@ if __name__ == "__main__":
     test_get_resume_source_choices_includes_private_when_present()
     test_build_recurring_gap_highlights_for_empty_list()
     test_skills_by_category_to_rows_returns_sorted_table_data()
+    test_get_default_database_path_points_to_outputs_db()
+    test_format_database_save_message_uses_repo_relative_path()
+    test_store_analysis_result_skips_save_when_disabled()
+    test_store_analysis_result_saves_when_enabled()
     test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")
