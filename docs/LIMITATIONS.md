@@ -2,7 +2,7 @@
 
 This document explains the current limitations of the Internship Fit & Skill-Gap Analyzer.
 
-The current version is a rule-based CLI tool with optional SQLite and pandas features. It is useful for learning and for first-pass skill-gap analysis, but it should not be treated as a perfect job-fit evaluator.
+The current version is a rule-based CLI tool with a **local-only Streamlit UI prototype** and optional SQLite and pandas features. It is useful for learning and for first-pass skill-gap analysis, but it should not be treated as a perfect job-fit evaluator.
 
 ## Current approach
 
@@ -46,7 +46,8 @@ The current version does not:
 - identify transferable experience unless the keyword appears,
 - use OpenAI API or structured AI extraction,
 - generate resume bullets or application materials,
-- provide a web UI or dashboard.
+- provide a hosted web app or public dashboard (the Streamlit UI runs on localhost only),
+- write report files from the UI preview path (CLI still handles full outputs).
 
 Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding of job descriptions or resume evidence.
 
@@ -104,8 +105,15 @@ For public GitHub use:
 
 - use `data/resume/sample_resume.txt` and `data/sample_jobs/` for tracked sample inputs,
 - put private files in `data/resume/resume.txt` and `data/jobs/` (all `.txt` files in `data/jobs/` are Git-ignored),
-- use `--jobs data/jobs` to analyze private job descriptions,
+- use `--jobs data/jobs` to analyze private job descriptions from the CLI,
 - keep generated outputs and `.db` files out of Git if they are based on private data.
+
+For the **local Streamlit UI**:
+
+- pasted job text stays in your browser session for that run; the app does not save it to tracked repo files,
+- the private resume option reads `data/resume/resume.txt` only when that file exists locally and you select it,
+- the UI does not display resume contents—only file paths and analysis results,
+- do not commit pasted content, private resume files, or screenshots that contain real PII.
 
 The `.gitignore` file helps avoid tracking private local files, generated outputs, and SQLite database files.
 
@@ -142,7 +150,7 @@ Possible future improvements include:
 - OpenAI API structured extraction,
 - confidence notes,
 - evidence mapping from resume projects to job requirements,
-- a private web UI for uploading job descriptions and tracking runs over time,
+- a hosted web UI with file uploads and multi-user run history (local Streamlit prototype exists; deployment does not),
 - responsible AI evaluation examples.
 
 ## Bottom line

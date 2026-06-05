@@ -21,22 +21,21 @@ Matching is **keyword- and alias-based**. It does not understand meaning, requir
 
 ## Current status
 
-**Version 3** is in progress: CLI/backend polish and **UI-readiness** (reusable backend functions), on top of the Version 2 feature set.
+**Version 4** adds a **local-only Streamlit UI prototype** on top of the Version 3 CLI and backend.
 
 The project can:
 
 * run analysis on a **folder of job files** (default sample data or private `--jobs` folder),
 * run analysis on a **single job file** with `--job-file`,
-* call shared backend functions (`src/analysis_runner.py`) that return structured results for future UI code,
-* generate markdown and CSV outputs,
+* call shared backend functions (`src/analysis_runner.py`) that return structured results,
+* run a **local Streamlit UI** (`streamlit_app.py`) for sample job and pasted job analysis,
+* generate markdown and CSV outputs (CLI),
 * optionally save to SQLite (`--database`),
 * optionally create pandas summary CSVs (`--pandas-summary`),
 * inspect saved databases with `scripts/inspect_database.py`,
 * run automated tests for core logic, CLI behavior, validation, database, and pandas output.
 
-It does **not** use OpenAI API, semantic matching, Streamlit, FastAPI, Docker, RAG, authentication, or production deployment.
-
-There is **no web UI yet**. Version 3 prepares the backend so a future local UI can reuse the same analysis workflow.
+The Streamlit app is a **localhost prototype only**—not a hosted web app. It does **not** use OpenAI API, semantic matching, FastAPI, Docker, RAG, authentication, or production deployment.
 
 ## Project structure
 
@@ -58,6 +57,8 @@ internship-fit-gap-analyzer/
     VERSION_2_CHECKPOINT.md
     VERSION_2_TEST_COMMANDS.md
     VERSION_3_CHECKPOINT.md
+    VERSION_4_CHECKPOINT.md
+    LOCAL_UI_PLAN.md
   scripts/
     inspect_database.py
   src/
@@ -80,11 +81,13 @@ internship-fit-gap-analyzer/
     test_output_writers.py
     test_pandas_summary.py
     test_single_job_analysis.py
+    test_streamlit_app.py
     test_validation.py
   LEARNING_LOG.md
   README.md
   requirements.txt
   run_tests.py
+  streamlit_app.py       local Streamlit UI (localhost only)
 ```
 
 ## How it works
@@ -100,7 +103,7 @@ resume + job description(s) + taxonomy + aliases
 → terminal summary (CLI)
 ```
 
-Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. Backend functions can also analyze pasted text without the CLI (for a future UI).
+Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. The local Streamlit UI calls the same backend for sample job and pasted job preview runs.
 
 ## Setup
 
@@ -110,7 +113,7 @@ Python 3 is required.
 python3 -m pip install -r requirements.txt
 ```
 
-Main external dependency: **pandas** (optional summary CSVs only).
+Main external dependencies: **pandas** (optional summary CSVs) and **streamlit** (local UI only).
 
 ## Input files and privacy
 
@@ -200,6 +203,25 @@ python3 run_tests.py
 
 Expected final line: `All tests passed.`
 
+### Local Streamlit UI (Version 4)
+
+Run from the project root. Opens a browser tab on your machine only—not a public website.
+
+```bash
+python3 -m streamlit run streamlit_app.py
+```
+
+The UI can:
+
+* analyze the **sample job file** against a selected resume,
+* analyze a **pasted job description** against a selected resume,
+* use the **sample resume** (`data/resume/sample_resume.txt`) by default,
+* use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine.
+
+Preview runs do not write report files. The CLI remains the way to generate markdown, CSV, SQLite, and pandas outputs.
+
+**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/`. See [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) for details.
+
 ### Help and other options
 
 ```bash
@@ -273,6 +295,8 @@ Output files:
 | Document | Purpose |
 |----------|---------|
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
+| [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
+| [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
 | [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) | Version 2 smoke-test sequence |
@@ -294,4 +318,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: finish Version 3 polish, keep the CLI stable, then consider a **local UI prototype** that calls the existing backend functions—not a full deployed app or AI pipeline yet.
+See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable, extend the local UI if useful (optional output writing, folder mode), then consider **Version 5** hosted deployment—not a full AI pipeline yet.

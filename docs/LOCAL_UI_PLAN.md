@@ -1,10 +1,10 @@
 # Local UI Plan (Version 4)
 
-This document plans a **future local UI prototype** for the Internship Fit & Skill-Gap Analyzer.
+This document planned and now records the **local Streamlit UI prototype** for the Internship Fit & Skill-Gap Analyzer.
 
-**Nothing in this file is implemented yet.** There is no Streamlit app, no FastAPI server, and no hosted deployment in the repo today.
+**Status:** Version 4 local UI work is **implemented** in `streamlit_app.py`. This is a **localhost-only** prototype—not a hosted web app.
 
-For what Version 3 delivered, see [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md). For long-term milestones, see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md).
+For what was delivered, see [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md). For Version 3 backend work, see [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md). For long-term milestones, see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md).
 
 ---
 
@@ -12,11 +12,13 @@ For what Version 3 delivered, see [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOI
 
 Build a **localhost-only** interface that proves the existing backend is useful for real internship search workflows—without deploying to the internet.
 
-Version 4 should answer:
+Version 4 answers:
 
 > Can I select or paste a job description, run the same analysis as the CLI, and understand matched skills, missing skills, and gaps faster than reading raw terminal output?
 
 It should **not** try to become a full product, AI assistant, or public SaaS.
+
+**Result:** Goal met for a minimal v1 prototype.
 
 ---
 
@@ -27,135 +29,123 @@ It should **not** try to become a full product, AI assistant, or public SaaS.
 | Lower risk | Private resume and job text stay on your machine during experiments. |
 | Faster learning | One Python process, one repo, no DNS/HTTPS/auth glue. |
 | Honest scope | Validates UX before paying for hosting or maintaining two codebases. |
-| Backend reuse | Version 3 structured results are meant for this step—prove they work in a UI before adding deployment. |
+| Backend reuse | Version 3 structured results power the UI without duplicating analysis logic. |
 
-Hosted tools (Streamlit Cloud, Railway, cooperrobillard.com/jobfit links, etc.) belong in **Version 5+**, after local use feels worthwhile.
+Hosted tools (Streamlit Cloud, Railway, portfolio-site links, etc.) belong in **Version 5+**, after local use feels worthwhile.
 
 ---
 
-## 3. Recommended first UI path
+## 3. UI path chosen
 
-**Likely choice: Streamlit** (Python-only, quick forms and text areas, good for solo learning projects).
+**Streamlit** at the repo root: `streamlit_app.py`
 
-Why Streamlit first:
+Why Streamlit:
 
 * same language as the CLI backend,
-* easy text paste and file upload widgets,
-* fast iteration on layout without building HTML/JS,
+* quick text areas and radio buttons,
+* fast iteration without HTML/JS,
 * fits a portfolio “local demo” story.
 
-**Alternatives (defer unless Streamlit blocks you):**
-
-* **FastAPI + minimal HTML** — more control, more boilerplate.
-* **Flask** — similar tradeoff to FastAPI for a small tool.
-* **Next.js + Python API** — professional split stack; too heavy for Version 4.
-
-**Explicitly wait on:** Docker, authentication, OpenAI API, RAG, semantic search, production deployment config.
+**Deferred:** FastAPI, Flask, Next.js, Docker, authentication, OpenAI API, RAG, semantic search, production deployment config.
 
 ---
 
-## 4. What the local UI should do in its first version
+## 4. What was implemented (Version 4 steps)
 
-Minimum useful v1 (local only):
+| Step | Feature | Status |
+|------|---------|--------|
+| 1 | Streamlit skeleton + sample job analysis | Done |
+| 2 | Pasted job description analysis | Done |
+| 3 | Resume source selector (sample + private local file) | Done |
+| 4 | Results display polish (metrics, tables, empty states) | Done |
 
-1. **Resume input**
-   * Default to sample resume path, or
-   * Let user pick a local file path, or
-   * Optional: paste resume text (calls backend with `resume_text=`).
+### Resume input
 
-2. **Job input** (one job per run in v1)
-   * Paste job description text, **or**
-   * Upload / select one `.txt` file, **or**
-   * Pick a known sample job file path.
+* **Done:** Sample resume (`data/resume/sample_resume.txt`) as default.
+* **Done:** Private local resume (`data/resume/resume.txt`) when the file exists on disk.
+* **Not in v1:** Paste resume text, file upload, or custom path picker.
 
-3. **Run analysis**
-   * Call `run_single_job_analysis()` for paste-only preview (no files), **or**
-   * Call `run_analysis_job_file()` if user wants markdown/CSV outputs written to a chosen folder, **or**
-   * Start with preview-only to keep v1 smallest.
+### Job input (one job per run)
 
-4. **Display results** from structured dict:
-   * jobs analyzed count,
-   * resume skills (by category),
-   * per job: matched skills, missing skills, counts,
-   * recurring gaps list (for one job, same as per-job gaps),
-   * optional: list of `output_files` if a full write run was triggered.
+* **Done:** Sample job file (`data/sample_jobs/sample_ai_engineering_internship.txt`).
+* **Done:** Paste job description text.
+* **Not in v1:** Upload job file, pick from `data/jobs/`, or folder mode.
 
-5. **Clear limitations on the page**
-   * Rule-based matching only; not AI job-fit scoring.
+### Run analysis
 
-Optional v1.1 (still local):
+* **Done:** `run_single_job_analysis()` for preview runs (no report files written from UI).
+* **Not in v1:** `run_analysis_job_file()` toggle for markdown/CSV outputs, or `run_analysis()` folder mode.
 
-* Toggle to write outputs to `data/outputs/` or a temp folder.
-* Button text that shows exact CLI equivalent for learning.
+### Display results
+
+* **Done:** Jobs analyzed, matched skills, missing skills, recurring gaps, output file note.
+* **Done:** Summary metrics, tables, expanders, empty-state messages.
+* **Done:** Rule-based / local-only disclaimer on the page.
 
 ---
 
-## 5. What the local UI should not do yet
+## 5. What the local UI still should not do yet
 
-Do **not** build in Version 4 v1:
+Do **not** build next without a clear scope:
 
 * public URL or deployment pipeline,
 * login, accounts, or API keys in the repo,
 * OpenAI or other LLM calls,
 * semantic / embedding search or RAG,
 * multi-user data storage in the cloud,
-* editing taxonomy/aliases in the UI (keep JSON in repo/files),
-* analyzing a whole folder of jobs unless clearly scoped as v1.2,
+* editing taxonomy/aliases in the UI,
+* analyzing a whole folder of jobs from the UI,
 * replacing the CLI—CLI remains the tested automation interface.
 
 ---
 
-## 6. Backend functions and data to use
+## 6. Backend functions used
 
-Import from `src/analysis_runner.py` (with `sys.path` or package layout as today’s tests do).
+Import from `src/analysis_runner.py` (via `sys.path` in `streamlit_app.py`).
 
-| UI scenario | Suggested backend call | Notes |
-|-------------|------------------------|-------|
-| Paste resume + paste job | `run_single_job_analysis(resume_text=..., job_text=...)` | Returns structured dict; `output_files` empty. |
-| File resume + file job, show results only | `run_single_job_analysis(resume_path=..., job_path=...)` | Same. |
-| File resume + file job + save reports | `run_analysis_job_file(...)` | Writes markdown/CSV; optional `--database` later in UI. |
-| Many jobs (later) | `run_analysis(...)` | Folder mode; recurring gaps across jobs. |
+| UI scenario | Backend call used | Notes |
+|-------------|-------------------|-------|
+| Sample resume + sample job file | `run_single_job_analysis(resume_path=..., job_path=...)` | Preview; `output_files` empty |
+| Selected resume + pasted job | `run_single_job_analysis(resume_path=..., job_text=...)` | Preview; `output_files` empty |
+| Many jobs (future) | `run_analysis(...)` | CLI today; UI not yet |
+| Full report writes (future) | `run_analysis_job_file(...)` | CLI today; UI not yet |
 
-**Fields to render (prefer `jobs` list):**
+**Fields rendered** (from `build_display_summary()` helpers):
 
 ```text
-results["jobs_analyzed_count"]
-results["resume_skills"]          # dict by category
-results["jobs"][i]["job_name"]
-results["jobs"][i]["matched_skills"]
-results["jobs"][i]["missing_skills"]
-results["jobs"][i]["matched_skills_count"]
-results["jobs"][i]["missing_skills_count"]
-results["recurring_gaps"]         # list of {gap_skill, category, count}
-results["output_files"]           # if outputs were written
-results["analysis_mode"]          # single_text, single_file, folder
+jobs_analyzed_count
+recurring_gaps_count, top_recurring_gap_skill
+jobs[i].job_name, matched_skills, missing_skills, counts
+recurring_gaps (table + text list)
+output_files (empty in preview mode)
+resume_path_label (path only — never resume contents)
 ```
 
-Keep UI logic thin: **no duplicate** `find_skills` / `find_gaps` in UI files.
+UI logic stays thin: **no duplicate** `find_skills` / `find_gaps` in UI files.
 
 ---
 
-## 7. Expected user flow (v1)
+## 7. Current user flow
 
 ```text
-Open terminal → streamlit run app.py (or similar)
+Open terminal → python3 -m streamlit run streamlit_app.py
     ↓
-Page loads with short explanation (rule-based tool, local only)
+Page loads with local-prototype note (rule-based, not AI scoring)
     ↓
-User chooses resume: sample / file / paste
+User chooses resume: sample (default) or private local file if available
     ↓
-User chooses job: paste / file / sample
+User chooses job mode: sample job file OR paste job description
     ↓
-User clicks "Analyze"
+User clicks Analyze (or sample mode auto-runs on first load)
     ↓
-UI calls run_single_job_analysis (or run_analysis_job_file)
+UI calls run_single_job_analysis()
     ↓
-UI shows matched skills, missing skills, recurring gaps
+UI shows summary metrics, matched skills, missing skills, recurring gaps
     ↓
-(Optional) UI shows output file paths if writes were enabled
+Output files section notes preview mode (no reports written unless future toggle added)
 ```
 
-No network calls required except Streamlit’s local server.
+No network calls required except Streamlit’s local server on your machine.
 
 ---
 
@@ -171,8 +161,8 @@ Same rules as the CLI and public repo:
 **Private (real search data):**
 
 * `data/resume/resume.txt`
-* files under `data/jobs/`
-* anything pasted into the UI that came from a real posting or resume
+* files under `data/jobs/` (CLI only today)
+* anything pasted into the UI from a real posting
 
 **Never commit:**
 
@@ -183,36 +173,37 @@ Same rules as the CLI and public repo:
 **Local UI discipline:**
 
 * do not log full resume/job text to a cloud analytics service,
-* prefer in-memory analysis for paste mode,
-* if saving uploads to disk, use Git-ignored paths only.
+* pasted job text stays in the Streamlit session (in-memory for the run),
+* private resume is read from a Git-ignored path only when selected.
 
 ---
 
 ## 9. Testing and smoke-check strategy
 
-Before merging Version 4 UI work:
+Verified for Version 4:
 
-1. `python3 run_tests.py` — all existing tests must still pass (UI is additive).
+1. `python3 run_tests.py` — all existing tests pass (UI is additive).
 2. CLI spot-check unchanged:
    * `python3 src/main.py`
    * `python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt`
-3. Manual UI checklist (same inputs as CLI):
-   * sample resume + pasted job text → gap list appears,
-   * sample resume + sample job file → counts match CLI order of magnitude,
-   * empty paste → friendly error, no crash.
-4. Optional: one small test that imports the UI helper function and mocks `run_single_job_analysis` (only if it stays simple).
+3. Local UI:
+   * `python3 -m streamlit run streamlit_app.py`
+4. Helper tests: `python3 tests/test_streamlit_app.py`
 
-Do not require pytest migration for Version 4 unless it clearly helps.
+Manual UI checklist (same backend as CLI preview):
+
+* sample resume + sample job → results appear,
+* sample resume + pasted job → gap list appears,
+* empty paste → friendly error, no crash,
+* private resume option appears only when `data/resume/resume.txt` exists.
 
 ---
 
-## 10. Future path after local UI
-
-If local Streamlit v1 is useful:
+## 10. Future path after local UI v1
 
 | Later milestone | Direction |
 |-----------------|-----------|
-| Version 4.x | Folder mode in UI, optional SQLite toggle, better layout |
+| Version 4.x | Optional output writing toggle, folder mode in UI, SQLite toggle |
 | Version 5 | Private hosted app, env-based secrets, link from portfolio site |
 | Version 6 | Optional AI-assisted extraction—only if rule-based limits hurt |
 
@@ -220,32 +211,24 @@ See [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md) for full milestone table.
 
 ---
 
-## 11. Open questions to answer before implementation
+## 11. Implementation decisions (answered)
 
-Answer these in a short branch or notes **before** writing UI code:
-
-1. **Preview vs full outputs in v1?**  
-   Start with `run_single_job_analysis` only, or always write reports via `run_analysis_job_file`?
-
-2. **Where does the Streamlit app live?**  
-   e.g. `ui/app.py` or `streamlit_app.py` at repo root—one file vs small folder?
-
-3. **Dependency:** add `streamlit` to `requirements.txt` when implementing—not in this planning doc pass.
-
-4. **Resume/job file uploads:** save to temp dir under `data/outputs/` (ignored) or purely in-memory?
-
-5. **Taxonomy paths:** hardcode defaults or expose advanced paths in an expander?
-
-6. **Multi-job in UI:** defer until folder mode is needed, or include a simple “analyze folder” button in v1.2?
-
-7. **Portfolio narrative:** how to describe the local UI in README without implying deployment?
+| Question | Decision |
+|----------|----------|
+| Preview vs full outputs in v1? | Preview only (`run_single_job_analysis`); no UI file writes yet |
+| Where does the Streamlit app live? | `streamlit_app.py` at repo root |
+| Dependency | `streamlit` in `requirements.txt` |
+| Resume/job uploads | Not in v1; paste job text only |
+| Taxonomy paths | Hardcoded defaults (same as CLI) |
+| Multi-job in UI | Deferred; CLI folder mode remains |
+| Portfolio narrative | Local prototype; not deployed; rule-based |
 
 ---
 
 ## Summary
 
-Version 4 = **local Streamlit (likely) + existing analysis runner + structured results display**.
+Version 4 delivered **local Streamlit + existing analysis runner + structured results display**.
 
 Keep it small, private, rule-based, and honest. Ship learning value before shipping hosting complexity.
 
-*Planning document only — no UI code in this milestone.*
+*Plan updated to reflect implemented local UI — see `streamlit_app.py` and [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md).*
