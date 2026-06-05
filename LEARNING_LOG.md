@@ -1361,3 +1361,11 @@ Tested with:
 * Practiced handling private local files carefully without committing or exposing private resume content.
 * Preserved the existing sample-job and pasted-job UI workflows.
 * Confirmed the test suite and CLI smoke commands still pass after adding the resume selector.
+
+## Dev Chat 4 - Results Display Polish
+
+* Improved the Streamlit results display for the local UI prototype.
+* Organized analysis output into clearer sections for summary information, matched skills, missing skills, recurring gaps, and output files.
+* Practiced separating display formatting from backend analysis logic.
+* Preserved the existing sample-job, pasted-job, and resume selector workflows.
+* Confirmed the test suite and CLI smoke commands still pass after the UI display polish.
