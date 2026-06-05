@@ -152,6 +152,28 @@ def run_pasted_job_analysis(
     )
 
 
+def skills_by_category_has_data(skills_by_category):
+    """Return True when at least one skill exists in the category dict."""
+    for skills in skills_by_category.values():
+        if skills:
+            return True
+
+    return False
+
+
+def skills_by_category_to_rows(skills_by_category):
+    """
+    Turn a {category: [skills]} dict into table rows for st.dataframe.
+    """
+    rows = []
+
+    for category in sorted(skills_by_category.keys()):
+        for skill in sorted(skills_by_category[category]):
+            rows.append({"Category": category, "Skill": skill})
+
+    return rows
+
+
 def format_skills_by_category(skills_by_category):
     """
     Turn a {category: [skills]} dict into simple text lines for the UI.
@@ -169,10 +191,23 @@ def format_skills_by_category(skills_by_category):
         skill_text = ", ".join(sorted(skills))
         lines.append(f"{category}: {skill_text}")
 
-    if not lines:
-        lines.append("(none)")
-
     return lines
+
+
+def recurring_gaps_to_rows(recurring_gaps):
+    """Turn recurring gap records into table rows for st.dataframe."""
+    rows = []
+
+    for gap in recurring_gaps:
+        rows.append(
+            {
+                "Skill": gap["gap_skill"],
+                "Category": gap["category"],
+                "Jobs missing this skill": gap["count"],
+            }
+        )
+
+    return rows
 
 
 def format_recurring_gaps(recurring_gaps):
@@ -186,10 +221,33 @@ def format_recurring_gaps(recurring_gaps):
             f"{gap['gap_skill']} ({gap['category']}) — seen in {gap['count']} job(s)"
         )
 
-    if not lines:
-        lines.append("(none)")
-
     return lines
+
+
+def build_recurring_gap_highlights(recurring_gaps):
+    """
+    Build summary numbers for the recurring gaps section.
+    """
+    recurring_gaps_count = len(recurring_gaps)
+
+    if recurring_gaps_count == 0:
+        return {
+            "recurring_gaps_count": 0,
+            "top_recurring_gap_skill": None,
+            "top_recurring_gap_caption": "No recurring gaps found.",
+            "has_recurring_gaps": False,
+        }
+
+    top_gap = recurring_gaps[0]
+
+    return {
+        "recurring_gaps_count": recurring_gaps_count,
+        "top_recurring_gap_skill": top_gap["gap_skill"],
+        "top_recurring_gap_caption": (
+            f"{top_gap['category']} — missing in {top_gap['count']} job(s)"
+        ),
+        "has_recurring_gaps": True,
+    }
 
 
 def build_display_summary(analysis_result):
@@ -202,69 +260,114 @@ def build_display_summary(analysis_result):
     job_summaries = []
 
     for job in jobs:
+        matched_skills = job["matched_skills"]
+        missing_skills = job["missing_skills"]
+
         job_summaries.append(
             {
                 "job_name": job["job_name"],
-                "matched_skills_lines": format_skills_by_category(
-                    job["matched_skills"]
-                ),
-                "missing_skills_lines": format_skills_by_category(
-                    job["missing_skills"]
-                ),
+                "matched_skills_lines": format_skills_by_category(matched_skills),
+                "missing_skills_lines": format_skills_by_category(missing_skills),
+                "matched_skills_rows": skills_by_category_to_rows(matched_skills),
+                "missing_skills_rows": skills_by_category_to_rows(missing_skills),
+                "has_matched_skills": skills_by_category_has_data(matched_skills),
+                "has_missing_skills": skills_by_category_has_data(missing_skills),
                 "matched_skills_count": job["matched_skills_count"],
                 "missing_skills_count": job["missing_skills_count"],
             }
         )
 
     output_files = analysis_result.get("output_files", [])
+    recurring_gaps = analysis_result["recurring_gaps"]
+    gap_highlights = build_recurring_gap_highlights(recurring_gaps)
 
     return {
         "jobs_analyzed_count": analysis_result["jobs_analyzed_count"],
         "jobs": job_summaries,
-        "recurring_gaps_lines": format_recurring_gaps(
-            analysis_result["recurring_gaps"]
-        ),
+        "recurring_gaps_lines": format_recurring_gaps(recurring_gaps),
+        "recurring_gaps_rows": recurring_gaps_to_rows(recurring_gaps),
         "output_files": output_files,
         "has_output_files": len(output_files) > 0,
         "resume_path_label": resume_path_label(analysis_result["resume_path"]),
+        **gap_highlights,
     }
 
 
 def render_analysis_results(st, display):
     """Show structured analysis results in the Streamlit page."""
-    st.subheader("Summary")
-    st.metric("Jobs analyzed", display["jobs_analyzed_count"])
+    st.subheader("Analysis results")
     st.caption(f"Resume used: `{display['resume_path_label']}`")
 
+    summary_col_jobs, summary_col_gaps, summary_col_top_gap = st.columns(3)
+
+    with summary_col_jobs:
+        st.metric("Jobs analyzed", display["jobs_analyzed_count"])
+
+    with summary_col_gaps:
+        st.metric("Recurring gaps", display["recurring_gaps_count"])
+
+    with summary_col_top_gap:
+        top_gap_skill = display["top_recurring_gap_skill"]
+        st.metric(
+            "Top recurring gap",
+            top_gap_skill if top_gap_skill else "None",
+        )
+        st.caption(display["top_recurring_gap_caption"])
+
     for job in display["jobs"]:
-        st.markdown(f"### {job['job_name']}")
+        st.markdown(f"#### {job['job_name']}")
 
-        col_matched, col_missing = st.columns(2)
+        matched_col, missing_col = st.columns(2)
 
-        with col_matched:
-            st.markdown(
-                f"**Matched skills** ({job['matched_skills_count']} total)"
-            )
-            for line in job["matched_skills_lines"]:
-                st.write(line)
+        with matched_col:
+            st.markdown(f"**Matched skills** ({job['matched_skills_count']} total)")
 
-        with col_missing:
-            st.markdown(
-                f"**Missing skills** ({job['missing_skills_count']} total)"
-            )
-            for line in job["missing_skills_lines"]:
-                st.write(line)
+            if job["has_matched_skills"]:
+                with st.expander("View matched skills table", expanded=True):
+                    st.dataframe(
+                        job["matched_skills_rows"],
+                        hide_index=True,
+                        use_container_width=True,
+                    )
+            else:
+                st.info("No matched skills found for this job.")
+
+        with missing_col:
+            st.markdown(f"**Missing skills** ({job['missing_skills_count']} total)")
+
+            if job["has_missing_skills"]:
+                with st.expander("View missing skills table", expanded=True):
+                    st.dataframe(
+                        job["missing_skills_rows"],
+                        hide_index=True,
+                        use_container_width=True,
+                    )
+            else:
+                st.info("No missing skills found for this job.")
 
     st.subheader("Recurring gaps")
-    for line in display["recurring_gaps_lines"]:
-        st.write(line)
+
+    if display["has_recurring_gaps"]:
+        st.dataframe(
+            display["recurring_gaps_rows"],
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        with st.expander("View recurring gaps as a text list"):
+            for line in display["recurring_gaps_lines"]:
+                st.write(line)
+    else:
+        st.info("No recurring gaps to show for this run.")
 
     st.subheader("Output files")
+
     if display["has_output_files"]:
-        for file_path in display["output_files"]:
-            st.code(file_path)
+        st.table(
+            [{"File path": file_path} for file_path in display["output_files"]]
+        )
     else:
-        st.write(
+        st.info(
             "No report files written for this preview run. "
             "Use the CLI with `--outputs` to generate markdown and CSV files."
         )

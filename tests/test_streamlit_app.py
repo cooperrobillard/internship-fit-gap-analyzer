@@ -38,6 +38,10 @@ def test_build_display_summary_for_sample_analysis():
     assert len(display["recurring_gaps_lines"]) >= 1
     assert display["has_output_files"] is False
     assert display["resume_path_label"] == "data/resume/sample_resume.txt"
+    assert display["recurring_gaps_count"] >= 1
+    assert display["has_recurring_gaps"] is True
+    assert display["top_recurring_gap_skill"] is not None
+    assert len(display["jobs"][0]["matched_skills_rows"]) >= 1
 
 
 def test_validate_pasted_job_text_rejects_blank_input():
@@ -100,6 +104,33 @@ def test_get_resume_source_choices_includes_private_when_present():
         assert choices[1]["key"] == module.RESUME_SOURCE_PRIVATE
 
 
+def test_build_recurring_gap_highlights_for_empty_list():
+    module = _load_streamlit_app_module()
+
+    highlights = module.build_recurring_gap_highlights([])
+
+    assert highlights["recurring_gaps_count"] == 0
+    assert highlights["has_recurring_gaps"] is False
+    assert highlights["top_recurring_gap_skill"] is None
+
+
+def test_skills_by_category_to_rows_returns_sorted_table_data():
+    module = _load_streamlit_app_module()
+
+    rows = module.skills_by_category_to_rows(
+        {
+            "data": ["pandas", "sql"],
+            "programming": ["python"],
+        }
+    )
+
+    assert rows == [
+        {"Category": "data", "Skill": "pandas"},
+        {"Category": "data", "Skill": "sql"},
+        {"Category": "programming", "Skill": "python"},
+    ]
+
+
 def test_resolve_resume_path_uses_sample_by_default():
     module = _load_streamlit_app_module()
 
@@ -125,5 +156,7 @@ if __name__ == "__main__":
     test_run_pasted_job_analysis_returns_display_data()
     test_get_resume_source_choices_excludes_missing_private_file()
     test_get_resume_source_choices_includes_private_when_present()
+    test_build_recurring_gap_highlights_for_empty_list()
+    test_skills_by_category_to_rows_returns_sorted_table_data()
     test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")
