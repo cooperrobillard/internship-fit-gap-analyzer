@@ -1393,3 +1393,11 @@ Tested with:
 - Displayed basic saved-run information such as analysis runs, job results, saved skill gaps, and top recurring gaps.
 - Kept the feature local-only and avoided overbuilding a full history browser or comparison tool.
 - Confirmed the UI, CLI smoke commands, database inspection workflow, and test suite still work.
+
+## Dev Chat 5 - Recent Saved Runs in Local UI
+
+- Added a read-only recent saved runs section to the local Streamlit UI.
+- Practiced reading individual saved analysis records from the existing SQLite database.
+- Kept the feature local-only and avoided overbuilding a full history browser or comparison dashboard.
+- Preserved the SQLite save option, saved summary panel, sample-job workflow, pasted-job workflow, and resume selector.
+- Confirmed the test suite, CLI smoke commands, database inspection workflow, and local UI still work after the change.
