@@ -309,6 +309,78 @@ def get_database_summary(database_path):
         connection.close()
 
 
+def query_recent_saved_jobs(connection, limit=10):
+    """
+    Return the most recent saved job results across all analysis runs.
+
+    Each item includes run ID, timestamp, job name, and skill counts.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            job_results.run_id,
+            analysis_runs.run_timestamp,
+            job_results.job_filename,
+            job_results.matched_skills_count,
+            job_results.missing_skills_count
+        FROM job_results
+        JOIN analysis_runs ON job_results.run_id = analysis_runs.id
+        ORDER BY analysis_runs.run_timestamp DESC,
+                 job_results.run_id DESC,
+                 job_results.id DESC
+        LIMIT ?;
+        """,
+        (limit,),
+    )
+
+    rows = cursor.fetchall()
+
+    recent_jobs = []
+    for row in rows:
+        recent_jobs.append(
+            {
+                "run_id": row[0],
+                "run_timestamp": row[1],
+                "job_filename": row[2],
+                "matched_skills_count": row[3],
+                "missing_skills_count": row[4],
+            }
+        )
+
+    return recent_jobs
+
+
+def get_recent_saved_jobs(database_path, limit=10):
+    """
+    Read recent saved job results from a SQLite analysis database file.
+
+    If the file does not exist, returns exists=False and an empty list.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "exists": False,
+            "database_path": database_path,
+            "recent_jobs": [],
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        recent_jobs = query_recent_saved_jobs(connection, limit=limit)
+    finally:
+        connection.close()
+
+    return {
+        "exists": True,
+        "database_path": database_path,
+        "recent_jobs": recent_jobs,
+    }
+
+
 def query_jobs_with_most_gaps(connection, run_id):
     """
     Query job results for one analysis run, sorted by missing skills.

@@ -12,7 +12,7 @@ SRC_FOLDER = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_FOLDER))
 
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
-from database import get_database_summary
+from database import get_database_summary, get_recent_saved_jobs
 
 # Safe sample inputs (public repo paths).
 SAMPLE_RESUME_PATH = REPO_ROOT / "data/resume/sample_resume.txt"
@@ -296,6 +296,76 @@ SAVED_HISTORY_MISSING_MESSAGE = (
     "No saved analysis database found yet. "
     "Run an analysis with SQLite saving enabled to create one."
 )
+RECENT_SAVED_RUNS_LIMIT = 10
+RECENT_SAVED_RUNS_MISSING_MESSAGE = "No recent saved runs to display yet."
+
+
+def recent_saved_jobs_to_rows(recent_jobs):
+    """Turn recent saved job records into table rows for st.dataframe."""
+    rows = []
+
+    for job in recent_jobs:
+        rows.append(
+            {
+                "Run ID": job["run_id"],
+                "Saved at": job["run_timestamp"],
+                "Job": job["job_filename"],
+                "Matched skills": job["matched_skills_count"],
+                "Missing skills": job["missing_skills_count"],
+            }
+        )
+
+    return rows
+
+
+def build_recent_saved_runs_display(
+    database_path=DEFAULT_DATABASE_PATH,
+    limit=RECENT_SAVED_RUNS_LIMIT,
+):
+    """
+    Build a display-friendly recent-runs list from the SQLite database.
+
+    Returns a dict for render_recent_saved_runs() and for tests.
+    """
+    recent_data = get_recent_saved_jobs(database_path, limit=limit)
+
+    if not recent_data["exists"]:
+        return {
+            "database_exists": False,
+            "missing_message": RECENT_SAVED_RUNS_MISSING_MESSAGE,
+        }
+
+    recent_jobs = recent_data["recent_jobs"]
+
+    return {
+        "database_exists": True,
+        "recent_jobs": recent_jobs,
+        "recent_jobs_rows": recent_saved_jobs_to_rows(recent_jobs),
+        "has_recent_jobs": len(recent_jobs) > 0,
+        "limit": limit,
+    }
+
+
+def render_recent_saved_runs(st, display):
+    """Show a read-only table of recent saved job results."""
+    st.subheader("Recent Saved Runs")
+
+    if not display["database_exists"]:
+        st.info(display["missing_message"])
+        return
+
+    if not display["has_recent_jobs"]:
+        st.info("No saved job results yet.")
+        return
+
+    st.caption(
+        f"Showing up to {display['limit']} most recent saved job results."
+    )
+    st.dataframe(
+        display["recent_jobs_rows"],
+        hide_index=True,
+        use_container_width=True,
+    )
 
 
 def build_saved_history_display(
@@ -628,6 +698,9 @@ def main():
 
     saved_history_display = build_saved_history_display()
     render_saved_analysis_history(st, saved_history_display)
+
+    recent_saved_runs_display = build_recent_saved_runs_display()
+    render_recent_saved_runs(st, recent_saved_runs_display)
 
 
 if __name__ == "__main__":
