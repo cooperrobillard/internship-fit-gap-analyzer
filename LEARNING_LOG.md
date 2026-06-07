@@ -1443,3 +1443,11 @@ Tested with:
 * Identified likely Version 7 priorities such as clearer saved-result labels, sorting, filtering/search, optional metadata, and safe local cleanup.
 * Kept hosted deployment, Clerk/authentication, cloud databases, OpenAI API, semantic matching, fit scores, and resume tailoring out of the immediate scope.
 * Confirmed the project tests, CLI workflows, database inspection workflow, and Git privacy checks still pass.
+
+## Dev Chat 6 - Improved Saved Result Labels
+
+* Began Version 7 implementation by improving saved-result labels and sorting in the local Streamlit UI.
+* Practiced making saved SQLite records easier to identify using stable information such as job names, timestamps, run IDs, job-result IDs, and gap counts where available.
+* Improved the saved-history and comparison workflow without adding filtering, deletion, ranking, scoring, or new database schema changes.
+* Preserved the existing analysis, SQLite saving, saved detail, saved comparison, and saved gap priority summary workflows.
+* Confirmed the test suite, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
