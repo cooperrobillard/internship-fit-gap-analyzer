@@ -61,6 +61,7 @@ internship-fit-gap-analyzer/
     VERSION_4_CHECKPOINT.md
     VERSION_5_CHECKPOINT.md
     VERSION_6_CHECKPOINT.md
+    VERSION_7_PLAN.md
     LOCAL_UI_PLAN.md
   scripts/
     inspect_database.py
@@ -307,6 +308,7 @@ Output files:
 | [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
 | [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) | Version 5 local UI persistence and saved-history views |
 | [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) | Version 6 saved-analysis comparison and gap priority summary |
+| [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) | Version 7 planning: saved-result organization (not implemented yet) |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
@@ -329,4 +331,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable and tests green; possible Version 7 work may focus on saved-result organization or local UI polish. **Hosted deployment** and optional AI-assisted extraction remain later milestones—not the default next step.
+See [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: Version 7 planning targets **saved-result organization** on localhost (labels, sorting, filtering)—not deployment. **Hosted deployment** and optional AI-assisted extraction remain later milestones.

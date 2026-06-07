@@ -116,19 +116,22 @@ Delivered:
 
 **Explicitly not Version 6:** fit scores, weighted rankings, matched-skill list comparison from SQLite, charts, deployment, auth, more than two-way comparison, edit/delete controls.
 
-### Version 7: Local saved-result organization (possible future)
+### Version 7: Local saved-result organization — **planning**
 
-**Goal:** Improve how saved analyses are browsed and labeled **locally**—only if the Version 6 workflow proves useful in real internship search.
+**Goal:** Improve how saved analyses are browsed, labeled, sorted, and optionally cleaned up **locally**—after Version 6 comparison and gap-priority views.
 
-Possible directions (pick small slices; not committed):
+Detailed plan: [`VERSION_7_PLAN.md`](VERSION_7_PLAN.md).
+
+Proposed first step: **improve saved-result labels and sorting** (no schema migration in Step 1).
+
+Possible later slices (one branch each; not all required):
 
 - search or filters for saved runs,
-- clearer saved-job labels or metadata,
-- safe **local** deletion or cleanup of saved rows (if deliberately planned and tested),
-- stronger tests and code organization,
-- deployment planning research **without** deploying yet.
+- lightweight optional metadata (only with deliberate schema/UI design),
+- safe **local** deletion or cleanup (explicit confirmation),
+- stronger tests and clearer empty states.
 
-**Explicitly not Version 7 by default:** hosted deployment, authentication, Clerk, cloud database, multi-user support, OpenAI API.
+**Explicitly not Version 7:** hosted deployment, custom domain, authentication, Clerk, cloud database, multi-user support, OpenAI API, fit scores, job ranking, full application tracker.
 
 ### Version 8: Private hosted web tool (future)
 
@@ -316,4 +319,4 @@ Actionable items for the **docs/product-roadmap** era and immediate follow-ups�
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 6 saved-run comparison and decision-support views complete, CLI stable, tests passing, no hosted deployment.*
+*Last aligned with: Version 6 complete; Version 7 planning documented in [`VERSION_7_PLAN.md`](VERSION_7_PLAN.md); no hosted deployment.*
