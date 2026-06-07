@@ -12,7 +12,9 @@ SRC_FOLDER = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_FOLDER))
 
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
+from database import get_all_saved_job_results
 from database import get_database_summary, get_recent_saved_jobs
+from database import get_saved_job_result_for_comparison
 
 # Safe sample inputs (public repo paths).
 SAMPLE_RESUME_PATH = REPO_ROOT / "data/resume/sample_resume.txt"
@@ -298,6 +300,18 @@ SAVED_HISTORY_MISSING_MESSAGE = (
 )
 RECENT_SAVED_RUNS_LIMIT = 10
 RECENT_SAVED_RUNS_MISSING_MESSAGE = "No recent saved runs to display yet."
+SAVED_COMPARISON_MISSING_MESSAGE = (
+    "No saved analysis database found yet. "
+    "Run an analysis with SQLite saving enabled to create one."
+)
+SAVED_COMPARISON_INSUFFICIENT_MESSAGE = (
+    "At least two saved analyses are needed for comparison. "
+    "Save another analysis run to compare results."
+)
+SAVED_COMPARISON_SAME_SELECTION_MESSAGE = (
+    "Choose two different saved analyses to compare."
+)
+EMPTY_SKILL_LIST_LABEL = "None"
 
 
 def recent_saved_jobs_to_rows(recent_jobs):
@@ -344,6 +358,212 @@ def build_recent_saved_runs_display(
         "has_recent_jobs": len(recent_jobs) > 0,
         "limit": limit,
     }
+
+
+def compare_skill_collections(first_skills, second_skills):
+    """
+    Compare two skill collections and return sorted comparison groups.
+
+    Duplicate values in either input are normalized safely.
+    """
+    first_set = set(first_skills)
+    second_set = set(second_skills)
+
+    return {
+        "shared": sorted(first_set & second_set),
+        "unique_to_first": sorted(first_set - second_set),
+        "unique_to_second": sorted(second_set - first_set),
+    }
+
+
+def format_skill_list_for_display(skills):
+    """Turn a skill list into a friendly UI string."""
+    if not skills:
+        return EMPTY_SKILL_LIST_LABEL
+
+    return ", ".join(skills)
+
+
+def format_saved_job_option_label(saved_job):
+    """Build a readable select-box label for one saved job result."""
+    return (
+        f"{saved_job['job_filename']} — run {saved_job['run_id']}, "
+        f"saved {saved_job['run_timestamp']} "
+        f"(result #{saved_job['job_result_id']})"
+    )
+
+
+def build_compare_saved_analyses_options(
+    database_path=DEFAULT_DATABASE_PATH,
+):
+    """
+    Build selectable saved-job options for the comparison section.
+
+    Returns a dict for render_compare_saved_analyses() and for tests.
+    """
+    saved_data = get_all_saved_job_results(database_path)
+
+    if not saved_data["exists"]:
+        return {
+            "database_exists": False,
+            "missing_message": SAVED_COMPARISON_MISSING_MESSAGE,
+        }
+
+    saved_jobs = saved_data["saved_jobs"]
+
+    if len(saved_jobs) < 2:
+        return {
+            "database_exists": True,
+            "can_compare": False,
+            "insufficient_message": SAVED_COMPARISON_INSUFFICIENT_MESSAGE,
+            "saved_jobs_count": len(saved_jobs),
+        }
+
+    options = []
+
+    for saved_job in saved_jobs:
+        options.append(
+            {
+                "job_result_id": saved_job["job_result_id"],
+                "label": format_saved_job_option_label(saved_job),
+            }
+        )
+
+    return {
+        "database_exists": True,
+        "can_compare": True,
+        "options": options,
+        "default_first_id": options[0]["job_result_id"],
+        "default_second_id": options[1]["job_result_id"],
+    }
+
+
+def build_compare_saved_analyses_result(
+    first_job_result_id,
+    second_job_result_id,
+    database_path=DEFAULT_DATABASE_PATH,
+):
+    """
+    Build a missing-skill comparison between two saved job results.
+
+    Returns a dict with status codes for the UI and for tests.
+    """
+    if first_job_result_id == second_job_result_id:
+        return {
+            "status": "same_selection",
+            "message": SAVED_COMPARISON_SAME_SELECTION_MESSAGE,
+        }
+
+    first_result = get_saved_job_result_for_comparison(
+        database_path,
+        first_job_result_id,
+    )
+    second_result = get_saved_job_result_for_comparison(
+        database_path,
+        second_job_result_id,
+    )
+
+    if first_result is None or second_result is None:
+        return {
+            "status": "missing_selection",
+            "message": "One or both saved analyses could not be found.",
+        }
+
+    comparison = compare_skill_collections(
+        first_result["missing_skills"],
+        second_result["missing_skills"],
+    )
+
+    return {
+        "status": "ready",
+        "first_job_name": first_result["job_filename"],
+        "second_job_name": second_result["job_filename"],
+        "first_missing_skills_count": first_result["missing_skills_count"],
+        "second_missing_skills_count": second_result["missing_skills_count"],
+        "shared_missing_skills": comparison["shared"],
+        "missing_skills_unique_to_first": comparison["unique_to_first"],
+        "missing_skills_unique_to_second": comparison["unique_to_second"],
+        "shared_missing_skills_label": format_skill_list_for_display(
+            comparison["shared"]
+        ),
+        "missing_skills_unique_to_first_label": format_skill_list_for_display(
+            comparison["unique_to_first"]
+        ),
+        "missing_skills_unique_to_second_label": format_skill_list_for_display(
+            comparison["unique_to_second"]
+        ),
+    }
+
+
+def render_compare_saved_analyses(st, options_display, database_path=DEFAULT_DATABASE_PATH):
+    """Show a read-only comparison between two saved job results."""
+    st.subheader("Compare Saved Analyses")
+
+    if not options_display["database_exists"]:
+        st.info(options_display["missing_message"])
+        return
+
+    if not options_display["can_compare"]:
+        st.info(options_display["insufficient_message"])
+        return
+
+    option_labels = [option["label"] for option in options_display["options"]]
+    label_to_id = {
+        option["label"]: option["job_result_id"]
+        for option in options_display["options"]
+    }
+
+    first_label = st.selectbox(
+        "First saved analysis",
+        option_labels,
+        key="compare_saved_first",
+    )
+    second_label = st.selectbox(
+        "Second saved analysis",
+        option_labels,
+        index=1,
+        key="compare_saved_second",
+    )
+
+    comparison = build_compare_saved_analyses_result(
+        label_to_id[first_label],
+        label_to_id[second_label],
+        database_path=database_path,
+    )
+
+    if comparison["status"] == "same_selection":
+        st.info(comparison["message"])
+        return
+
+    if comparison["status"] != "ready":
+        st.warning(comparison["message"])
+        return
+
+    st.markdown(f"**First job:** {comparison['first_job_name']}")
+    st.markdown(f"**Second job:** {comparison['second_job_name']}")
+
+    first_count_col, second_count_col = st.columns(2)
+
+    with first_count_col:
+        st.metric(
+            "First missing-skill count",
+            comparison["first_missing_skills_count"],
+        )
+
+    with second_count_col:
+        st.metric(
+            "Second missing-skill count",
+            comparison["second_missing_skills_count"],
+        )
+
+    st.markdown("**Shared missing skills**")
+    st.write(comparison["shared_missing_skills_label"])
+
+    st.markdown("**Missing skills unique to the first saved result**")
+    st.write(comparison["missing_skills_unique_to_first_label"])
+
+    st.markdown("**Missing skills unique to the second saved result**")
+    st.write(comparison["missing_skills_unique_to_second_label"])
 
 
 def render_recent_saved_runs(st, display):
@@ -701,6 +921,13 @@ def main():
 
     recent_saved_runs_display = build_recent_saved_runs_display()
     render_recent_saved_runs(st, recent_saved_runs_display)
+
+    compare_saved_analyses_options = build_compare_saved_analyses_options()
+    render_compare_saved_analyses(
+        st,
+        compare_saved_analyses_options,
+        database_path=DEFAULT_DATABASE_PATH,
+    )
 
 
 if __name__ == "__main__":

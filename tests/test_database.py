@@ -12,7 +12,11 @@ from database import insert_skill_gap
 from database import query_recurring_gaps
 from database import query_jobs_with_most_gaps
 from database import query_recent_saved_jobs
+from database import get_all_saved_job_results
 from database import get_database_summary, get_recent_saved_jobs, save_analysis_results
+from database import get_saved_job_result_for_comparison
+from database import query_all_saved_job_results
+from database import query_missing_skills_for_job_result
 
 
 def table_exists(connection, table_name):
@@ -543,6 +547,134 @@ def test_query_recent_saved_jobs_returns_newest_first_and_respects_limit():
         assert recent_data["recent_jobs"][0]["job_filename"] == "newer_job.txt"
 
 
+def test_get_all_saved_job_results_when_file_missing():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "missing_analysis_results.db"
+
+        saved_data = get_all_saved_job_results(database_path)
+
+        assert saved_data["exists"] is False
+        assert saved_data["saved_jobs"] == []
+
+
+def test_query_missing_skills_for_job_result_returns_sorted_unique_skills():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=1,
+        )
+
+        job_result_id = insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            matched_skills_count=1,
+            missing_skills_count=3,
+        )
+
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            skill="sql",
+            category="data",
+        )
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            skill="fastapi",
+            category="backend",
+        )
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            skill="sql",
+            category="analytics",
+        )
+
+        missing_skills = query_missing_skills_for_job_result(
+            connection,
+            job_result_id,
+        )
+
+        assert missing_skills == ["fastapi", "sql"]
+        assert query_missing_skills_for_job_result(connection, 999) is None
+
+        connection.close()
+
+
+def test_get_saved_job_result_for_comparison_returns_one_identifiable_result():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        first_job_results = [
+            {
+                "job_name": "older_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["docker"]},
+            }
+        ]
+        second_job_results = [
+            {
+                "job_name": "newer_job.txt",
+                "job_skills": {"programming": ["python", "fastapi"]},
+                "skill_gaps": {"programming": ["fastapi", "sql"]},
+            }
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=first_job_results,
+        )
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=second_job_results,
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+        connection.close()
+
+        assert len(saved_jobs) == 2
+        assert saved_jobs[0]["job_filename"] == "newer_job.txt"
+        assert saved_jobs[1]["job_filename"] == "older_job.txt"
+
+        newer_result = get_saved_job_result_for_comparison(
+            database_path,
+            saved_jobs[0]["job_result_id"],
+        )
+        older_result = get_saved_job_result_for_comparison(
+            database_path,
+            saved_jobs[1]["job_result_id"],
+        )
+
+        assert newer_result["job_filename"] == "newer_job.txt"
+        assert newer_result["missing_skills"] == ["fastapi", "sql"]
+        assert older_result["job_filename"] == "older_job.txt"
+        assert older_result["missing_skills"] == ["docker"]
+
+        all_saved = get_all_saved_job_results(database_path)
+        assert all_saved["exists"] is True
+        assert len(all_saved["saved_jobs"]) == 2
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -556,5 +688,8 @@ if __name__ == "__main__":
     test_get_database_summary_returns_counts_and_gaps()
     test_get_recent_saved_jobs_when_file_missing()
     test_query_recent_saved_jobs_returns_newest_first_and_respects_limit()
+    test_get_all_saved_job_results_when_file_missing()
+    test_query_missing_skills_for_job_result_returns_sorted_unique_skills()
+    test_get_saved_job_result_for_comparison_returns_one_identifiable_result()
 
     print("All database tests passed.")

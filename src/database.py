@@ -352,6 +352,172 @@ def query_recent_saved_jobs(connection, limit=10):
     return recent_jobs
 
 
+def query_all_saved_job_results(connection):
+    """
+    Return every saved job result with stable IDs for comparison pickers.
+
+    Ordered newest run first, then newest job result within each run.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            job_results.id,
+            job_results.run_id,
+            analysis_runs.run_timestamp,
+            job_results.job_filename,
+            job_results.matched_skills_count,
+            job_results.missing_skills_count
+        FROM job_results
+        JOIN analysis_runs ON job_results.run_id = analysis_runs.id
+        ORDER BY analysis_runs.run_timestamp DESC,
+                 job_results.run_id DESC,
+                 job_results.id DESC;
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    saved_jobs = []
+    for row in rows:
+        saved_jobs.append(
+            {
+                "job_result_id": row[0],
+                "run_id": row[1],
+                "run_timestamp": row[2],
+                "job_filename": row[3],
+                "matched_skills_count": row[4],
+                "missing_skills_count": row[5],
+            }
+        )
+
+    return saved_jobs
+
+
+def query_missing_skills_for_job_result(connection, job_result_id):
+    """
+    Return the missing skill names saved for one job result row.
+
+    Skills are deduplicated and sorted alphabetically.
+    Returns None when the job result ID does not exist.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT run_id, job_filename
+        FROM job_results
+        WHERE id = ?;
+        """,
+        (job_result_id,),
+    )
+
+    job_row = cursor.fetchone()
+
+    if job_row is None:
+        return None
+
+    run_id = job_row[0]
+    job_filename = job_row[1]
+
+    cursor.execute(
+        """
+        SELECT DISTINCT skill
+        FROM skill_gaps
+        WHERE run_id = ? AND job_filename = ?
+        ORDER BY skill ASC;
+        """,
+        (run_id, job_filename),
+    )
+
+    return [row[0] for row in cursor.fetchall()]
+
+
+def get_all_saved_job_results(database_path):
+    """
+    Read every saved job result from a SQLite analysis database file.
+
+    If the file does not exist, returns exists=False and an empty list.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "exists": False,
+            "database_path": database_path,
+            "saved_jobs": [],
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        saved_jobs = query_all_saved_job_results(connection)
+    finally:
+        connection.close()
+
+    return {
+        "exists": True,
+        "database_path": database_path,
+        "saved_jobs": saved_jobs,
+    }
+
+
+def get_saved_job_result_for_comparison(database_path, job_result_id):
+    """
+    Load one saved job result and its missing skills for comparison.
+
+    Returns None when the job result ID does not exist.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return None
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                job_results.id,
+                job_results.run_id,
+                analysis_runs.run_timestamp,
+                job_results.job_filename,
+                job_results.matched_skills_count,
+                job_results.missing_skills_count
+            FROM job_results
+            JOIN analysis_runs ON job_results.run_id = analysis_runs.id
+            WHERE job_results.id = ?;
+            """,
+            (job_result_id,),
+        )
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        missing_skills = query_missing_skills_for_job_result(
+            connection,
+            job_result_id,
+        )
+
+        return {
+            "job_result_id": row[0],
+            "run_id": row[1],
+            "run_timestamp": row[2],
+            "job_filename": row[3],
+            "matched_skills_count": row[4],
+            "missing_skills_count": row[5],
+            "missing_skills": missing_skills,
+        }
+    finally:
+        connection.close()
+
+
 def get_recent_saved_jobs(database_path, limit=10):
     """
     Read recent saved job results from a SQLite analysis database file.

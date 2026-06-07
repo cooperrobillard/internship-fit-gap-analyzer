@@ -267,6 +267,171 @@ def test_build_recent_saved_runs_display_when_database_exists():
         assert display["recent_jobs_rows"][0]["Missing skills"] >= 1
 
 
+def test_compare_skill_collections_finds_shared_and_unique_skills():
+    module = _load_streamlit_app_module()
+
+    comparison = module.compare_skill_collections(
+        ["sql", "pandas", "fastapi"],
+        ["sql", "docker", "pandas"],
+    )
+
+    assert comparison["shared"] == ["pandas", "sql"]
+    assert comparison["unique_to_first"] == ["fastapi"]
+    assert comparison["unique_to_second"] == ["docker"]
+
+
+def test_compare_skill_collections_handles_no_shared_skills():
+    module = _load_streamlit_app_module()
+
+    comparison = module.compare_skill_collections(
+        ["alpha"],
+        ["beta"],
+    )
+
+    assert comparison["shared"] == []
+    assert comparison["unique_to_first"] == ["alpha"]
+    assert comparison["unique_to_second"] == ["beta"]
+
+
+def test_compare_skill_collections_handles_identical_collections():
+    module = _load_streamlit_app_module()
+
+    comparison = module.compare_skill_collections(
+        ["sql", "pandas"],
+        ["pandas", "sql"],
+    )
+
+    assert comparison["shared"] == ["pandas", "sql"]
+    assert comparison["unique_to_first"] == []
+    assert comparison["unique_to_second"] == []
+
+
+def test_compare_skill_collections_normalizes_duplicate_values():
+    module = _load_streamlit_app_module()
+
+    comparison = module.compare_skill_collections(
+        ["sql", "sql", "pandas"],
+        ["sql", "pandas", "pandas"],
+    )
+
+    assert comparison["shared"] == ["pandas", "sql"]
+    assert comparison["unique_to_first"] == []
+    assert comparison["unique_to_second"] == []
+
+
+def test_format_skill_list_for_display_uses_none_for_empty_lists():
+    module = _load_streamlit_app_module()
+
+    assert module.format_skill_list_for_display([]) == module.EMPTY_SKILL_LIST_LABEL
+    assert module.format_skill_list_for_display(["sql", "pandas"]) == "sql, pandas"
+
+
+def test_build_compare_saved_analyses_options_when_database_missing():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        display = module.build_compare_saved_analyses_options(database_path)
+
+        assert display["database_exists"] is False
+        assert "sqlite saving enabled" in display["missing_message"].lower()
+
+
+def test_build_compare_saved_analyses_options_when_only_one_saved_job():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_compare_saved_analyses_options(database_path)
+
+        assert display["database_exists"] is True
+        assert display["can_compare"] is False
+        assert "at least two" in display["insufficient_message"].lower()
+
+
+def test_build_compare_saved_analyses_result_for_two_saved_jobs():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        first_result = module.run_sample_analysis()
+        module.store_analysis_result(
+            first_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        pasted_result = module.run_pasted_job_analysis(
+            "Internship requiring Python, SQL, Docker, and technical writing."
+        )
+        module.store_analysis_result(
+            pasted_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        options = module.build_compare_saved_analyses_options(database_path)
+        comparison = module.build_compare_saved_analyses_result(
+            options["default_first_id"],
+            options["default_second_id"],
+            database_path=database_path,
+        )
+
+        assert comparison["status"] == "ready"
+        assert comparison["first_job_name"]
+        assert comparison["second_job_name"]
+        assert comparison["first_missing_skills_count"] >= 0
+        assert comparison["second_missing_skills_count"] >= 0
+        assert isinstance(comparison["shared_missing_skills"], list)
+        assert isinstance(comparison["missing_skills_unique_to_first"], list)
+        assert isinstance(comparison["missing_skills_unique_to_second"], list)
+
+
+def test_build_compare_saved_analyses_result_rejects_same_selection():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        pasted_result = module.run_pasted_job_analysis(
+            "Internship requiring Python, SQL, Docker, and technical writing."
+        )
+        module.store_analysis_result(
+            pasted_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        options = module.build_compare_saved_analyses_options(database_path)
+        job_result_id = options["default_first_id"]
+
+        comparison = module.build_compare_saved_analyses_result(
+            job_result_id,
+            job_result_id,
+            database_path=database_path,
+        )
+
+        assert comparison["status"] == "same_selection"
+        assert "different" in comparison["message"].lower()
+
+
 def test_resolve_resume_path_uses_sample_by_default():
     module = _load_streamlit_app_module()
 
@@ -302,5 +467,14 @@ if __name__ == "__main__":
     test_build_saved_history_display_when_database_exists()
     test_build_recent_saved_runs_display_when_database_missing()
     test_build_recent_saved_runs_display_when_database_exists()
+    test_compare_skill_collections_finds_shared_and_unique_skills()
+    test_compare_skill_collections_handles_no_shared_skills()
+    test_compare_skill_collections_handles_identical_collections()
+    test_compare_skill_collections_normalizes_duplicate_values()
+    test_format_skill_list_for_display_uses_none_for_empty_lists()
+    test_build_compare_saved_analyses_options_when_database_missing()
+    test_build_compare_saved_analyses_options_when_only_one_saved_job()
+    test_build_compare_saved_analyses_result_for_two_saved_jobs()
+    test_build_compare_saved_analyses_result_rejects_same_selection()
     test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")
