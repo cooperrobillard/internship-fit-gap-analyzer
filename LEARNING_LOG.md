@@ -1451,3 +1451,13 @@ Tested with:
 * Improved the saved-history and comparison workflow without adding filtering, deletion, ranking, scoring, or new database schema changes.
 * Preserved the existing analysis, SQLite saving, saved detail, saved comparison, and saved gap priority summary workflows.
 * Confirmed the test suite, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
+
+## Dev Chat 6 - Saved Result Search
+
+* Added a simple text search for saved analysis results in the local Streamlit UI.
+* Practiced filtering saved SQLite records using case-insensitive text matching without modifying the underlying database.
+* Preserved the existing saved-result labels and newest-first sorting while making saved analyses easier to find by job name and stable record information.
+* Added friendly handling for no matches and for cases where fewer than two matching analyses are available for comparison.
+* Kept the saved gap priority summary based on the complete saved history rather than silently changing its scope.
+* Preserved the existing analysis, SQLite saving, saved history, saved details, saved comparison, and recurring-gap workflows.
+* Confirmed the tests, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
