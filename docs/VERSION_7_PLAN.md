@@ -2,9 +2,9 @@
 
 This document plans **Version 7** for the Internship Fit & Skill-Gap Analyzer: **saved-result organization and local data management** in the existing localhost Streamlit UI and local SQLite database.
 
-**Status:** Planning only. **No Version 7 code is implemented yet.**
+**Status:** **Complete.** Implementation recorded in [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md).
 
-For what exists today, see [`VERSION_6_CHECKPOINT.md`](VERSION_6_CHECKPOINT.md). For long-term milestones (hosted UI, optional AI), see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
+For the Version 6 baseline, see [`VERSION_6_CHECKPOINT.md`](VERSION_6_CHECKPOINT.md). For long-term milestones (hosted UI, optional AI), see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ---
 

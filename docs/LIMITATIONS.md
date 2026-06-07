@@ -62,9 +62,25 @@ Important limits:
 - **Two results at a time.** The UI compares exactly two saved analyses, not three or more.
 - **Latest-run vs. all-saves.** **Saved Analysis History** still shows top recurring gaps for the **latest run only**. **Saved Gap Priority Summary** aggregates across **all** saved job results (up to 10 skills shown).
 - **Example job names.** The priority summary lists distinct job filenames when available. The same filename saved in multiple runs may appear once in examples even when the recurrence count is higher.
-- **No edit or delete.** Saved rows cannot be removed or changed from the UI.
-
 See [`VERSION_6_CHECKPOINT.md`](VERSION_6_CHECKPOINT.md) for the full Version 6 workflow and commands.
+
+## Saved-result management limitations (Version 7)
+
+The local Streamlit UI can **search** saved job results and **delete one selected result** at a time with explicit confirmation.
+
+Important limits:
+
+- **Deletion is permanent.** There is no undo, archive, or trash recovery.
+- **One record at a time.** No bulk delete, delete-all, or delete-by-search.
+- **Local only.** Deletes affect `data/outputs/analysis_results.db` on your machine only.
+- **Skill gaps keyed by run + job name.** `skill_gaps` rows do not store `job_result_id`; deletion matches `run_id` and `job_filename`. Normal UI saves have one result per job name per run.
+- **Search is substring-based.** No date-range, category, or gap-count filters.
+- **No saved-record editing.** You cannot change labels, metadata, or stored skill rows from the UI.
+- **No company/title metadata.** Labels use stored job filename, timestamps, IDs, and counts only.
+- **Gap priority summary stays global.** Search filters browsing and pickers but not the all-saves priority summary.
+- **Parent run cleanup.** An empty `analysis_runs` row is removed only when its last `job_results` row is deleted; multi-job runs keep the parent when siblings remain.
+
+See [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md) for the full Version 7 workflow and commands.
 
 ## Keyword matching limitations
 

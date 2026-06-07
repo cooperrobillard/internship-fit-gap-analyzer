@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 6**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, read-only saved-analysis comparison, and tests passing on a clean public repo.
+As of **Version 7**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, and tests passing on a clean public repo.
 
 **What exists today:**
 
@@ -20,6 +20,7 @@ As of **Version 6**, the project is a **stable, rule-based Python CLI tool** wit
 - Version 4 additions: local Streamlit UI (`streamlit_app.py`) for sample job and pasted job analysis, resume source selector, polished results display.
 - Version 5 additions: optional SQLite save from the UI, read-only **Saved Analysis History** summary panel, read-only **Recent Saved Runs** table (localhost only).
 - Version 6 additions: read-only **Compare Saved Analyses** (two saved job results, missing-skill comparison), read-only **Saved Gap Priority Summary** across all saved analyses (localhost only).
+- Version 7 additions: improved saved-result labels, newest-first sorting across all saves, **Search saved analyses**, guarded **Delete Saved Analysis** (one record at a time, localhost only).
 
 **What does not exist today:**
 
@@ -29,7 +30,8 @@ As of **Version 6**, the project is a **stable, rule-based Python CLI tool** wit
 - Semantic matching, embeddings, or RAG
 - Docker, CI deployment pipelines for the app itself
 - Production hosting or a live product at cooperrobillard.com/jobfit
-- Full saved-run browser with search/filters, edit/delete controls, or fit-score ranking in the UI
+- Bulk delete, undo/archive, saved-record editing, tags/favorites, or fit-score ranking in the UI
+- Hosted deployment, authentication, or cloud database
 - Matched-skill list comparison from saved SQLite data (only counts are stored)
 
 The analyzer uses **keyword and alias matching**, not AI understanding of resumes or job descriptions. Optional SQLite and pandas features **store and summarize** results locally; they do not add semantic job-fit judgment.
@@ -116,24 +118,38 @@ Delivered:
 
 **Explicitly not Version 6:** fit scores, weighted rankings, matched-skill list comparison from SQLite, charts, deployment, auth, more than two-way comparison, edit/delete controls.
 
-### Version 7: Local saved-result organization — **planning**
+### Version 7: Local saved-result organization — **complete**
 
-**Goal:** Improve how saved analyses are browsed, labeled, sorted, and optionally cleaned up **locally**—after Version 6 comparison and gap-priority views.
+**Goal:** Improve how saved analyses are browsed, labeled, sorted, searched, and safely cleaned up **locally**.
 
-Detailed plan: [`VERSION_7_PLAN.md`](VERSION_7_PLAN.md).
+Plan: [`VERSION_7_PLAN.md`](VERSION_7_PLAN.md). Checkpoint: [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md).
 
-Proposed first step: **improve saved-result labels and sorting** (no schema migration in Step 1).
+Delivered:
 
-Possible later slices (one branch each; not all required):
+- improved saved-result labels (job name, timestamp, run/result IDs, gap/matched counts),
+- newest-first sorting across **all** saved job results,
+- case-insensitive **Search saved analyses** for browsing and pickers,
+- guarded **Delete Saved Analysis** (one record, explicit confirmation, related skill-gap cleanup),
+- safe Streamlit confirmation reset after deletion.
 
-- search or filters for saved runs,
-- lightweight optional metadata (only with deliberate schema/UI design),
-- safe **local** deletion or cleanup (explicit confirmation),
-- stronger tests and clearer empty states.
+**Explicitly not Version 7:** bulk delete, undo, editing, tags, advanced filters, metadata schema changes, hosted deployment, auth, fit scores.
 
-**Explicitly not Version 7:** hosted deployment, custom domain, authentication, Clerk, cloud database, multi-user support, OpenAI API, fit scores, job ranking, full application tracker.
+### Version 8: Future planning (not committed)
 
-### Version 8: Private hosted web tool (future)
+**Goal:** Evaluate next improvements **without** selecting a final implementation yet.
+
+Possible directions to discuss in planning docs only:
+
+- test-suite modernization (`unittest discover` compatibility),
+- limited optional saved-result metadata,
+- local export/import or backup research,
+- Streamlit UI maintenance,
+- deployment-readiness research (no deployment in this phase),
+- architecture notes for a possible future hosted tool.
+
+**Explicitly not Version 8 by default:** production deployment, authentication, Clerk, cloud database, multi-user SaaS.
+
+### Version 9: Private hosted web tool (future)
 
 **Goal:** A **private or unlisted** hosted instance for personal use, optionally linked from cooperrobillard.com/jobfit—**only after** local UI workflows feel worthwhile.
 
@@ -146,7 +162,7 @@ Possible characteristics:
 
 **Explicitly not required for first hosted milestone:** multi-user accounts, billing, RAG, or semantic search.
 
-### Version 9: Optional AI-assisted extraction (maybe never)
+### Version 10: Optional AI-assisted extraction (maybe never)
 
 **Goal:** Only if rule-based matching becomes a clear bottleneck **and** privacy/cost tradeoffs are acceptable.
 
@@ -156,7 +172,7 @@ Possible future additions (all optional):
 - Better handling of varied wording—not full “AI understands fit.”
 - Still keep rule-based path as fallback and for offline/local use.
 
-This version is **optional** and should not block Versions 3–8. The project remains valuable as a rule-based, explainable tool.
+This version is **optional** and should not block Versions 3–9. The project remains valuable as a rule-based, explainable tool.
 
 ---
 
@@ -174,6 +190,7 @@ Treat these as **prerequisites**, not suggestions:
 | Version 4 local prototype validated | Proves the workflow before paying hosting/complexity costs |
 | Version 5 local persistence validated | Optional save + read-only history without overbuilding a dashboard |
 | Version 6 comparison validated | Two-way missing-skill comparison + gap priority summary feel useful locally |
+| Version 7 organization validated | Labels, search, and guarded deletion work during real local use |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -212,15 +229,17 @@ Version 5 (complete)
   → optional UI SQLite save + read-only saved-history views
 Version 6 (complete)
   → saved-analysis comparison + saved gap priority summary
-Version 7 (possible, small slices)
-  → local saved-result organization / UI polish / stronger tests
-Version 8 (only if local UX feels worthwhile)
-  → private/unlisted deploy; link from cooperrobillard.com/jobfit; env-based secrets
-Version 9 (optional, much later)
+Version 7 (complete)
+  → labels, sorting, search, guarded single-result deletion
+Version 8 (planning discussion only)
+  → evaluate tests, metadata, export/backup, UI maintenance, deployment research
+Version 9 (only if local UX feels worthwhile)
+  → private/unlisted deploy; env-based secrets; access gate
+Version 10 (optional, much later)
   → AI-assisted extraction experiments; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep CLI tests green; use Version 6 views during real internship search; consider Version 7 only as small, reviewable local improvements. Treat hosted deployment as a **separate milestone**, not the default next step.
+**Immediate recommendation:** Keep CLI tests green; use Version 7 saved-management workflows during real internship search; treat Version 8 as a **planning milestone**, not an automatic implementation step. Hosted deployment remains a separate, later decision.
 
 ---
 
@@ -282,7 +301,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Wrote tests for core logic, CLI behavior, validation, database output, and inspection scripts.
 - Designed repo layout for **privacy**: public samples in Git, real resume/jobs local-only.
 - Extended a Version 1 MVP with optional SQLite persistence and pandas summaries (Version 2).
-- Built a local Streamlit UI with optional SQLite save, read-only saved-history views, saved-analysis comparison, and a recurring gap priority summary (Versions 4–6).
+- Built a local Streamlit UI with optional SQLite save, searchable saved-history views, saved-analysis comparison, a recurring gap priority summary, and guarded single-result deletion (Versions 4–7).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -293,7 +312,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 
 **Possible one-liner (today):**
 
-> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs, read-only saved-history views, two-way saved-analysis comparison, and a gap priority summary—test-backed and privacy-conscious, not deployed.
+> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs, searchable saved-history views, two-way saved-analysis comparison, a gap priority summary, and guarded local deletion—test-backed and privacy-conscious, not deployed.
 
 Update the one-liner when a hosted UI exists—still without overstating AI capabilities unless an AI milestone is real.
 
@@ -319,4 +338,4 @@ Actionable items for the **docs/product-roadmap** era and immediate follow-ups�
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 6 complete; Version 7 planning documented in [`VERSION_7_PLAN.md`](VERSION_7_PLAN.md); no hosted deployment.*
+*Last aligned with: Version 7 complete; Version 8 reserved for planning discussion; no hosted deployment.*

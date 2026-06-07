@@ -21,7 +21,7 @@ Matching is **keyword- and alias-based**. It does not understand meaning, requir
 
 ## Current status
 
-**Version 6** adds **read-only saved-analysis comparison and a saved gap priority summary** to the Version 5 local Streamlit UI, on top of the Version 3 CLI and backend.
+**Version 7** adds **saved-result organization and local data management** (improved labels, search, guarded deletion) to the Version 6 local Streamlit UI, on top of the Version 3 CLI and backend.
 
 The project can:
 
@@ -29,7 +29,7 @@ The project can:
 * run analysis on a **single job file** with `--job-file`,
 * call shared backend functions (`src/analysis_runner.py`) that return structured results,
 * run a **local Streamlit UI** (`streamlit_app.py`) for sample job and pasted job analysis,
-* **optionally save UI runs** to `data/outputs/analysis_results.db` and view **read-only saved-history views** (summary, recent runs, **two-way comparison**, and **recurring gap priority summary**) in the UI,
+* **optionally save UI runs** to `data/outputs/analysis_results.db` and use **saved-history views** with improved labels, **text search**, **two-way comparison**, **recurring gap priority summary**, and **guarded single-result deletion** in the UI,
 * generate markdown and CSV outputs (CLI),
 * optionally save to SQLite (`--database`),
 * optionally create pandas summary CSVs (`--pandas-summary`),
@@ -62,6 +62,7 @@ internship-fit-gap-analyzer/
     VERSION_5_CHECKPOINT.md
     VERSION_6_CHECKPOINT.md
     VERSION_7_PLAN.md
+    VERSION_7_CHECKPOINT.md
     LOCAL_UI_PLAN.md
   scripts/
     inspect_database.py
@@ -207,7 +208,16 @@ python3 run_tests.py
 
 Expected final line: `All tests passed.`
 
-### Local Streamlit UI (Versions 4–6)
+Focused helper tests (including Version 7 label, search, and deletion helpers):
+
+```bash
+python3 tests/test_streamlit_app.py
+python3 tests/test_database.py
+```
+
+Note: `python3 -m unittest discover -s tests -p "test_*.py"` currently reports **0 tests** because most test files are executable scripts, not `unittest.TestCase` classes. Use `run_tests.py` or the per-file commands above.
+
+### Local Streamlit UI (Versions 4–7)
 
 Run from the project root. Opens a browser tab on your machine only—not a public website.
 
@@ -222,15 +232,17 @@ The UI can:
 * use the **sample resume** (`data/resume/sample_resume.txt`) by default,
 * use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine,
 * **optionally save** an analysis run to `data/outputs/analysis_results.db` (checkbox),
-* show read-only **Saved Analysis History** and **Recent Saved Runs** when that database exists,
+* show **Saved Analysis History** and **Recent Saved Runs** with **improved labels** (job name, saved time, run/result IDs, gap counts) when that database exists,
+* **search saved analyses** by job name, date, or IDs (filters browsing and pickers, not the gap priority summary),
 * **compare two saved analyses** (shared and unique missing skills; requires at least two saved job results),
-* show a **Saved Gap Priority Summary** of recurring missing skills across all saved analyses.
+* show a **Saved Gap Priority Summary** of recurring missing skills across all saved analyses,
+* **delete one selected saved analysis** permanently after explicit confirmation (local SQLite only).
 
-Comparison uses **missing skills stored in SQLite** only—it does not compare matched-skill lists because individual matched skill names are not saved to the database. The gap priority summary is descriptive, not a ranked recommendation engine.
+Comparison uses **missing skills stored in SQLite** only—it does not compare matched-skill lists because individual matched skill names are not saved to the database. The gap priority summary is descriptive, not a ranked recommendation engine. Deletion has **no undo**.
 
 Preview runs do not write markdown/CSV report files unless you use the CLI. Optional UI SQLite saving uses the same local database path family as `--database`.
 
-**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence and [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison and decision-support workflows.
+**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence, [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison, and [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) for saved-result management.
 
 ### Help and other options
 
@@ -308,7 +320,8 @@ Output files:
 | [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
 | [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) | Version 5 local UI persistence and saved-history views |
 | [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) | Version 6 saved-analysis comparison and gap priority summary |
-| [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) | Version 7 planning: saved-result organization (not implemented yet) |
+| [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) | Version 7 plan: saved-result organization |
+| [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) | Version 7 checkpoint: labels, search, guarded deletion |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
@@ -331,4 +344,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: Version 7 planning targets **saved-result organization** on localhost (labels, sorting, filtering)—not deployment. **Hosted deployment** and optional AI-assisted extraction remain later milestones.
+See [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: Version 7 saved-result management is **complete** on localhost. **Version 8** is reserved for planning discussion (tests, metadata, export/backup research, deployment research)—not automatic implementation. Hosted deployment and optional AI-assisted extraction remain later milestones.
