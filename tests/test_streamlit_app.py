@@ -262,9 +262,161 @@ def test_build_recent_saved_runs_display_when_database_exists():
         assert display["recent_jobs_rows"][0]["Job"] == (
             "sample_ai_engineering_internship.txt"
         )
+        assert "sample_ai_engineering_internship.txt" in (
+            display["recent_jobs_rows"][0]["Saved result"]
+        )
         assert display["recent_jobs_rows"][0]["Run ID"] == 1
+        assert display["recent_jobs_rows"][0]["Result ID"] == 1
         assert display["recent_jobs_rows"][0]["Matched skills"] >= 1
         assert display["recent_jobs_rows"][0]["Missing skills"] >= 1
+
+
+def test_format_saved_result_label_includes_job_name_and_stable_ids():
+    module = _load_streamlit_app_module()
+
+    label = module.format_saved_result_label(
+        {
+            "job_filename": "sample_ai_engineering_internship.txt",
+            "run_timestamp": "2026-06-07T16:32:00",
+            "run_id": 3,
+            "job_result_id": 5,
+            "missing_skills_count": 11,
+            "matched_skills_count": 17,
+        }
+    )
+
+    assert "sample_ai_engineering_internship.txt" in label
+    assert "run 3" in label
+    assert "result 5" in label
+    assert "11 gaps" in label
+    assert "17 matched" in label
+    assert "saved 2026-06-07" in label
+
+
+def test_format_saved_result_label_distinguishes_duplicate_job_names():
+    module = _load_streamlit_app_module()
+
+    first_label = module.format_saved_result_label(
+        {
+            "job_filename": "sample_job.txt",
+            "run_timestamp": "2026-06-07T10:00:00",
+            "run_id": 1,
+            "job_result_id": 1,
+            "missing_skills_count": 4,
+            "matched_skills_count": 6,
+        }
+    )
+    second_label = module.format_saved_result_label(
+        {
+            "job_filename": "sample_job.txt",
+            "run_timestamp": "2026-06-08T10:00:00",
+            "run_id": 2,
+            "job_result_id": 2,
+            "missing_skills_count": 7,
+            "matched_skills_count": 5,
+        }
+    )
+
+    assert first_label != second_label
+    assert "run 1" in first_label
+    assert "run 2" in second_label
+    assert "result 1" in first_label
+    assert "result 2" in second_label
+
+
+def test_sort_saved_results_orders_newest_first():
+    module = _load_streamlit_app_module()
+
+    sorted_jobs = module.sort_saved_results(
+        [
+            {
+                "job_filename": "older_job.txt",
+                "run_timestamp": "2026-06-01T10:00:00",
+                "run_id": 1,
+                "job_result_id": 1,
+                "missing_skills_count": 2,
+                "matched_skills_count": 3,
+            },
+            {
+                "job_filename": "newer_job.txt",
+                "run_timestamp": "2026-06-07T10:00:00",
+                "run_id": 2,
+                "job_result_id": 2,
+                "missing_skills_count": 5,
+                "matched_skills_count": 4,
+            },
+        ]
+    )
+
+    assert sorted_jobs[0]["job_filename"] == "newer_job.txt"
+    assert sorted_jobs[1]["job_filename"] == "older_job.txt"
+
+
+def test_sort_saved_results_uses_ids_when_timestamps_match():
+    module = _load_streamlit_app_module()
+
+    sorted_jobs = module.sort_saved_results(
+        [
+            {
+                "job_filename": "alpha_job.txt",
+                "run_timestamp": "2026-06-07T10:00:00",
+                "run_id": 1,
+                "job_result_id": 1,
+                "missing_skills_count": 2,
+                "matched_skills_count": 3,
+            },
+            {
+                "job_filename": "beta_job.txt",
+                "run_timestamp": "2026-06-07T10:00:00",
+                "run_id": 2,
+                "job_result_id": 3,
+                "missing_skills_count": 5,
+                "matched_skills_count": 4,
+            },
+        ]
+    )
+
+    assert sorted_jobs[0]["run_id"] == 2
+    assert sorted_jobs[1]["run_id"] == 1
+
+
+def test_format_saved_result_label_handles_missing_timestamp():
+    module = _load_streamlit_app_module()
+
+    label = module.format_saved_result_label(
+        {
+            "job_filename": "sample_job.txt",
+            "run_id": 4,
+            "job_result_id": 9,
+            "missing_skills_count": 1,
+        }
+    )
+
+    assert "sample_job.txt" in label
+    assert "saved unknown time" in label
+    assert "run 4" in label
+    assert "result 9" in label
+
+
+def test_recent_saved_jobs_to_rows_includes_saved_result_label():
+    module = _load_streamlit_app_module()
+
+    rows = module.recent_saved_jobs_to_rows(
+        [
+            {
+                "job_filename": "sample_job.txt",
+                "run_timestamp": "2026-06-07T16:32:00",
+                "run_id": 1,
+                "job_result_id": 1,
+                "missing_skills_count": 3,
+                "matched_skills_count": 5,
+            }
+        ]
+    )
+
+    assert "Saved result" in rows[0]
+    assert "sample_job.txt" in rows[0]["Saved result"]
+    assert rows[0]["Result ID"] == 1
 
 
 def test_compare_skill_collections_finds_shared_and_unique_skills():
@@ -537,6 +689,12 @@ if __name__ == "__main__":
     test_build_saved_history_display_when_database_exists()
     test_build_recent_saved_runs_display_when_database_missing()
     test_build_recent_saved_runs_display_when_database_exists()
+    test_format_saved_result_label_includes_job_name_and_stable_ids()
+    test_format_saved_result_label_distinguishes_duplicate_job_names()
+    test_sort_saved_results_orders_newest_first()
+    test_sort_saved_results_uses_ids_when_timestamps_match()
+    test_format_saved_result_label_handles_missing_timestamp()
+    test_recent_saved_jobs_to_rows_includes_saved_result_label()
     test_compare_skill_collections_finds_shared_and_unique_skills()
     test_compare_skill_collections_handles_no_shared_skills()
     test_compare_skill_collections_handles_identical_collections()

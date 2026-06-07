@@ -4,6 +4,7 @@
 # Run from the repo root:
 #   python3 -m streamlit run streamlit_app.py
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Add src/ so we can import analysis_runner like the CLI and tests do.
@@ -327,18 +328,103 @@ SAVED_GAP_PRIORITY_GUIDANCE = (
 )
 
 
+def normalize_saved_result(saved_result):
+    """Return a saved-result dict with consistent keys for labels and sorting."""
+    normalized = dict(saved_result)
+
+    if "job_result_id" not in normalized and "id" in normalized:
+        normalized["job_result_id"] = normalized["id"]
+
+    return normalized
+
+
+def format_saved_timestamp(run_timestamp):
+    """Turn an ISO run timestamp into a shorter readable label."""
+    if not run_timestamp:
+        return "unknown time"
+
+    timestamp_text = str(run_timestamp).strip()
+
+    try:
+        parsed = datetime.fromisoformat(timestamp_text)
+    except ValueError:
+        return timestamp_text
+
+    hour = parsed.hour % 12 or 12
+    return (
+        f"{parsed.year:04d}-{parsed.month:02d}-{parsed.day:02d} "
+        f"{hour}:{parsed.minute:02d} "
+        f"{'AM' if parsed.hour < 12 else 'PM'}"
+    )
+
+
+def format_saved_result_label(saved_result):
+    """
+    Build a readable label for one saved job result.
+
+    Uses stored fields only. Duplicate job names stay distinct via run and
+    result IDs plus the saved timestamp.
+    """
+    saved_result = normalize_saved_result(saved_result)
+
+    job_name = saved_result.get("job_filename") or "Unknown job"
+    timestamp_label = format_saved_timestamp(saved_result.get("run_timestamp"))
+    run_id = saved_result.get("run_id", "?")
+    job_result_id = saved_result.get("job_result_id", "?")
+    missing_count = saved_result.get("missing_skills_count", 0)
+    matched_count = saved_result.get("matched_skills_count")
+
+    label_parts = [
+        job_name,
+        f"saved {timestamp_label}",
+        f"run {run_id}",
+        f"result {job_result_id}",
+        f"{missing_count} gaps",
+    ]
+
+    if matched_count is not None:
+        label_parts.append(f"{matched_count} matched")
+
+    return " | ".join(label_parts)
+
+
+def sort_saved_results(saved_results):
+    """
+    Sort saved job results newest first with stable tie-breakers.
+
+    Uses run timestamp when available, then run ID, job result ID, and job name.
+    """
+    normalized_results = [
+        normalize_saved_result(saved_result) for saved_result in saved_results
+    ]
+
+    def sort_key(saved_result):
+        timestamp = str(saved_result.get("run_timestamp") or "")
+        run_id = int(saved_result.get("run_id") or 0)
+        job_result_id = int(saved_result.get("job_result_id") or 0)
+        job_name = str(saved_result.get("job_filename") or "")
+
+        return (timestamp, run_id, job_result_id, job_name)
+
+    return sorted(normalized_results, key=sort_key, reverse=True)
+
+
 def recent_saved_jobs_to_rows(recent_jobs):
     """Turn recent saved job records into table rows for st.dataframe."""
     rows = []
 
-    for job in recent_jobs:
+    for job in sort_saved_results(recent_jobs):
+        normalized_job = normalize_saved_result(job)
+
         rows.append(
             {
-                "Run ID": job["run_id"],
-                "Saved at": job["run_timestamp"],
-                "Job": job["job_filename"],
-                "Matched skills": job["matched_skills_count"],
-                "Missing skills": job["missing_skills_count"],
+                "Saved result": format_saved_result_label(normalized_job),
+                "Run ID": normalized_job["run_id"],
+                "Saved at": format_saved_timestamp(normalized_job["run_timestamp"]),
+                "Job": normalized_job["job_filename"],
+                "Result ID": normalized_job.get("job_result_id"),
+                "Matched skills": normalized_job["matched_skills_count"],
+                "Missing skills": normalized_job["missing_skills_count"],
             }
         )
 
@@ -362,7 +448,7 @@ def build_recent_saved_runs_display(
             "missing_message": RECENT_SAVED_RUNS_MISSING_MESSAGE,
         }
 
-    recent_jobs = recent_data["recent_jobs"]
+    recent_jobs = sort_saved_results(recent_data["recent_jobs"])
 
     return {
         "database_exists": True,
@@ -397,15 +483,6 @@ def format_skill_list_for_display(skills):
     return ", ".join(skills)
 
 
-def format_saved_job_option_label(saved_job):
-    """Build a readable select-box label for one saved job result."""
-    return (
-        f"{saved_job['job_filename']} — run {saved_job['run_id']}, "
-        f"saved {saved_job['run_timestamp']} "
-        f"(result #{saved_job['job_result_id']})"
-    )
-
-
 def build_compare_saved_analyses_options(
     database_path=DEFAULT_DATABASE_PATH,
 ):
@@ -422,7 +499,7 @@ def build_compare_saved_analyses_options(
             "missing_message": SAVED_COMPARISON_MISSING_MESSAGE,
         }
 
-    saved_jobs = saved_data["saved_jobs"]
+    saved_jobs = sort_saved_results(saved_data["saved_jobs"])
 
     if len(saved_jobs) < 2:
         return {
@@ -438,7 +515,7 @@ def build_compare_saved_analyses_options(
         options.append(
             {
                 "job_result_id": saved_job["job_result_id"],
-                "label": format_saved_job_option_label(saved_job),
+                "label": format_saved_result_label(saved_job),
             }
         )
 

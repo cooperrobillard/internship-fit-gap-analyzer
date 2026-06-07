@@ -537,6 +537,7 @@ def test_query_recent_saved_jobs_returns_newest_first_and_respects_limit():
         assert len(recent_jobs) == 1
         assert recent_jobs[0]["job_filename"] == "newer_job.txt"
         assert recent_jobs[0]["run_id"] == 2
+        assert recent_jobs[0]["job_result_id"] == 2
         assert recent_jobs[0]["matched_skills_count"] == 2
         assert recent_jobs[0]["missing_skills_count"] == 1
 

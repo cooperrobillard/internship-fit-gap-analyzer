@@ -412,6 +412,7 @@ def query_recent_saved_jobs(connection, limit=10):
     cursor.execute(
         """
         SELECT
+            job_results.id,
             job_results.run_id,
             analysis_runs.run_timestamp,
             job_results.job_filename,
@@ -433,11 +434,12 @@ def query_recent_saved_jobs(connection, limit=10):
     for row in rows:
         recent_jobs.append(
             {
-                "run_id": row[0],
-                "run_timestamp": row[1],
-                "job_filename": row[2],
-                "matched_skills_count": row[3],
-                "missing_skills_count": row[4],
+                "job_result_id": row[0],
+                "run_id": row[1],
+                "run_timestamp": row[2],
+                "job_filename": row[3],
+                "matched_skills_count": row[4],
+                "missing_skills_count": row[5],
             }
         )
 
