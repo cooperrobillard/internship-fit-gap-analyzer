@@ -1427,3 +1427,11 @@ Tested with:
 - Kept the summary descriptive instead of adding fit scores, weighted rankings, or automatic job recommendations.
 - Preserved the existing analysis, SQLite saving, saved history, saved detail, and saved comparison workflows.
 - Confirmed the test suite, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
+
+## Dev Chat 6 - Version 6 Checkpoint
+
+- Documented the completed Version 6 saved-analysis comparison and decision-support workflow.
+- Reviewed the implementation to make sure the documentation accurately reflects the SQLite data and local Streamlit behavior.
+- Recorded the limitations of the current rule-based comparison, including the absence of fit scores, automatic rankings, semantic matching, deployment, and user accounts.
+- Updated the project roadmap or README where necessary to distinguish current local features from future hosted-product ideas.
+- Confirmed the test suite, CLI workflows, database inspection workflow, local UI, and Git privacy checks still work.
