@@ -14,9 +14,11 @@ from database import query_jobs_with_most_gaps
 from database import query_recent_saved_jobs
 from database import get_all_saved_job_results
 from database import get_database_summary, get_recent_saved_jobs, save_analysis_results
+from database import get_saved_gap_priority_summary
 from database import get_saved_job_result_for_comparison
 from database import query_all_saved_job_results
 from database import query_missing_skills_for_job_result
+from database import query_saved_gap_priorities
 
 
 def table_exists(connection, table_name):
@@ -675,6 +677,113 @@ def test_get_saved_job_result_for_comparison_returns_one_identifiable_result():
         assert len(all_saved["saved_jobs"]) == 2
 
 
+def test_get_saved_gap_priority_summary_when_file_missing():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "missing_analysis_results.db"
+
+        summary = get_saved_gap_priority_summary(database_path)
+
+        assert summary["exists"] is False
+        assert summary["database_path"] == database_path
+
+
+def test_get_saved_gap_priority_summary_when_no_saved_gaps():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=0,
+        )
+
+        connection.close()
+
+        summary = get_saved_gap_priority_summary(database_path)
+
+        assert summary["exists"] is True
+        assert summary["has_saved_gaps"] is False
+        assert summary["priorities"] == []
+
+
+def test_query_saved_gap_priorities_counts_and_sorts_across_saved_jobs():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        first_job_results = [
+            {
+                "job_name": "alpha_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {
+                    "programming": ["docker"],
+                    "data": ["sql", "pandas"],
+                },
+            },
+            {
+                "job_name": "beta_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {
+                    "programming": [],
+                    "data": ["sql"],
+                },
+            },
+        ]
+        second_job_results = [
+            {
+                "job_name": "gamma_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {
+                    "programming": ["fastapi"],
+                    "data": ["sql"],
+                },
+            }
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=first_job_results,
+        )
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=second_job_results,
+        )
+
+        priorities = query_saved_gap_priorities(connection)
+
+        assert priorities[0]["gap_skill"] == "sql"
+        assert priorities[0]["category"] == "data"
+        assert priorities[0]["count"] == 3
+        assert priorities[0]["example_job_names"] == [
+            "alpha_job.txt",
+            "beta_job.txt",
+            "gamma_job.txt",
+        ]
+
+        skill_names = [priority["gap_skill"] for priority in priorities]
+        assert skill_names.index("docker") < skill_names.index("fastapi")
+        assert skill_names.index("fastapi") < skill_names.index("pandas")
+
+        limited_priorities = query_saved_gap_priorities(connection, limit=2)
+        assert len(limited_priorities) == 2
+        assert limited_priorities[0]["gap_skill"] == "sql"
+        assert limited_priorities[1]["gap_skill"] == "docker"
+
+        connection.close()
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -691,5 +800,8 @@ if __name__ == "__main__":
     test_get_all_saved_job_results_when_file_missing()
     test_query_missing_skills_for_job_result_returns_sorted_unique_skills()
     test_get_saved_job_result_for_comparison_returns_one_identifiable_result()
+    test_get_saved_gap_priority_summary_when_file_missing()
+    test_get_saved_gap_priority_summary_when_no_saved_gaps()
+    test_query_saved_gap_priorities_counts_and_sorts_across_saved_jobs()
 
     print("All database tests passed.")

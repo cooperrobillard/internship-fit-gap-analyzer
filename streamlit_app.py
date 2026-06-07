@@ -14,6 +14,7 @@ sys.path.insert(0, str(SRC_FOLDER))
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
 from database import get_all_saved_job_results
 from database import get_database_summary, get_recent_saved_jobs
+from database import get_saved_gap_priority_summary
 from database import get_saved_job_result_for_comparison
 
 # Safe sample inputs (public repo paths).
@@ -312,6 +313,18 @@ SAVED_COMPARISON_SAME_SELECTION_MESSAGE = (
     "Choose two different saved analyses to compare."
 )
 EMPTY_SKILL_LIST_LABEL = "None"
+SAVED_GAP_PRIORITY_LIMIT = 10
+SAVED_GAP_PRIORITY_MISSING_MESSAGE = (
+    "No saved analysis database found yet. "
+    "Run an analysis with SQLite saving enabled to create one."
+)
+SAVED_GAP_PRIORITY_EMPTY_MESSAGE = (
+    "No saved skill gaps yet. Save an analysis run to build a priority summary."
+)
+SAVED_GAP_PRIORITY_GUIDANCE = (
+    "These recurring gaps can help you decide what to study, practice, "
+    "or build projects around next."
+)
 
 
 def recent_saved_jobs_to_rows(recent_jobs):
@@ -564,6 +577,119 @@ def render_compare_saved_analyses(st, options_display, database_path=DEFAULT_DAT
 
     st.markdown("**Missing skills unique to the second saved result**")
     st.write(comparison["missing_skills_unique_to_second_label"])
+
+
+def format_example_job_names(job_names):
+    """Turn example job filenames into a readable comma-separated string."""
+    if not job_names:
+        return EMPTY_SKILL_LIST_LABEL
+
+    return ", ".join(job_names)
+
+
+def saved_gap_priorities_to_rows(priorities):
+    """Turn saved gap priority records into table rows for st.dataframe."""
+    rows = []
+
+    for priority in priorities:
+        rows.append(
+            {
+                "Skill": priority["gap_skill"],
+                "Category": priority["category"],
+                "Saved job results missing this skill": priority["count"],
+                "Example jobs": format_example_job_names(
+                    priority["example_job_names"]
+                ),
+            }
+        )
+
+    return rows
+
+
+def format_saved_gap_priority_lines(priorities):
+    """Turn saved gap priority records into readable lines for the UI."""
+    lines = []
+
+    for priority in priorities:
+        example_jobs = format_example_job_names(priority["example_job_names"])
+        lines.append(
+            f"{priority['gap_skill']} ({priority['category']}) — "
+            f"missing in {priority['count']} saved job result(s); "
+            f"example jobs: {example_jobs}"
+        )
+
+    return lines
+
+
+def build_saved_gap_priority_display(
+    database_path=DEFAULT_DATABASE_PATH,
+    limit=SAVED_GAP_PRIORITY_LIMIT,
+):
+    """
+    Build a display-friendly saved gap priority summary from SQLite.
+
+    Returns a dict for render_saved_gap_priority_summary() and for tests.
+    """
+    summary = get_saved_gap_priority_summary(database_path, limit=limit)
+
+    if not summary["exists"]:
+        return {
+            "database_exists": False,
+            "missing_message": SAVED_GAP_PRIORITY_MISSING_MESSAGE,
+        }
+
+    if not summary["has_saved_gaps"]:
+        return {
+            "database_exists": True,
+            "has_saved_gaps": False,
+            "empty_message": SAVED_GAP_PRIORITY_EMPTY_MESSAGE,
+        }
+
+    priorities = summary["priorities"]
+
+    return {
+        "database_exists": True,
+        "has_saved_gaps": True,
+        "priorities": priorities,
+        "priority_rows": saved_gap_priorities_to_rows(priorities),
+        "priority_lines": format_saved_gap_priority_lines(priorities),
+        "has_priorities": len(priorities) > 0,
+        "limit": summary["limit"],
+        "guidance": SAVED_GAP_PRIORITY_GUIDANCE,
+    }
+
+
+def render_saved_gap_priority_summary(st, display):
+    """Show recurring missing-skill priorities across saved analyses."""
+    st.subheader("Saved Gap Priority Summary")
+
+    if not display["database_exists"]:
+        st.info(display["missing_message"])
+        return
+
+    if not display["has_saved_gaps"]:
+        st.info(display["empty_message"])
+        return
+
+    st.caption(display["guidance"])
+
+    if not display["has_priorities"]:
+        st.info(display["empty_message"])
+        return
+
+    st.caption(
+        f"Showing up to {display['limit']} recurring missing skills "
+        "across all saved job analyses."
+    )
+    st.dataframe(
+        display["priority_rows"],
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    with st.expander("View saved gap priorities as a text list"):
+        for line in display["priority_lines"]:
+            st.write(line)
 
 
 def render_recent_saved_runs(st, display):
@@ -928,6 +1054,9 @@ def main():
         compare_saved_analyses_options,
         database_path=DEFAULT_DATABASE_PATH,
     )
+
+    saved_gap_priority_display = build_saved_gap_priority_display()
+    render_saved_gap_priority_summary(st, saved_gap_priority_display)
 
 
 if __name__ == "__main__":

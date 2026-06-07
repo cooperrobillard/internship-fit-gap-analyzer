@@ -432,6 +432,76 @@ def test_build_compare_saved_analyses_result_rejects_same_selection():
         assert "different" in comparison["message"].lower()
 
 
+def test_format_example_job_names_uses_none_for_empty_lists():
+    module = _load_streamlit_app_module()
+
+    assert module.format_example_job_names([]) == module.EMPTY_SKILL_LIST_LABEL
+    assert module.format_example_job_names(["beta_job.txt", "alpha_job.txt"]) == (
+        "beta_job.txt, alpha_job.txt"
+    )
+
+
+def test_saved_gap_priorities_to_rows_includes_category_and_example_jobs():
+    module = _load_streamlit_app_module()
+
+    rows = module.saved_gap_priorities_to_rows(
+        [
+            {
+                "gap_skill": "sql",
+                "category": "data",
+                "count": 3,
+                "example_job_names": ["alpha_job.txt", "beta_job.txt"],
+            }
+        ]
+    )
+
+    assert rows == [
+        {
+            "Skill": "sql",
+            "Category": "data",
+            "Saved job results missing this skill": 3,
+            "Example jobs": "alpha_job.txt, beta_job.txt",
+        }
+    ]
+
+
+def test_build_saved_gap_priority_display_when_database_missing():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        display = module.build_saved_gap_priority_display(database_path)
+
+        assert display["database_exists"] is False
+        assert "sqlite saving enabled" in display["missing_message"].lower()
+
+
+def test_build_saved_gap_priority_display_when_database_exists():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_saved_gap_priority_display(database_path)
+
+        assert display["database_exists"] is True
+        assert display["has_saved_gaps"] is True
+        assert display["has_priorities"] is True
+        assert len(display["priority_rows"]) >= 1
+        assert display["priority_rows"][0]["Skill"]
+        assert display["priority_rows"][0]["Category"]
+        assert display["priority_rows"][0]["Saved job results missing this skill"] >= 1
+        assert "study" in display["guidance"].lower()
+
+
 def test_resolve_resume_path_uses_sample_by_default():
     module = _load_streamlit_app_module()
 
@@ -476,5 +546,9 @@ if __name__ == "__main__":
     test_build_compare_saved_analyses_options_when_only_one_saved_job()
     test_build_compare_saved_analyses_result_for_two_saved_jobs()
     test_build_compare_saved_analyses_result_rejects_same_selection()
+    test_format_example_job_names_uses_none_for_empty_lists()
+    test_saved_gap_priorities_to_rows_includes_category_and_example_jobs()
+    test_build_saved_gap_priority_display_when_database_missing()
+    test_build_saved_gap_priority_display_when_database_exists()
     test_resolve_resume_path_uses_sample_by_default()
     print("All streamlit app tests passed.")

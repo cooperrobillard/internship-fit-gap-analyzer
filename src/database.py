@@ -268,6 +268,98 @@ def _count_table_rows(connection, table_name):
     return cursor.fetchone()[0]
 
 
+def query_saved_gap_priorities(connection, limit=None):
+    """
+    Query recurring missing skills across all saved job analyses.
+
+    Each count is the number of distinct saved job results (run + job name)
+    where the skill appears. Results are sorted by highest count first, then
+    skill name alphabetically.
+    """
+    cursor = connection.cursor()
+
+    query = """
+        SELECT
+            skill,
+            category,
+            COUNT(DISTINCT run_id || '|' || job_filename) AS job_result_count,
+            GROUP_CONCAT(DISTINCT job_filename) AS example_job_names
+        FROM skill_gaps
+        GROUP BY skill, category
+        ORDER BY job_result_count DESC, skill ASC
+    """
+
+    if limit is None:
+        cursor.execute(query)
+    else:
+        cursor.execute(query + " LIMIT ?;", (limit,))
+
+    rows = cursor.fetchall()
+
+    priorities = []
+    for row in rows:
+        example_job_names = []
+
+        if row[3]:
+            example_job_names = sorted(
+                job_name.strip()
+                for job_name in row[3].split(",")
+                if job_name.strip()
+            )
+
+        priorities.append(
+            {
+                "gap_skill": row[0],
+                "category": row[1],
+                "count": row[2],
+                "example_job_names": example_job_names,
+            }
+        )
+
+    return priorities
+
+
+def get_saved_gap_priority_summary(database_path, limit=10):
+    """
+    Read recurring missing-skill priorities from a SQLite analysis database.
+
+    If the file does not exist, returns exists=False.
+    If no skill gaps are saved yet, returns has_saved_gaps=False.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "exists": False,
+            "database_path": database_path,
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        skill_gaps_count = _count_table_rows(connection, "skill_gaps")
+
+        if skill_gaps_count == 0:
+            return {
+                "exists": True,
+                "database_path": database_path,
+                "has_saved_gaps": False,
+                "priorities": [],
+            }
+
+        priorities = query_saved_gap_priorities(connection, limit=limit)
+
+        return {
+            "exists": True,
+            "database_path": database_path,
+            "has_saved_gaps": True,
+            "priorities": priorities,
+            "limit": limit,
+        }
+    finally:
+        connection.close()
+
+
 def get_database_summary(database_path):
     """
     Read a simple summary from a SQLite analysis database file.
