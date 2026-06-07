@@ -1461,3 +1461,12 @@ Tested with:
 * Kept the saved gap priority summary based on the complete saved history rather than silently changing its scope.
 * Preserved the existing analysis, SQLite saving, saved history, saved details, saved comparison, and recurring-gap workflows.
 * Confirmed the tests, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
+
+## Dev Chat 6 - Safe Saved Analysis Deletion
+
+* Added a guarded local workflow for permanently deleting one selected saved job-analysis result.
+* Practiced using parameterized SQLite deletion queries and transactions while preserving unrelated saved records.
+* Added confirmation controls so destructive actions remain separate from normal saved-history browsing.
+* Confirmed that related skill-gap records are cleaned up safely and that saved details, comparison controls, search results, and the recurring-gap summary refresh after deletion.
+* Kept the feature limited to individual local records without adding bulk deletion, editing, archiving, authentication, or cloud storage.
+* Confirmed the test suite, CLI smoke commands, database inspection workflow, local Streamlit workflow, and Git privacy checks still pass.
