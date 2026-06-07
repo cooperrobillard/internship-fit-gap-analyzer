@@ -1409,3 +1409,13 @@ Tested with:
 - Practiced keeping documentation aligned with actual project behavior instead of overstating future features.
 - Clarified that the project remains local-only, rule-based, and not deployed.
 - Confirmed the test suite and Git privacy checks still pass after documentation updates.
+
+## Dev Chat 6 - Compare Saved Analyses
+
+* Began Version 6 by adding a read-only comparison between two saved analysis results in the local Streamlit UI.
+* Practiced identifying individual saved job results with stable database IDs instead of relying only on job names.
+* Practiced comparing skill collections to identify shared gaps and gaps unique to each saved analysis.
+* Kept the comparison descriptive instead of inventing an automatic job ranking, weighted score, or fit score.
+* Used only the comparison data reliably supported by the existing SQLite schema and avoided an unnecessary database migration.
+* Preserved the existing sample analysis, pasted job analysis, resume selection, SQLite saving, database summary, recent-run, and saved-detail workflows.
+* Confirmed the test suite, CLI smoke commands, database inspection workflow, local Streamlit workflow, and Git privacy checks still work.
