@@ -1419,3 +1419,11 @@ Tested with:
 * Used only the comparison data reliably supported by the existing SQLite schema and avoided an unnecessary database migration.
 * Preserved the existing sample analysis, pasted job analysis, resume selection, SQLite saving, database summary, recent-run, and saved-detail workflows.
 * Confirmed the test suite, CLI smoke commands, database inspection workflow, local Streamlit workflow, and Git privacy checks still work.
+
+## Dev Chat 6 - Saved Gap Priority Summary
+
+- Added a read-only saved gap priority summary to the local Streamlit UI.
+- Practiced using saved SQLite analysis data to identify recurring missing skills across saved job results.
+- Kept the summary descriptive instead of adding fit scores, weighted rankings, or automatic job recommendations.
+- Preserved the existing analysis, SQLite saving, saved history, saved detail, and saved comparison workflows.
+- Confirmed the test suite, CLI smoke commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
