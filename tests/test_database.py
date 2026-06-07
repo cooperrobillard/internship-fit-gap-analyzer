@@ -19,6 +19,8 @@ from database import get_saved_job_result_for_comparison
 from database import query_all_saved_job_results
 from database import query_missing_skills_for_job_result
 from database import query_saved_gap_priorities
+from database import delete_saved_job_result
+from database import delete_saved_job_result_from_database
 
 
 def table_exists(connection, table_name):
@@ -785,6 +787,198 @@ def test_query_saved_gap_priorities_counts_and_sorts_across_saved_jobs():
         connection.close()
 
 
+def _count_rows(connection, table_name):
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name};")
+    return cursor.fetchone()[0]
+
+
+def test_delete_saved_job_result_removes_job_result_and_skill_gaps():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        job_results = [
+            {
+                "job_name": "target_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["docker"], "data": ["sql"]},
+            }
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=job_results,
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+        job_result_id = saved_jobs[0]["job_result_id"]
+
+        result = delete_saved_job_result(connection, job_result_id)
+
+        assert result["deleted"] is True
+        assert result["job_result_id"] == job_result_id
+        assert result["skill_gaps_deleted"] == 2
+        assert result["parent_run_deleted"] is True
+        assert _count_rows(connection, "job_results") == 0
+        assert _count_rows(connection, "skill_gaps") == 0
+        assert _count_rows(connection, "analysis_runs") == 0
+
+        connection.close()
+
+
+def test_delete_saved_job_result_preserves_unrelated_records():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        first_job_results = [
+            {
+                "job_name": "delete_me.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["docker"]},
+            }
+        ]
+        second_job_results = [
+            {
+                "job_name": "keep_me.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["fastapi"]},
+            }
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=first_job_results,
+        )
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=second_job_results,
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+        delete_target_id = saved_jobs[1]["job_result_id"]
+
+        result = delete_saved_job_result(connection, delete_target_id)
+
+        assert result["deleted"] is True
+        assert result["parent_run_deleted"] is True
+        assert _count_rows(connection, "job_results") == 1
+        assert _count_rows(connection, "skill_gaps") == 1
+        assert _count_rows(connection, "analysis_runs") == 1
+
+        remaining_jobs = query_all_saved_job_results(connection)
+        assert len(remaining_jobs) == 1
+        assert remaining_jobs[0]["job_filename"] == "keep_me.txt"
+
+        connection.close()
+
+
+def test_delete_saved_job_result_not_found_is_safe():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        job_results = [
+            {
+                "job_name": "sample_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["docker"]},
+            }
+        ]
+
+        save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=job_results,
+        )
+
+        result = delete_saved_job_result(connection, 999)
+
+        assert result["deleted"] is False
+        assert result["reason"] == "not_found"
+        assert _count_rows(connection, "job_results") == 1
+        assert _count_rows(connection, "skill_gaps") == 1
+
+        connection.close()
+
+
+def test_delete_saved_job_result_keeps_sibling_in_multi_job_run():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        multi_job_results = [
+            {
+                "job_name": "alpha_job.txt",
+                "job_skills": {"programming": ["python"]},
+                "skill_gaps": {"programming": ["docker"]},
+            },
+            {
+                "job_name": "beta_job.txt",
+                "job_skills": {"programming": ["python", "fastapi"]},
+                "skill_gaps": {"programming": ["sql"]},
+            },
+        ]
+
+        run_id = save_analysis_results(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            job_results=multi_job_results,
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+        alpha_job = next(
+            job for job in saved_jobs if job["job_filename"] == "alpha_job.txt"
+        )
+
+        result = delete_saved_job_result(connection, alpha_job["job_result_id"])
+
+        assert result["deleted"] is True
+        assert result["parent_run_deleted"] is False
+        assert _count_rows(connection, "job_results") == 1
+        assert _count_rows(connection, "analysis_runs") == 1
+
+        cursor = connection.cursor()
+        cursor.execute("SELECT id FROM analysis_runs WHERE id = ?;", (run_id,))
+        assert cursor.fetchone() is not None
+
+        remaining_jobs = query_all_saved_job_results(connection)
+        assert len(remaining_jobs) == 1
+        assert remaining_jobs[0]["job_filename"] == "beta_job.txt"
+        assert _count_rows(connection, "skill_gaps") == 1
+
+        connection.close()
+
+
+def test_delete_saved_job_result_from_database_when_file_missing():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "missing_analysis_results.db"
+
+        result = delete_saved_job_result_from_database(database_path, 1)
+
+        assert result["deleted"] is False
+        assert result["reason"] == "database_not_found"
+
+
 if __name__ == "__main__":
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
@@ -804,5 +998,10 @@ if __name__ == "__main__":
     test_get_saved_gap_priority_summary_when_file_missing()
     test_get_saved_gap_priority_summary_when_no_saved_gaps()
     test_query_saved_gap_priorities_counts_and_sorts_across_saved_jobs()
+    test_delete_saved_job_result_removes_job_result_and_skill_gaps()
+    test_delete_saved_job_result_preserves_unrelated_records()
+    test_delete_saved_job_result_not_found_is_safe()
+    test_delete_saved_job_result_keeps_sibling_in_multi_job_run()
+    test_delete_saved_job_result_from_database_when_file_missing()
 
     print("All database tests passed.")

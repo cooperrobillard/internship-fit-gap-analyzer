@@ -424,6 +424,120 @@ def test_build_recent_saved_runs_display_search_no_match():
         assert "match this search" in display["no_match_message"].lower()
 
 
+def test_apply_pending_delete_saved_analysis_confirmation_reset():
+    module = _load_streamlit_app_module()
+
+    session_state = {
+        module.DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY: True,
+        module.DELETE_SAVED_CONFIRM_SESSION_KEY: True,
+        module.DELETE_SAVED_SELECTED_SESSION_KEY: 7,
+    }
+
+    applied = module.apply_pending_delete_saved_analysis_confirmation_reset(
+        session_state
+    )
+
+    assert applied is True
+    assert session_state[module.DELETE_SAVED_CONFIRM_SESSION_KEY] is False
+    assert module.DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY not in session_state
+    assert module.DELETE_SAVED_SELECTED_SESSION_KEY not in session_state
+
+
+def test_apply_pending_delete_saved_analysis_confirmation_reset_when_not_pending():
+    module = _load_streamlit_app_module()
+
+    session_state = {
+        module.DELETE_SAVED_CONFIRM_SESSION_KEY: True,
+    }
+
+    applied = module.apply_pending_delete_saved_analysis_confirmation_reset(
+        session_state
+    )
+
+    assert applied is False
+    assert session_state[module.DELETE_SAVED_CONFIRM_SESSION_KEY] is True
+
+
+def test_request_delete_saved_analysis_confirmation_reset_sets_pending_flag():
+    module = _load_streamlit_app_module()
+
+    session_state = {
+        module.DELETE_SAVED_CONFIRM_SESSION_KEY: True,
+        module.DELETE_SAVED_SELECTED_SESSION_KEY: 4,
+    }
+
+    module.request_delete_saved_analysis_confirmation_reset(session_state)
+
+    assert session_state[module.DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY] is True
+    assert module.DELETE_SAVED_SELECTED_SESSION_KEY not in session_state
+    assert session_state[module.DELETE_SAVED_CONFIRM_SESSION_KEY] is True
+
+
+def test_build_delete_saved_analysis_display_when_database_missing():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        display = module.build_delete_saved_analysis_display(database_path)
+
+        assert display["database_exists"] is False
+        assert "sqlite saving enabled" in display["missing_message"].lower()
+
+
+def test_build_delete_saved_analysis_display_when_can_delete():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_delete_saved_analysis_display(database_path)
+
+        assert display["can_delete"] is True
+        assert display["selectable_count"] == 1
+        assert "sample_ai_engineering_internship.txt" in display["options"][0]["label"]
+
+
+def test_build_delete_saved_analysis_display_respects_search_filter():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        first_result = module.run_sample_analysis()
+        module.store_analysis_result(
+            first_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        pasted_result = module.run_pasted_job_analysis(
+            "Internship requiring Python, SQL, Docker, and technical writing."
+        )
+        module.store_analysis_result(
+            pasted_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_delete_saved_analysis_display(
+            database_path,
+            search_query="sample_ai_engineering",
+        )
+
+        assert display["can_delete"] is True
+        assert display["selectable_count"] == 1
+        assert display["is_filtered"] is True
+        assert "sample_ai_engineering_internship.txt" in display["options"][0]["label"]
+
+
 def test_build_compare_saved_analyses_options_search_insufficient():
     module = _load_streamlit_app_module()
 
@@ -885,6 +999,12 @@ if __name__ == "__main__":
     test_filter_saved_results_does_not_mutate_input()
     test_filter_saved_results_handles_missing_optional_fields()
     test_build_recent_saved_runs_display_search_no_match()
+    test_apply_pending_delete_saved_analysis_confirmation_reset()
+    test_apply_pending_delete_saved_analysis_confirmation_reset_when_not_pending()
+    test_request_delete_saved_analysis_confirmation_reset_sets_pending_flag()
+    test_build_delete_saved_analysis_display_when_database_missing()
+    test_build_delete_saved_analysis_display_when_can_delete()
+    test_build_delete_saved_analysis_display_respects_search_filter()
     test_build_compare_saved_analyses_options_search_insufficient()
     test_format_saved_result_label_includes_job_name_and_stable_ids()
     test_format_saved_result_label_distinguishes_duplicate_job_names()

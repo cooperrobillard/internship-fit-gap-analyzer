@@ -13,6 +13,7 @@ SRC_FOLDER = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_FOLDER))
 
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
+from database import delete_saved_job_result_from_database
 from database import get_all_saved_job_results
 from database import get_database_summary
 from database import get_saved_gap_priority_summary
@@ -333,6 +334,36 @@ SAVED_COMPARISON_SEARCH_INSUFFICIENT_MESSAGE = (
     "At least two saved analyses match this search. "
     "Try a broader search or clear the search box."
 )
+DELETE_SAVED_ANALYSIS_MISSING_MESSAGE = (
+    "No saved analysis database found yet. "
+    "Run an analysis with SQLite saving enabled to create one."
+)
+DELETE_SAVED_ANALYSIS_EMPTY_MESSAGE = (
+    "No saved analyses are available to delete yet."
+)
+DELETE_SAVED_ANALYSIS_WARNING = (
+    "This permanently deletes the selected saved analysis from your local "
+    "SQLite database. This cannot be undone."
+)
+DELETE_SAVED_CONFIRM_LABEL = (
+    "I understand that this permanently deletes the selected saved analysis."
+)
+DELETE_SAVED_BUTTON_LABEL = "Delete selected saved analysis"
+DELETE_SAVED_SUCCESS_MESSAGE = (
+    "Selected saved analysis deleted from the local database."
+)
+DELETE_SAVED_NOT_FOUND_MESSAGE = (
+    "That saved analysis could not be found. It may have already been deleted."
+)
+DELETE_SAVED_FILTERED_CAPTION = (
+    "Choosing from saved analyses that match your current search."
+)
+DELETE_SAVED_CONFIRM_SESSION_KEY = "delete_saved_analysis_confirm"
+DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY = (
+    "delete_saved_analysis_confirm_reset_pending"
+)
+DELETE_SAVED_SELECTED_SESSION_KEY = "delete_saved_analysis_selected_id"
+DELETE_SAVED_SUCCESS_SESSION_KEY = "delete_saved_analysis_success_message"
 
 
 def normalize_saved_result(saved_result):
@@ -657,6 +688,89 @@ def build_compare_saved_analyses_options(
     }
 
 
+def build_delete_saved_analysis_display(
+    database_path=DEFAULT_DATABASE_PATH,
+    search_query="",
+):
+    """
+    Build selectable saved-job options for the deletion section.
+
+    Uses the same filtered collection as other saved-result pickers when search
+    is active. Returns a dict for render_delete_saved_analysis() and tests.
+    """
+    saved_data = load_all_sorted_saved_results(database_path)
+
+    if not saved_data["exists"]:
+        return {
+            "database_exists": False,
+            "missing_message": DELETE_SAVED_ANALYSIS_MISSING_MESSAGE,
+        }
+
+    all_saved_jobs = saved_data["saved_jobs"]
+    selectable_jobs = filter_saved_results(all_saved_jobs, search_query)
+    is_filtered = bool(normalize_search_query(search_query))
+
+    if len(all_saved_jobs) == 0:
+        return {
+            "database_exists": True,
+            "can_delete": False,
+            "empty_message": DELETE_SAVED_ANALYSIS_EMPTY_MESSAGE,
+            "total_saved_count": 0,
+            "is_filtered": is_filtered,
+        }
+
+    if is_filtered and len(selectable_jobs) == 0:
+        return {
+            "database_exists": True,
+            "can_delete": False,
+            "search_no_match": True,
+            "no_match_message": SAVED_SEARCH_NO_MATCH_MESSAGE,
+            "total_saved_count": len(all_saved_jobs),
+            "is_filtered": True,
+        }
+
+    options = []
+
+    for saved_job in selectable_jobs:
+        options.append(
+            {
+                "job_result_id": saved_job["job_result_id"],
+                "label": format_saved_result_label(saved_job),
+            }
+        )
+
+    return {
+        "database_exists": True,
+        "can_delete": True,
+        "options": options,
+        "default_job_result_id": options[0]["job_result_id"],
+        "selectable_count": len(options),
+        "total_saved_count": len(all_saved_jobs),
+        "is_filtered": is_filtered,
+    }
+
+
+def apply_pending_delete_saved_analysis_confirmation_reset(session_state):
+    """
+    Apply a pending confirmation reset before the checkbox widget renders.
+
+    Returns True when a pending reset was applied.
+    """
+    if not session_state.get(DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY):
+        return False
+
+    session_state[DELETE_SAVED_CONFIRM_SESSION_KEY] = False
+    del session_state[DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY]
+    session_state.pop(DELETE_SAVED_SELECTED_SESSION_KEY, None)
+    return True
+
+
+def request_delete_saved_analysis_confirmation_reset(session_state):
+    """Request a confirmation reset on the next render after deletion."""
+    session_state[DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY] = True
+    session_state.pop(DELETE_SAVED_SELECTED_SESSION_KEY, None)
+
+
 def build_compare_saved_analyses_result(
     first_job_result_id,
     second_job_result_id,
@@ -787,6 +901,83 @@ def render_compare_saved_analyses(st, options_display, database_path=DEFAULT_DAT
 
     st.markdown("**Missing skills unique to the second saved result**")
     st.write(comparison["missing_skills_unique_to_second_label"])
+
+
+def render_delete_saved_analysis(
+    st,
+    display,
+    database_path=DEFAULT_DATABASE_PATH,
+):
+    """Show a guarded, one-at-a-time delete control for saved job results."""
+    st.subheader("Delete Saved Analysis")
+
+    success_message = st.session_state.pop(DELETE_SAVED_SUCCESS_SESSION_KEY, None)
+    if success_message:
+        st.success(success_message)
+
+    apply_pending_delete_saved_analysis_confirmation_reset(st.session_state)
+
+    st.warning(DELETE_SAVED_ANALYSIS_WARNING)
+
+    if not display["database_exists"]:
+        st.info(display["missing_message"])
+        return
+
+    if display.get("search_no_match"):
+        st.info(display["no_match_message"])
+        return
+
+    if not display.get("can_delete"):
+        st.info(display["empty_message"])
+        return
+
+    if display.get("is_filtered"):
+        st.caption(DELETE_SAVED_FILTERED_CAPTION)
+
+    option_labels = [option["label"] for option in display["options"]]
+    label_to_id = {
+        option["label"]: option["job_result_id"] for option in display["options"]
+    }
+
+    selected_label = st.selectbox(
+        "Saved analysis to delete",
+        option_labels,
+        key="delete_saved_analysis_selectbox",
+    )
+    selected_job_result_id = label_to_id[selected_label]
+
+    if (
+        st.session_state.get(DELETE_SAVED_SELECTED_SESSION_KEY)
+        != selected_job_result_id
+    ):
+        st.session_state[DELETE_SAVED_CONFIRM_SESSION_KEY] = False
+        st.session_state[DELETE_SAVED_SELECTED_SESSION_KEY] = selected_job_result_id
+
+    confirm_delete = st.checkbox(
+        DELETE_SAVED_CONFIRM_LABEL,
+        key=DELETE_SAVED_CONFIRM_SESSION_KEY,
+    )
+
+    if st.button(
+        DELETE_SAVED_BUTTON_LABEL,
+        type="primary",
+        disabled=not confirm_delete,
+        key="delete_saved_analysis_button",
+    ):
+        delete_result = delete_saved_job_result_from_database(
+            database_path,
+            selected_job_result_id,
+        )
+
+        if delete_result["deleted"]:
+            st.session_state[DELETE_SAVED_SUCCESS_SESSION_KEY] = (
+                DELETE_SAVED_SUCCESS_MESSAGE
+            )
+            request_delete_saved_analysis_confirmation_reset(st.session_state)
+            st.rerun()
+            return
+
+        st.warning(DELETE_SAVED_NOT_FOUND_MESSAGE)
 
 
 def format_example_job_names(job_names):
@@ -1310,6 +1501,15 @@ def main():
 
     saved_gap_priority_display = build_saved_gap_priority_display()
     render_saved_gap_priority_summary(st, saved_gap_priority_display)
+
+    delete_saved_analysis_display = build_delete_saved_analysis_display(
+        search_query=saved_results_search_query,
+    )
+    render_delete_saved_analysis(
+        st,
+        delete_saved_analysis_display,
+        database_path=DEFAULT_DATABASE_PATH,
+    )
 
 
 if __name__ == "__main__":

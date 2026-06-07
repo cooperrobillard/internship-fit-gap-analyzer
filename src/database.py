@@ -679,6 +679,133 @@ def query_jobs_with_most_gaps(connection, run_id):
     return jobs_with_gaps
 
 
+def delete_saved_job_result(connection, job_result_id):
+    """
+    Permanently delete one saved job result and its related skill gaps.
+
+    Skill gaps are matched by run_id and job_filename because skill_gaps rows
+    do not store job_result_id. Unrelated job results and skill gaps are left
+    untouched. If the parent analysis run has no job results left afterward,
+    that empty analysis run is removed as well.
+
+    Returns a result dict with deleted=True or deleted=False.
+    """
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT run_id, job_filename
+            FROM job_results
+            WHERE id = ?;
+            """,
+            (job_result_id,),
+        )
+        job_row = cursor.fetchone()
+
+        if job_row is None:
+            connection.rollback()
+            return {
+                "deleted": False,
+                "reason": "not_found",
+                "job_result_id": job_result_id,
+            }
+
+        run_id = job_row[0]
+        job_filename = job_row[1]
+
+        cursor.execute(
+            """
+            DELETE FROM skill_gaps
+            WHERE run_id = ? AND job_filename = ?;
+            """,
+            (run_id, job_filename),
+        )
+        skill_gaps_deleted = cursor.rowcount
+
+        cursor.execute(
+            """
+            DELETE FROM job_results
+            WHERE id = ?;
+            """,
+            (job_result_id,),
+        )
+
+        if cursor.rowcount == 0:
+            connection.rollback()
+            return {
+                "deleted": False,
+                "reason": "not_found",
+                "job_result_id": job_result_id,
+            }
+
+        parent_run_deleted = False
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM job_results
+            WHERE run_id = ?;
+            """,
+            (run_id,),
+        )
+        remaining_job_results = cursor.fetchone()[0]
+
+        if remaining_job_results == 0:
+            cursor.execute(
+                """
+                DELETE FROM skill_gaps
+                WHERE run_id = ?;
+                """,
+                (run_id,),
+            )
+            cursor.execute(
+                """
+                DELETE FROM analysis_runs
+                WHERE id = ?;
+                """,
+                (run_id,),
+            )
+            parent_run_deleted = cursor.rowcount > 0
+
+        connection.commit()
+
+        return {
+            "deleted": True,
+            "job_result_id": job_result_id,
+            "run_id": run_id,
+            "job_filename": job_filename,
+            "skill_gaps_deleted": skill_gaps_deleted,
+            "parent_run_deleted": parent_run_deleted,
+        }
+    except Exception:
+        connection.rollback()
+        raise
+
+
+def delete_saved_job_result_from_database(database_path, job_result_id):
+    """
+    Delete one saved job result from a SQLite analysis database file.
+
+    Returns deleted=False when the database file or job result does not exist.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "deleted": False,
+            "reason": "database_not_found",
+            "job_result_id": job_result_id,
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        return delete_saved_job_result(connection, job_result_id)
+    finally:
+        connection.close()
+
+
 def save_analysis_results(
     connection,
     resume_path,
