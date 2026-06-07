@@ -21,7 +21,7 @@ Matching is **keyword- and alias-based**. It does not understand meaning, requir
 
 ## Current status
 
-**Version 5** adds **optional local SQLite persistence and read-only saved-history views** to the Version 4 local Streamlit UI, on top of the Version 3 CLI and backend.
+**Version 6** adds **read-only saved-analysis comparison and a saved gap priority summary** to the Version 5 local Streamlit UI, on top of the Version 3 CLI and backend.
 
 The project can:
 
@@ -29,7 +29,7 @@ The project can:
 * run analysis on a **single job file** with `--job-file`,
 * call shared backend functions (`src/analysis_runner.py`) that return structured results,
 * run a **local Streamlit UI** (`streamlit_app.py`) for sample job and pasted job analysis,
-* **optionally save UI runs** to `data/outputs/analysis_results.db` and view a **read-only saved-history summary** and **recent saved runs** list in the UI,
+* **optionally save UI runs** to `data/outputs/analysis_results.db` and view **read-only saved-history views** (summary, recent runs, **two-way comparison**, and **recurring gap priority summary**) in the UI,
 * generate markdown and CSV outputs (CLI),
 * optionally save to SQLite (`--database`),
 * optionally create pandas summary CSVs (`--pandas-summary`),
@@ -60,6 +60,7 @@ internship-fit-gap-analyzer/
     VERSION_3_CHECKPOINT.md
     VERSION_4_CHECKPOINT.md
     VERSION_5_CHECKPOINT.md
+    VERSION_6_CHECKPOINT.md
     LOCAL_UI_PLAN.md
   scripts/
     inspect_database.py
@@ -205,7 +206,7 @@ python3 run_tests.py
 
 Expected final line: `All tests passed.`
 
-### Local Streamlit UI (Version 4 + Version 5)
+### Local Streamlit UI (Versions 4–6)
 
 Run from the project root. Opens a browser tab on your machine only—not a public website.
 
@@ -220,11 +221,15 @@ The UI can:
 * use the **sample resume** (`data/resume/sample_resume.txt`) by default,
 * use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine,
 * **optionally save** an analysis run to `data/outputs/analysis_results.db` (checkbox),
-* show a read-only **Saved Analysis History** summary and **Recent Saved Runs** table when that database exists.
+* show read-only **Saved Analysis History** and **Recent Saved Runs** when that database exists,
+* **compare two saved analyses** (shared and unique missing skills; requires at least two saved job results),
+* show a **Saved Gap Priority Summary** of recurring missing skills across all saved analyses.
+
+Comparison uses **missing skills stored in SQLite** only—it does not compare matched-skill lists because individual matched skill names are not saved to the database. The gap priority summary is descriptive, not a ranked recommendation engine.
 
 Preview runs do not write markdown/CSV report files unless you use the CLI. Optional UI SQLite saving uses the same local database path family as `--database`.
 
-**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for the persistence workflow.
+**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence and [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison and decision-support workflows.
 
 ### Help and other options
 
@@ -301,6 +306,7 @@ Output files:
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
 | [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) | Version 5 local UI persistence and saved-history views |
+| [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) | Version 6 saved-analysis comparison and gap priority summary |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
@@ -323,4 +329,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable, polish the local UI if useful (optional report-file toggle, folder mode), then consider a **later hosted deployment** milestone—not a full AI pipeline yet.
+See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable and tests green; possible Version 7 work may focus on saved-result organization or local UI polish. **Hosted deployment** and optional AI-assisted extraction remain later milestones—not the default next step.

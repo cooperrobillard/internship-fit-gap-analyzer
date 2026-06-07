@@ -51,6 +51,21 @@ The current version does not:
 
 Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding of job descriptions or resume evidence.
 
+## Saved-analysis comparison limitations (Version 6)
+
+The local Streamlit UI can compare **two saved job results** and show a **saved gap priority summary** across all saved analyses. These views are read-only and rule-based.
+
+Important limits:
+
+- **Missing-skill comparison only.** SQLite stores individual missing skills in `skill_gaps`, but stores only `matched_skills_count` per job—not individual matched skill names. Saved comparison cannot show shared or unique **matched** skills from the database.
+- **Not a recommendation engine.** The gap priority summary describes which missing skills appear in the most saved job results. It does not rank jobs, score fit, or claim which skill you should learn next.
+- **Two results at a time.** The UI compares exactly two saved analyses, not three or more.
+- **Latest-run vs. all-saves.** **Saved Analysis History** still shows top recurring gaps for the **latest run only**. **Saved Gap Priority Summary** aggregates across **all** saved job results (up to 10 skills shown).
+- **Example job names.** The priority summary lists distinct job filenames when available. The same filename saved in multiple runs may appear once in examples even when the recurrence count is higher.
+- **No edit or delete.** Saved rows cannot be removed or changed from the UI.
+
+See [`VERSION_6_CHECKPOINT.md`](VERSION_6_CHECKPOINT.md) for the full Version 6 workflow and commands.
+
 ## Keyword matching limitations
 
 Because the analyzer uses keyword matching, it can miss skills when the wording is different.

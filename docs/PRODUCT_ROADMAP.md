@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 5**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, and tests passing on a clean public repo.
+As of **Version 6**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, read-only saved-analysis comparison, and tests passing on a clean public repo.
 
 **What exists today:**
 
@@ -19,16 +19,18 @@ As of **Version 5**, the project is a **stable, rule-based Python CLI tool** wit
 - Version 3 additions: reusable `src/analysis_runner.py`, single-job analysis, `--job-file`, structured results, CLI/backend polish.
 - Version 4 additions: local Streamlit UI (`streamlit_app.py`) for sample job and pasted job analysis, resume source selector, polished results display.
 - Version 5 additions: optional SQLite save from the UI, read-only **Saved Analysis History** summary panel, read-only **Recent Saved Runs** table (localhost only).
+- Version 6 additions: read-only **Compare Saved Analyses** (two saved job results, missing-skill comparison), read-only **Saved Gap Priority Summary** across all saved analyses (localhost only).
 
 **What does not exist today:**
 
 - Hosted web UI, API server, or deployment configuration
-- User accounts or authentication
+- User accounts or authentication (including Clerk)
 - OpenAI API or other LLM-based extraction
 - Semantic matching, embeddings, or RAG
 - Docker, CI deployment pipelines for the app itself
 - Production hosting or a live product at cooperrobillard.com/jobfit
-- Full saved-run browser, comparison dashboard, or edit/delete controls in the UI
+- Full saved-run browser with search/filters, edit/delete controls, or fit-score ranking in the UI
+- Matched-skill list comparison from saved SQLite data (only counts are stored)
 
 The analyzer uses **keyword and alias matching**, not AI understanding of resumes or job descriptions. Optional SQLite and pandas features **store and summarize** results locally; they do not add semantic job-fit judgment.
 
@@ -100,7 +102,35 @@ Delivered:
 
 **Explicitly not Version 5:** hosted deployment, auth, full history browser, run comparison, charts, semantic matching.
 
-### Version 6: Private hosted web tool (future)
+### Version 6: Saved-run comparison and decision support — **complete**
+
+**Goal:** Use the local SQLite database to support **read-only comparison** and **simple decision-support views** without fit scoring, job ranking, or semantic matching.
+
+Checkpoint: [`VERSION_6_CHECKPOINT.md`](VERSION_6_CHECKPOINT.md).
+
+Delivered:
+
+- **Compare Saved Analyses** — two select boxes, stable `job_result_id` labels, shared/unique missing skills,
+- **Saved Gap Priority Summary** — top recurring missing skills across all saved job results (up to 10 rows),
+- database read helpers in `src/database.py` and display builders in `streamlit_app.py`.
+
+**Explicitly not Version 6:** fit scores, weighted rankings, matched-skill list comparison from SQLite, charts, deployment, auth, more than two-way comparison, edit/delete controls.
+
+### Version 7: Local saved-result organization (possible future)
+
+**Goal:** Improve how saved analyses are browsed and labeled **locally**—only if the Version 6 workflow proves useful in real internship search.
+
+Possible directions (pick small slices; not committed):
+
+- search or filters for saved runs,
+- clearer saved-job labels or metadata,
+- safe **local** deletion or cleanup of saved rows (if deliberately planned and tested),
+- stronger tests and code organization,
+- deployment planning research **without** deploying yet.
+
+**Explicitly not Version 7 by default:** hosted deployment, authentication, Clerk, cloud database, multi-user support, OpenAI API.
+
+### Version 8: Private hosted web tool (future)
 
 **Goal:** A **private or unlisted** hosted instance for personal use, optionally linked from cooperrobillard.com/jobfit—**only after** local UI workflows feel worthwhile.
 
@@ -113,7 +143,7 @@ Possible characteristics:
 
 **Explicitly not required for first hosted milestone:** multi-user accounts, billing, RAG, or semantic search.
 
-### Version 7: Optional AI-assisted extraction (maybe never)
+### Version 9: Optional AI-assisted extraction (maybe never)
 
 **Goal:** Only if rule-based matching becomes a clear bottleneck **and** privacy/cost tradeoffs are acceptable.
 
@@ -123,7 +153,7 @@ Possible future additions (all optional):
 - Better handling of varied wording—not full “AI understands fit.”
 - Still keep rule-based path as fallback and for offline/local use.
 
-This version is **optional** and should not block Versions 3–6. The project remains valuable as a rule-based, explainable tool.
+This version is **optional** and should not block Versions 3–8. The project remains valuable as a rule-based, explainable tool.
 
 ---
 
@@ -140,6 +170,7 @@ Treat these as **prerequisites**, not suggestions:
 | Version 3 “UI readiness” (stable result shape, polished CLI) | Avoids rewriting analysis twice under UI pressure |
 | Version 4 local prototype validated | Proves the workflow before paying hosting/complexity costs |
 | Version 5 local persistence validated | Optional save + read-only history without overbuilding a dashboard |
+| Version 6 comparison validated | Two-way missing-skill comparison + gap priority summary feel useful locally |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -176,13 +207,17 @@ Version 4 (complete)
   → local Streamlit; localhost only
 Version 5 (complete)
   → optional UI SQLite save + read-only saved-history views
-Version 6 (only if local UX feels worthwhile)
+Version 6 (complete)
+  → saved-analysis comparison + saved gap priority summary
+Version 7 (possible, small slices)
+  → local saved-result organization / UI polish / stronger tests
+Version 8 (only if local UX feels worthwhile)
   → private/unlisted deploy; link from cooperrobillard.com/jobfit; env-based secrets
-Version 7 (optional, much later)
+Version 9 (optional, much later)
   → AI-assisted extraction experiments; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep CLI tests green; polish local UI only where it helps real internship search workflows. Treat hosted deployment as a **separate milestone**, not the default next step.
+**Immediate recommendation:** Keep CLI tests green; use Version 6 views during real internship search; consider Version 7 only as small, reviewable local improvements. Treat hosted deployment as a **separate milestone**, not the default next step.
 
 ---
 
@@ -244,7 +279,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Wrote tests for core logic, CLI behavior, validation, database output, and inspection scripts.
 - Designed repo layout for **privacy**: public samples in Git, real resume/jobs local-only.
 - Extended a Version 1 MVP with optional SQLite persistence and pandas summaries (Version 2).
-- Built a local Streamlit UI with optional SQLite save and read-only saved-history views (Versions 4–5).
+- Built a local Streamlit UI with optional SQLite save, read-only saved-history views, saved-analysis comparison, and a recurring gap priority summary (Versions 4–6).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -255,7 +290,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 
 **Possible one-liner (today):**
 
-> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs and read-only saved-history views—test-backed and privacy-conscious, not deployed.
+> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs, read-only saved-history views, two-way saved-analysis comparison, and a gap priority summary—test-backed and privacy-conscious, not deployed.
 
 Update the one-liner when a hosted UI exists—still without overstating AI capabilities unless an AI milestone is real.
 
@@ -281,4 +316,4 @@ Actionable items for the **docs/product-roadmap** era and immediate follow-ups�
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 5 local UI persistence complete, CLI stable, tests passing, no hosted deployment.*
+*Last aligned with: Version 6 saved-run comparison and decision-support views complete, CLI stable, tests passing, no hosted deployment.*
