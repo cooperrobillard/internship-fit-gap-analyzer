@@ -1470,3 +1470,13 @@ Tested with:
 * Confirmed that related skill-gap records are cleaned up safely and that saved details, comparison controls, search results, and the recurring-gap summary refresh after deletion.
 * Kept the feature limited to individual local records without adding bulk deletion, editing, archiving, authentication, or cloud storage.
 * Confirmed the test suite, CLI smoke commands, database inspection workflow, local Streamlit workflow, and Git privacy checks still pass.
+
+## Dev Chat 6 - Version 7 Checkpoint
+
+* Documented the completed Version 7 saved-result organization and local data-management workflow.
+* Recorded the improved saved-result labels, newest-first sorting, text search, and guarded single-result deletion features.
+* Documented how SQLite deletion removes the selected saved job result and its related skill-gap records while preserving unrelated data.
+* Recorded the Streamlit widget-state lesson that widget-backed session state must be reset before widget creation on a later rerun rather than modified after the widget is instantiated.
+* Clarified that the current tests are executable scripts and that standard unittest discovery does not yet discover them.
+* Kept deployment, authentication, cloud persistence, advanced metadata, bulk deletion, editing, rankings, and semantic matching outside the completed Version 7 scope.
+* Confirmed the test suite, CLI commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
