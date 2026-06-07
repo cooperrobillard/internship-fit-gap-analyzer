@@ -271,6 +271,190 @@ def test_build_recent_saved_runs_display_when_database_exists():
         assert display["recent_jobs_rows"][0]["Missing skills"] >= 1
 
 
+def _sample_saved_results_for_search_tests():
+    return [
+        {
+            "job_filename": "alpha_engineering_internship.txt",
+            "run_timestamp": "2026-06-07T16:32:00",
+            "run_id": 3,
+            "job_result_id": 5,
+            "missing_skills_count": 11,
+            "matched_skills_count": 17,
+        },
+        {
+            "job_filename": "beta_data_internship.txt",
+            "run_timestamp": "2026-06-01T10:00:00",
+            "run_id": 1,
+            "job_result_id": 1,
+            "missing_skills_count": 4,
+            "matched_skills_count": 6,
+        },
+    ]
+
+
+def test_filter_saved_results_empty_query_returns_all_results_in_order():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "")
+    assert filtered == saved_results
+    assert saved_results is not filtered
+
+
+def test_filter_saved_results_whitespace_query_returns_all_results():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "   ")
+    assert filtered == saved_results
+
+
+def test_filter_saved_results_is_case_insensitive():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "ALPHA_ENGINEERING")
+    assert len(filtered) == 1
+    assert filtered[0]["job_filename"] == "alpha_engineering_internship.txt"
+
+
+def test_filter_saved_results_matches_job_name_substring():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "beta_data")
+    assert len(filtered) == 1
+    assert filtered[0]["job_filename"] == "beta_data_internship.txt"
+
+
+def test_filter_saved_results_matches_run_id():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "run 3")
+    assert len(filtered) == 1
+    assert filtered[0]["run_id"] == 3
+
+
+def test_filter_saved_results_matches_job_result_id():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "result 1")
+    assert len(filtered) == 1
+    assert filtered[0]["job_result_id"] == 1
+
+
+def test_filter_saved_results_matches_formatted_timestamp_text():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "2026-06-07")
+    assert len(filtered) == 1
+    assert filtered[0]["run_id"] == 3
+
+
+def test_filter_saved_results_no_match_returns_empty_list():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+
+    filtered = module.filter_saved_results(saved_results, "no-such-saved-job")
+    assert filtered == []
+
+
+def test_filter_saved_results_preserves_newest_first_order():
+    module = _load_streamlit_app_module()
+    saved_results = module.sort_saved_results(
+        _sample_saved_results_for_search_tests()
+    )
+
+    filtered = module.filter_saved_results(saved_results, "internship")
+    assert [job["job_filename"] for job in filtered] == [
+        "alpha_engineering_internship.txt",
+        "beta_data_internship.txt",
+    ]
+
+
+def test_filter_saved_results_does_not_mutate_input():
+    module = _load_streamlit_app_module()
+    saved_results = _sample_saved_results_for_search_tests()
+    original_copy = [dict(job) for job in saved_results]
+
+    module.filter_saved_results(saved_results, "alpha")
+    assert saved_results == original_copy
+
+
+def test_filter_saved_results_handles_missing_optional_fields():
+    module = _load_streamlit_app_module()
+
+    filtered = module.filter_saved_results(
+        [
+            {
+                "job_filename": "minimal_job.txt",
+                "run_id": 9,
+                "job_result_id": 12,
+            }
+        ],
+        "result 12",
+    )
+
+    assert len(filtered) == 1
+    assert filtered[0]["job_filename"] == "minimal_job.txt"
+
+
+def test_build_recent_saved_runs_display_search_no_match():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_recent_saved_runs_display(
+            database_path,
+            search_query="no-such-saved-job",
+        )
+
+        assert display["search_no_match"] is True
+        assert "match this search" in display["no_match_message"].lower()
+
+
+def test_build_compare_saved_analyses_options_search_insufficient():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        first_result = module.run_sample_analysis()
+        module.store_analysis_result(
+            first_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        pasted_result = module.run_pasted_job_analysis(
+            "Internship requiring Python, SQL, Docker, and technical writing."
+        )
+        module.store_analysis_result(
+            pasted_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        display = module.build_compare_saved_analyses_options(
+            database_path,
+            search_query="sample_ai_engineering",
+        )
+
+        assert display["can_compare"] is False
+        assert "match this search" in display["insufficient_message"].lower()
+
+
 def test_format_saved_result_label_includes_job_name_and_stable_ids():
     module = _load_streamlit_app_module()
 
@@ -689,6 +873,19 @@ if __name__ == "__main__":
     test_build_saved_history_display_when_database_exists()
     test_build_recent_saved_runs_display_when_database_missing()
     test_build_recent_saved_runs_display_when_database_exists()
+    test_filter_saved_results_empty_query_returns_all_results_in_order()
+    test_filter_saved_results_whitespace_query_returns_all_results()
+    test_filter_saved_results_is_case_insensitive()
+    test_filter_saved_results_matches_job_name_substring()
+    test_filter_saved_results_matches_run_id()
+    test_filter_saved_results_matches_job_result_id()
+    test_filter_saved_results_matches_formatted_timestamp_text()
+    test_filter_saved_results_no_match_returns_empty_list()
+    test_filter_saved_results_preserves_newest_first_order()
+    test_filter_saved_results_does_not_mutate_input()
+    test_filter_saved_results_handles_missing_optional_fields()
+    test_build_recent_saved_runs_display_search_no_match()
+    test_build_compare_saved_analyses_options_search_insufficient()
     test_format_saved_result_label_includes_job_name_and_stable_ids()
     test_format_saved_result_label_distinguishes_duplicate_job_names()
     test_sort_saved_results_orders_newest_first()

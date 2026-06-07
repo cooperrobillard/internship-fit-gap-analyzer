@@ -14,7 +14,7 @@ sys.path.insert(0, str(SRC_FOLDER))
 
 from analysis_runner import run_single_job_analysis, save_analysis_to_database
 from database import get_all_saved_job_results
-from database import get_database_summary, get_recent_saved_jobs
+from database import get_database_summary
 from database import get_saved_gap_priority_summary
 from database import get_saved_job_result_for_comparison
 
@@ -300,7 +300,6 @@ SAVED_HISTORY_MISSING_MESSAGE = (
     "No saved analysis database found yet. "
     "Run an analysis with SQLite saving enabled to create one."
 )
-RECENT_SAVED_RUNS_LIMIT = 10
 RECENT_SAVED_RUNS_MISSING_MESSAGE = "No recent saved runs to display yet."
 SAVED_COMPARISON_MISSING_MESSAGE = (
     "No saved analysis database found yet. "
@@ -325,6 +324,14 @@ SAVED_GAP_PRIORITY_EMPTY_MESSAGE = (
 SAVED_GAP_PRIORITY_GUIDANCE = (
     "These recurring gaps can help you decide what to study, practice, "
     "or build projects around next."
+)
+SAVED_SEARCH_GUIDANCE = (
+    "Search by job name, saved date, run ID, or job-result ID."
+)
+SAVED_SEARCH_NO_MATCH_MESSAGE = "No saved analyses match this search."
+SAVED_COMPARISON_SEARCH_INSUFFICIENT_MESSAGE = (
+    "At least two saved analyses match this search. "
+    "Try a broader search or clear the search box."
 )
 
 
@@ -409,6 +416,70 @@ def sort_saved_results(saved_results):
     return sorted(normalized_results, key=sort_key, reverse=True)
 
 
+def normalize_search_query(search_query):
+    """Normalize search text for case-insensitive, whitespace-tolerant matching."""
+    return " ".join(str(search_query).strip().lower().split())
+
+
+def build_saved_result_search_text(saved_result):
+    """Build lowercase searchable text for one saved job result."""
+    saved_result = normalize_saved_result(saved_result)
+
+    searchable_parts = [
+        saved_result.get("job_filename", ""),
+        format_saved_timestamp(saved_result.get("run_timestamp")),
+        str(saved_result.get("run_timestamp") or ""),
+        str(saved_result.get("run_id", "")),
+        str(saved_result.get("job_result_id", "")),
+        format_saved_result_label(saved_result),
+    ]
+
+    return " ".join(str(part) for part in searchable_parts if part).lower()
+
+
+def filter_saved_results(saved_results, search_query):
+    """
+    Return saved results that match a search query.
+
+    Empty or whitespace-only queries return all results in their existing order.
+    The input collection is not mutated.
+    """
+    normalized_query = normalize_search_query(search_query)
+
+    if not normalized_query:
+        return list(saved_results)
+
+    filtered_results = []
+
+    for saved_result in saved_results:
+        if normalized_query in build_saved_result_search_text(saved_result):
+            filtered_results.append(saved_result)
+
+    return filtered_results
+
+
+def load_all_sorted_saved_results(database_path=DEFAULT_DATABASE_PATH):
+    """
+    Load every saved job result from SQLite in newest-first order.
+
+    Returns a dict for saved-history UI builders and for tests.
+    """
+    saved_data = get_all_saved_job_results(database_path)
+
+    if not saved_data["exists"]:
+        return {
+            "exists": False,
+            "database_path": saved_data["database_path"],
+            "saved_jobs": [],
+        }
+
+    return {
+        "exists": True,
+        "database_path": saved_data["database_path"],
+        "saved_jobs": sort_saved_results(saved_data["saved_jobs"]),
+    }
+
+
 def recent_saved_jobs_to_rows(recent_jobs):
     """Turn recent saved job records into table rows for st.dataframe."""
     rows = []
@@ -433,29 +504,52 @@ def recent_saved_jobs_to_rows(recent_jobs):
 
 def build_recent_saved_runs_display(
     database_path=DEFAULT_DATABASE_PATH,
-    limit=RECENT_SAVED_RUNS_LIMIT,
+    search_query="",
 ):
     """
-    Build a display-friendly recent-runs list from the SQLite database.
+    Build a display-friendly saved-runs list from the SQLite database.
 
-    Returns a dict for render_recent_saved_runs() and for tests.
+    Uses every saved job result (not a limited recent subset), optionally
+    filtered by search_query. Returns a dict for render_recent_saved_runs().
     """
-    recent_data = get_recent_saved_jobs(database_path, limit=limit)
+    saved_data = load_all_sorted_saved_results(database_path)
 
-    if not recent_data["exists"]:
+    if not saved_data["exists"]:
         return {
             "database_exists": False,
             "missing_message": RECENT_SAVED_RUNS_MISSING_MESSAGE,
         }
 
-    recent_jobs = sort_saved_results(recent_data["recent_jobs"])
+    all_saved_jobs = saved_data["saved_jobs"]
+    filtered_jobs = filter_saved_results(all_saved_jobs, search_query)
+    is_filtered = bool(normalize_search_query(search_query))
+
+    if len(all_saved_jobs) == 0:
+        return {
+            "database_exists": True,
+            "has_recent_jobs": False,
+            "total_saved_count": 0,
+            "is_filtered": is_filtered,
+        }
+
+    if is_filtered and len(filtered_jobs) == 0:
+        return {
+            "database_exists": True,
+            "has_recent_jobs": True,
+            "search_no_match": True,
+            "no_match_message": SAVED_SEARCH_NO_MATCH_MESSAGE,
+            "total_saved_count": len(all_saved_jobs),
+            "is_filtered": True,
+        }
 
     return {
         "database_exists": True,
-        "recent_jobs": recent_jobs,
-        "recent_jobs_rows": recent_saved_jobs_to_rows(recent_jobs),
-        "has_recent_jobs": len(recent_jobs) > 0,
-        "limit": limit,
+        "recent_jobs": filtered_jobs,
+        "recent_jobs_rows": recent_saved_jobs_to_rows(filtered_jobs),
+        "has_recent_jobs": True,
+        "filtered_count": len(filtered_jobs),
+        "total_saved_count": len(all_saved_jobs),
+        "is_filtered": is_filtered,
     }
 
 
@@ -485,13 +579,15 @@ def format_skill_list_for_display(skills):
 
 def build_compare_saved_analyses_options(
     database_path=DEFAULT_DATABASE_PATH,
+    search_query="",
 ):
     """
     Build selectable saved-job options for the comparison section.
 
+    Uses the full saved-result collection, optionally filtered by search_query.
     Returns a dict for render_compare_saved_analyses() and for tests.
     """
-    saved_data = get_all_saved_job_results(database_path)
+    saved_data = load_all_sorted_saved_results(database_path)
 
     if not saved_data["exists"]:
         return {
@@ -499,14 +595,44 @@ def build_compare_saved_analyses_options(
             "missing_message": SAVED_COMPARISON_MISSING_MESSAGE,
         }
 
-    saved_jobs = sort_saved_results(saved_data["saved_jobs"])
+    all_saved_jobs = saved_data["saved_jobs"]
+    saved_jobs = filter_saved_results(all_saved_jobs, search_query)
+    is_filtered = bool(normalize_search_query(search_query))
 
-    if len(saved_jobs) < 2:
+    if len(all_saved_jobs) == 0:
         return {
             "database_exists": True,
             "can_compare": False,
             "insufficient_message": SAVED_COMPARISON_INSUFFICIENT_MESSAGE,
+            "saved_jobs_count": 0,
+            "total_saved_count": 0,
+            "is_filtered": is_filtered,
+        }
+
+    if is_filtered and len(saved_jobs) == 0:
+        return {
+            "database_exists": True,
+            "can_compare": False,
+            "search_no_match": True,
+            "no_match_message": SAVED_SEARCH_NO_MATCH_MESSAGE,
+            "saved_jobs_count": 0,
+            "total_saved_count": len(all_saved_jobs),
+            "is_filtered": True,
+        }
+
+    if len(saved_jobs) < 2:
+        if is_filtered and len(all_saved_jobs) >= 2:
+            insufficient_message = SAVED_COMPARISON_SEARCH_INSUFFICIENT_MESSAGE
+        else:
+            insufficient_message = SAVED_COMPARISON_INSUFFICIENT_MESSAGE
+
+        return {
+            "database_exists": True,
+            "can_compare": False,
+            "insufficient_message": insufficient_message,
             "saved_jobs_count": len(saved_jobs),
+            "total_saved_count": len(all_saved_jobs),
+            "is_filtered": is_filtered,
         }
 
     options = []
@@ -525,6 +651,9 @@ def build_compare_saved_analyses_options(
         "options": options,
         "default_first_id": options[0]["job_result_id"],
         "default_second_id": options[1]["job_result_id"],
+        "saved_jobs_count": len(saved_jobs),
+        "total_saved_count": len(all_saved_jobs),
+        "is_filtered": is_filtered,
     }
 
 
@@ -591,6 +720,10 @@ def render_compare_saved_analyses(st, options_display, database_path=DEFAULT_DAT
 
     if not options_display["database_exists"]:
         st.info(options_display["missing_message"])
+        return
+
+    if options_display.get("search_no_match"):
+        st.info(options_display["no_match_message"])
         return
 
     if not options_display["can_compare"]:
@@ -769,21 +902,55 @@ def render_saved_gap_priority_summary(st, display):
             st.write(line)
 
 
+def render_saved_result_search_input(st, saved_history_display):
+    """
+    Show the saved-result search box when saved data exists.
+
+    Returns the current search query (empty string when search is hidden).
+    """
+    if not saved_history_display.get("database_exists"):
+        return ""
+
+    if saved_history_display.get("job_results_count", 0) == 0:
+        return ""
+
+    search_query = st.text_input(
+        "Search saved analyses",
+        placeholder=SAVED_SEARCH_GUIDANCE,
+        key="saved_results_search",
+    )
+    st.caption(SAVED_SEARCH_GUIDANCE)
+
+    return search_query
+
+
 def render_recent_saved_runs(st, display):
-    """Show a read-only table of recent saved job results."""
+    """Show a read-only table of saved job results."""
     st.subheader("Recent Saved Runs")
 
     if not display["database_exists"]:
         st.info(display["missing_message"])
         return
 
-    if not display["has_recent_jobs"]:
+    if not display.get("has_recent_jobs"):
         st.info("No saved job results yet.")
         return
 
-    st.caption(
-        f"Showing up to {display['limit']} most recent saved job results."
-    )
+    if display.get("search_no_match"):
+        st.info(display["no_match_message"])
+        return
+
+    if display.get("is_filtered"):
+        st.caption(
+            f"Showing {display['filtered_count']} saved job result(s) "
+            "that match your search, newest first."
+        )
+    else:
+        st.caption(
+            f"Showing all {display['total_saved_count']} saved job results, "
+            "newest first."
+        )
+
     st.dataframe(
         display["recent_jobs_rows"],
         hide_index=True,
@@ -1122,10 +1289,19 @@ def main():
     saved_history_display = build_saved_history_display()
     render_saved_analysis_history(st, saved_history_display)
 
-    recent_saved_runs_display = build_recent_saved_runs_display()
+    saved_results_search_query = render_saved_result_search_input(
+        st,
+        saved_history_display,
+    )
+
+    recent_saved_runs_display = build_recent_saved_runs_display(
+        search_query=saved_results_search_query,
+    )
     render_recent_saved_runs(st, recent_saved_runs_display)
 
-    compare_saved_analyses_options = build_compare_saved_analyses_options()
+    compare_saved_analyses_options = build_compare_saved_analyses_options(
+        search_query=saved_results_search_query,
+    )
     render_compare_saved_analyses(
         st,
         compare_saved_analyses_options,
