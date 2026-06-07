@@ -1401,3 +1401,11 @@ Tested with:
 - Kept the feature local-only and avoided overbuilding a full history browser or comparison dashboard.
 - Preserved the SQLite save option, saved summary panel, sample-job workflow, pasted-job workflow, and resume selector.
 - Confirmed the test suite, CLI smoke commands, database inspection workflow, and local UI still work after the change.
+
+## Dev Chat 5 - Version 5 Local Persistence Checkpoint
+
+- Documented the completed Version 5 local persistence workflow.
+- Added a Version 5 checkpoint covering optional SQLite saving, saved database summaries, recent saved runs, and saved run details.
+- Practiced keeping documentation aligned with actual project behavior instead of overstating future features.
+- Clarified that the project remains local-only, rule-based, and not deployed.
+- Confirmed the test suite and Git privacy checks still pass after documentation updates.
