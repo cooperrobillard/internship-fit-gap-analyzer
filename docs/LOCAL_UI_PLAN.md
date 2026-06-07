@@ -2,9 +2,9 @@
 
 This document planned and now records the **local Streamlit UI prototype** for the Internship Fit & Skill-Gap Analyzer.
 
-**Status:** Version 4 local UI work is **implemented** in `streamlit_app.py`. This is a **localhost-only** prototype—not a hosted web app.
+**Status:** Version 4 local UI work and **Version 5 local persistence** are **implemented** in `streamlit_app.py`. This is a **localhost-only** prototype—not a hosted web app.
 
-For what was delivered, see [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md). For Version 3 backend work, see [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md). For long-term milestones, see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md).
+For what was delivered, see [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md) and [`VERSION_5_CHECKPOINT.md`](VERSION_5_CHECKPOINT.md). For Version 3 backend work, see [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md). For long-term milestones, see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md).
 
 ---
 
@@ -31,7 +31,7 @@ It should **not** try to become a full product, AI assistant, or public SaaS.
 | Honest scope | Validates UX before paying for hosting or maintaining two codebases. |
 | Backend reuse | Version 3 structured results power the UI without duplicating analysis logic. |
 
-Hosted tools (Streamlit Cloud, Railway, portfolio-site links, etc.) belong in **Version 5+**, after local use feels worthwhile.
+Hosted tools (Streamlit Cloud, Railway, portfolio-site links, etc.) belong in a **later deployment milestone**, after local use feels worthwhile.
 
 ---
 
@@ -50,7 +50,9 @@ Why Streamlit:
 
 ---
 
-## 4. What was implemented (Version 4 steps)
+## 4. What was implemented (Version 4 + Version 5 steps)
+
+### Version 4 — local UI prototype
 
 | Step | Feature | Status |
 |------|---------|--------|
@@ -58,6 +60,15 @@ Why Streamlit:
 | 2 | Pasted job description analysis | Done |
 | 3 | Resume source selector (sample + private local file) | Done |
 | 4 | Results display polish (metrics, tables, empty states) | Done |
+
+### Version 5 — local persistence and saved history
+
+| Step | Feature | Status |
+|------|---------|--------|
+| 1 | Optional SQLite save checkbox (`data/outputs/analysis_results.db`) | Done |
+| 2 | Saved Analysis History summary panel (counts + latest-run gaps) | Done |
+| 3 | Recent Saved Runs table (up to 10 rows, read-only) | Done |
+| 4 | Per-row saved job details in recent-runs table (run ID, timestamp, counts) | Done |
 
 ### Resume input
 
@@ -75,6 +86,7 @@ Why Streamlit:
 
 * **Done:** `run_single_job_analysis()` for preview runs (no report files written from UI).
 * **Not in v1:** `run_analysis_job_file()` toggle for markdown/CSV outputs, or `run_analysis()` folder mode.
+* **Done (Version 5):** Optional SQLite save via `save_analysis_to_database()`; read-only saved summary and recent runs via `src/database.py` helpers.
 
 ### Display results
 
@@ -142,7 +154,11 @@ UI calls run_single_job_analysis()
     ↓
 UI shows summary metrics, matched skills, missing skills, recurring gaps
     ↓
-Output files section notes preview mode (no reports written unless future toggle added)
+Output files section notes preview mode (no markdown/CSV reports unless CLI used)
+    ↓
+Optional: save run to SQLite (Version 5 checkbox)
+    ↓
+Saved Analysis History + Recent Saved Runs read local .db (read-only)
 ```
 
 No network calls required except Streamlit’s local server on your machine.
@@ -203,9 +219,9 @@ Manual UI checklist (same backend as CLI preview):
 
 | Later milestone | Direction |
 |-----------------|-----------|
-| Version 4.x | Optional output writing toggle, folder mode in UI, SQLite toggle |
-| Version 5 | Private hosted app, env-based secrets, link from portfolio site |
-| Version 6 | Optional AI-assisted extraction—only if rule-based limits hurt |
+| Version 5.x | Optional report-file toggle, folder mode in UI |
+| Later hosted milestone | Private/unlisted app, env-based secrets, link from portfolio site |
+| Optional AI milestone | AI-assisted extraction—only if rule-based limits hurt |
 
 See [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md) for full milestone table.
 
@@ -229,6 +245,8 @@ See [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md) for full milestone table.
 
 Version 4 delivered **local Streamlit + existing analysis runner + structured results display**.
 
+Version 5 added **optional local SQLite saving + read-only saved-history views** (summary panel, recent runs table).
+
 Keep it small, private, rule-based, and honest. Ship learning value before shipping hosting complexity.
 
-*Plan updated to reflect implemented local UI — see `streamlit_app.py` and [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md).*
+*Plan updated to reflect implemented local UI — see `streamlit_app.py`, [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md), and [`VERSION_5_CHECKPOINT.md`](VERSION_5_CHECKPOINT.md).*

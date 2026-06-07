@@ -21,7 +21,7 @@ Matching is **keyword- and alias-based**. It does not understand meaning, requir
 
 ## Current status
 
-**Version 4** adds a **local-only Streamlit UI prototype** on top of the Version 3 CLI and backend.
+**Version 5** adds **optional local SQLite persistence and read-only saved-history views** to the Version 4 local Streamlit UI, on top of the Version 3 CLI and backend.
 
 The project can:
 
@@ -29,11 +29,12 @@ The project can:
 * run analysis on a **single job file** with `--job-file`,
 * call shared backend functions (`src/analysis_runner.py`) that return structured results,
 * run a **local Streamlit UI** (`streamlit_app.py`) for sample job and pasted job analysis,
+* **optionally save UI runs** to `data/outputs/analysis_results.db` and view a **read-only saved-history summary** and **recent saved runs** list in the UI,
 * generate markdown and CSV outputs (CLI),
 * optionally save to SQLite (`--database`),
 * optionally create pandas summary CSVs (`--pandas-summary`),
 * inspect saved databases with `scripts/inspect_database.py`,
-* run automated tests for core logic, CLI behavior, validation, database, and pandas output.
+* run automated tests for core logic, CLI behavior, validation, database, pandas output, and Streamlit helpers.
 
 The Streamlit app is a **localhost prototype only**—not a hosted web app. It does **not** use OpenAI API, semantic matching, FastAPI, Docker, RAG, authentication, or production deployment.
 
@@ -58,6 +59,7 @@ internship-fit-gap-analyzer/
     VERSION_2_TEST_COMMANDS.md
     VERSION_3_CHECKPOINT.md
     VERSION_4_CHECKPOINT.md
+    VERSION_5_CHECKPOINT.md
     LOCAL_UI_PLAN.md
   scripts/
     inspect_database.py
@@ -203,7 +205,7 @@ python3 run_tests.py
 
 Expected final line: `All tests passed.`
 
-### Local Streamlit UI (Version 4)
+### Local Streamlit UI (Version 4 + Version 5)
 
 Run from the project root. Opens a browser tab on your machine only—not a public website.
 
@@ -216,11 +218,13 @@ The UI can:
 * analyze the **sample job file** against a selected resume,
 * analyze a **pasted job description** against a selected resume,
 * use the **sample resume** (`data/resume/sample_resume.txt`) by default,
-* use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine.
+* use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine,
+* **optionally save** an analysis run to `data/outputs/analysis_results.db` (checkbox),
+* show a read-only **Saved Analysis History** summary and **Recent Saved Runs** table when that database exists.
 
-Preview runs do not write report files. The CLI remains the way to generate markdown, CSV, SQLite, and pandas outputs.
+Preview runs do not write markdown/CSV report files unless you use the CLI. Optional UI SQLite saving uses the same local database path family as `--database`.
 
-**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/`. See [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) for details.
+**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for the persistence workflow.
 
 ### Help and other options
 
@@ -296,6 +300,7 @@ Output files:
 |----------|---------|
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
+| [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) | Version 5 local UI persistence and saved-history views |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
@@ -318,4 +323,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable, extend the local UI if useful (optional output writing, folder mode), then consider **Version 5** hosted deployment—not a full AI pipeline yet.
+See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: keep the CLI stable, polish the local UI if useful (optional report-file toggle, folder mode), then consider a **later hosted deployment** milestone—not a full AI pipeline yet.

@@ -10,22 +10,25 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of Version 2 on `main`, the project is a **stable, rule-based Python CLI tool** with tests passing and a clean public repo.
+As of **Version 5**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, and tests passing on a clean public repo.
 
 **What exists today:**
 
 - Version 1 MVP: resume + job text files, JSON taxonomy and aliases, skill extraction, gap comparison, markdown/CSV outputs, terminal summary, manual test suite.
 - Version 2 additions: optional SQLite (`--database`), optional pandas summary CSVs (`--pandas-summary`), `scripts/inspect_database.py`, expanded tests and docs, privacy-safe sample data vs. Git-ignored private inputs.
-- CLI polish: clear user-facing errors for common invalid inputs (missing files, empty jobs folder, bad JSON, invalid database path).
+- Version 3 additions: reusable `src/analysis_runner.py`, single-job analysis, `--job-file`, structured results, CLI/backend polish.
+- Version 4 additions: local Streamlit UI (`streamlit_app.py`) for sample job and pasted job analysis, resume source selector, polished results display.
+- Version 5 additions: optional SQLite save from the UI, read-only **Saved Analysis History** summary panel, read-only **Recent Saved Runs** table (localhost only).
 
 **What does not exist today:**
 
-- Web UI, API server, or deployment configuration
+- Hosted web UI, API server, or deployment configuration
 - User accounts or authentication
 - OpenAI API or other LLM-based extraction
 - Semantic matching, embeddings, or RAG
 - Docker, CI deployment pipelines for the app itself
 - Production hosting or a live product at cooperrobillard.com/jobfit
+- Full saved-run browser, comparison dashboard, or edit/delete controls in the UI
 
 The analyzer uses **keyword and alias matching**, not AI understanding of resumes or job descriptions. Optional SQLite and pandas features **store and summarize** results locally; they do not add semantic job-fit judgment.
 
@@ -74,34 +77,43 @@ Possible work (pick small slices per branch):
 
 **Explicitly not Version 3:** Streamlit pages, FastAPI routes, Next.js, deployment, OpenAI API.
 
-### Version 4: Local UI prototype
+### Version 4: Local UI prototype — **complete**
 
 **Goal:** Prove that the analysis workflow feels useful in a browser **on localhost only**.
 
-Detailed plan: [`LOCAL_UI_PLAN.md`](LOCAL_UI_PLAN.md). Version 3 completion: [`VERSION_3_CHECKPOINT.md`](VERSION_3_CHECKPOINT.md).
+Detailed plan: [`LOCAL_UI_PLAN.md`](LOCAL_UI_PLAN.md). Checkpoint: [`VERSION_4_CHECKPOINT.md`](VERSION_4_CHECKPOINT.md).
 
-Likely direction (to be chosen after Version 3):
+Delivered: Streamlit app with sample job, pasted job, resume selector, and polished results display. No deployment.
 
-- **Streamlit** or a **minimal FastAPI/Flask** app that reads local files or pasted text and displays gaps and recurring summaries.
-- Still **no public deployment**, no login, no cloud secrets in the repo.
-- Reuse `src/` modules; keep business logic out of UI-only files as much as possible.
+### Version 5: Local UI persistence — **complete**
 
-Success criteria: I can run the prototype locally, compare several jobs, and trust the output matches CLI behavior for the same inputs.
+**Goal:** Let the local UI **optionally save** analysis runs to SQLite and show **small read-only saved-history views**.
 
-### Version 5: Private hosted web tool
+Checkpoint: [`VERSION_5_CHECKPOINT.md`](VERSION_5_CHECKPOINT.md).
 
-**Goal:** A **private or unlisted** hosted instance for personal use, optionally linked from cooperrobillard.com/jobfit.
+Delivered:
+
+- optional SQLite save checkbox (default path `data/outputs/analysis_results.db`),
+- Saved Analysis History summary panel,
+- Recent Saved Runs table (up to 10 rows),
+- backend read/save helpers in `src/` (no duplicated SQL in the UI).
+
+**Explicitly not Version 5:** hosted deployment, auth, full history browser, run comparison, charts, semantic matching.
+
+### Version 6: Private hosted web tool (future)
+
+**Goal:** A **private or unlisted** hosted instance for personal use, optionally linked from cooperrobillard.com/jobfit—**only after** local UI workflows feel worthwhile.
 
 Possible characteristics:
 
-- Hosted on a modest platform (e.g. Streamlit Community, Railway, Render, Fly.io, or static site + API)—**decision deferred until Version 4 teaches what the UI needs**.
+- Hosted on a modest platform (e.g. Streamlit Community, Railway, Render, Fly.io)—decision deferred.
 - Environment variables for any secrets; no resume/job content committed to Git.
-- Access control simple enough for one user (password gate, allowlist, or platform private app)—not full auth product engineering unless truly needed.
+- Access control simple enough for one user (password gate, allowlist, or platform private app).
 - HTTPS and clear privacy notice on the page.
 
-**Explicitly not required for Version 5:** multi-user accounts, billing, RAG, or semantic search.
+**Explicitly not required for first hosted milestone:** multi-user accounts, billing, RAG, or semantic search.
 
-### Version 6: Optional AI-assisted extraction (maybe never)
+### Version 7: Optional AI-assisted extraction (maybe never)
 
 **Goal:** Only if rule-based matching becomes a clear bottleneck **and** privacy/cost tradeoffs are acceptable.
 
@@ -111,7 +123,7 @@ Possible future additions (all optional):
 - Better handling of varied wording—not full “AI understands fit.”
 - Still keep rule-based path as fallback and for offline/local use.
 
-This version is **optional** and should not block Versions 3–5. The project remains valuable as a rule-based, explainable tool.
+This version is **optional** and should not block Versions 3–6. The project remains valuable as a rule-based, explainable tool.
 
 ---
 
@@ -127,6 +139,7 @@ Treat these as **prerequisites**, not suggestions:
 | Repeatable smoke-test commands | Fast verification after each UI experiment |
 | Version 3 “UI readiness” (stable result shape, polished CLI) | Avoids rewriting analysis twice under UI pressure |
 | Version 4 local prototype validated | Proves the workflow before paying hosting/complexity costs |
+| Version 5 local persistence validated | Optional save + read-only history without overbuilding a dashboard |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -140,11 +153,11 @@ All options below are **future choices**, not current stack. None should be buil
 | Option | Pros | Cons | Fit for this project |
 |--------|------|------|----------------------|
 | **CLI-only / local use** | Simplest, private, already works, best for learning | No visual history dashboard, less “portfolio demo” flash | **Current default**; keep improving here first |
-| **Local Streamlit prototype** | Fast UI, Python-only, good for solo tools | Easy to mix UI and logic; harder to style; scaling story weak | **Strong candidate for Version 4** |
-| **Streamlit deployment** | Quick path to a hosted demo | Public-by-default risks; less control; app sleeps on free tiers | Possible **Version 5** if privacy controls are sufficient |
+| **Local Streamlit prototype** | Fast UI, Python-only, good for solo tools | Easy to mix UI and logic; harder to style; scaling story weak | **Implemented in Version 4** |
+| **Streamlit deployment** | Quick path to a hosted demo | Public-by-default risks; less control; app sleeps on free tiers | Possible **future hosted milestone** if privacy controls are sufficient |
 | **Local FastAPI/Flask app** | Clear API boundary; UI can be swapped later | More boilerplate than Streamlit for a solo learner | Good if I want API + separate frontend practice |
 | **Next.js frontend + Python backend** | Professional split stack; great for portfolio sites | Two codebases, deployment glue, more than needed early | **Later**, if cooperrobillard.com needs a custom branded UI |
-| **Separate hosted app linked from personal website** | Keeps main site simple; tool can stay unlisted | Extra DNS/path setup; two places to maintain | **Likely Version 5 shape** for cooperrobillard.com/jobfit |
+| **Separate hosted app linked from personal website** | Keeps main site simple; tool can stay unlisted | Extra DNS/path setup; two places to maintain | **Likely future hosted shape** for cooperrobillard.com/jobfit |
 
 **Not recommended near-term:** full Next.js + auth + Docker + LLM pipeline as the first UI step—that is overbuilding for a learning-first solo project.
 
@@ -159,15 +172,17 @@ Now (main)
   → stay CLI-first; use tool for real searches with private --resume / --jobs
 Version 3 (small branches)
   → polish, docs, taxonomy/samples, optional pytest, UI-ready result interface
-Version 4 (experiment branch)
-  → local Streamlit OR minimal FastAPI + simple HTML; localhost only
-Version 5 (only if Version 4 is useful)
+Version 4 (complete)
+  → local Streamlit; localhost only
+Version 5 (complete)
+  → optional UI SQLite save + read-only saved-history views
+Version 6 (only if local UX feels worthwhile)
   → private/unlisted deploy; link from cooperrobillard.com/jobfit; env-based secrets
-Version 6 (optional, much later)
+Version 7 (optional, much later)
   → AI-assisted extraction experiments; never required for portfolio value
 ```
 
-**Immediate recommendation:** Stay on CLI and documentation through Version 3. Treat any UI framework as a **deliberate experiment branch**, not the next merge to `main`.
+**Immediate recommendation:** Keep CLI tests green; polish local UI only where it helps real internship search workflows. Treat hosted deployment as a **separate milestone**, not the default next step.
 
 ---
 
@@ -229,6 +244,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Wrote tests for core logic, CLI behavior, validation, database output, and inspection scripts.
 - Designed repo layout for **privacy**: public samples in Git, real resume/jobs local-only.
 - Extended a Version 1 MVP with optional SQLite persistence and pandas summaries (Version 2).
+- Built a local Streamlit UI with optional SQLite save and read-only saved-history views (Versions 4–5).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -239,9 +255,9 @@ When the project is ready to cite publicly, describe it **accurately**:
 
 **Possible one-liner (today):**
 
-> Rule-based Python CLI that surfaces recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs and a test-backed, privacy-conscious repo.
+> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs and read-only saved-history views—test-backed and privacy-conscious, not deployed.
 
-Update the one-liner when a local or hosted UI exists—still without overstating AI capabilities unless Version 6 is real.
+Update the one-liner when a hosted UI exists—still without overstating AI capabilities unless an AI milestone is real.
 
 ---
 
@@ -265,4 +281,4 @@ Actionable items for the **docs/product-roadmap** era and immediate follow-ups�
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 2 stable CLI on `main`, tests passing, no web stack implemented.*
+*Last aligned with: Version 5 local UI persistence complete, CLI stable, tests passing, no hosted deployment.*
