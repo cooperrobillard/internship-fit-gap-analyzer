@@ -1435,3 +1435,11 @@ Tested with:
 - Recorded the limitations of the current rule-based comparison, including the absence of fit scores, automatic rankings, semantic matching, deployment, and user accounts.
 - Updated the project roadmap or README where necessary to distinguish current local features from future hosted-product ideas.
 - Confirmed the test suite, CLI workflows, database inspection workflow, local UI, and Git privacy checks still work.
+
+## Dev Chat 6 - Version 7 Planning
+
+* Created a Version 7 planning document focused on saved-result organization and local data management.
+* Chose a conservative next phase that improves the local SQLite/Streamlit workflow before deployment, authentication, or multi-user architecture.
+* Identified likely Version 7 priorities such as clearer saved-result labels, sorting, filtering/search, optional metadata, and safe local cleanup.
+* Kept hosted deployment, Clerk/authentication, cloud databases, OpenAI API, semantic matching, fit scores, and resume tailoring out of the immediate scope.
+* Confirmed the project tests, CLI workflows, database inspection workflow, and Git privacy checks still pass.
