@@ -1573,3 +1573,34 @@ This improved my understanding of:
 - regression tests,
 - the difference between maintenance changes and feature changes,
 - and why small dependency/API updates should be isolated in their own branch.
+
+## Version 8 checkpoint — testing and maintenance reliability
+
+Completed Version 8 as a focused testing and maintenance reliability milestone.
+
+Version 8 began after discovering that the project's main test command passed but executed only 7 of the 10 existing test files. The project also used script-style tests that were not recognized by Python's built-in `unittest` discovery, and the Streamlit UI emitted deprecation warnings for `use_container_width`.
+
+Completed work:
+- Updated `run_tests.py` to automatically discover and execute every top-level `tests/test_*.py` file.
+- Ensured test files run in deterministic order as separate Python processes.
+- Added clear failure behavior if a test fails or no test files are found.
+- Established `python3 run_tests.py` as the canonical full-suite command.
+- Documented the decision to retain the current script-style test architecture.
+- Deferred pytest or `unittest.TestCase` migration until there is a demonstrated need.
+- Replaced deprecated Streamlit `use_container_width=True` arguments with `width="stretch"`.
+- Added a regression test to prevent deprecated width usage from returning to `streamlit_app.py`.
+- Created the Version 8 checkpoint and reconciled the product roadmap.
+
+At the Version 8 checkpoint, the main runner executed all 10 top-level test files and all tests passed.
+
+Version 8 intentionally did not add deployment, authentication, cloud persistence, semantic matching, fit scores, automatic job ranking, resume tailoring, or another major product feature.
+
+This version improved my understanding of:
+- complete test-suite coverage,
+- automatic test discovery,
+- subprocess failure propagation,
+- test-framework tradeoffs,
+- architecture decision documentation,
+- API deprecation cleanup,
+- regression tests,
+- and maintenance work as an important part of software development.
