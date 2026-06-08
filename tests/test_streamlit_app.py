@@ -970,6 +970,14 @@ def test_resolve_resume_path_uses_sample_by_default():
         assert resolved == sample_resume
 
 
+def test_streamlit_app_does_not_use_deprecated_use_container_width():
+    """Guard against reintroducing deprecated Streamlit width arguments."""
+    repo_root = Path(__file__).resolve().parent.parent
+    streamlit_app_source = (repo_root / "streamlit_app.py").read_text(encoding="utf-8")
+
+    assert "use_container_width" not in streamlit_app_source
+
+
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_build_display_summary_for_sample_analysis()
@@ -1026,4 +1034,5 @@ if __name__ == "__main__":
     test_build_saved_gap_priority_display_when_database_missing()
     test_build_saved_gap_priority_display_when_database_exists()
     test_resolve_resume_path_uses_sample_by_default()
+    test_streamlit_app_does_not_use_deprecated_use_container_width()
     print("All streamlit app tests passed.")

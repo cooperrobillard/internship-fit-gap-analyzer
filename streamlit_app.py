@@ -1085,7 +1085,7 @@ def render_saved_gap_priority_summary(st, display):
     st.dataframe(
         display["priority_rows"],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
     with st.expander("View saved gap priorities as a text list"):
@@ -1145,7 +1145,7 @@ def render_recent_saved_runs(st, display):
     st.dataframe(
         display["recent_jobs_rows"],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -1211,7 +1211,7 @@ def render_saved_analysis_history(st, display):
         st.dataframe(
             display["top_recurring_gaps_rows"],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
         with st.expander("View top recurring gaps as a text list"):
@@ -1298,7 +1298,7 @@ def render_analysis_results(st, display):
                     st.dataframe(
                         job["matched_skills_rows"],
                         hide_index=True,
-                        use_container_width=True,
+                        width="stretch",
                     )
             else:
                 st.info("No matched skills found for this job.")
@@ -1311,7 +1311,7 @@ def render_analysis_results(st, display):
                     st.dataframe(
                         job["missing_skills_rows"],
                         hide_index=True,
-                        use_container_width=True,
+                        width="stretch",
                     )
             else:
                 st.info("No missing skills found for this job.")
@@ -1322,7 +1322,7 @@ def render_analysis_results(st, display):
         st.dataframe(
             display["recurring_gaps_rows"],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
         with st.expander("View recurring gaps as a text list"):
