@@ -1638,3 +1638,31 @@ This improved my understanding of:
 - input validation,
 - privacy-conscious UI design,
 - and how removing local-file assumptions prepares an application for future hosting.
+
+## Version 9 Step 2 — Pasted job metadata labels
+
+Added optional job title and company fields to the local Streamlit pasted-job analysis workflow.
+
+Before this change, pasted analyses could use a generic label such as `Pasted internship posting`, which made saved results harder to distinguish over time. The UI can now build a clearer job name from optional metadata:
+- blank title and blank company preserve the existing default pasted-job name,
+- title only uses the title,
+- company only uses a readable company-based fallback,
+- and company plus title creates a combined label.
+
+The generated label flows through the existing analysis result and saved-history system using the existing job name field. This improves saved-analysis usability without changing the SQLite schema.
+
+This step intentionally did not add source URLs, notes, tags, database migrations, authentication, deployment configuration, semantic matching, fit scores, or any new dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit checks for blank metadata, title-only, company-only, company-plus-title, saved history, and saved search
+
+This improved my understanding of:
+- small UI metadata fields,
+- string normalization,
+- optional inputs,
+- preserving default behavior,
+- improving saved-record usability without a schema migration,
+- and separating user-facing improvements from larger architecture changes.
