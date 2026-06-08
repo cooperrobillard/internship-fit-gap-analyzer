@@ -1699,3 +1699,33 @@ This improved my understanding of:
 - safe filename display,
 - preserving privacy when handling user files,
 - and reusing backend logic across multiple UI input methods.
+
+## Version 9 Step 3 — Simplified local Streamlit layout
+
+Simplified the local Streamlit UI layout after reviewing a PDF preview that showed the app had become too busy and hard to read.
+
+The goal was to make the app feel more usable and closer to something that could eventually be published, without adding a new product feature or changing backend behavior.
+
+The cleanup focused on:
+- separating the main analysis workflow from saved-analysis management,
+- reducing vertical clutter,
+- grouping advanced saved-data tools more clearly,
+- making deletion feel separate from normal browsing,
+- making results easier to scan,
+- and preserving the existing Streamlit-native style.
+
+This step intentionally did not add uploaded job descriptions, source URLs, notes, tags, database migrations, authentication, deployment configuration, cloud persistence, semantic matching, fit scores, or new dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit checks for sample analysis, pasted job analysis, portable resume input, metadata labels, saved history, search, comparison, priority summary, and guarded deletion
+
+This improved my understanding of:
+- user-facing UI polish,
+- reducing cognitive load,
+- grouping related controls,
+- separating normal workflows from dangerous actions,
+- preserving behavior during layout refactors,
+- and why usability work can be just as important as adding features.
