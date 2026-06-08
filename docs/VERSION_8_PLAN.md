@@ -2,9 +2,9 @@
 
 This document plans **Version 8** for the Internship Fit & Skill-Gap Analyzer: **testing and maintenance reliability**.
 
-**Status:** **Planning.** No Version 8 implementation has started yet.
+**Status:** **In progress.** Steps 1–2 complete; Steps 3–4 remain.
 
-For the Version 7 baseline, see [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md). For long-term product milestones (hosted UI, optional AI), see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
+For the Version 7 baseline, see [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md). For the canonical testing guide, see [`TESTING.md`](TESTING.md). For long-term product milestones (hosted UI, optional AI), see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ---
 
@@ -15,6 +15,19 @@ Version 8 will focus on **testing reliability** and **low-risk maintenance** so 
 The goal is to make **one command run every existing test file**, decide deliberately whether to keep or evolve the current script-style test architecture, and clean up known Streamlit deprecation warnings—without feature work, deployment, or framework churn.
 
 Version 8 does **not** try to deploy the app, add authentication, introduce pytest by default, or rewrite the entire test suite in one pass.
+
+---
+
+## Version 8 progress
+
+| Step | Status | Outcome |
+|------|--------|---------|
+| **Step 1** — Full runner coverage | **Complete** | `run_tests.py` auto-discovers every top-level `tests/test_*.py` file (10 files), runs them in alphabetical order as separate subprocesses, and fails fast on error |
+| **Step 2** — Test architecture decision | **Complete** | Retain script-style tests; **`python3 run_tests.py`** is the canonical full-suite command; framework migration deferred until clear need — documented in [`TESTING.md`](TESTING.md) |
+| **Step 3** — Streamlit `use_container_width` cleanup | **Next** | Maintenance only; no new UI features |
+| **Step 4** — Version 8 checkpoint doc | **Pending** | Create `docs/VERSION_8_CHECKPOINT.md` when Steps 3–4 ship |
+
+Version 8 is **not** fully complete until Streamlit deprecation cleanup and the checkpoint document are done.
 
 ---
 
@@ -139,42 +152,23 @@ if __name__ == "__main__":
 
 Each step should fit **one branch**, end with passing tests, and avoid mixing unrelated scope.
 
-### Step 1 — Update `run_tests.py` so one command runs every existing test file
+### Step 1 — Update `run_tests.py` so one command runs every existing test file — **Complete**
 
-**Branch theme:** `tests/run-all-test-files` (example)
+**Shipped:** `run_tests.py` uses `sorted(tests_folder.glob("test_*.py"))`, resolves paths from the script location, runs each file as a subprocess with `cwd` set to the repo root, fails if no tests are found, and preserves fail-fast behavior.
 
-* Add the three missing files to the runner **or** replace the hard-coded list with automatic discovery of `tests/test_*.py` (stable sort order).
-* Preserve fail-fast behavior: first failure stops the run with a non-zero exit code.
-* Preserve per-file `Running tests/...` output so logs stay readable.
-* Verify: `python3 run_tests.py` executes all **10** test files and still passes on a clean tree.
+**Verified:** `python3 run_tests.py` executes all **10** top-level `tests/test_*.py` files on a clean tree.
 
-**Step 1 should deliver:**
+### Step 2 — Decide whether to keep script-style tests or incrementally move toward discoverable unittest tests — **Complete**
 
-* Full runner coverage of the current test suite.
-* No changes to individual test logic unless a newly included file exposes a real failure (fix the failure, do not skip the file).
+**Decision:** **Option A — Keep script-style tests.**
 
-**Step 1 should not deliver:**
+* **`python3 run_tests.py`** is the canonical full-suite command.
+* Plain `test_*` functions, `assert`, and `if __name__ == "__main__"` blocks remain the standard.
+* **`unittest discover`** stays informational only (still reports 0 tests).
+* **Framework migration** (unittest or pytest) is deferred until a clear need arises.
+* Full rationale, limitations, and future-test expectations: [`TESTING.md`](TESTING.md).
 
-* pytest adoption, `unittest.TestCase` migration, or CI setup.
-
-### Step 2 — Decide whether to keep script-style tests or incrementally move toward discoverable unittest tests
-
-**Branch theme:** planning + optional small pilot (example: `tests/architecture-decision`)
-
-* **Option A — Keep script-style tests (minimal change):** Continue `run_tests.py` subprocess execution; document that `unittest discover` is not the gate; optionally add a short note in [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md) when done.
-* **Option B — Incremental unittest migration:** Convert one file at a time to `unittest.TestCase` (or a thin wrapper) so `unittest discover` eventually finds tests; keep `run_tests.py` as the primary gate until discovery parity is proven.
-* **Option C — Deliberate pytest (deferred by default):** Only if explicitly chosen; treat as a separate decision with dependency and tooling implications—not the default Version 8 path.
-
-**Decision criteria:**
-
-| Criterion | Script-style + `run_tests.py` | Incremental unittest |
-|-----------|------------------------------|----------------------|
-| Learning curve | Lowest; matches current code | Moderate; standard library only |
-| `unittest discover` | Still 0 until migration | Improves over time |
-| Refactor risk | Lowest | Low if one file per branch |
-| Portfolio story | Honest subprocess runner | Closer to industry convention |
-
-**Do not** rewrite all ten files in one branch. If migration is chosen, pick **one** pilot file after Step 1 is green.
+**Not chosen now:** incremental unittest migration or pytest adoption.
 
 ### Step 3 — Clean up Streamlit deprecation warnings related to `use_container_width`
 
@@ -274,26 +268,24 @@ Version 8 is **complete** when all of the following are true:
 
 ---
 
-## Proposed first Version 8 implementation task
+## Next Version 8 implementation task
 
-**Version 8 Step 1: update `run_tests.py` to run every existing test file**
+**Version 8 Step 3: clean up Streamlit deprecation warnings related to `use_container_width`**
 
-**Why first:**
+**Why next:**
 
-* Fixes the highest-risk problem immediately (false green `run_tests.py`).
-* Does not require choosing unittest vs. script-style long term.
-* Is a small, reviewable diff with an objective pass/fail outcome.
-* Unblocks trustworthy gates before Streamlit cleanup or architecture migration.
+* Steps 1–2 fixed runner coverage and recorded the testing architecture decision.
+* Deprecation warnings in `streamlit_app.py` are known maintenance debt.
+* Low-risk cleanup before the Version 8 checkpoint document.
 
-**Step 1 should deliver:**
+**Step 3 should deliver:**
 
-* All 10 current test files invoked by `python3 run_tests.py`.
-* Fail-fast subprocess behavior unchanged.
-* Clear console output per file.
+* Replacement of deprecated `use_container_width` usage per current Streamlit guidance.
+* Passing `python3 run_tests.py` and a basic manual Streamlit smoke check.
 
-**Step 1 should not deliver:**
+**Step 3 should not deliver:**
 
-* Test rewrites, pytest, CI, deployment, or UI features.
+* New UI features, deployment, auth, or test-framework changes.
 
 ---
 
@@ -301,6 +293,6 @@ Version 8 is **complete** when all of the following are true:
 
 * **Owner:** project author (learning portfolio).
 * **Update when:** a Version 8 step ships or scope changes.
-* **Related docs:** [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [README](../README.md).
+* **Related docs:** [`TESTING.md`](TESTING.md), [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [README](../README.md).
 
-*Version 8 plan — planning only; testing and maintenance reliability after Version 7.*
+*Version 8 plan — in progress; Steps 1–2 complete, Step 3 next.*
