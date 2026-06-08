@@ -1526,3 +1526,27 @@ This improved my understanding of:
 - subprocess exit codes,
 - failure propagation,
 - and why a passing test command is only trustworthy when it actually includes every intended test.
+
+## Version 8 Step 2 — Testing architecture decision
+
+Documented the project's current testing strategy after updating the main runner to execute every test file.
+
+The project will retain its current script-style tests for now. These tests use plain functions, Python `assert` statements, and direct-execution blocks. The canonical full-suite command is now:
+
+```bash
+python3 run_tests.py
+```
+
+The improved runner automatically discovers every top-level `tests/test_*.py` file, so new matching test files do not need to be manually added to a hard-coded runner list.
+
+The project is not converting to `unittest.TestCase` or adding `pytest` at this stage. The current approach is readable, dependency-free, and reliable enough for the size and learning goals of the project. A framework migration would create significant code churn without solving an immediate problem.
+
+The decision can be revisited if the project later needs fixtures, extensive mocking, parameterized tests, coverage tooling, more complex setup and teardown, continuous integration, or broader production use.
+
+This step improved my understanding of:
+
+* the difference between tests and test frameworks,
+* why Python's `unittest` discovery does not recognize every possible test style,
+* how a custom runner can provide reliable discovery,
+* the tradeoff between standardization and unnecessary refactoring,
+* and how to document a technical architecture decision honestly.
