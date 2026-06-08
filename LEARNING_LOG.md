@@ -1500,3 +1500,29 @@ Version 8 will focus on:
 4. Documenting the Version 8 checkpoint.
 
 This planning step intentionally avoided code changes, dependency changes, pytest adoption, deployment work, authentication, cloud databases, AI/API features, semantic matching, fit scores, and unrelated feature work.
+
+## Version 8 Step 1 — Complete main test runner coverage
+
+Updated `run_tests.py` so the project's main test command automatically discovers and executes every top-level file matching `tests/test_*.py`.
+
+Before this change, `python3 run_tests.py` passed but only ran 7 of the repository's 10 test files. The analysis-runner, single-job-analysis, and Streamlit test files passed when run directly but were omitted from the main runner.
+
+The updated runner:
+- discovers all matching test files automatically,
+- sorts them for deterministic execution,
+- runs each test file in a separate Python process,
+- uses the same Python interpreter that launched the runner,
+- clearly reports which test file is running,
+- stops and returns a failure if a test fails,
+- fails clearly if no test files are found,
+- and prints a final success message only after every test passes.
+
+The test files remain simple executable Python scripts. This step did not add pytest, convert tests to `unittest.TestCase`, change dependencies, or modify application behavior.
+
+This improved my understanding of:
+- test runners,
+- automatic file discovery,
+- deterministic ordering,
+- subprocess exit codes,
+- failure propagation,
+- and why a passing test command is only trustworthy when it actually includes every intended test.
