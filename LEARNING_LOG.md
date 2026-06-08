@@ -1550,3 +1550,26 @@ This step improved my understanding of:
 * how a custom runner can provide reliable discovery,
 * the tradeoff between standardization and unnecessary refactoring,
 * and how to document a technical architecture decision honestly.
+
+## Version 8 Step 3 — Streamlit width deprecation cleanup
+
+Replaced deprecated Streamlit `use_container_width` arguments in the local UI with the newer `width` argument.
+
+The goal was to preserve the existing layout while removing deprecation warnings. For elements that previously used `use_container_width=True`, the replacement was `width="stretch"` so the element continues to fill the available container width.
+
+Also added a regression test to help prevent `use_container_width` from being reintroduced in `streamlit_app.py`.
+
+This step did not change analysis logic, saved-history behavior, database behavior, search behavior, comparison behavior, deletion behavior, dependencies, or the test framework.
+
+Validation completed:
+- `python3 run_tests.py`
+- `python3 tests/test_streamlit_app.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit UI smoke test
+
+This improved my understanding of:
+- API deprecation warnings,
+- preserving behavior while updating syntax,
+- regression tests,
+- the difference between maintenance changes and feature changes,
+- and why small dependency/API updates should be isolated in their own branch.
