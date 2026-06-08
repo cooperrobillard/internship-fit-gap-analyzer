@@ -1604,3 +1604,37 @@ This version improved my understanding of:
 - API deprecation cleanup,
 - regression tests,
 - and maintenance work as an important part of software development.
+
+## Version 9 Step 1 — Portable resume input
+
+Extended the local Streamlit workflow so a resume can be supplied without placing a private file at a predefined local path.
+
+The pasted-job analysis workflow now supports:
+- the safe sample resume,
+- the private local resume when that file exists,
+- pasted resume text,
+- and an uploaded UTF-8 `.txt` resume.
+
+Pasted and uploaded resume content is processed in memory. The app does not write the content to `data/resume/`, generated output files, or the SQLite database. Saved analyses use only a generic resume-source label rather than storing raw resume text.
+
+The feature includes friendly validation for:
+- blank pasted resume text,
+- empty uploaded files,
+- and uploaded files that cannot be decoded as UTF-8.
+
+This step intentionally did not add PDF or DOCX parsing, new dependencies, authentication, deployment configuration, cloud storage, or a database-schema change.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual testing of sample, private-local, pasted, and uploaded resume workflows
+- privacy and generated-file checks
+
+This improved my understanding of:
+- in-memory file handling,
+- UTF-8 decoding,
+- conditional Streamlit widgets,
+- input validation,
+- privacy-conscious UI design,
+- and how removing local-file assumptions prepares an application for future hosting.
