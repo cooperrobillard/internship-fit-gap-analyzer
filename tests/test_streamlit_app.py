@@ -26,6 +26,15 @@ def test_streamlit_app_imports_safely():
     assert hasattr(module, "resolve_resume_path")
 
 
+def test_streamlit_app_exposes_layout_tab_helpers():
+    module = _load_streamlit_app_module()
+
+    assert hasattr(module, "_render_analyze_tab")
+    assert hasattr(module, "_render_results_tab")
+    assert hasattr(module, "_render_saved_analyses_tab")
+    assert hasattr(module, "_render_data_management_tab")
+
+
 def test_build_display_summary_for_sample_analysis():
     module = _load_streamlit_app_module()
 
@@ -1481,6 +1490,7 @@ def test_streamlit_app_does_not_use_deprecated_use_container_width():
 
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
+    test_streamlit_app_exposes_layout_tab_helpers()
     test_build_display_summary_for_sample_analysis()
     test_validate_pasted_job_text_rejects_blank_input()
     test_run_pasted_job_analysis_returns_display_data()

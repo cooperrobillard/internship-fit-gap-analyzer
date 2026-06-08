@@ -1139,9 +1139,15 @@ def build_compare_saved_analyses_result(
     }
 
 
-def render_compare_saved_analyses(st, options_display, database_path=DEFAULT_DATABASE_PATH):
+def render_compare_saved_analyses(
+    st,
+    options_display,
+    database_path=DEFAULT_DATABASE_PATH,
+    show_heading=True,
+):
     """Show a read-only comparison between two saved job results."""
-    st.subheader("Compare Saved Analyses")
+    if show_heading:
+        st.subheader("Compare Saved Analyses")
 
     if not options_display["database_exists"]:
         st.info(options_display["missing_message"])
@@ -1218,6 +1224,7 @@ def render_delete_saved_analysis(
     st,
     display,
     database_path=DEFAULT_DATABASE_PATH,
+    show_database_missing_message=True,
 ):
     """Show a guarded, one-at-a-time delete control for saved job results."""
     st.subheader("Delete Saved Analysis")
@@ -1231,7 +1238,8 @@ def render_delete_saved_analysis(
     st.warning(DELETE_SAVED_ANALYSIS_WARNING)
 
     if not display["database_exists"]:
-        st.info(display["missing_message"])
+        if show_database_missing_message:
+            st.info(display["missing_message"])
         return
 
     if display.get("search_no_match"):
@@ -1371,9 +1379,10 @@ def build_saved_gap_priority_display(
     }
 
 
-def render_saved_gap_priority_summary(st, display):
+def render_saved_gap_priority_summary(st, display, show_heading=True):
     """Show recurring missing-skill priorities across saved analyses."""
-    st.subheader("Saved Gap Priority Summary")
+    if show_heading:
+        st.subheader("Saved Gap Priority Summary")
 
     if not display["database_exists"]:
         st.info(display["missing_message"])
@@ -1426,9 +1435,10 @@ def render_saved_result_search_input(st, saved_history_display):
     return search_query
 
 
-def render_recent_saved_runs(st, display):
+def render_recent_saved_runs(st, display, show_heading=True):
     """Show a read-only table of saved job results."""
-    st.subheader("Recent Saved Runs")
+    if show_heading:
+        st.subheader("Recent Saved Runs")
 
     if not display["database_exists"]:
         st.info(display["missing_message"])
@@ -1577,7 +1587,6 @@ def build_display_summary(analysis_result):
 
 def render_analysis_results(st, display):
     """Show structured analysis results in the Streamlit page."""
-    st.subheader("Analysis results")
     st.caption(f"Resume used: `{display['resume_path_label']}`")
 
     summary_col_jobs, summary_col_gaps, summary_col_top_gap = st.columns(3)
@@ -1597,37 +1606,40 @@ def render_analysis_results(st, display):
         st.caption(display["top_recurring_gap_caption"])
 
     for job in display["jobs"]:
-        st.markdown(f"#### {job['job_name']}")
+        with st.expander(f"{job['job_name']} — skills breakdown", expanded=True):
+            matched_col, missing_col = st.columns(2)
 
-        matched_col, missing_col = st.columns(2)
+            with matched_col:
+                st.markdown(
+                    f"**Matched skills** ({job['matched_skills_count']} total)"
+                )
 
-        with matched_col:
-            st.markdown(f"**Matched skills** ({job['matched_skills_count']} total)")
+                if job["has_matched_skills"]:
+                    with st.expander("Matched skills table", expanded=False):
+                        st.dataframe(
+                            job["matched_skills_rows"],
+                            hide_index=True,
+                            width="stretch",
+                        )
+                else:
+                    st.caption("No matched skills found for this job.")
 
-            if job["has_matched_skills"]:
-                with st.expander("View matched skills table", expanded=True):
-                    st.dataframe(
-                        job["matched_skills_rows"],
-                        hide_index=True,
-                        width="stretch",
-                    )
-            else:
-                st.info("No matched skills found for this job.")
+            with missing_col:
+                st.markdown(
+                    f"**Missing skills** ({job['missing_skills_count']} total)"
+                )
 
-        with missing_col:
-            st.markdown(f"**Missing skills** ({job['missing_skills_count']} total)")
+                if job["has_missing_skills"]:
+                    with st.expander("Missing skills table", expanded=False):
+                        st.dataframe(
+                            job["missing_skills_rows"],
+                            hide_index=True,
+                            width="stretch",
+                        )
+                else:
+                    st.caption("No missing skills found for this job.")
 
-            if job["has_missing_skills"]:
-                with st.expander("View missing skills table", expanded=True):
-                    st.dataframe(
-                        job["missing_skills_rows"],
-                        hide_index=True,
-                        width="stretch",
-                    )
-            else:
-                st.info("No missing skills found for this job.")
-
-    st.subheader("Recurring gaps")
+    st.markdown("**Recurring gaps**")
 
     if display["has_recurring_gaps"]:
         st.dataframe(
@@ -1636,23 +1648,22 @@ def render_analysis_results(st, display):
             width="stretch",
         )
 
-        with st.expander("View recurring gaps as a text list"):
+        with st.expander("Recurring gaps as a text list"):
             for line in display["recurring_gaps_lines"]:
                 st.write(line)
     else:
-        st.info("No recurring gaps to show for this run.")
+        st.caption("No recurring gaps to show for this run.")
 
-    st.subheader("Output files")
-
-    if display["has_output_files"]:
-        st.table(
-            [{"File path": file_path} for file_path in display["output_files"]]
-        )
-    else:
-        st.info(
-            "No report files written for this preview run. "
-            "Use the CLI with `--outputs` to generate markdown and CSV files."
-        )
+    with st.expander("Output files", expanded=False):
+        if display["has_output_files"]:
+            st.table(
+                [{"File path": file_path} for file_path in display["output_files"]]
+            )
+        else:
+            st.caption(
+                "No report files written for this preview run. "
+                "Use the CLI with `--outputs` to generate markdown and CSV files."
+            )
 
 
 def _render_resume_source_selector(st, include_in_memory_options=False):
@@ -1668,26 +1679,25 @@ def _render_resume_source_selector(st, include_in_memory_options=False):
     choice_labels = [choice["label"] for choice in resume_choices]
     label_to_choice = {choice["label"]: choice for choice in resume_choices}
 
-    if not private_resume_exists():
-        if include_in_memory_options:
-            st.info(
-                "Private resume file not found. You can paste resume text or upload "
-                "a .txt file below, or create "
-                f"`{resume_path_label(PRIVATE_RESUME_PATH)}` locally. "
-                "Keep private resume files out of Git."
-            )
+    with st.expander("Resume privacy notes", expanded=False):
+        if not private_resume_exists():
+            if include_in_memory_options:
+                st.caption(
+                    "Private resume file not found. You can paste resume text or upload "
+                    "a .txt file below, or create "
+                    f"`{resume_path_label(PRIVATE_RESUME_PATH)}` locally. "
+                    "Keep private resume files out of Git."
+                )
+            else:
+                st.caption(
+                    "Private resume option is unavailable. To use your own resume locally, "
+                    f"create `{resume_path_label(PRIVATE_RESUME_PATH)}` on your machine."
+                )
         else:
-            st.info(
-                "Private resume option is unavailable. To use your own resume locally, "
-                f"create `{resume_path_label(PRIVATE_RESUME_PATH)}` on your machine. "
-                "Keep that file local and do not commit it to Git."
+            st.caption(
+                f"Private resume mode reads `{resume_path_label(PRIVATE_RESUME_PATH)}` "
+                "from your computer only. Do not commit that file."
             )
-    else:
-        st.warning(
-            f"Private resume mode reads `{resume_path_label(PRIVATE_RESUME_PATH)}` "
-            "from your computer only. Do not commit that file or paste resume text "
-            "into the repo."
-        )
 
     selected_label = st.radio(
         "Resume source",
@@ -1735,19 +1745,17 @@ def _render_resume_source_selector(st, include_in_memory_options=False):
     }
 
 
-def main():
-    import streamlit as st
-
-    st.set_page_config(page_title="Internship Fit Analyzer (local)", layout="wide")
-
-    st.title("Internship Fit & Skill-Gap Analyzer")
-    st.caption(
-        "Local prototype only. Choose a resume source, then analyze a sample job "
-        "or pasted job text. Rule-based matching — not an AI job-fit score."
+def _render_analyze_tab(st):
+    """Collect inputs and run sample or custom job analysis."""
+    st.markdown(
+        "1. Choose a job source  \n"
+        "2. Choose a resume source  \n"
+        "3. Run analysis  \n"
+        "4. Review results on the **Results** tab"
     )
 
     input_mode = st.radio(
-        "How do you want to provide the job?",
+        "Job source",
         [MODE_SAMPLE_JOB, MODE_PASTE_JOB],
         horizontal=True,
     )
@@ -1763,6 +1771,7 @@ def main():
     save_to_database = st.checkbox(
         "Save this analysis to local SQLite database",
         value=False,
+        help="Optional. Creates or updates the local database file on this machine only.",
     )
 
     def apply_analysis_result(analysis_result):
@@ -1794,8 +1803,10 @@ def main():
             st.session_state.pop("analysis_result", None)
             st.session_state.pop("database_save_message", None)
 
+    st.divider()
+
     if input_mode == MODE_SAMPLE_JOB:
-        st.info(
+        st.caption(
             f"Resume: `{resume_path_label(selected_resume_path)}`  \n"
             f"Job: `{DEFAULT_JOB_PATH.relative_to(REPO_ROOT)}`"
         )
@@ -1809,34 +1820,19 @@ def main():
             apply_analysis_result(
                 run_sample_analysis(resume_path=selected_resume_path)
             )
-
     else:
-        if resume_source_key == RESUME_SOURCE_PASTED:
-            st.info(f"Resume: `{RESUME_LABEL_PASTED}` (paste text above)")
-        elif resume_source_key == RESUME_SOURCE_UPLOADED:
-            if resume_selection["uploaded_filename"]:
-                uploaded_label = format_uploaded_resume_label(
-                    resume_selection["uploaded_filename"]
-                )
-                st.info(f"Resume: `{uploaded_label}`")
-            else:
-                st.info("Resume: upload a .txt file above")
-        elif selected_resume_path is not None:
-            st.info(f"Resume: `{resume_path_label(selected_resume_path)}`")
-        else:
-            st.info("Choose a resume source above, then paste a job description.")
-
-        pasted_job_title = st.text_input(
-            "Job title (optional)",
-            placeholder="e.g. Software Engineering Intern",
-        )
-        pasted_job_company = st.text_input(
-            "Company (optional)",
-            placeholder="e.g. Example Company",
-        )
+        with st.expander("Optional job labels (title and company)", expanded=False):
+            pasted_job_title = st.text_input(
+                "Job title (optional)",
+                placeholder="e.g. Software Engineering Intern",
+            )
+            pasted_job_company = st.text_input(
+                "Company (optional)",
+                placeholder="e.g. Example Company",
+            )
 
         job_input_label = st.radio(
-            "How do you want to provide the job description?",
+            "Job description source",
             [JOB_INPUT_PASTE_LABEL, JOB_INPUT_UPLOAD_LABEL],
             horizontal=True,
         )
@@ -1852,12 +1848,12 @@ def main():
 
         if job_input_key == JOB_INPUT_PASTED:
             pasted_job_text = st.text_area(
-                "Paste one job description",
+                "Paste job description",
                 height=220,
                 placeholder="Paste an internship posting here...",
             )
             st.caption(
-                "Pasted job descriptions are used in memory only and are not saved to disk."
+                "Pasted job descriptions stay in memory only and are not saved to disk."
             )
         else:
             uploaded_job_file = st.file_uploader(
@@ -1871,7 +1867,7 @@ def main():
                 uploaded_job_filename = uploaded_job_file.name
 
             st.caption(
-                "Uploaded job descriptions are decoded in memory only and are not saved to disk."
+                "Uploaded job descriptions stay in memory only and are not saved to disk."
             )
 
         if st.button("Analyze job", type="primary"):
@@ -1913,15 +1909,29 @@ def main():
     if st.session_state.get("database_save_message"):
         st.success(st.session_state["database_save_message"])
 
-    if "analysis_result" in st.session_state:
-        display = build_display_summary(st.session_state["analysis_result"])
-        render_analysis_results(st, display)
-    elif input_mode == MODE_PASTE_JOB:
-        st.write(
-            "Provide a pasted or uploaded job description above, then click **Analyze job**."
-        )
 
+def _render_results_tab(st):
+    """Show the latest analysis result when one exists."""
+    if "analysis_result" not in st.session_state:
+        st.info("No analysis yet. Run an analysis on the **Analyze** tab.")
+        return
+
+    display = build_display_summary(st.session_state["analysis_result"])
+    render_analysis_results(st, display)
+
+
+def _render_saved_analyses_tab(st):
+    """Browse saved history, search, compare, and review recurring gaps."""
     saved_history_display = build_saved_history_display()
+
+    if not saved_history_display.get("database_exists"):
+        st.info(SAVED_HISTORY_MISSING_MESSAGE)
+        st.caption(
+            "Enable **Save this analysis to local SQLite database** on the "
+            "**Analyze** tab after you run an analysis."
+        )
+        return
+
     render_saved_analysis_history(st, saved_history_display)
 
     saved_results_search_query = render_saved_result_search_input(
@@ -1929,31 +1939,103 @@ def main():
         saved_history_display,
     )
 
-    recent_saved_runs_display = build_recent_saved_runs_display(
-        search_query=saved_results_search_query,
-    )
-    render_recent_saved_runs(st, recent_saved_runs_display)
+    with st.expander("Recent saved runs", expanded=True):
+        recent_saved_runs_display = build_recent_saved_runs_display(
+            search_query=saved_results_search_query,
+        )
+        render_recent_saved_runs(
+            st,
+            recent_saved_runs_display,
+            show_heading=False,
+        )
 
-    compare_saved_analyses_options = build_compare_saved_analyses_options(
-        search_query=saved_results_search_query,
-    )
-    render_compare_saved_analyses(
-        st,
-        compare_saved_analyses_options,
-        database_path=DEFAULT_DATABASE_PATH,
+    with st.expander("Compare saved analyses", expanded=False):
+        compare_saved_analyses_options = build_compare_saved_analyses_options(
+            search_query=saved_results_search_query,
+        )
+        render_compare_saved_analyses(
+            st,
+            compare_saved_analyses_options,
+            database_path=DEFAULT_DATABASE_PATH,
+            show_heading=False,
+        )
+
+    with st.expander("Saved gap priority summary", expanded=False):
+        saved_gap_priority_display = build_saved_gap_priority_display()
+        render_saved_gap_priority_summary(
+            st,
+            saved_gap_priority_display,
+            show_heading=False,
+        )
+
+
+def _render_data_management_tab(st):
+    """Explain local database storage and host guarded deletion controls."""
+    saved_history_display = build_saved_history_display()
+
+    st.markdown("### Local SQLite database")
+    if saved_history_display.get("database_exists"):
+        st.caption(f"Database file: `{saved_history_display['database_path_label']}`")
+        st.write(
+            "Saved analyses are stored in a local SQLite file on this machine only. "
+            "They are not uploaded anywhere."
+        )
+    else:
+        st.info(SAVED_HISTORY_MISSING_MESSAGE)
+        st.caption(
+            "Run an analysis on the **Analyze** tab and enable save to create the database."
+        )
+
+    with st.expander("Danger zone: delete a saved analysis", expanded=False):
+        st.caption(
+            "Permanent deletion removes one saved job result and related skill gaps. "
+            "This cannot be undone."
+        )
+        saved_results_search_query = st.session_state.get("saved_results_search", "")
+        delete_saved_analysis_display = build_delete_saved_analysis_display(
+            search_query=saved_results_search_query,
+        )
+        render_delete_saved_analysis(
+            st,
+            delete_saved_analysis_display,
+            database_path=DEFAULT_DATABASE_PATH,
+            show_database_missing_message=not saved_history_display.get(
+                "database_exists"
+            ),
+        )
+
+
+def main():
+    import streamlit as st
+
+    st.set_page_config(page_title="Internship Fit Analyzer (local)", layout="wide")
+
+    st.title("Internship Fit & Skill-Gap Analyzer")
+    st.caption(
+        "Local prototype — rule-based skill-gap analysis for internship search. "
+        "Not an AI job-fit score."
     )
 
-    saved_gap_priority_display = build_saved_gap_priority_display()
-    render_saved_gap_priority_summary(st, saved_gap_priority_display)
+    analyze_tab, results_tab, saved_tab, data_tab = st.tabs(
+        [
+            "Analyze",
+            "Results",
+            "Saved analyses",
+            "Data management",
+        ]
+    )
 
-    delete_saved_analysis_display = build_delete_saved_analysis_display(
-        search_query=saved_results_search_query,
-    )
-    render_delete_saved_analysis(
-        st,
-        delete_saved_analysis_display,
-        database_path=DEFAULT_DATABASE_PATH,
-    )
+    with analyze_tab:
+        _render_analyze_tab(st)
+
+    with results_tab:
+        _render_results_tab(st)
+
+    with saved_tab:
+        _render_saved_analyses_tab(st)
+
+    with data_tab:
+        _render_data_management_tab(st)
 
 
 if __name__ == "__main__":
