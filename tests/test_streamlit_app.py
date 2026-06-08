@@ -35,6 +35,79 @@ def test_streamlit_app_exposes_layout_tab_helpers():
     assert hasattr(module, "_render_data_management_tab")
 
 
+def test_get_analysis_workflow_choices_includes_sample_paste_and_upload():
+    module = _load_streamlit_app_module()
+
+    choices = module.get_analysis_workflow_choices()
+    choice_keys = [choice["key"] for choice in choices]
+    choice_labels = [choice["label"] for choice in choices]
+
+    assert module.WORKFLOW_SAMPLE in choice_keys
+    assert module.WORKFLOW_PASTE in choice_keys
+    assert module.WORKFLOW_UPLOAD in choice_keys
+    assert module.WORKFLOW_SAMPLE_LABEL in choice_labels
+    assert module.WORKFLOW_PASTE_LABEL in choice_labels
+    assert module.WORKFLOW_UPLOAD_LABEL in choice_labels
+
+
+def test_label_to_analysis_workflow_key_maps_user_facing_labels():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.label_to_analysis_workflow_key(module.WORKFLOW_SAMPLE_LABEL)
+        == module.WORKFLOW_SAMPLE
+    )
+    assert (
+        module.label_to_analysis_workflow_key(module.WORKFLOW_PASTE_LABEL)
+        == module.WORKFLOW_PASTE
+    )
+    assert (
+        module.label_to_analysis_workflow_key(module.WORKFLOW_UPLOAD_LABEL)
+        == module.WORKFLOW_UPLOAD
+    )
+
+
+def test_run_sample_analysis_uses_bundled_sample_resume_and_job():
+    module = _load_streamlit_app_module()
+
+    result = module.run_sample_analysis()
+
+    assert Path(result["resume_path"]) == module.SAMPLE_RESUME_PATH
+    assert result["jobs"][0]["job_name"] == module.DEFAULT_JOB_PATH.name
+
+
+def test_custom_job_workflows_still_support_portable_resume_and_job_text():
+    module = _load_streamlit_app_module()
+
+    pasted_job_text = "Internship requiring Python, SQL, and technical documentation."
+    resume_text = "Python SQL pandas Git technical documentation"
+
+    pasted_job_input = module.resolve_job_description_input(
+        module.JOB_INPUT_PASTED,
+        pasted_job_text=pasted_job_text,
+    )
+    resume_input = module.resolve_pasted_job_resume_input(
+        module.RESUME_SOURCE_PASTED,
+        pasted_resume_text=resume_text,
+    )
+    job_name = module.build_pasted_job_name(
+        job_title="Data Intern",
+        company="Acme Corp",
+    )
+
+    result = module.run_pasted_job_analysis(
+        pasted_job_input["job_text"],
+        job_name=job_name,
+        resume_path=resume_input["resume_path"],
+        resume_text=resume_input["resume_text"],
+    )
+
+    assert pasted_job_input["error_message"] is None
+    assert resume_input["error_message"] is None
+    assert result["jobs"][0]["job_name"] == "Acme Corp — Data Intern"
+    assert result["analysis_mode"] == "single_text"
+
+
 def test_build_display_summary_for_sample_analysis():
     module = _load_streamlit_app_module()
 
@@ -1491,6 +1564,10 @@ def test_streamlit_app_does_not_use_deprecated_use_container_width():
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_streamlit_app_exposes_layout_tab_helpers()
+    test_get_analysis_workflow_choices_includes_sample_paste_and_upload()
+    test_label_to_analysis_workflow_key_maps_user_facing_labels()
+    test_run_sample_analysis_uses_bundled_sample_resume_and_job()
+    test_custom_job_workflows_still_support_portable_resume_and_job_text()
     test_build_display_summary_for_sample_analysis()
     test_validate_pasted_job_text_rejects_blank_input()
     test_run_pasted_job_analysis_returns_display_data()

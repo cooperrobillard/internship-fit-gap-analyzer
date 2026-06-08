@@ -41,6 +41,14 @@ MODE_SAMPLE_JOB = "Analyze sample job"
 MODE_PASTE_JOB = "Paste job description"
 PASTED_JOB_NAME = "Pasted job description"
 
+WORKFLOW_SAMPLE = "sample"
+WORKFLOW_PASTE = "paste"
+WORKFLOW_UPLOAD = "upload"
+
+WORKFLOW_SAMPLE_LABEL = "Try sample analysis"
+WORKFLOW_PASTE_LABEL = "Paste a job description"
+WORKFLOW_UPLOAD_LABEL = "Upload a job description"
+
 JOB_INPUT_PASTED = "paste"
 JOB_INPUT_UPLOADED = "upload"
 JOB_INPUT_PASTE_LABEL = "Paste job description"
@@ -50,6 +58,42 @@ JOB_INPUT_UPLOAD_LABEL = "Upload job description (.txt)"
 def private_resume_exists(private_resume_path=PRIVATE_RESUME_PATH):
     """Return True when the local private resume file is present."""
     return Path(private_resume_path).is_file()
+
+
+def supports_uploaded_job_description():
+    """Return True when uploaded job-description analysis is available."""
+    return True
+
+
+def get_analysis_workflow_choices():
+    """
+    Build the primary job-analysis workflow options for the Analyze tab.
+
+    Sample and paste are always available. Upload is included when supported.
+    """
+    choices = [
+        {"key": WORKFLOW_SAMPLE, "label": WORKFLOW_SAMPLE_LABEL},
+        {"key": WORKFLOW_PASTE, "label": WORKFLOW_PASTE_LABEL},
+    ]
+
+    if supports_uploaded_job_description():
+        choices.append({"key": WORKFLOW_UPLOAD, "label": WORKFLOW_UPLOAD_LABEL})
+
+    return choices
+
+
+def label_to_analysis_workflow_key(workflow_label):
+    """Map a workflow label from the UI to its internal key."""
+    for choice in get_analysis_workflow_choices():
+        if choice["label"] == workflow_label:
+            return choice["key"]
+
+    raise ValueError(f"Unknown analysis workflow label: {workflow_label}")
+
+
+def is_sample_analysis_workflow(workflow_key):
+    """Return True when the workflow uses bundled sample resume and job files."""
+    return workflow_key == WORKFLOW_SAMPLE
 
 
 def get_resume_source_choices(
@@ -1748,25 +1792,17 @@ def _render_resume_source_selector(st, include_in_memory_options=False):
 def _render_analyze_tab(st):
     """Collect inputs and run sample or custom job analysis."""
     st.markdown(
-        "1. Choose a job source  \n"
-        "2. Choose a resume source  \n"
-        "3. Run analysis  \n"
-        "4. Review results on the **Results** tab"
+        "Choose one workflow below, then review results on the **Results** tab."
     )
 
-    input_mode = st.radio(
-        "Job source",
-        [MODE_SAMPLE_JOB, MODE_PASTE_JOB],
+    workflow_choices = get_analysis_workflow_choices()
+    workflow_labels = [choice["label"] for choice in workflow_choices]
+    selected_workflow_label = st.radio(
+        "Job analysis workflow",
+        workflow_labels,
         horizontal=True,
     )
-
-    include_in_memory_resume_options = input_mode == MODE_PASTE_JOB
-    resume_selection = _render_resume_source_selector(
-        st,
-        include_in_memory_options=include_in_memory_resume_options,
-    )
-    resume_source_key = resume_selection["key"]
-    selected_resume_path = resume_selection["path"]
+    workflow_key = label_to_analysis_workflow_key(selected_workflow_label)
 
     save_to_database = st.checkbox(
         "Save this analysis to local SQLite database",
@@ -1786,18 +1822,31 @@ def _render_analyze_tab(st):
         else:
             st.session_state.pop("database_save_message", None)
 
-    resume_or_mode_changed = (
-        st.session_state.get("last_input_mode") != input_mode
-        or st.session_state.get("last_resume_source") != resume_source_key
+    resume_selection = None
+    resume_source_key = RESUME_SOURCE_SAMPLE
+
+    if not is_sample_analysis_workflow(workflow_key):
+        resume_selection = _render_resume_source_selector(
+            st,
+            include_in_memory_options=True,
+        )
+        resume_source_key = resume_selection["key"]
+
+    workflow_or_resume_changed = (
+        st.session_state.get("last_input_mode") != workflow_key
+        or (
+            not is_sample_analysis_workflow(workflow_key)
+            and st.session_state.get("last_resume_source") != resume_source_key
+        )
     )
 
-    if resume_or_mode_changed:
-        st.session_state["last_input_mode"] = input_mode
+    if workflow_or_resume_changed:
+        st.session_state["last_input_mode"] = workflow_key
         st.session_state["last_resume_source"] = resume_source_key
 
-        if input_mode == MODE_SAMPLE_JOB:
+        if is_sample_analysis_workflow(workflow_key):
             apply_analysis_result(
-                run_sample_analysis(resume_path=selected_resume_path)
+                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH)
             )
         else:
             st.session_state.pop("analysis_result", None)
@@ -1805,20 +1854,24 @@ def _render_analyze_tab(st):
 
     st.divider()
 
-    if input_mode == MODE_SAMPLE_JOB:
+    if is_sample_analysis_workflow(workflow_key):
         st.caption(
-            f"Resume: `{resume_path_label(selected_resume_path)}`  \n"
+            "Uses the bundled sample resume and sample job description. "
+            "No extra inputs are required."
+        )
+        st.caption(
+            f"Resume: `{resume_path_label(SAMPLE_RESUME_PATH)}`  \n"
             f"Job: `{DEFAULT_JOB_PATH.relative_to(REPO_ROOT)}`"
         )
 
         if st.button("Run sample analysis", type="primary"):
             apply_analysis_result(
-                run_sample_analysis(resume_path=selected_resume_path)
+                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH)
             )
 
         if "analysis_result" not in st.session_state:
             apply_analysis_result(
-                run_sample_analysis(resume_path=selected_resume_path)
+                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH)
             )
     else:
         with st.expander("Optional job labels (title and company)", expanded=False):
@@ -1831,22 +1884,11 @@ def _render_analyze_tab(st):
                 placeholder="e.g. Example Company",
             )
 
-        job_input_label = st.radio(
-            "Job description source",
-            [JOB_INPUT_PASTE_LABEL, JOB_INPUT_UPLOAD_LABEL],
-            horizontal=True,
-        )
-        job_input_key = (
-            JOB_INPUT_PASTED
-            if job_input_label == JOB_INPUT_PASTE_LABEL
-            else JOB_INPUT_UPLOADED
-        )
-
         pasted_job_text = None
         uploaded_job_bytes = None
         uploaded_job_filename = None
 
-        if job_input_key == JOB_INPUT_PASTED:
+        if workflow_key == WORKFLOW_PASTE:
             pasted_job_text = st.text_area(
                 "Paste job description",
                 height=220,
@@ -1855,6 +1897,7 @@ def _render_analyze_tab(st):
             st.caption(
                 "Pasted job descriptions stay in memory only and are not saved to disk."
             )
+            job_input_key = JOB_INPUT_PASTED
         else:
             uploaded_job_file = st.file_uploader(
                 "Upload job description (.txt)",
@@ -1869,6 +1912,7 @@ def _render_analyze_tab(st):
             st.caption(
                 "Uploaded job descriptions stay in memory only and are not saved to disk."
             )
+            job_input_key = JOB_INPUT_UPLOADED
 
         if st.button("Analyze job", type="primary"):
             job_description_input = resolve_job_description_input(
