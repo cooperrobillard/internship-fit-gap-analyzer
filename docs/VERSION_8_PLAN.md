@@ -2,7 +2,7 @@
 
 This document plans **Version 8** for the Internship Fit & Skill-Gap Analyzer: **testing and maintenance reliability**.
 
-**Status:** **In progress.** Steps 1–2 complete; Steps 3–4 remain.
+**Status:** **Complete.** Recorded in [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md).
 
 For the Version 7 baseline, see [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md). For the canonical testing guide, see [`TESTING.md`](TESTING.md). For long-term product milestones (hosted UI, optional AI), see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). For limitations, see [`LIMITATIONS.md`](LIMITATIONS.md).
 
@@ -24,10 +24,10 @@ Version 8 does **not** try to deploy the app, add authentication, introduce pyte
 |------|--------|---------|
 | **Step 1** — Full runner coverage | **Complete** | `run_tests.py` auto-discovers every top-level `tests/test_*.py` file (10 files), runs them in alphabetical order as separate subprocesses, and fails fast on error |
 | **Step 2** — Test architecture decision | **Complete** | Retain script-style tests; **`python3 run_tests.py`** is the canonical full-suite command; framework migration deferred until clear need — documented in [`TESTING.md`](TESTING.md) |
-| **Step 3** — Streamlit `use_container_width` cleanup | **Next** | Maintenance only; no new UI features |
-| **Step 4** — Version 8 checkpoint doc | **Pending** | Create `docs/VERSION_8_CHECKPOINT.md` when Steps 3–4 ship |
+| **Step 3** — Streamlit `use_container_width` cleanup | **Complete** | Six `st.dataframe` calls updated to `width="stretch"`; regression test added |
+| **Step 4** — Version 8 checkpoint doc | **Complete** | [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md) |
 
-Version 8 is **not** fully complete until Streamlit deprecation cleanup and the checkpoint document are done.
+**Final decisions:** retain script-style tests; **`python3 run_tests.py`** is the canonical full-suite command; framework migration deferred until clear need.
 
 ---
 
@@ -170,20 +170,13 @@ Each step should fit **one branch**, end with passing tests, and avoid mixing un
 
 **Not chosen now:** incremental unittest migration or pytest adoption.
 
-### Step 3 — Clean up Streamlit deprecation warnings related to `use_container_width`
+### Step 3 — Clean up Streamlit deprecation warnings related to `use_container_width` — **Complete**
 
-**Branch theme:** `ui/streamlit-width-deprecation` (example)
+**Shipped:** `use_container_width=True` replaced with `width="stretch"` on six `st.dataframe` calls; layout preserved; regression test in `tests/test_streamlit_app.py`.
 
-* Address `use_container_width` deprecation warnings in `streamlit_app.py` (multiple call sites).
-* Follow current Streamlit guidance for the installed version (e.g. `width` parameter or equivalent replacement).
-* Re-run `python3 run_tests.py` and manual `streamlit run` smoke check.
-* No new UI features; maintenance only.
+### Step 4 — Document the Version 8 checkpoint — **Complete**
 
-### Step 4 — Document the Version 8 checkpoint
-
-* Create `docs/VERSION_8_CHECKPOINT.md` when work ships.
-* Record: runner coverage, architecture decision from Step 2, deprecation cleanup status, and verified commands.
-* Update README or roadmap **only if** the documented test gate or commands change.
+**Shipped:** [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md) records runner coverage, architecture decision, maintenance result, success criteria, and future direction.
 
 **Do not combine all steps in one large branch.**
 
@@ -260,7 +253,7 @@ Version 8 is **complete** when all of the following are true:
 
 1. **Full runner coverage** — `python3 run_tests.py` executes every `tests/test_*.py` file (10 files today) and passes on a clean checkout.
 2. **No silent exclusions** — The runner list or discovery logic cannot drift from the filesystem without a deliberate doc/code change; missing files are not omitted by accident.
-3. **Documented test architecture decision** — Step 2 outcome is recorded (keep script-style, pilot unittest migration, or explicit deferral with rationale) in [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md).
+3. **Documented test architecture decision** — Step 2 outcome recorded in [`TESTING.md`](TESTING.md) and [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md): retain script-style tests; framework migration deferred.
 4. **Streamlit maintenance** — `use_container_width` deprecation warnings are resolved or documented with a blocked upstream reason after Step 3.
 5. **Regression safety** — CLI smoke commands still work; no user-facing feature changes required for Version 8 completion.
 6. **Scope discipline** — No deployment, auth, cloud DB, OpenAI, semantic matching, fit scores, or unrelated features shipped under the Version 8 label.
@@ -268,31 +261,10 @@ Version 8 is **complete** when all of the following are true:
 
 ---
 
-## Next Version 8 implementation task
-
-**Version 8 Step 3: clean up Streamlit deprecation warnings related to `use_container_width`**
-
-**Why next:**
-
-* Steps 1–2 fixed runner coverage and recorded the testing architecture decision.
-* Deprecation warnings in `streamlit_app.py` are known maintenance debt.
-* Low-risk cleanup before the Version 8 checkpoint document.
-
-**Step 3 should deliver:**
-
-* Replacement of deprecated `use_container_width` usage per current Streamlit guidance.
-* Passing `python3 run_tests.py` and a basic manual Streamlit smoke check.
-
-**Step 3 should not deliver:**
-
-* New UI features, deployment, auth, or test-framework changes.
-
----
-
 ## Document maintenance
 
 * **Owner:** project author (learning portfolio).
 * **Update when:** a Version 8 step ships or scope changes.
-* **Related docs:** [`TESTING.md`](TESTING.md), [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [README](../README.md).
+* **Related docs:** [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md), [`TESTING.md`](TESTING.md), [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [README](../README.md).
 
-*Version 8 plan — in progress; Steps 1–2 complete, Step 3 next.*
+*Version 8 plan — complete; see [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md).*

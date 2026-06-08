@@ -322,6 +322,9 @@ Output files:
 | [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) | Version 6 saved-analysis comparison and gap priority summary |
 | [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) | Version 7 plan: saved-result organization |
 | [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) | Version 7 checkpoint: labels, search, guarded deletion |
+| [`docs/VERSION_8_PLAN.md`](docs/VERSION_8_PLAN.md) | Version 8 plan: testing and maintenance reliability |
+| [`docs/VERSION_8_CHECKPOINT.md`](docs/VERSION_8_CHECKPOINT.md) | Version 8 checkpoint: test runner, TESTING.md, Streamlit maintenance |
+| [`docs/TESTING.md`](docs/TESTING.md) | Canonical testing guide |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
 | [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
@@ -344,4 +347,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Near term: Version 7 saved-result management is **complete** on localhost. **Version 8** is reserved for planning discussion (tests, metadata, export/backup research, deployment research)—not automatic implementation. Hosted deployment and optional AI-assisted extraction remain later milestones.
+See [`docs/VERSION_8_CHECKPOINT.md`](docs/VERSION_8_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Version 8 testing and maintenance reliability is **complete** (`run_tests.py` runs every top-level `tests/test_*.py` file; see [`docs/TESTING.md`](docs/TESTING.md)). The **next milestone** should begin with a separate planning step—no Version 9 scope is committed yet. Hosted deployment and optional AI-assisted extraction remain uncommitted future candidates.

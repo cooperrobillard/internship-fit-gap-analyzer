@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 7**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, and tests passing on a clean public repo.
+As of **Version 8**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
 
 **What exists today:**
 
@@ -21,6 +21,7 @@ As of **Version 7**, the project is a **stable, rule-based Python CLI tool** wit
 - Version 5 additions: optional SQLite save from the UI, read-only **Saved Analysis History** summary panel, read-only **Recent Saved Runs** table (localhost only).
 - Version 6 additions: read-only **Compare Saved Analyses** (two saved job results, missing-skill comparison), read-only **Saved Gap Priority Summary** across all saved analyses (localhost only).
 - Version 7 additions: improved saved-result labels, newest-first sorting across all saves, **Search saved analyses**, guarded **Delete Saved Analysis** (one record at a time, localhost only).
+- Version 8 additions: auto-discovering `run_tests.py` (every top-level `tests/test_*.py` file), documented script-style test architecture ([`TESTING.md`](TESTING.md)), Streamlit `width="stretch"` maintenance (replacing deprecated `use_container_width`).
 
 **What does not exist today:**
 
@@ -134,45 +135,38 @@ Delivered:
 
 **Explicitly not Version 7:** bulk delete, undo, editing, tags, advanced filters, metadata schema changes, hosted deployment, auth, fit scores.
 
-### Version 8: Future planning (not committed)
+### Version 8: Testing and maintenance reliability — **complete**
 
-**Goal:** Evaluate next improvements **without** selecting a final implementation yet.
+**Goal:** Make the test gate honest and reduce known maintenance debt before new product features.
 
-Possible directions to discuss in planning docs only:
+Plan: [`VERSION_8_PLAN.md`](VERSION_8_PLAN.md). Checkpoint: [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md). Testing guide: [`TESTING.md`](TESTING.md).
 
-- test-suite modernization (`unittest discover` compatibility),
-- limited optional saved-result metadata,
-- local export/import or backup research,
-- Streamlit UI maintenance,
-- deployment-readiness research (no deployment in this phase),
-- architecture notes for a possible future hosted tool.
+Delivered:
 
-**Explicitly not Version 8 by default:** production deployment, authentication, Clerk, cloud database, multi-user SaaS.
+- `run_tests.py` auto-discovers every top-level `tests/test_*.py` file (alphabetical, subprocess per file, fail-fast),
+- documented decision to **retain script-style tests**; `python3 run_tests.py` is the canonical full-suite command,
+- Streamlit `width="stretch"` replacing deprecated `use_container_width` on dataframe calls,
+- regression test guarding against deprecated Streamlit width API in `streamlit_app.py`.
 
-### Version 9: Private hosted web tool (future)
+**Explicitly not Version 8:** pytest adoption, unittest migration, deployment, auth, new product features, fit scores, semantic matching.
 
-**Goal:** A **private or unlisted** hosted instance for personal use, optionally linked from cooperrobillard.com/jobfit—**only after** local UI workflows feel worthwhile.
+### Future versions (not committed)
 
-Possible characteristics:
+The items below are **candidates for a future planning step**. No version number, scope, or implementation order is selected yet.
 
-- Hosted on a modest platform (e.g. Streamlit Community, Railway, Render, Fly.io)—decision deferred.
-- Environment variables for any secrets; no resume/job content committed to Git.
-- Access control simple enough for one user (password gate, allowlist, or platform private app).
-- HTTPS and clear privacy notice on the page.
+| Candidate area | Notes |
+|----------------|--------|
+| **Local export / backup** | Research export or backup of saved SQLite data |
+| **Limited saved-result metadata** | Only with deliberate, minimal schema design |
+| **Test-framework migration** | unittest or pytest **only if** triggers in [`TESTING.md`](TESTING.md) are met |
+| **Streamlit / UI maintenance** | Ongoing deprecation and layout fixes beyond Version 8 |
+| **Deployment-readiness research** | Architecture notes, privacy rules, platform comparison—**not deployment** |
+| **Private hosted UI** | Unlisted or access-gated hosted instance—**only after** local workflows feel worthwhile |
+| **Optional AI-assisted extraction** | LLM-based skill extraction—**maybe never**; rule-based path remains valuable |
 
-**Explicitly not required for first hosted milestone:** multi-user accounts, billing, RAG, or semantic search.
+**Explicitly not committed:** production multi-user SaaS, Clerk/auth by default, cloud database, semantic matching, fit-score ranking, or automatic implementation of any row above.
 
-### Version 10: Optional AI-assisted extraction (maybe never)
-
-**Goal:** Only if rule-based matching becomes a clear bottleneck **and** privacy/cost tradeoffs are acceptable.
-
-Possible future additions (all optional):
-
-- OpenAI API (or similar) for structured skill extraction from unstructured job text.
-- Better handling of varied wording—not full “AI understands fit.”
-- Still keep rule-based path as fallback and for offline/local use.
-
-This version is **optional** and should not block Versions 3–9. The project remains valuable as a rule-based, explainable tool.
+Optional AI-assisted extraction (e.g. OpenAI API for structured skill extraction) remains a **maybe-never** candidate: only if rule-based matching becomes a clear bottleneck and privacy/cost tradeoffs are acceptable. The rule-based path would remain as fallback.
 
 ---
 
@@ -191,6 +185,7 @@ Treat these as **prerequisites**, not suggestions:
 | Version 5 local persistence validated | Optional save + read-only history without overbuilding a dashboard |
 | Version 6 comparison validated | Two-way missing-skill comparison + gap priority summary feel useful locally |
 | Version 7 organization validated | Labels, search, and guarded deletion work during real local use |
+| Version 8 testing reliability validated | `run_tests.py` runs full suite; test architecture documented |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -231,15 +226,15 @@ Version 6 (complete)
   → saved-analysis comparison + saved gap priority summary
 Version 7 (complete)
   → labels, sorting, search, guarded single-result deletion
-Version 8 (planning discussion only)
-  → evaluate tests, metadata, export/backup, UI maintenance, deployment research
-Version 9 (only if local UX feels worthwhile)
-  → private/unlisted deploy; env-based secrets; access gate
-Version 10 (optional, much later)
-  → AI-assisted extraction experiments; never required for portfolio value
+Version 8 (complete)
+  → full test-runner coverage, TESTING.md, Streamlit width maintenance
+Next (planning only — no version number committed)
+  → evaluate export/backup, metadata, hosted research, or other candidates in table above
+Future (optional, much later)
+  → private hosted UI and/or AI-assisted extraction; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep CLI tests green; use Version 7 saved-management workflows during real internship search; treat Version 8 as a **planning milestone**, not an automatic implementation step. Hosted deployment remains a separate, later decision.
+**Immediate recommendation:** Keep `python3 run_tests.py` green; use Version 7 saved-management workflows during real internship search; **begin the next milestone with a separate planning step** (see [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md)). Hosted deployment and other future candidates remain uncommitted.
 
 ---
 
@@ -302,6 +297,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Designed repo layout for **privacy**: public samples in Git, real resume/jobs local-only.
 - Extended a Version 1 MVP with optional SQLite persistence and pandas summaries (Version 2).
 - Built a local Streamlit UI with optional SQLite save, searchable saved-history views, saved-analysis comparison, a recurring gap priority summary, and guarded single-result deletion (Versions 4–7).
+- Improved test reliability with auto-discovering `run_tests.py` and documented script-style test architecture (Version 8).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -320,15 +316,13 @@ Update the one-liner when a hosted UI exists—still without overstating AI capa
 
 ## 11. Near-term next steps
 
-Actionable items for the **docs/product-roadmap** era and immediate follow-ups—**no web app implementation yet**:
+Actionable items after **Version 8 complete**—**no automatic next implementation**:
 
-1. **Merge or review** this roadmap on branch `docs/product-roadmap` after human read-through.
-2. **Keep using the CLI** for real searches with `--resume data/resume/resume.txt --jobs data/jobs` (private, local).
-3. **Plan Version 3** as a short list of 1–2 item branches (e.g. more sample jobs, taxonomy tweaks, one small CLI/backend polish item).
-4. **Run the usual gate** before any merge: `python3 run_tests.py` and `python3 src/main.py`.
-5. **Update README “Planned next steps”** only when a milestone actually ships—avoid duplicating this entire roadmap in README.
-6. **Revisit UI choice** after Version 3: compare local Streamlit vs. minimal FastAPI with written pros/cons from real usage.
-7. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment work until Version 4 succeeds locally.
+1. **Run the usual gate** before any merge: `python3 run_tests.py` and `python3 src/main.py`.
+2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs.
+3. **Start the next milestone with planning only** — see future candidates in §4 and [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md).
+4. **Update README “Planned next steps”** when a new milestone is actually planned or shipped.
+5. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment until explicitly planned.
 
 ---
 
@@ -338,4 +332,4 @@ Actionable items for the **docs/product-roadmap** era and immediate follow-ups�
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 7 complete; Version 8 reserved for planning discussion; no hosted deployment.*
+*Last aligned with: Version 8 complete (testing and maintenance reliability); next milestone uncommitted; no hosted deployment.*
