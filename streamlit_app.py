@@ -32,6 +32,10 @@ DEFAULT_DATABASE_PATH = REPO_ROOT / "data/outputs/analysis_results.db"
 
 RESUME_SOURCE_SAMPLE = "sample"
 RESUME_SOURCE_PRIVATE = "private"
+RESUME_SOURCE_PASTED = "pasted"
+RESUME_SOURCE_UPLOADED = "uploaded"
+
+RESUME_LABEL_PASTED = "Pasted resume"
 
 MODE_SAMPLE_JOB = "Analyze sample job"
 MODE_PASTE_JOB = "Paste job description"
@@ -46,11 +50,14 @@ def private_resume_exists(private_resume_path=PRIVATE_RESUME_PATH):
 def get_resume_source_choices(
     sample_resume_path=SAMPLE_RESUME_PATH,
     private_resume_path=PRIVATE_RESUME_PATH,
+    include_in_memory_options=False,
 ):
     """
     Build resume source options for the UI.
 
     The private option appears only when the local file exists.
+    Pasted and uploaded resume options appear only when requested
+    (pasted-job workflow).
     """
     choices = [
         {
@@ -67,6 +74,20 @@ def get_resume_source_choices(
                 "label": "Private local resume",
                 "path": Path(private_resume_path),
             }
+        )
+
+    if include_in_memory_options:
+        choices.extend(
+            [
+                {
+                    "key": RESUME_SOURCE_PASTED,
+                    "label": "Paste resume text",
+                },
+                {
+                    "key": RESUME_SOURCE_UPLOADED,
+                    "label": "Upload resume (.txt)",
+                },
+            ]
         )
 
     return choices
@@ -133,6 +154,144 @@ def validate_pasted_job_text(job_text):
     return True, None
 
 
+def validate_pasted_resume_text(resume_text):
+    """
+    Return (is_valid, error_message) for pasted resume text.
+    """
+    if not str(resume_text).strip():
+        return False, "Resume text cannot be empty. Paste your resume text first."
+
+    return True, None
+
+
+def sanitize_uploaded_resume_filename(filename):
+    """Return a safe basename for display labels only."""
+    if not filename:
+        return "uploaded_resume.txt"
+
+    return Path(filename).name
+
+
+def format_uploaded_resume_label(filename):
+    """Build a non-sensitive resume-source label for uploaded files."""
+    safe_name = sanitize_uploaded_resume_filename(filename)
+    return f"Uploaded resume: {safe_name}"
+
+
+def decode_uploaded_resume_bytes(uploaded_bytes):
+    """
+    Decode uploaded resume bytes as UTF-8 text.
+
+    Returns (is_valid, resume_text, error_message).
+    """
+    if uploaded_bytes is None:
+        return False, None, "Please upload a .txt resume file first."
+
+    if len(uploaded_bytes) == 0:
+        return False, None, "Uploaded resume file is empty. Choose a .txt file with content."
+
+    try:
+        resume_text = uploaded_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return (
+            False,
+            None,
+            "Uploaded resume must be a UTF-8 text file. Save your resume as .txt and try again.",
+        )
+
+    if not resume_text.strip():
+        return False, None, "Uploaded resume file is empty. Choose a .txt file with content."
+
+    return True, resume_text, None
+
+
+def resolve_pasted_job_resume_input(
+    resume_source_key,
+    pasted_resume_text=None,
+    uploaded_resume_bytes=None,
+    uploaded_filename=None,
+    sample_resume_path=SAMPLE_RESUME_PATH,
+    private_resume_path=PRIVATE_RESUME_PATH,
+):
+    """
+    Resolve resume inputs for pasted-job analysis.
+
+    Returns a dict with resume_path, resume_text, display_label, and
+    error_message. Pasted and uploaded resume text stay in memory only.
+    """
+    if resume_source_key == RESUME_SOURCE_SAMPLE:
+        resume_path = Path(sample_resume_path)
+        return {
+            "resume_path": resume_path,
+            "resume_text": None,
+            "display_label": resume_path_label(resume_path),
+            "error_message": None,
+        }
+
+    if resume_source_key == RESUME_SOURCE_PRIVATE:
+        private_path = Path(private_resume_path)
+
+        if not private_resume_exists(private_path):
+            return {
+                "resume_path": None,
+                "resume_text": None,
+                "display_label": None,
+                "error_message": (
+                    "Private resume file is not available. "
+                    f"Expected: {private_path.relative_to(REPO_ROOT)}"
+                ),
+            }
+
+        return {
+            "resume_path": private_path,
+            "resume_text": None,
+            "display_label": resume_path_label(private_path),
+            "error_message": None,
+        }
+
+    if resume_source_key == RESUME_SOURCE_PASTED:
+        is_valid, error_message = validate_pasted_resume_text(pasted_resume_text)
+
+        if not is_valid:
+            return {
+                "resume_path": None,
+                "resume_text": None,
+                "display_label": None,
+                "error_message": error_message,
+            }
+
+        return {
+            "resume_path": RESUME_LABEL_PASTED,
+            "resume_text": pasted_resume_text,
+            "display_label": RESUME_LABEL_PASTED,
+            "error_message": None,
+        }
+
+    if resume_source_key == RESUME_SOURCE_UPLOADED:
+        is_valid, resume_text, error_message = decode_uploaded_resume_bytes(
+            uploaded_resume_bytes
+        )
+
+        if not is_valid:
+            return {
+                "resume_path": None,
+                "resume_text": None,
+                "display_label": None,
+                "error_message": error_message,
+            }
+
+        display_label = format_uploaded_resume_label(uploaded_filename)
+
+        return {
+            "resume_path": display_label,
+            "resume_text": resume_text,
+            "display_label": display_label,
+            "error_message": None,
+        }
+
+    raise ValueError(f"Unknown resume source key: {resume_source_key}")
+
+
 def get_default_database_path(repo_root=REPO_ROOT):
     """Return the default SQLite database path for UI saves."""
     return Path(repo_root) / "data/outputs/analysis_results.db"
@@ -177,21 +336,27 @@ def run_pasted_job_analysis(
     job_text,
     job_name=PASTED_JOB_NAME,
     resume_path=DEFAULT_RESUME_PATH,
+    resume_text=None,
     taxonomy_path=DEFAULT_TAXONOMY_PATH,
     aliases_path=DEFAULT_ALIASES_PATH,
 ):
     """
-    Analyze pasted job text against the selected resume file.
+    Analyze pasted job text against a resume file path or in-memory resume text.
 
-    Uses the backend's resume_path + job_text mode (no files written).
+    Uses the backend's resume_path / resume_text + job_text mode (no resume files
+    written for pasted or uploaded resume input).
     """
     is_valid, error_message = validate_pasted_job_text(job_text)
 
     if not is_valid:
         raise ValueError(error_message)
 
+    if resume_path is None and resume_text is None:
+        raise ValueError("Provide resume_path or resume_text.")
+
     return run_single_job_analysis(
         resume_path=resume_path,
+        resume_text=resume_text,
         job_text=job_text,
         job_name=job_name,
         taxonomy_path=taxonomy_path,
@@ -1344,18 +1509,33 @@ def render_analysis_results(st, display):
         )
 
 
-def _render_resume_source_selector(st):
-    """Show resume source controls and return the selected resume file path."""
-    resume_choices = get_resume_source_choices()
+def _render_resume_source_selector(st, include_in_memory_options=False):
+    """
+    Show resume source controls.
+
+    Returns a dict with key, path (file sources only), pasted_resume_text,
+    uploaded_bytes, and uploaded_filename.
+    """
+    resume_choices = get_resume_source_choices(
+        include_in_memory_options=include_in_memory_options,
+    )
     choice_labels = [choice["label"] for choice in resume_choices]
     label_to_choice = {choice["label"]: choice for choice in resume_choices}
 
     if not private_resume_exists():
-        st.info(
-            "Private resume option is unavailable. To use your own resume locally, "
-            f"create `{resume_path_label(PRIVATE_RESUME_PATH)}` on your machine. "
-            "Keep that file local and do not commit it to Git."
-        )
+        if include_in_memory_options:
+            st.info(
+                "Private resume file not found. You can paste resume text or upload "
+                "a .txt file below, or create "
+                f"`{resume_path_label(PRIVATE_RESUME_PATH)}` locally. "
+                "Keep private resume files out of Git."
+            )
+        else:
+            st.info(
+                "Private resume option is unavailable. To use your own resume locally, "
+                f"create `{resume_path_label(PRIVATE_RESUME_PATH)}` on your machine. "
+                "Keep that file local and do not commit it to Git."
+            )
     else:
         st.warning(
             f"Private resume mode reads `{resume_path_label(PRIVATE_RESUME_PATH)}` "
@@ -1369,11 +1549,43 @@ def _render_resume_source_selector(st):
         horizontal=True,
     )
     selected_choice = label_to_choice[selected_label]
-    selected_resume_path = selected_choice["path"]
+    selected_key = selected_choice["key"]
+    selected_resume_path = selected_choice.get("path")
 
-    st.caption(f"Selected resume file: `{resume_path_label(selected_resume_path)}`")
+    pasted_resume_text = None
+    uploaded_bytes = None
+    uploaded_filename = None
 
-    return selected_choice["key"], selected_resume_path
+    if selected_key == RESUME_SOURCE_PASTED:
+        pasted_resume_text = st.text_area(
+            "Paste your resume text",
+            height=180,
+            placeholder="Paste resume text here. It stays in memory only.",
+        )
+        st.caption("Pasted resume text is used in memory only and is not saved to disk.")
+    elif selected_key == RESUME_SOURCE_UPLOADED:
+        uploaded_file = st.file_uploader(
+            "Upload resume (.txt)",
+            type=["txt"],
+        )
+
+        if uploaded_file is not None:
+            uploaded_bytes = uploaded_file.getvalue()
+            uploaded_filename = uploaded_file.name
+
+        st.caption(
+            "Uploaded resume text is decoded in memory only and is not saved to disk."
+        )
+    elif selected_resume_path is not None:
+        st.caption(f"Selected resume file: `{resume_path_label(selected_resume_path)}`")
+
+    return {
+        "key": selected_key,
+        "path": selected_resume_path,
+        "pasted_resume_text": pasted_resume_text,
+        "uploaded_bytes": uploaded_bytes,
+        "uploaded_filename": uploaded_filename,
+    }
 
 
 def main():
@@ -1383,18 +1595,23 @@ def main():
 
     st.title("Internship Fit & Skill-Gap Analyzer")
     st.caption(
-        "Local prototype only. Choose a sample or private local resume file, "
-        "then analyze a sample job or pasted job text. Rule-based matching — "
-        "not an AI job-fit score."
+        "Local prototype only. Choose a resume source, then analyze a sample job "
+        "or pasted job text. Rule-based matching — not an AI job-fit score."
     )
-
-    resume_source_key, selected_resume_path = _render_resume_source_selector(st)
 
     input_mode = st.radio(
         "How do you want to provide the job?",
         [MODE_SAMPLE_JOB, MODE_PASTE_JOB],
         horizontal=True,
     )
+
+    include_in_memory_resume_options = input_mode == MODE_PASTE_JOB
+    resume_selection = _render_resume_source_selector(
+        st,
+        include_in_memory_options=include_in_memory_resume_options,
+    )
+    resume_source_key = resume_selection["key"]
+    selected_resume_path = resume_selection["path"]
 
     save_to_database = st.checkbox(
         "Save this analysis to local SQLite database",
@@ -1447,7 +1664,20 @@ def main():
             )
 
     else:
-        st.info(f"Resume: `{resume_path_label(selected_resume_path)}`")
+        if resume_source_key == RESUME_SOURCE_PASTED:
+            st.info(f"Resume: `{RESUME_LABEL_PASTED}` (paste text above)")
+        elif resume_source_key == RESUME_SOURCE_UPLOADED:
+            if resume_selection["uploaded_filename"]:
+                uploaded_label = format_uploaded_resume_label(
+                    resume_selection["uploaded_filename"]
+                )
+                st.info(f"Resume: `{uploaded_label}`")
+            else:
+                st.info("Resume: upload a .txt file above")
+        elif selected_resume_path is not None:
+            st.info(f"Resume: `{resume_path_label(selected_resume_path)}`")
+        else:
+            st.info("Choose a resume source above, then paste a job description.")
 
         pasted_job_text = st.text_area(
             "Paste one job description",
@@ -1461,12 +1691,23 @@ def main():
             if not is_valid:
                 st.error(error_message)
             else:
-                apply_analysis_result(
-                    run_pasted_job_analysis(
-                        pasted_job_text,
-                        resume_path=selected_resume_path,
-                    )
+                resume_input = resolve_pasted_job_resume_input(
+                    resume_source_key,
+                    pasted_resume_text=resume_selection["pasted_resume_text"],
+                    uploaded_resume_bytes=resume_selection["uploaded_bytes"],
+                    uploaded_filename=resume_selection["uploaded_filename"],
                 )
+
+                if resume_input["error_message"]:
+                    st.error(resume_input["error_message"])
+                else:
+                    apply_analysis_result(
+                        run_pasted_job_analysis(
+                            pasted_job_text,
+                            resume_path=resume_input["resume_path"],
+                            resume_text=resume_input["resume_text"],
+                        )
+                    )
 
     if st.session_state.get("database_save_message"):
         st.success(st.session_state["database_save_message"])

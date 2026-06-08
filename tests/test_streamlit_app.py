@@ -1,5 +1,6 @@
 # Smoke tests for the local Streamlit app helpers (no Streamlit server required).
 import importlib.util
+import sqlite3
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -970,6 +971,253 @@ def test_resolve_resume_path_uses_sample_by_default():
         assert resolved == sample_resume
 
 
+def test_get_resume_source_choices_include_portable_options_when_requested():
+    module = _load_streamlit_app_module()
+
+    choices = module.get_resume_source_choices(include_in_memory_options=True)
+    choice_keys = [choice["key"] for choice in choices]
+
+    assert module.RESUME_SOURCE_SAMPLE in choice_keys
+    assert module.RESUME_SOURCE_PASTED in choice_keys
+    assert module.RESUME_SOURCE_UPLOADED in choice_keys
+
+
+def test_get_resume_source_choices_omit_portable_options_by_default():
+    module = _load_streamlit_app_module()
+
+    choices = module.get_resume_source_choices()
+    choice_keys = [choice["key"] for choice in choices]
+
+    assert module.RESUME_SOURCE_PASTED not in choice_keys
+    assert module.RESUME_SOURCE_UPLOADED not in choice_keys
+
+
+def test_validate_pasted_resume_text_rejects_blank_input():
+    module = _load_streamlit_app_module()
+
+    is_valid, error_message = module.validate_pasted_resume_text("")
+    assert is_valid is False
+    assert "empty" in error_message.lower()
+
+    is_valid, _ = module.validate_pasted_resume_text("   ")
+    assert is_valid is False
+
+
+def test_validate_pasted_resume_text_accepts_nonempty_input():
+    module = _load_streamlit_app_module()
+
+    is_valid, error_message = module.validate_pasted_resume_text(
+        "Python, SQL, and technical documentation"
+    )
+
+    assert is_valid is True
+    assert error_message is None
+
+
+def test_decode_uploaded_resume_bytes_accepts_valid_utf8():
+    module = _load_streamlit_app_module()
+
+    uploaded_bytes = "Python and SQL experience".encode("utf-8")
+    is_valid, resume_text, error_message = module.decode_uploaded_resume_bytes(
+        uploaded_bytes
+    )
+
+    assert is_valid is True
+    assert resume_text == "Python and SQL experience"
+    assert error_message is None
+
+
+def test_decode_uploaded_resume_bytes_rejects_empty_content():
+    module = _load_streamlit_app_module()
+
+    is_valid, resume_text, error_message = module.decode_uploaded_resume_bytes(b"")
+    assert is_valid is False
+    assert resume_text is None
+    assert "empty" in error_message.lower()
+
+    is_valid, resume_text, error_message = module.decode_uploaded_resume_bytes(None)
+    assert is_valid is False
+    assert resume_text is None
+    assert "upload" in error_message.lower()
+
+
+def test_decode_uploaded_resume_bytes_rejects_invalid_utf8():
+    module = _load_streamlit_app_module()
+
+    is_valid, resume_text, error_message = module.decode_uploaded_resume_bytes(
+        b"\xff\xfe\xfd"
+    )
+
+    assert is_valid is False
+    assert resume_text is None
+    assert "utf-8" in error_message.lower()
+
+
+def test_resolve_pasted_job_resume_input_accepts_pasted_resume_text():
+    module = _load_streamlit_app_module()
+
+    resume_input = module.resolve_pasted_job_resume_input(
+        module.RESUME_SOURCE_PASTED,
+        pasted_resume_text="Python SQL pandas",
+    )
+
+    assert resume_input["error_message"] is None
+    assert resume_input["resume_text"] == "Python SQL pandas"
+    assert resume_input["resume_path"] == module.RESUME_LABEL_PASTED
+    assert resume_input["display_label"] == module.RESUME_LABEL_PASTED
+
+
+def test_resolve_pasted_job_resume_input_accepts_uploaded_resume_bytes():
+    module = _load_streamlit_app_module()
+
+    resume_input = module.resolve_pasted_job_resume_input(
+        module.RESUME_SOURCE_UPLOADED,
+        uploaded_resume_bytes="MATLAB and Python".encode("utf-8"),
+        uploaded_filename="../../secret/path/my_resume.txt",
+    )
+
+    assert resume_input["error_message"] is None
+    assert resume_input["resume_text"] == "MATLAB and Python"
+    assert resume_input["display_label"] == "Uploaded resume: my_resume.txt"
+    assert resume_input["resume_path"] == "Uploaded resume: my_resume.txt"
+
+
+def test_run_pasted_job_analysis_works_with_in_memory_resume_text():
+    module = _load_streamlit_app_module()
+
+    resume_text = "Python SQL pandas Git technical documentation"
+    job_text = "Summer internship requiring Python, SQL, pandas, and documentation."
+
+    result = module.run_pasted_job_analysis(
+        job_text,
+        resume_path=module.RESUME_LABEL_PASTED,
+        resume_text=resume_text,
+    )
+    display = module.build_display_summary(result)
+
+    assert result["analysis_mode"] == "single_text"
+    assert display["resume_path_label"] == module.RESUME_LABEL_PASTED
+    assert display["jobs"][0]["matched_skills_count"] >= 1
+
+
+def test_in_memory_resume_text_is_not_written_to_disk_or_database_body():
+    module = _load_streamlit_app_module()
+
+    secret_resume = "SECRET_RESUME_PHRASE_12345 Python SQL pandas"
+    job_text = "Internship requiring Python and SQL."
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        database_path = temp_path / "analysis_results.db"
+
+        result = module.run_pasted_job_analysis(
+            job_text,
+            resume_path=module.RESUME_LABEL_PASTED,
+            resume_text=secret_resume,
+        )
+        module.store_analysis_result(
+            result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        assert list(temp_path.iterdir()) == [database_path]
+        assert secret_resume.encode() not in database_path.read_bytes()
+
+        connection = sqlite3.connect(database_path)
+        try:
+            stored_resume_path = connection.execute(
+                "SELECT resume_path FROM analysis_runs"
+            ).fetchone()[0]
+        finally:
+            connection.close()
+
+        assert stored_resume_path == module.RESUME_LABEL_PASTED
+        assert secret_resume not in stored_resume_path
+
+
+def test_uploaded_resume_workflow_keeps_generic_database_label_only():
+    module = _load_streamlit_app_module()
+
+    secret_resume = "SECRET_UPLOADED_RESUME_67890 Python Git"
+    job_text = "Role requiring Python and Git."
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        database_path = temp_path / "analysis_results.db"
+
+        resume_input = module.resolve_pasted_job_resume_input(
+            module.RESUME_SOURCE_UPLOADED,
+            uploaded_resume_bytes=secret_resume.encode("utf-8"),
+            uploaded_filename="my_resume.txt",
+        )
+
+        result = module.run_pasted_job_analysis(
+            job_text,
+            resume_path=resume_input["resume_path"],
+            resume_text=resume_input["resume_text"],
+        )
+        module.store_analysis_result(
+            result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        assert list(temp_path.iterdir()) == [database_path]
+        assert secret_resume.encode() not in database_path.read_bytes()
+
+        connection = sqlite3.connect(database_path)
+        try:
+            stored_resume_path = connection.execute(
+                "SELECT resume_path FROM analysis_runs"
+            ).fetchone()[0]
+        finally:
+            connection.close()
+
+        assert stored_resume_path == "Uploaded resume: my_resume.txt"
+
+
+def test_resolve_pasted_job_resume_input_preserves_sample_resume_behavior():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        sample_resume = temp_path / "sample_resume.txt"
+        private_resume = temp_path / "resume.txt"
+        sample_resume.write_text("Python and Git", encoding="utf-8")
+
+        resume_input = module.resolve_pasted_job_resume_input(
+            module.RESUME_SOURCE_SAMPLE,
+            sample_resume_path=sample_resume,
+            private_resume_path=private_resume,
+        )
+
+        assert resume_input["error_message"] is None
+        assert resume_input["resume_path"] == sample_resume
+        assert resume_input["resume_text"] is None
+
+
+def test_resolve_pasted_job_resume_input_preserves_private_resume_behavior():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        sample_resume = temp_path / "sample_resume.txt"
+        private_resume = temp_path / "resume.txt"
+        sample_resume.write_text("Python and Git", encoding="utf-8")
+        private_resume.write_text("MATLAB and Python", encoding="utf-8")
+
+        resume_input = module.resolve_pasted_job_resume_input(
+            module.RESUME_SOURCE_PRIVATE,
+            sample_resume_path=sample_resume,
+            private_resume_path=private_resume,
+        )
+
+        assert resume_input["error_message"] is None
+        assert resume_input["resume_path"] == private_resume
+        assert resume_input["resume_text"] is None
+
+
 def test_streamlit_app_does_not_use_deprecated_use_container_width():
     """Guard against reintroducing deprecated Streamlit width arguments."""
     repo_root = Path(__file__).resolve().parent.parent
@@ -1034,5 +1282,19 @@ if __name__ == "__main__":
     test_build_saved_gap_priority_display_when_database_missing()
     test_build_saved_gap_priority_display_when_database_exists()
     test_resolve_resume_path_uses_sample_by_default()
+    test_get_resume_source_choices_include_portable_options_when_requested()
+    test_get_resume_source_choices_omit_portable_options_by_default()
+    test_validate_pasted_resume_text_rejects_blank_input()
+    test_validate_pasted_resume_text_accepts_nonempty_input()
+    test_decode_uploaded_resume_bytes_accepts_valid_utf8()
+    test_decode_uploaded_resume_bytes_rejects_empty_content()
+    test_decode_uploaded_resume_bytes_rejects_invalid_utf8()
+    test_resolve_pasted_job_resume_input_accepts_pasted_resume_text()
+    test_resolve_pasted_job_resume_input_accepts_uploaded_resume_bytes()
+    test_run_pasted_job_analysis_works_with_in_memory_resume_text()
+    test_in_memory_resume_text_is_not_written_to_disk_or_database_body()
+    test_uploaded_resume_workflow_keeps_generic_database_label_only()
+    test_resolve_pasted_job_resume_input_preserves_sample_resume_behavior()
+    test_resolve_pasted_job_resume_input_preserves_private_resume_behavior()
     test_streamlit_app_does_not_use_deprecated_use_container_width()
     print("All streamlit app tests passed.")
