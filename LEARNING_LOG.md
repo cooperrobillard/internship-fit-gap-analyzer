@@ -1729,3 +1729,27 @@ This improved my understanding of:
 - separating normal workflows from dangerous actions,
 - preserving behavior during layout refactors,
 - and why usability work can be just as important as adding features.
+
+## Version 9 Step 4 — Simplified analysis input flow
+
+Simplified the Streamlit analysis input flow after noticing that the UI asked for job source and job-description source in a repetitive way.
+
+The new flow centers on one primary workflow choice. The sample path is treated as a quick demo that uses both the safe sample resume and the safe sample job together, instead of making the user separately choose sample inputs. The custom job path keeps the resume options, optional job title/company metadata, and pasted job-description input together.
+
+This step focused on reducing UI friction and cognitive load without changing backend analysis logic, database behavior, saved-history behavior, comparison, deletion, or the SQLite schema.
+
+This step intentionally did not add deployment, authentication, cloud persistence, source URLs, notes, tags, fit scores, semantic matching, PDF/DOCX parsing, or new dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit checks for sample mode, pasted job mode, resume options, metadata labels, saved history, search, comparison, priority summary, and guarded deletion
+
+This improved my understanding of:
+- UI flow design,
+- reducing repeated choices,
+- grouping related inputs,
+- hiding irrelevant controls,
+- preserving behavior during layout cleanup,
+- and making a prototype feel closer to a usable product.
