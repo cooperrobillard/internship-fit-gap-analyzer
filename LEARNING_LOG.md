@@ -1666,3 +1666,36 @@ This improved my understanding of:
 - preserving default behavior,
 - improving saved-record usability without a schema migration,
 - and separating user-facing improvements from larger architecture changes.
+
+## Version 9 Step 3 — Uploaded job-description input
+
+Extended the local Streamlit analysis workflow so a job description can either be pasted into the app or uploaded as a UTF-8 `.txt` file.
+
+Uploaded job descriptions are decoded and analyzed in memory. The app does not copy uploaded files into `data/jobs/`, write their raw contents to generated files, or store the raw job-description text in SQLite.
+
+The upload workflow includes friendly validation for:
+- no file selected,
+- empty or whitespace-only files,
+- and files that cannot be decoded as UTF-8.
+
+The existing optional job title and company fields continue to create readable result and saved-history labels for both pasted and uploaded job descriptions.
+
+This step intentionally did not add PDF or DOCX parsing, source URLs, notes, tags, a database migration, authentication, deployment configuration, or new dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual checks of pasted and uploaded job-description workflows
+- empty-file and invalid-UTF-8 validation
+- saved-history and search checks
+- privacy and generated-file checks
+
+This improved my understanding of:
+- in-memory file uploads,
+- UTF-8 decoding,
+- conditional Streamlit input workflows,
+- validating uploaded content,
+- safe filename display,
+- preserving privacy when handling user files,
+- and reusing backend logic across multiple UI input methods.

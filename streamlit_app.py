@@ -41,6 +41,11 @@ MODE_SAMPLE_JOB = "Analyze sample job"
 MODE_PASTE_JOB = "Paste job description"
 PASTED_JOB_NAME = "Pasted job description"
 
+JOB_INPUT_PASTED = "paste"
+JOB_INPUT_UPLOADED = "upload"
+JOB_INPUT_PASTE_LABEL = "Paste job description"
+JOB_INPUT_UPLOAD_LABEL = "Upload job description (.txt)"
+
 
 def private_resume_exists(private_resume_path=PRIVATE_RESUME_PATH):
     """Return True when the local private resume file is present."""
@@ -175,11 +180,14 @@ def build_pasted_job_name(
     job_title=None,
     company=None,
     default_name=PASTED_JOB_NAME,
+    uploaded_filename=None,
 ):
     """
-    Build a readable job name for pasted-job analysis.
+    Build a readable job name for pasted or uploaded job-description analysis.
 
-    Both fields are optional. Whitespace is trimmed; blank values are ignored.
+    Both metadata fields are optional. Whitespace is trimmed; blank values are
+    ignored. When title and company are blank and an uploaded filename is
+    provided, use a safe filename-based label.
     """
     normalized_title = normalize_optional_metadata_field(job_title)
     normalized_company = normalize_optional_metadata_field(company)
@@ -192,6 +200,10 @@ def build_pasted_job_name(
 
     if normalized_company:
         return f"{normalized_company} — pasted job"
+
+    if uploaded_filename:
+        safe_name = sanitize_uploaded_job_filename(uploaded_filename)
+        return f"Uploaded job: {safe_name}"
 
     return default_name
 
@@ -212,6 +224,98 @@ def sanitize_uploaded_resume_filename(filename):
         return "uploaded_resume.txt"
 
     return Path(filename).name
+
+
+def sanitize_uploaded_job_filename(filename):
+    """Return a safe basename for uploaded job-description labels only."""
+    if not filename:
+        return "uploaded_job.txt"
+
+    return Path(filename).name
+
+
+def decode_uploaded_job_bytes(uploaded_bytes):
+    """
+    Decode uploaded job-description bytes as UTF-8 text.
+
+    Returns (is_valid, job_text, error_message).
+    """
+    if uploaded_bytes is None:
+        return False, None, "Please upload a .txt job description file first."
+
+    if len(uploaded_bytes) == 0:
+        return (
+            False,
+            None,
+            "Uploaded job description file is empty. Choose a .txt file with content.",
+        )
+
+    try:
+        job_text = uploaded_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return (
+            False,
+            None,
+            "Uploaded job description must be a UTF-8 text file. Save it as .txt and try again.",
+        )
+
+    if not job_text.strip():
+        return (
+            False,
+            None,
+            "Uploaded job description file is empty. Choose a .txt file with content.",
+        )
+
+    return True, job_text, None
+
+
+def resolve_job_description_input(
+    job_input_key,
+    pasted_job_text=None,
+    uploaded_job_bytes=None,
+    uploaded_filename=None,
+):
+    """
+    Resolve pasted or uploaded job-description input for analysis.
+
+    Returns a dict with job_text, uploaded_filename, and error_message.
+    Job text stays in memory only.
+    """
+    if job_input_key == JOB_INPUT_PASTED:
+        is_valid, error_message = validate_pasted_job_text(pasted_job_text)
+
+        if not is_valid:
+            return {
+                "job_text": None,
+                "uploaded_filename": None,
+                "error_message": error_message,
+            }
+
+        return {
+            "job_text": pasted_job_text,
+            "uploaded_filename": None,
+            "error_message": None,
+        }
+
+    if job_input_key == JOB_INPUT_UPLOADED:
+        is_valid, job_text, error_message = decode_uploaded_job_bytes(
+            uploaded_job_bytes
+        )
+
+        if not is_valid:
+            return {
+                "job_text": None,
+                "uploaded_filename": uploaded_filename,
+                "error_message": error_message,
+            }
+
+        return {
+            "job_text": job_text,
+            "uploaded_filename": uploaded_filename,
+            "error_message": None,
+        }
+
+    raise ValueError(f"Unknown job input key: {job_input_key}")
 
 
 def format_uploaded_resume_label(filename):
@@ -1609,6 +1713,7 @@ def _render_resume_source_selector(st, include_in_memory_options=False):
         uploaded_file = st.file_uploader(
             "Upload resume (.txt)",
             type=["txt"],
+            key="uploaded_resume_txt",
         )
 
         if uploaded_file is not None:
@@ -1730,17 +1835,55 @@ def main():
             placeholder="e.g. Example Company",
         )
 
-        pasted_job_text = st.text_area(
-            "Paste one job description",
-            height=220,
-            placeholder="Paste an internship posting here...",
+        job_input_label = st.radio(
+            "How do you want to provide the job description?",
+            [JOB_INPUT_PASTE_LABEL, JOB_INPUT_UPLOAD_LABEL],
+            horizontal=True,
+        )
+        job_input_key = (
+            JOB_INPUT_PASTED
+            if job_input_label == JOB_INPUT_PASTE_LABEL
+            else JOB_INPUT_UPLOADED
         )
 
-        if st.button("Analyze pasted job", type="primary"):
-            is_valid, error_message = validate_pasted_job_text(pasted_job_text)
+        pasted_job_text = None
+        uploaded_job_bytes = None
+        uploaded_job_filename = None
 
-            if not is_valid:
-                st.error(error_message)
+        if job_input_key == JOB_INPUT_PASTED:
+            pasted_job_text = st.text_area(
+                "Paste one job description",
+                height=220,
+                placeholder="Paste an internship posting here...",
+            )
+            st.caption(
+                "Pasted job descriptions are used in memory only and are not saved to disk."
+            )
+        else:
+            uploaded_job_file = st.file_uploader(
+                "Upload job description (.txt)",
+                type=["txt"],
+                key="uploaded_job_description_txt",
+            )
+
+            if uploaded_job_file is not None:
+                uploaded_job_bytes = uploaded_job_file.getvalue()
+                uploaded_job_filename = uploaded_job_file.name
+
+            st.caption(
+                "Uploaded job descriptions are decoded in memory only and are not saved to disk."
+            )
+
+        if st.button("Analyze job", type="primary"):
+            job_description_input = resolve_job_description_input(
+                job_input_key,
+                pasted_job_text=pasted_job_text,
+                uploaded_job_bytes=uploaded_job_bytes,
+                uploaded_filename=uploaded_job_filename,
+            )
+
+            if job_description_input["error_message"]:
+                st.error(job_description_input["error_message"])
             else:
                 resume_input = resolve_pasted_job_resume_input(
                     resume_source_key,
@@ -1752,15 +1895,16 @@ def main():
                 if resume_input["error_message"]:
                     st.error(resume_input["error_message"])
                 else:
-                    pasted_job_name = build_pasted_job_name(
+                    job_name = build_pasted_job_name(
                         job_title=pasted_job_title,
                         company=pasted_job_company,
+                        uploaded_filename=job_description_input["uploaded_filename"],
                     )
 
                     apply_analysis_result(
                         run_pasted_job_analysis(
-                            pasted_job_text,
-                            job_name=pasted_job_name,
+                            job_description_input["job_text"],
+                            job_name=job_name,
                             resume_path=resume_input["resume_path"],
                             resume_text=resume_input["resume_text"],
                         )
@@ -1773,7 +1917,9 @@ def main():
         display = build_display_summary(st.session_state["analysis_result"])
         render_analysis_results(st, display)
     elif input_mode == MODE_PASTE_JOB:
-        st.write("Paste a job description above, then click **Analyze pasted job**.")
+        st.write(
+            "Provide a pasted or uploaded job description above, then click **Analyze job**."
+        )
 
     saved_history_display = build_saved_history_display()
     render_saved_analysis_history(st, saved_history_display)

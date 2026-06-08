@@ -1320,6 +1320,157 @@ def test_filter_saved_results_finds_pasted_job_metadata_label():
         )
 
 
+def test_decode_uploaded_job_bytes_accepts_valid_utf8():
+    module = _load_streamlit_app_module()
+
+    uploaded_bytes = "Internship requiring Python and SQL.".encode("utf-8")
+    is_valid, job_text, error_message = module.decode_uploaded_job_bytes(uploaded_bytes)
+
+    assert is_valid is True
+    assert job_text == "Internship requiring Python and SQL."
+    assert error_message is None
+
+
+def test_decode_uploaded_job_bytes_rejects_empty_content():
+    module = _load_streamlit_app_module()
+
+    is_valid, job_text, error_message = module.decode_uploaded_job_bytes(b"")
+    assert is_valid is False
+    assert job_text is None
+    assert "empty" in error_message.lower()
+
+    is_valid, job_text, error_message = module.decode_uploaded_job_bytes(None)
+    assert is_valid is False
+    assert job_text is None
+    assert "upload" in error_message.lower()
+
+
+def test_decode_uploaded_job_bytes_rejects_whitespace_only_content():
+    module = _load_streamlit_app_module()
+
+    is_valid, job_text, error_message = module.decode_uploaded_job_bytes(b"   \n\t  ")
+    assert is_valid is False
+    assert job_text is None
+    assert "empty" in error_message.lower()
+
+
+def test_decode_uploaded_job_bytes_rejects_invalid_utf8():
+    module = _load_streamlit_app_module()
+
+    is_valid, job_text, error_message = module.decode_uploaded_job_bytes(b"\xff\xfe\xfd")
+    assert is_valid is False
+    assert job_text is None
+    assert "utf-8" in error_message.lower()
+
+
+def test_resolve_job_description_input_preserves_pasted_validation():
+    module = _load_streamlit_app_module()
+
+    job_input = module.resolve_job_description_input(
+        module.JOB_INPUT_PASTED,
+        pasted_job_text="   ",
+    )
+
+    assert job_input["job_text"] is None
+    assert job_input["error_message"] is not None
+    assert "empty" in job_input["error_message"].lower()
+
+    valid_input = module.resolve_job_description_input(
+        module.JOB_INPUT_PASTED,
+        pasted_job_text="Internship requiring Python.",
+    )
+
+    assert valid_input["error_message"] is None
+    assert valid_input["job_text"] == "Internship requiring Python."
+
+
+def test_run_pasted_job_analysis_works_with_uploaded_job_text():
+    module = _load_streamlit_app_module()
+
+    job_text = "Internship requiring Python, SQL, and technical documentation."
+    job_input = module.resolve_job_description_input(
+        module.JOB_INPUT_UPLOADED,
+        uploaded_job_bytes=job_text.encode("utf-8"),
+        uploaded_filename="internship_posting.txt",
+    )
+
+    result = module.run_pasted_job_analysis(
+        job_input["job_text"],
+        job_name=module.build_pasted_job_name(
+            uploaded_filename=job_input["uploaded_filename"],
+        ),
+    )
+    display = module.build_display_summary(result)
+
+    assert result["analysis_mode"] == "single_text"
+    assert display["jobs"][0]["job_name"] == "Uploaded job: internship_posting.txt"
+    assert display["jobs"][0]["matched_skills_count"] >= 1
+
+
+def test_build_pasted_job_name_uses_uploaded_filename_fallback():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.build_pasted_job_name(uploaded_filename="../../secret/internship.txt")
+        == "Uploaded job: internship.txt"
+    )
+
+
+def test_build_pasted_job_name_prefers_metadata_over_uploaded_filename():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.build_pasted_job_name(
+            job_title="Data Intern",
+            company="Acme Corp",
+            uploaded_filename="internship.txt",
+        )
+        == "Acme Corp — Data Intern"
+    )
+
+
+def test_uploaded_job_text_is_not_written_to_disk_or_database_body():
+    module = _load_streamlit_app_module()
+
+    secret_job = "SECRET_JOB_PHRASE_99999 Python SQL internship role"
+    job_input = module.resolve_job_description_input(
+        module.JOB_INPUT_UPLOADED,
+        uploaded_job_bytes=secret_job.encode("utf-8"),
+        uploaded_filename="internship.txt",
+    )
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        jobs_folder = temp_path / "data" / "jobs"
+        jobs_folder.mkdir(parents=True)
+        database_path = temp_path / "analysis_results.db"
+
+        result = module.run_pasted_job_analysis(
+            job_input["job_text"],
+            job_name=module.build_pasted_job_name(
+                uploaded_filename=job_input["uploaded_filename"],
+            ),
+        )
+        module.store_analysis_result(
+            result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        assert list(jobs_folder.iterdir()) == []
+        assert secret_job.encode() not in database_path.read_bytes()
+
+        connection = sqlite3.connect(database_path)
+        try:
+            stored_job_filename = connection.execute(
+                "SELECT job_filename FROM job_results"
+            ).fetchone()[0]
+        finally:
+            connection.close()
+
+        assert stored_job_filename == "Uploaded job: internship.txt"
+
+
 def test_streamlit_app_does_not_use_deprecated_use_container_width():
     """Guard against reintroducing deprecated Streamlit width arguments."""
     repo_root = Path(__file__).resolve().parent.parent
@@ -1406,5 +1557,14 @@ if __name__ == "__main__":
     test_build_pasted_job_name_treats_whitespace_only_as_missing()
     test_run_pasted_job_analysis_uses_custom_job_name()
     test_filter_saved_results_finds_pasted_job_metadata_label()
+    test_decode_uploaded_job_bytes_accepts_valid_utf8()
+    test_decode_uploaded_job_bytes_rejects_empty_content()
+    test_decode_uploaded_job_bytes_rejects_whitespace_only_content()
+    test_decode_uploaded_job_bytes_rejects_invalid_utf8()
+    test_resolve_job_description_input_preserves_pasted_validation()
+    test_run_pasted_job_analysis_works_with_uploaded_job_text()
+    test_build_pasted_job_name_uses_uploaded_filename_fallback()
+    test_build_pasted_job_name_prefers_metadata_over_uploaded_filename()
+    test_uploaded_job_text_is_not_written_to_disk_or_database_body()
     test_streamlit_app_does_not_use_deprecated_use_container_width()
     print("All streamlit app tests passed.")
