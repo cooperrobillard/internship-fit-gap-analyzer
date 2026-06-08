@@ -1480,3 +1480,23 @@ Tested with:
 * Clarified that the current tests are executable scripts and that standard unittest discovery does not yet discover them.
 * Kept deployment, authentication, cloud persistence, advanced metadata, bulk deletion, editing, rankings, and semantic matching outside the completed Version 7 scope.
 * Confirmed the test suite, CLI commands, database inspection workflow, local UI workflow, and Git privacy checks still pass.
+
+## Version 8 planning — testing and maintenance reliability
+
+Planned Version 8 as a focused testing and maintenance reliability phase after completing Version 7 saved-result organization and deletion.
+
+Key findings entering Version 8:
+- The repository is clean on `main` and synchronized with `origin/main`.
+- Version 7 is fully documented and merged.
+- The current project uses script-style tests with plain `test_*` functions and direct execution blocks.
+- `python3 run_tests.py` passes, but it does not currently run every test file.
+- `tests/test_analysis_runner.py`, `tests/test_single_job_analysis.py`, and `tests/test_streamlit_app.py` pass when run directly but are not included in the main test runner output.
+- `python3 -m unittest discover -s tests -p "test_*.py"` reports zero tests because the existing tests are not structured as discoverable `unittest.TestCase` tests.
+
+Version 8 will focus on:
+1. Updating the main test runner so one command runs every existing test file.
+2. Deciding whether to keep the current script-style test approach or later migrate incrementally toward discoverable tests.
+3. Cleaning up Streamlit deprecation warnings.
+4. Documenting the Version 8 checkpoint.
+
+This planning step intentionally avoided code changes, dependency changes, pytest adoption, deployment work, authentication, cloud databases, AI/API features, semantic matching, fit scores, and unrelated feature work.
