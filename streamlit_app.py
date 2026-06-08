@@ -154,6 +154,48 @@ def validate_pasted_job_text(job_text):
     return True, None
 
 
+def normalize_optional_metadata_field(value):
+    """
+    Strip leading/trailing whitespace from optional metadata.
+
+    Returns None when the value is missing or whitespace-only.
+    """
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    if not normalized:
+        return None
+
+    return normalized
+
+
+def build_pasted_job_name(
+    job_title=None,
+    company=None,
+    default_name=PASTED_JOB_NAME,
+):
+    """
+    Build a readable job name for pasted-job analysis.
+
+    Both fields are optional. Whitespace is trimmed; blank values are ignored.
+    """
+    normalized_title = normalize_optional_metadata_field(job_title)
+    normalized_company = normalize_optional_metadata_field(company)
+
+    if normalized_title and normalized_company:
+        return f"{normalized_company} — {normalized_title}"
+
+    if normalized_title:
+        return normalized_title
+
+    if normalized_company:
+        return f"{normalized_company} — pasted job"
+
+    return default_name
+
+
 def validate_pasted_resume_text(resume_text):
     """
     Return (is_valid, error_message) for pasted resume text.
@@ -1679,6 +1721,15 @@ def main():
         else:
             st.info("Choose a resume source above, then paste a job description.")
 
+        pasted_job_title = st.text_input(
+            "Job title (optional)",
+            placeholder="e.g. Software Engineering Intern",
+        )
+        pasted_job_company = st.text_input(
+            "Company (optional)",
+            placeholder="e.g. Example Company",
+        )
+
         pasted_job_text = st.text_area(
             "Paste one job description",
             height=220,
@@ -1701,9 +1752,15 @@ def main():
                 if resume_input["error_message"]:
                     st.error(resume_input["error_message"])
                 else:
+                    pasted_job_name = build_pasted_job_name(
+                        job_title=pasted_job_title,
+                        company=pasted_job_company,
+                    )
+
                     apply_analysis_result(
                         run_pasted_job_analysis(
                             pasted_job_text,
+                            job_name=pasted_job_name,
                             resume_path=resume_input["resume_path"],
                             resume_text=resume_input["resume_text"],
                         )

@@ -1218,6 +1218,108 @@ def test_resolve_pasted_job_resume_input_preserves_private_resume_behavior():
         assert resume_input["resume_text"] is None
 
 
+def test_build_pasted_job_name_uses_default_when_both_fields_blank():
+    module = _load_streamlit_app_module()
+
+    assert module.build_pasted_job_name() == module.PASTED_JOB_NAME
+    assert module.build_pasted_job_name(None, None) == module.PASTED_JOB_NAME
+
+
+def test_build_pasted_job_name_uses_title_only():
+    module = _load_streamlit_app_module()
+
+    assert module.build_pasted_job_name(job_title="Data Intern") == "Data Intern"
+
+
+def test_build_pasted_job_name_uses_company_fallback():
+    module = _load_streamlit_app_module()
+
+    assert module.build_pasted_job_name(company="Acme Corp") == "Acme Corp — pasted job"
+
+
+def test_build_pasted_job_name_combines_title_and_company():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.build_pasted_job_name(
+            job_title="Software Engineering Intern",
+            company="Acme Corp",
+        )
+        == "Acme Corp — Software Engineering Intern"
+    )
+
+
+def test_build_pasted_job_name_trims_whitespace():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.build_pasted_job_name(
+            job_title="  Data Intern  ",
+            company="  Acme Corp  ",
+        )
+        == "Acme Corp — Data Intern"
+    )
+
+
+def test_build_pasted_job_name_treats_whitespace_only_as_missing():
+    module = _load_streamlit_app_module()
+
+    assert module.build_pasted_job_name(job_title="   ", company="Acme Corp") == (
+        "Acme Corp — pasted job"
+    )
+    assert module.build_pasted_job_name(job_title="Data Intern", company="   ") == (
+        "Data Intern"
+    )
+    assert module.build_pasted_job_name(job_title="   ", company="   ") == (
+        module.PASTED_JOB_NAME
+    )
+
+
+def test_run_pasted_job_analysis_uses_custom_job_name():
+    module = _load_streamlit_app_module()
+
+    job_text = "Internship requiring Python, SQL, and technical documentation."
+    custom_job_name = "Acme Corp — Data Intern"
+
+    result = module.run_pasted_job_analysis(job_text, job_name=custom_job_name)
+    display = module.build_display_summary(result)
+
+    assert result["jobs"][0]["job_name"] == custom_job_name
+    assert display["jobs"][0]["job_name"] == custom_job_name
+
+
+def test_filter_saved_results_finds_pasted_job_metadata_label():
+    module = _load_streamlit_app_module()
+
+    job_text = "Internship requiring Python, SQL, and technical documentation."
+    custom_job_name = module.build_pasted_job_name(
+        job_title="Data Intern",
+        company="Acme Corp",
+    )
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        result = module.run_pasted_job_analysis(
+            job_text,
+            job_name=custom_job_name,
+        )
+        module.store_analysis_result(
+            result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        saved_data = module.load_all_sorted_saved_results(database_path)
+        filtered = module.filter_saved_results(saved_data["saved_jobs"], "acme corp")
+
+        assert len(filtered) == 1
+        assert filtered[0]["job_filename"] == "Acme Corp — Data Intern"
+        assert "Acme Corp — Data Intern" in module.format_saved_result_label(
+            filtered[0]
+        )
+
+
 def test_streamlit_app_does_not_use_deprecated_use_container_width():
     """Guard against reintroducing deprecated Streamlit width arguments."""
     repo_root = Path(__file__).resolve().parent.parent
@@ -1296,5 +1398,13 @@ if __name__ == "__main__":
     test_uploaded_resume_workflow_keeps_generic_database_label_only()
     test_resolve_pasted_job_resume_input_preserves_sample_resume_behavior()
     test_resolve_pasted_job_resume_input_preserves_private_resume_behavior()
+    test_build_pasted_job_name_uses_default_when_both_fields_blank()
+    test_build_pasted_job_name_uses_title_only()
+    test_build_pasted_job_name_uses_company_fallback()
+    test_build_pasted_job_name_combines_title_and_company()
+    test_build_pasted_job_name_trims_whitespace()
+    test_build_pasted_job_name_treats_whitespace_only_as_missing()
+    test_run_pasted_job_analysis_uses_custom_job_name()
+    test_filter_saved_results_finds_pasted_job_metadata_label()
     test_streamlit_app_does_not_use_deprecated_use_container_width()
     print("All streamlit app tests passed.")
