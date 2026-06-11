@@ -1,10 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
+import { SavedAnalysesPanel } from "./saved-analyses-panel";
 import { SupabaseStatus } from "./supabase-status";
 
 const placeholderCards = [
   {
     title: "Saved analyses",
-    body: "Future home for your private, cloud-backed analysis history. Read-only count check only—no save flow yet.",
+    body: "Cloud read model lists job_analyses metadata when rows exist. No create/save flow from the web app yet.",
   },
   {
     title: "Resume profiles",
@@ -34,9 +35,9 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
           You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
-          Clerk authentication is active. Supabase client scaffolding can verify a
-          read-only connection to your cloud database. This page does not run
-          analyses, save postings to the cloud, or call a Python analysis service
+          Clerk authentication is active. Supabase scaffolding can verify connectivity
+          and list saved cloud analyses when rows exist. This page does not run
+          analyses, save new postings to the cloud, or call a Python analysis service
           yet.
         </p>
         <p className="mt-4 text-sm text-amber-800">
@@ -45,6 +46,7 @@ export default async function DashboardPage() {
         </p>
 
         <SupabaseStatus />
+        <SavedAnalysesPanel />
       </section>
 
       <section className="mt-10">

@@ -8,7 +8,7 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Clerk authentication shell** — sign-in, sign-up, protected dashboard route, header nav with `UserButton`
 - Dashboard placeholder cards (no real data or cloud saving)
 - **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md)
-- **Supabase client scaffolding** — Clerk-aware browser client and dashboard read-only status check (count on `job_analyses`)
+- **Supabase client scaffolding** — Clerk-aware browser client, read-only status check, and read-only saved-analysis list from `job_analyses` (metadata/counts only)
 
 ## What is not implemented yet
 
@@ -49,7 +49,7 @@ The sign-in/sign-up URLs and fallback redirects are already documented in `.env.
 3. Configure **Clerk as a Supabase third-party auth provider** (see [Clerk + Supabase docs](https://clerk.com/docs/guides/development/integrations/databases/supabase)).
 4. Copy Project URL and Publishable key into `web/.env.local`.
 
-The signed-in dashboard runs a **read-only count** on `job_analyses` to verify Clerk token → RLS. **Cloud saving is not implemented yet.** Do not use the Supabase service role key in browser code.
+The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. **Cloud saving is not implemented yet.** Python analyzer integration is not implemented yet. Do not use the Supabase service role key in browser code.
 
 Start the dev server:
 
@@ -86,7 +86,7 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 ## Database schema (draft)
 
-See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The app can **check** connectivity via a count query; **cloud saving is not implemented**.
+See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The dashboard **reads** `job_analyses` list metadata when configured; **cloud saving is not implemented**.
 
 ## Related docs
 

@@ -6,7 +6,8 @@ This folder holds a **first-pass cloud database schema** for the future hosted I
 
 - [`schema.sql`](schema.sql) — tables, indexes, RLS policies for user-owned saved analyses
 - Clerk auth shell in the Next.js app (`web/src/`) — sign-in, sign-up, protected `/dashboard`
-- **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses` only)
+- **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses`)
+- **Version 12 Step 5:** read-only saved-analysis list from `job_analyses` (`web/src/lib/supabase/saved-analyses.ts`) — first table read as a list, not only a count
 
 ## What is not implemented yet
 
@@ -59,7 +60,7 @@ See comments at the top of `schema.sql` for the full design note.
 
 ## Recommended next step
 
-After the dashboard connection check works with zero rows, a future branch can add **cloud save** flows (still behind RLS)—likely starting with `profiles` / `analysis_runs` / `job_analyses` inserts from a Python API or server actions, not from this scaffold alone.
+After the dashboard read model works (empty list or existing rows), a future branch can add **cloud save** flows (still behind RLS)—likely starting with `profiles` / `analysis_runs` / `job_analyses` inserts from a Python API or server actions, not from the read-only dashboard alone.
 
 Env vars (in `web/.env.example`, values in `.env.local` only):
 
