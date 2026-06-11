@@ -8,14 +8,15 @@ This folder holds a **first-pass cloud database schema** for the future hosted I
 - Clerk auth shell in the Next.js app (`web/src/`) — sign-in, sign-up, protected `/dashboard`
 - **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses`)
 - **Version 12 Step 5:** read-only saved-analysis list from `job_analyses` (`web/src/lib/supabase/saved-analyses.ts`) — first table read as a list, not only a count
-- **Version 12 Step 6:** write-path design — [`WRITE_PATH.md`](WRITE_PATH.md) and [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts) (no inserts yet; first write path avoids raw resume/job text)
+- **Version 12 Step 6:** write-path design — [`WRITE_PATH.md`](WRITE_PATH.md) and [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts) (first write path avoids raw resume/job text)
+- **Version 12 Step 7:** insert helper — [`save-analysis.ts`](../src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`; not wired to dashboard UI yet)
 
 ## What is not implemented yet
 
-- Executing Supabase inserts from the web app (contract only)
+- User-facing cloud save from the dashboard (helper exists for programmatic/dev use only)
 - Python analysis API or cloud save flow
 
-**Cloud saving does not work.** The working analyzer remains the Python CLI and local Streamlit app at the repository root.
+**User-facing cloud saving does not work yet** (no save button in the UI). The working analyzer remains the Python CLI and local Streamlit app at the repository root.
 
 ## Schema overview
 
@@ -61,7 +62,7 @@ See comments at the top of `schema.sql` for the full design note.
 
 ## Recommended next step
 
-**Version 12 Step 7:** implement the insert helper described in [`WRITE_PATH.md`](WRITE_PATH.md), using `buildCloudAnalysisWritePlan()` — still behind a controlled dev/test action, not full production save.
+**Next:** wire `saveCloudAnalysis()` behind a controlled dev/test dashboard action or future analysis flow — see [`WRITE_PATH.md`](WRITE_PATH.md).
 
 Env vars (in `web/.env.example`, values in `.env.local` only):
 

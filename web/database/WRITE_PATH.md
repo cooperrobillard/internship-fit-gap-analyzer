@@ -1,6 +1,6 @@
 # Cloud saved-analysis write path (design)
 
-Concise design for the **first cloud save** flow. This document and [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts) define the contract only — **nothing is persisted yet**.
+Concise design for the **first cloud save** flow. The write contract lives in [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts). **Step 7** added [`save-analysis.ts`](../src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`) — the first insert helper. It is **not wired to the dashboard UI yet**.
 
 ## Goal
 
@@ -15,7 +15,7 @@ All inserts run as the authenticated Clerk user (`clerk_user_id` from JWT `sub`)
 3. **`matched_skills`** — insert one row per matched skill, linked to `job_analysis_id`.
 4. **`skill_gaps`** — insert one row per missing skill, linked to `job_analysis_id`.
 
-Use a single transaction in Step 7 so a partial failure does not leave orphan rows.
+The helper inserts sequentially (browser client has no SQL transaction). On failure after the parent `analysis_runs` row exists, it **best-effort deletes** that run so `ON DELETE CASCADE` removes child rows.
 
 ## Tables touched
 
@@ -56,13 +56,18 @@ Internship search data is sensitive. The first hosted write path stores **derive
 - Each inserted row sets `clerk_user_id` to the signed-in user.
 - Child inserts must reference parent rows owned by the same user (policies already check parent ownership in `schema.sql`).
 
+## Step 7 — insert helper (implemented)
+
+[`save-analysis.ts`](../src/lib/supabase/save-analysis.ts) exports `saveCloudAnalysis(supabase, clerkUserId, input)`:
+
+| Behavior | Detail |
+|----------|--------|
+| Insert order | `analysis_runs` → `job_analyses` → `matched_skills` → `skill_gaps` |
+| Raw text | Does **not** insert `resume_text` or `job_text` (`job_text` column omitted) |
+| Cleanup | On child insert failure, deletes the `analysis_runs` row when possible; safe error if cleanup fails |
+| UI | **Not connected** — helper only; future Step 8+ can add a dev/test save control |
+| Auth | Caller supplies Clerk-authenticated Supabase client + `clerkUserId`; assumes RLS |
+
 ## Next implementation step
 
-**Version 12 Step 7:** implement the actual Supabase insert helper that:
-
-1. Accepts `CloudAnalysisSaveInput` and a Clerk-aware client.
-2. Calls `buildCloudAnalysisWritePlan()`.
-3. Inserts rows in the order above (transaction).
-4. Is exposed behind a **small test/dev-only control** or controlled dashboard action — not automatic production saving until reviewed.
-
-No Python analysis API required for Step 7 if the UI passes structured skill arrays from a future analysis call; Python service integration remains a separate milestone.
+Expose saving behind a **small test/dev-only dashboard control** or wire to a future analysis result — not automatic production save until reviewed. Python analysis service integration remains a separate milestone.
