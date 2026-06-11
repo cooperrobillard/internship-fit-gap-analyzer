@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 10**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, portable pasted/uploaded text workflows, optional SQLite persistence in both CLI and UI, optional saved-analysis **source URL and notes** metadata, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, in-memory current-analysis downloads, saved-data CSV exports and SQLite backup download, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
+As of **Version 11**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, portable pasted/uploaded text workflows, optional SQLite persistence in both CLI and UI, optional saved-analysis **source URL and notes** metadata, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, in-memory current-analysis downloads, saved-data CSV exports and SQLite backup download, README quickstart clarity, and a deployment-readiness checklist ([`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md)). The test gate remains `python3 run_tests.py` on a clean public repo.
 
 **What exists today:**
 
@@ -24,6 +24,7 @@ As of **Version 10**, the project is a **stable, rule-based Python CLI tool** wi
 - Version 8 additions: auto-discovering `run_tests.py` (every top-level `tests/test_*.py` file), documented script-style test architecture ([`TESTING.md`](TESTING.md)), Streamlit `width="stretch"` maintenance (replacing deprecated `use_container_width`).
 - Version 9 additions: portable resume input (pasted and uploaded UTF-8 `.txt`), optional job title/company metadata labels, uploaded job-description input, simplified Streamlit layout and analysis input flow, current-analysis Markdown/CSV downloads, saved-analysis CSV exports and SQLite backup download (localhost only).
 - Version 10 additions: optional saved-analysis **source URL** and **notes** on `job_results`, idempotent SQLite migration, Streamlit metadata inputs and save flow, search/display/CSV support (localhost only).
+- Version 11 additions: README quickstart and portfolio-ready overview, safe demo workflow, privacy/limitations summary, [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md) checklist (documentation only).
 
 **What does not exist today:**
 
@@ -184,20 +185,34 @@ Delivered:
 
 **Explicitly not Version 10:** statuses, tags, application tracker, post-save editing, restore/import, deployment, auth, semantic matching.
 
+### Version 11: Publish-readiness and deployment-readiness docs — **complete**
+
+**Goal:** Make the project easier to understand, run, demo, and evaluate before any hosted work.
+
+Delivered:
+
+- README quickstart, capabilities, privacy notes, limitations, and future direction,
+- [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md) practical checklist (no deployment implemented).
+
+**Explicitly not Version 11:** deployment, auth, cloud database, Docker, FastAPI, app rewrites.
+
 ### Future versions (not committed)
 
-The items below are **candidates for a future step**. No version number or scope is committed yet.
+The project is moving from **local demo polish** toward evaluating a **larger hosted web-app path** with **accounts**, **Clerk-style authentication**, and a **cloud database**. That is the next major direction—not more Streamlit feature work by default.
+
+The items below are **candidates for future steps**. Scope is not fully committed until Version 12 Step 0.
 
 | Candidate area | Notes |
 |----------------|--------|
-| **Publish-readiness polish** | README/quickstart, demo workflow, privacy audit, local launch polish (possible Version 11) |
+| **Version 12 Step 0: hosted architecture decision** | Document/prototype plan for account-based version; auth + DB + UI split (see [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md)) |
+| **Hosted account-based web app** | Separate frontend/app layer, auth layer, cloud DB, analysis service—after architecture decision |
 | **Restore/import planning** | Research only; Version 9 shipped backup download, not import |
 | **Richer saved-analysis organization** | Tags, filters, favorites—only with clear scope |
 | **Test-framework migration** | unittest or pytest **only if** triggers in [`TESTING.md`](TESTING.md) are met |
 | **Streamlit / UI maintenance** | Ongoing deprecation and layout fixes |
-| **Deployment-readiness research** | Architecture notes, privacy rules, platform comparison—**not deployment** |
-| **Authentication / cloud architecture** | Much later; solo local tool remains the default |
-| **Private hosted UI** | Unlisted or access-gated hosted instance—**only after** local workflows feel worthwhile |
+| **Deployment-readiness research** | [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md) shipped in Version 11; implementation still not started |
+| **Authentication / cloud architecture** | **Next major direction** after Version 11—Clerk-style auth + cloud DB, not bolted onto Streamlit |
+| **Private hosted UI** | Unlisted or access-gated hosted instance—**only after** Version 12 architecture decision |
 | **Semantic matching** | Embeddings/RAG/LLM—**much later**; rule-based path remains valuable |
 | **Optional AI-assisted extraction** | LLM-based skill extraction—**maybe never**; rule-based path remains fallback |
 
@@ -271,13 +286,15 @@ Version 9 (complete)
   → portable inputs, UI polish, current downloads, saved exports/backup
 Version 10 (complete)
   → optional source URL/notes metadata on saved job results
+Version 11 (complete)
+  → README quickstart, deployment-readiness checklist
 Next (not committed)
-  → publish-readiness polish (possible Version 11); see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md)
+  → Version 12 Step 0: hosted architecture decision / prototype plan for account-based version
 Future (optional, much later)
-  → private hosted UI, auth/cloud architecture, semantic matching; never required for portfolio value
+  → hosted web app with auth + cloud DB, semantic matching; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep `python3 run_tests.py` green; use the CLI and local Streamlit UI during real internship search; consider **Version 11 publish-readiness** next (see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md)). Hosted deployment remains uncommitted.
+**Immediate recommendation:** Keep `python3 run_tests.py` green; use the CLI and local Streamlit UI during real internship search. **Next major direction:** evaluate a hosted account-based web app (Clerk-style auth, cloud database, standalone UI)—starting with **Version 12 Step 0** architecture planning, not blind deployment of the current Streamlit app. See [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md).
 
 ---
 
@@ -361,13 +378,13 @@ Update the one-liner when a hosted UI exists—still without overstating AI capa
 
 ## 11. Near-term next steps
 
-Actionable items after **Version 10 complete**—**no automatic next implementation**:
+Actionable items after **Version 11 complete**—**no automatic next implementation**:
 
 1. **Run the usual gate** before any merge: `python3 run_tests.py` and `python3 src/main.py`.
 2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs, downloads, exports, and optional metadata.
-3. **Consider Version 11 publish-readiness** — see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md).
-4. **Update README “Planned next steps”** when a new milestone is actually planned or shipped.
-5. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment until explicitly planned.
+3. **Start Version 12 Step 0** — hosted architecture decision document / prototype plan for an account-based version (auth, cloud DB, UI split). See [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md) section 10.
+4. **Do not bolt auth onto Streamlit + local SQLite** without that architecture step.
+5. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment until Version 12 planning is done.
 
 ---
 
@@ -377,4 +394,4 @@ Actionable items after **Version 10 complete**—**no automatic next implementat
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 10 complete (saved-analysis metadata); possible Version 11 publish-readiness next; no hosted deployment.*
+*Last aligned with: Version 11 complete (README + deployment-readiness docs); Version 12 Step 0 hosted architecture decision next; no hosted deployment yet.*

@@ -1,43 +1,158 @@
 # Internship Fit & Skill-Gap Analyzer
 
-A **rule-based** Python command-line tool that compares internship or co-op job descriptions against a resume, finds skills mentioned in each text, identifies **missing skills** (gaps), and summarizes **recurring gaps** across multiple postings.
+A **rule-based** Python tool that compares internship or co-op job descriptions against a resume, surfaces **missing skills** (gaps), and summarizes **recurring gaps** across multiple postings.
 
-This is a learning and portfolio project. It is **not** an AI-powered job matcher, a semantic search tool, or a deployed web application.
+This is a **local, private** internship fit and skill-gap analyzer—a learning and portfolio project you run on your own machine. It is **not** a deployed web app, an AI job matcher, or a semantic search tool.
 
-## What the project does
+## What it does
 
 The analyzer:
 
-* loads a resume and one or more job descriptions (text files),
-* uses a JSON **skills taxonomy** and **skill aliases** to find known skills in each text,
-* reports skills found in the resume and in each job,
-* compares job skills against resume skills to list **gaps per job**,
-* counts **recurring gaps** across all analyzed jobs,
-* writes a markdown report and CSV summaries,
-* optionally saves results to SQLite and optional pandas summary CSVs,
-* prints a short terminal summary.
+- loads resume and job-description text (files, CLI paths, or Streamlit paste/upload),
+- matches skills using a JSON **taxonomy** and **aliases** (keyword-based, not semantic),
+- reports skills found in the resume and each job,
+- lists **gaps per job** and **recurring gaps** across jobs,
+- writes markdown and CSV reports (CLI),
+- optionally saves results to **local SQLite** with searchable history, comparison, and deletion,
+- supports optional **source URL** and **notes** metadata on saved analyses (Streamlit),
+- offers **current-analysis downloads** and **saved-data CSV exports** plus SQLite backup (Streamlit).
 
-Matching is **keyword- and alias-based**. It does not understand meaning, required vs. preferred skills, or how strong resume evidence is.
+Matching is **keyword- and alias-based**. It does not judge overall fit, required vs. preferred skills, or how strong resume evidence is.
+
+## Main capabilities
+
+| Area | What you get |
+|------|----------------|
+| **Core analysis** | Rule-based resume vs. job skill comparison using taxonomy + aliases |
+| **CLI** | Folder or single-job analysis, markdown/CSV outputs, optional SQLite and pandas summaries |
+| **Local Streamlit UI** | Sample, pasted, and uploaded workflows on localhost only |
+| **SQLite persistence** | Optional save of analysis runs to a local `.db` file (CLI or UI) |
+| **Saved-analysis management** | Search, two-way comparison, gap priority summary, guarded single-result deletion |
+| **Metadata** | Optional source URL and notes per saved job result (no raw posting text stored) |
+| **Downloads & exports** | In-memory report/CSV for current runs; summary CSVs and DB backup for saved data |
+| **Tests** | Auto-discovering `run_tests.py` gate across 10 test files |
+
+## Quickstart
+
+Run all commands from the **project root**. Python 3 is required.
+
+### 1. Virtual environment (recommended)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+```
+
+### 2. Install dependencies
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Main packages: **pandas** (optional summary CSVs) and **streamlit** (local UI).
+
+### 3. Run tests
+
+```bash
+python3 run_tests.py
+```
+
+Expected final line: `All tests passed.`
+
+### 4. CLI sample analysis
+
+```bash
+python3 src/main.py
+```
+
+Uses public sample resume and sample jobs (see [Safe demo workflow](#safe-demo-workflow) below).
+
+### 5. Local Streamlit UI
+
+```bash
+python3 -m streamlit run streamlit_app.py
+```
+
+Opens a browser tab on your machine only—not a public website.
+
+For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
+
+## Safe demo workflow
+
+Use **bundled public sample data** for portfolio demos, screenshots, and first-time exploration:
+
+| Path | Role |
+|------|------|
+| `data/resume/sample_resume.txt` | Default sample resume |
+| `data/sample_jobs/` | Default sample job descriptions |
+
+**CLI (safe default):**
+
+```bash
+python3 src/main.py
+python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
+```
+
+**Streamlit (safe default):** choose **Try sample analysis** on the Analyze tab. It uses the same public sample files and does not require your real resume.
+
+For your own internship search, use Git-ignored private paths (never commit these):
+
+```bash
+python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
+```
+
+Place private job `.txt` files in `data/jobs/` and your real resume at `data/resume/resume.txt`.
+
+## Privacy
+
+- **Do not commit** private resume or job files, generated outputs under `data/outputs/`, or SQLite `.db` files.
+- **Pasted and uploaded** resume/job text in Streamlit is handled **in memory** for that session; it is not written to tracked repo files by default.
+- **SQLite saving is local and private** on your machine when you opt in (CLI `--database` or UI checkbox).
+- **Raw resume and job-description text is not stored** in SQLite—only analysis results, gap lists, counts, and optional metadata.
+- **Source URL and notes** are optional saved metadata you enter; they are not auto-extracted from posting body text.
+
+See also [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) and [`docs/VERSION_10_CHECKPOINT.md`](docs/VERSION_10_CHECKPOINT.md).
+
+## Current limitations
+
+Be honest about what this project is today:
+
+- **Rule-based matching only** — taxonomy and alias keywords, not meaning or evidence strength
+- **No semantic or AI matching** — no embeddings, RAG, or LLM extraction
+- **No authentication** — single-user local tool
+- **No cloud database** — SQLite is local filesystem only
+- **No multi-user data separation** — one shared local DB path if you use persistence
+- **No production deployment** — Streamlit runs on localhost; nothing is hosted for public use
+
+Details: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+
+## Future direction
+
+After local demo polish (Version 11), the next major step is evaluating a **hosted account-based web app**—not bolting auth onto the current Streamlit + local SQLite stack.
+
+Likely future work (not built yet):
+
+- hosted web application (separate from localhost Streamlit),
+- user **accounts and authentication** (e.g. Clerk-style integration),
+- **cloud database** with per-user data isolation,
+- cleaner **standalone UI** decoupled from Streamlit,
+- careful **privacy and security redesign** before any public multi-user launch.
+
+See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) and [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
 
 ## Current status
 
-**Version 9** adds **local Streamlit usability and portability** (portable pasted/uploaded text workflows, simplified layout, in-memory downloads, saved-data exports) on top of Version 7–8 saved-management and test reliability, with the Version 3 CLI and backend unchanged.
+**Version 10** added optional saved-analysis **source URL** and **notes** metadata. **Version 11** focuses on README quickstart clarity and deployment-readiness documentation.
 
 The project can:
 
-* run analysis on a **folder of job files** (default sample data or private `--jobs` folder),
-* run analysis on a **single job file** with `--job-file`,
-* call shared backend functions (`src/analysis_runner.py`) that return structured results,
-* run a **local Streamlit UI** (`streamlit_app.py`) for sample, pasted, and uploaded job analysis with flexible resume input,
-* **download current analysis** reports (Markdown and skill-gap CSV) and **export saved data** (summary CSV, skill-gaps CSV, SQLite backup) from the UI when saved data exists,
-* **optionally save UI runs** to `data/outputs/analysis_results.db` and use **saved-history views** with improved labels, **text search**, **two-way comparison**, **recurring gap priority summary**, and **guarded single-result deletion** in the UI,
-* generate markdown and CSV outputs (CLI),
-* optionally save to SQLite (`--database`),
-* optionally create pandas summary CSVs (`--pandas-summary`),
-* inspect saved databases with `scripts/inspect_database.py`,
-* run automated tests for core logic, CLI behavior, validation, database, pandas output, and Streamlit helpers.
+- run CLI analysis on sample or private inputs (folder or `--job-file`),
+- run the **local Streamlit UI** with sample, pasted, and uploaded workflows,
+- **optionally save** to `data/outputs/analysis_results.db` and manage saved history (search, compare, delete),
+- **download** current-analysis reports and **export** saved summary CSVs and SQLite backup from the UI,
+- pass automated tests via `python3 run_tests.py`.
 
-The Streamlit app is a **localhost prototype only**—not a hosted web app. It does **not** use OpenAI API, semantic matching, FastAPI, Docker, RAG, authentication, or production deployment.
+The Streamlit app is a **localhost prototype only**. It does not use OpenAI API, semantic matching, FastAPI, Docker, authentication, or production deployment.
 
 ## Project structure
 
@@ -45,55 +160,31 @@ The Streamlit app is a **localhost prototype only**—not a hosted web app. It d
 internship-fit-gap-analyzer/
   data/
     jobs/                  private local job files (Git-ignored)
-    sample_jobs/           public sample job files (used by default)
-    outputs/               generated reports and CSV files (Git-ignored)
+    sample_jobs/           public sample job files (default)
+    outputs/               generated reports and CSVs (Git-ignored)
     resume/
-      sample_resume.txt    public sample resume (used by default)
+      sample_resume.txt    public sample resume (default)
       resume.txt           private local resume (Git-ignored)
     skill_aliases.json
     skills_taxonomy.json
   docs/
+    DEPLOYMENT_READINESS.md
     LIMITATIONS.md
     PRODUCT_ROADMAP.md
-    VERSION_1_CHECKLIST.md
-    VERSION_2_CHECKPOINT.md
-    VERSION_2_TEST_COMMANDS.md
-    VERSION_3_CHECKPOINT.md
-    VERSION_4_CHECKPOINT.md
-    VERSION_5_CHECKPOINT.md
-    VERSION_6_CHECKPOINT.md
-    VERSION_7_PLAN.md
-    VERSION_7_CHECKPOINT.md
-    LOCAL_UI_PLAN.md
+    TESTING.md
+    VERSION_*_CHECKPOINT.md
   scripts/
     inspect_database.py
   src/
-    analysis_runner.py     reusable analysis workflow (CLI + future UI)
-    compare_resume.py
-    console_summary.py
-    csv_writer.py
-    database.py
-    extract_keywords.py
+    analysis_runner.py     shared workflow (CLI + UI)
     main.py                CLI entry point
-    pandas_summary.py
-    report_writer.py
-    summarize_gaps.py
+    database.py            optional SQLite helpers
+    ...
   tests/
-    test_analysis_runner.py
-    test_cli.py
-    test_core_logic.py
-    test_database.py
-    test_inspect_database.py
-    test_output_writers.py
-    test_pandas_summary.py
-    test_single_job_analysis.py
-    test_streamlit_app.py
-    test_validation.py
-  LEARNING_LOG.md
-  README.md
+    test_*.py
+  streamlit_app.py         local Streamlit UI (localhost only)
+  run_tests.py             full test gate
   requirements.txt
-  run_tests.py
-  streamlit_app.py       local Streamlit UI (localhost only)
 ```
 
 ## How it works
@@ -104,251 +195,107 @@ resume + job description(s) + taxonomy + aliases
 → find skills in each job
 → compare job skills vs resume skills → gaps per job
 → count recurring gaps
-→ write markdown + CSV outputs
+→ write markdown + CSV outputs (CLI)
 → optionally SQLite + pandas summaries
-→ terminal summary (CLI)
+→ terminal summary (CLI) or Streamlit display
 ```
 
-Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. The local Streamlit UI calls the same backend for sample, pasted, and uploaded job preview runs.
+## CLI reference
 
-## Setup
-
-Python 3 is required.
+### Common commands
 
 ```bash
-python3 -m pip install -r requirements.txt
-```
-
-Main external dependencies: **pandas** (optional summary CSVs) and **streamlit** (local UI only).
-
-## Input files and privacy
-
-### Public sample inputs (tracked in Git, used by default)
-
-| Path | Role |
-|------|------|
-| `data/resume/sample_resume.txt` | Default resume when you run `python3 src/main.py` |
-| `data/sample_jobs/` | Default job descriptions folder |
-
-### Private local inputs (Git-ignored)
-
-| Path | Role |
-|------|------|
-| `data/resume/resume.txt` | Your real resume — use `--resume data/resume/resume.txt` |
-| `data/jobs/` | Your real job `.txt` files — use `--jobs data/jobs` |
-
-**Do not commit** private resume or job files, generated files under `data/outputs/`, or SQLite `.db` files.
-
-### Taxonomy and aliases
-
-**`data/skills_taxonomy.json`** — official skills grouped by category.
-
-**`data/skill_aliases.json`** — alternate phrases mapped to official skill names.
-
-## How to run (main commands)
-
-Run all commands from the **project root**.
-
-### Default sample-data run
-
-```bash
+# Default sample-data run
 python3 src/main.py
-```
 
-Uses `data/resume/sample_resume.txt` and all `.txt` files in `data/sample_jobs/`.
-
-### Private local resume and jobs folder
-
-```bash
-python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
-```
-
-### Single job file (Version 3)
-
-Analyze one job description file without a jobs folder:
-
-```bash
+# Single job file
 python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
-```
 
-Do **not** pass `--jobs` and `--job-file` together; the program exits with a clear error.
+# Private resume and jobs folder
+python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
 
-### SQLite output
-
-```bash
+# SQLite output
 python3 src/main.py --database data/outputs/analysis_results.db
-```
 
-### pandas summary CSVs
-
-```bash
+# pandas summary CSVs
 python3 src/main.py --pandas-summary
-```
 
-Creates `gap_categories_pandas.csv` and `top_recurring_gaps_pandas.csv` under the outputs folder.
-
-### SQLite + pandas combined
-
-```bash
-python3 src/main.py --database data/outputs/analysis_results.db --pandas-summary
-```
-
-### Inspect a saved database
-
-After a run with `--database`:
-
-```bash
+# Inspect saved database
 python3 scripts/inspect_database.py data/outputs/analysis_results.db
+
+# Help
+python3 src/main.py --help
 ```
 
-### Run tests
+Do **not** pass `--jobs` and `--job-file` together.
+
+### Command-line options
+
+| Option | Purpose |
+|--------|---------|
+| `--resume` | Path to resume text file |
+| `--jobs` | Folder of job description `.txt` files |
+| `--job-file` | Path to one job description file |
+| `--taxonomy` | Skills taxonomy JSON path |
+| `--aliases` | Skill aliases JSON path |
+| `--outputs` | Output folder for reports and CSVs |
+| `--top-gaps` | Recurring gaps to show in terminal |
+| `--database` | Optional SQLite database file path |
+| `--pandas-summary` | Create extra pandas summary CSV files |
+
+### Output files (CLI)
+
+| File | Description |
+|------|-------------|
+| `data/outputs/gap_report.md` | Human-readable report |
+| `data/outputs/gap_summary.csv` | One row per missing skill per job |
+| `data/outputs/recurring_gaps.csv` | Gap counts across jobs |
+| `data/outputs/analysis_results.db` | Optional SQLite run history |
+
+## Streamlit UI (localhost)
+
+```bash
+python3 -m streamlit run streamlit_app.py
+```
+
+The UI supports:
+
+- **Try sample analysis** (public sample files),
+- **paste** or **upload** job descriptions and resumes (UTF-8 `.txt`),
+- optional **job title, company, source URL, and notes** before save,
+- **Results** tab with current-analysis Markdown and CSV downloads,
+- **Saved analyses** tab with search, two-way comparison, and gap priority summary,
+- **Data management** tab with exports, SQLite backup download, and guarded deletion.
+
+Preview runs do not write report files to `data/outputs/` unless you use the CLI. Optional SQLite saving uses the same local database path family as `--database`.
+
+## Testing
+
+Canonical full-suite command:
 
 ```bash
 python3 run_tests.py
 ```
 
-Expected final line: `All tests passed.`
-
-Focused helper tests (including Version 7 label, search, and deletion helpers):
+Focused runs:
 
 ```bash
 python3 tests/test_streamlit_app.py
 python3 tests/test_database.py
 ```
 
-Note: `python3 -m unittest discover -s tests -p "test_*.py"` currently reports **0 tests** because most test files are executable scripts, not `unittest.TestCase` classes. Use `run_tests.py` or the per-file commands above.
-
-### Local Streamlit UI (Versions 4–9)
-
-Run from the project root. Opens a browser tab on your machine only—not a public website.
-
-```bash
-python3 -m streamlit run streamlit_app.py
-```
-
-The UI can:
-
-* **Try sample analysis** with the bundled sample resume and sample job,
-* **paste a job description** or **upload a UTF-8 `.txt` job description**,
-* use the **sample resume**, **private local resume** (if present), **pasted resume text**, or **uploaded `.txt` resume** where relevant,
-* add optional **job title and company** metadata for clearer saved labels,
-* **download current analysis** as Markdown and skill-gap CSV from the **Results** tab (in memory only),
-* **optionally save** an analysis run to `data/outputs/analysis_results.db` (checkbox),
-* show **Saved Analysis History** and **Recent Saved Runs** with **improved labels** (job name, saved time, run/result IDs, gap counts) when that database exists,
-* **search saved analyses** by job name, date, or IDs (filters browsing and pickers, not the gap priority summary),
-* **compare two saved analyses** (shared and unique missing skills; requires at least two saved job results),
-* show a **Saved Gap Priority Summary** of recurring missing skills across all saved analyses,
-* **export saved data** (summary CSV, skill-gaps CSV) and **download a SQLite backup** when a saved database exists,
-* **delete one selected saved analysis** permanently after explicit confirmation (local SQLite only; **Data management** tab).
-
-Comparison uses **missing skills stored in SQLite** only—it does not compare matched-skill lists because individual matched skill names are not saved to the database. The gap priority summary is descriptive, not a ranked recommendation engine. Deletion has **no undo**.
-
-Preview runs do not write markdown/CSV report files to `data/outputs/` unless you use the CLI. UI downloads and exports are generated in memory only. Optional UI SQLite saving uses the same local database path family as `--database`.
-
-**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, uploaded file contents, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence, [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison, [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) for saved-result management, and [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) for portability and exports.
-
-### Help and other options
-
-```bash
-python3 src/main.py --help
-python3 src/main.py --top-gaps 3
-python3 src/main.py --outputs data/outputs_test
-```
-
-Example terminal output:
-
-```text
-Analysis complete.
-
-Jobs analyzed: 1
-
-Top recurring gaps:
-1. sql (data): 1 job(s)
-2. pandas (data): 1 job(s)
-
-Output files:
-- data/outputs/gap_report.md
-- data/outputs/gap_summary.csv
-- data/outputs/recurring_gaps.csv
-```
-
-## Command-line options
-
-| Option | Purpose |
-|--------|---------|
-| `--resume` | Path to resume text file |
-| `--jobs` | Folder of job description `.txt` files (folder mode) |
-| `--job-file` | Path to one job description file (single-job mode) |
-| `--taxonomy` | Skills taxonomy JSON path |
-| `--aliases` | Skill aliases JSON path |
-| `--outputs` | Output folder for reports and CSVs |
-| `--top-gaps` | Number of recurring gaps to show in the terminal |
-| `--database` | Optional SQLite database file path |
-| `--pandas-summary` | Create extra pandas summary CSV files |
-
-**Folder mode:** default, or explicit `--jobs data/sample_jobs`.
-
-**Single-job mode:** `--job-file path/to/job.txt` (do not also pass `--jobs`).
-
-## Source files (high level)
-
-| File | Role |
-|------|------|
-| `src/main.py` | Parses CLI arguments, calls the analysis runner, prints terminal summary |
-| `src/analysis_runner.py` | `run_analysis()`, `run_analysis_job_file()`, `run_single_job_analysis()` — shared workflow |
-| `src/extract_keywords.py` | Find taxonomy skills in text |
-| `src/compare_resume.py` | Job vs resume gap comparison |
-| `src/summarize_gaps.py` | Recurring gap counts |
-| `src/report_writer.py` / `src/csv_writer.py` | Markdown and CSV outputs |
-| `src/database.py` | Optional SQLite helpers |
-| `src/pandas_summary.py` | Optional pandas summary CSVs |
-| `scripts/inspect_database.py` | Inspect a saved `.db` file |
-
-## Output files
-
-| File | Description |
-|------|-------------|
-| `data/outputs/gap_report.md` | Human-readable report: recurring gaps, resume skills, per-job skills and gaps |
-| `data/outputs/gap_summary.csv` | One row per missing skill per job (`job_name`, `category`, `gap_skill`) |
-| `data/outputs/recurring_gaps.csv` | Gap counts across jobs (`gap_skill`, `category`, `count`) |
-| `data/outputs/gap_categories_pandas.csv` | Optional; gaps by category (`--pandas-summary`) |
-| `data/outputs/top_recurring_gaps_pandas.csv` | Optional; top recurring gaps (`--pandas-summary`) |
-| `data/outputs/analysis_results.db` | Optional; SQLite run history (`--database`) |
+`python3 -m unittest discover -s tests -p "test_*.py"` reports **0 tests** because most files are script-style tests, not `unittest.TestCase` classes. See [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Documentation
 
 | Document | Purpose |
 |----------|---------|
+| [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | What is demo-ready vs. not deployment-ready |
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
-| [`docs/VERSION_4_CHECKPOINT.md`](docs/VERSION_4_CHECKPOINT.md) | Version 4 local UI summary and test commands |
-| [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) | Version 5 local UI persistence and saved-history views |
-| [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) | Version 6 saved-analysis comparison and gap priority summary |
-| [`docs/VERSION_7_PLAN.md`](docs/VERSION_7_PLAN.md) | Version 7 plan: saved-result organization |
-| [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) | Version 7 checkpoint: labels, search, guarded deletion |
-| [`docs/VERSION_8_PLAN.md`](docs/VERSION_8_PLAN.md) | Version 8 plan: testing and maintenance reliability |
-| [`docs/VERSION_8_CHECKPOINT.md`](docs/VERSION_8_CHECKPOINT.md) | Version 8 checkpoint: test runner, TESTING.md, Streamlit maintenance |
-| [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) | Version 9 checkpoint: usability, portability, downloads, exports |
 | [`docs/TESTING.md`](docs/TESTING.md) | Canonical testing guide |
-| [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
-| [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
-| [`docs/VERSION_2_CHECKPOINT.md`](docs/VERSION_2_CHECKPOINT.md) | Version 2 feature summary |
-| [`docs/VERSION_2_TEST_COMMANDS.md`](docs/VERSION_2_TEST_COMMANDS.md) | Version 2 smoke-test sequence |
-| [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Future UI and milestone planning |
-| [`docs/VERSION_1_CHECKLIST.md`](docs/VERSION_1_CHECKLIST.md) | Version 1 MVP milestone |
-| [`LIMITATIONS.md`](LIMITATIONS.md) | Pointer to `docs/LIMITATIONS.md` |
-
-## Current limitations
-
-Rule-based matching can miss skills not in the taxonomy or aliases and may match keywords without real evidence. The tool does not judge overall job fit, seniority, or required vs. preferred skills.
-
-Optional SQLite and pandas features store and summarize results locally; they do not add semantic understanding.
-
-Details: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+| [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Version milestones and future direction |
+| [`docs/VERSION_10_CHECKPOINT.md`](docs/VERSION_10_CHECKPOINT.md) | Saved-analysis metadata (source URL, notes) |
 
 ## Learning purpose
 
 This project supports learning Python, CLI design, testing, file I/O, JSON, project structure, documentation, Git workflow, and optional SQLite/pandas usage—while building something useful for internship search planning.
-
-## Planned next steps
-
-See [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Version 9 usability and portability work is **complete** (portable inputs, UI polish, downloads, saved exports/backup). The **next phase** should begin with a separate planning step—likely starting with richer saved-analysis metadata (source URL and notes), which may require a SQLite schema decision. Hosted deployment, restore/import, and optional AI-assisted extraction remain uncommitted future candidates.
