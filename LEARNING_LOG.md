@@ -1845,3 +1845,22 @@ This checkpoint improved my understanding of:
 - local data export,
 - privacy-conscious handling of user text,
 - and the difference between a useful local tool and a fully deployed production application.
+
+## Version 10 Step 0 — planned saved-analysis metadata audit
+
+Created the Version 10 planning document before making any database or UI changes.
+
+This step reviewed the current saved-analysis architecture and identified source URL and notes as the strongest next metadata fields to add. Because these fields affect SQLite persistence, the plan emphasizes schema safety, backward compatibility, idempotent migration behavior, privacy boundaries, and focused tests before implementation.
+
+Key decisions:
+- Start Version 10 with planning before implementation.
+- Treat source URL and notes as optional saved-analysis metadata.
+- Avoid storing raw resume text or raw job-description text.
+- Defer full application tracking, tags, status workflows, deployment, authentication, cloud persistence, and semantic/AI matching.
+- Keep the next implementation branch small and focused on schema-safe metadata storage.
+
+Verification:
+- Confirmed the repository was clean on main before branching.
+- Confirmed Version 9 was merged and documented.
+- Confirmed the custom test suite passed before starting Version 10 planning.
+- Kept the planning branch documentation-only.
