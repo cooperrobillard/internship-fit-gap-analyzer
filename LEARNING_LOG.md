@@ -2095,3 +2095,21 @@ What I learned:
 - Cloud writes need clear insert order when foreign keys connect tables.
 - A save helper should return safe result states instead of leaking raw database errors into the UI.
 - Partial failure handling matters because multiple related rows are created during one save operation.
+
+## Version 12 Step 8 — added dashboard test save action
+
+Added a controlled dashboard action for testing the cloud saved-analysis write path.
+
+This step connected the signed-in dashboard to the Supabase insert helper through a clearly labeled test action. The button saves a small sample analysis to Supabase so the Clerk authentication, Supabase client, RLS policies, insert helper, and read model can be tested together before building the real web analysis workflow.
+
+Key decisions:
+- Add a controlled test action before adding real resume/job analysis saving.
+- Keep the payload small and clearly marked as sample data.
+- Avoid saving raw resume text or raw job-description text.
+- Keep the Python/Streamlit app unchanged.
+- Keep the dashboard honest that the real web analysis workflow and Python analysis service are not connected yet.
+
+What I learned:
+- Testing a full cloud write path requires the auth layer, database client, RLS policies, insert helper, and read model to work together.
+- A controlled test save is safer than immediately connecting user-provided resume/job text.
+- UI copy matters when a button exists only for development or verification.
