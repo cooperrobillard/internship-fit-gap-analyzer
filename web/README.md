@@ -61,6 +61,17 @@ The signed-in dashboard runs a **read-only count** and can **list recent `job_an
 
 The dashboard analysis form requires the FastAPI service running locally.
 
+**Recommended shortcut (repository root):**
+
+```bash
+chmod +x scripts/run_local_full_stack_demo.sh
+./scripts/run_local_full_stack_demo.sh
+```
+
+Starts FastAPI at http://127.0.0.1:8000 and Next.js at http://localhost:3000. Local development only. Clerk and Supabase need `web/.env.local` (the script warns if missing). Press **Control+C** to stop both.
+
+**Manual two-terminal workflow:**
+
 **Terminal 1 (repository root):**
 
 ```bash

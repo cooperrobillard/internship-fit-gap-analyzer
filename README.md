@@ -107,6 +107,22 @@ Three separate local surfaces — all development-only, nothing deployed:
 
 The Next.js dashboard calls the local FastAPI `/analyze` endpoint. Set `NEXT_PUBLIC_ANALYSIS_API_URL` in `web/.env.local` (see `web/README.md`). FastAPI must be running before using the dashboard analysis form.
 
+### Run the local full-stack web demo
+
+One script starts FastAPI in the background, waits for `/health`, then runs Next.js in the foreground. **Local development only** — not deployment.
+
+```bash
+chmod +x scripts/run_local_full_stack_demo.sh
+./scripts/run_local_full_stack_demo.sh
+```
+
+| Service | URL |
+|---------|-----|
+| FastAPI | http://127.0.0.1:8000 |
+| Next.js | http://localhost:3000 |
+
+Clerk sign-in and Supabase dashboard features require values in `web/.env.local` (the script warns if that file is missing; it does not read secrets). Press **Control+C** to stop Next.js and clean up the background FastAPI process.
+
 For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
 
 ## Safe demo workflow
