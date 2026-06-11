@@ -2241,3 +2241,26 @@ What I learned:
 - A local full-stack project often needs a repeatable startup workflow before deployment.
 - Cleanup behavior matters when a script starts background processes.
 - Developer-experience improvements can make a project easier to demo without adding new product features.
+
+## Version 13 Step 1 — Deployment path decision and checklist
+
+Created a focused deployment-path checklist for the first hosted full-stack prototype.
+
+Chosen direction:
+
+* Vercel for the Next.js frontend
+* Render or Railway for the FastAPI backend
+* Supabase for Postgres/cloud saved analyses
+* Clerk for authentication
+
+Key decisions:
+
+* Keep the stable local Python/Streamlit app intact.
+* Deploy the hosted prototype in small steps rather than all at once.
+* Do not save raw resume or job-description text in the hosted write path yet.
+* Do not commit secrets or local environment files.
+* Prepare FastAPI hosting, production CORS, Supabase RLS/JWT verification, and Vercel environment variables before a public demo.
+
+Next implementation branch:
+
+* feature/fastapi-hosting-prep
