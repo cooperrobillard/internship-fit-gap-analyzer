@@ -2167,3 +2167,22 @@ What I learned:
 - Connecting a feature end-to-end is easier after separating analysis, mapping, and saving into smaller layers.
 - Privacy boundaries need to be enforced at the UI, mapping, and persistence layers.
 - A prototype save flow can validate the cloud architecture before the production analysis service exists.
+
+## Version 12 Step 12 — added FastAPI analysis service prototype
+
+Added the first Python API boundary for the future hosted web app.
+
+This step created a local FastAPI service prototype that exposes the existing rule-based Python analyzer through HTTP endpoints. The service can accept pasted resume and job text, run the analyzer in memory, and return matched and missing skills in a JSON shape that the Next.js app can eventually consume.
+
+Key decisions:
+- Use FastAPI to preserve and reuse the existing Python analysis work.
+- Keep the API local/prototype-only for now.
+- Do not connect the Next.js app to the API yet.
+- Do not save analyses from the API.
+- Do not store raw resume text or raw job-description text.
+- Keep Supabase writes and Python analysis service integration as separate steps.
+
+What I learned:
+- A service boundary lets a frontend call existing backend logic without rewriting it.
+- API request and response models define a contract between the web app and Python analyzer.
+- Wrapping existing code safely is better than duplicating the analyzer in another language.
