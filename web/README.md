@@ -7,11 +7,12 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - Landing page describing the planned hosted product
 - **Clerk authentication shell** — sign-in, sign-up, protected dashboard route, header nav with `UserButton`
 - Dashboard placeholder cards (no real data or cloud saving)
-- **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md) (not connected to the app)
+- **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md)
+- **Supabase client scaffolding** — Clerk-aware browser client and dashboard read-only status check (count on `job_analyses`)
 
 ## What is not implemented yet
 
-- Supabase client, env vars, or live database connection (schema is draft SQL only)
+- Cloud saving, updating, or deleting analyses from this UI
 - Python analysis API or service integration
 - Saving, comparing, or loading real analyses from this UI
 - Billing, organizations, or deployment configuration
@@ -36,8 +37,19 @@ Edit `.env.local` and set:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — from the [Clerk Dashboard](https://dashboard.clerk.com/) (development instance)
 - `CLERK_SECRET_KEY` — from the same Clerk application
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL from your [Supabase](https://supabase.com/) project
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Publishable (anon) key from the same project
 
 The sign-in/sign-up URLs and fallback redirects are already documented in `.env.example`.
+
+### Supabase setup (manual, for connection check)
+
+1. Create a **development** Supabase project.
+2. Run [`database/schema.sql`](database/schema.sql) in the Supabase SQL editor.
+3. Configure **Clerk as a Supabase third-party auth provider** (see [Clerk + Supabase docs](https://clerk.com/docs/guides/development/integrations/databases/supabase)).
+4. Copy Project URL and Publishable key into `web/.env.local`.
+
+The signed-in dashboard runs a **read-only count** on `job_analyses` to verify Clerk token → RLS. **Cloud saving is not implemented yet.** Do not use the Supabase service role key in browser code.
 
 Start the dev server:
 
@@ -74,7 +86,7 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 ## Database schema (draft)
 
-See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. **Cloud saving is not implemented**—the schema is for a future Supabase integration branch.
+See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The app can **check** connectivity via a count query; **cloud saving is not implemented**.
 
 ## Related docs
 

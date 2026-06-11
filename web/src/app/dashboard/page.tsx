@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
+import { SupabaseStatus } from "./supabase-status";
 
 const placeholderCards = [
   {
     title: "Saved analyses",
-    body: "Future home for your private, cloud-backed analysis history. Not connected yet.",
+    body: "Future home for your private, cloud-backed analysis history. Read-only count check only—no save flow yet.",
   },
   {
     title: "Resume profiles",
@@ -32,20 +33,25 @@ export default async function DashboardPage() {
           Your future account dashboard
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
-          You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}. This
-          page is a protected placeholder for the hosted product. It does not run
-          analyses, save postings to the cloud, or load data from a database yet.
+          You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
+          Clerk authentication is active. Supabase client scaffolding can verify a
+          read-only connection to your cloud database. This page does not run
+          analyses, save postings to the cloud, or call a Python analysis service
+          yet.
         </p>
         <p className="mt-4 text-sm text-amber-800">
           For real analyses today, use the Python CLI and local Streamlit app in
           the repository root.
         </p>
+
+        <SupabaseStatus />
       </section>
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-zinc-900">Coming soon</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Placeholder cards only—no persistence or analysis behind these yet.
+          Placeholder cards only—no cloud save or analysis execution behind these
+          yet.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {placeholderCards.map((card) => (

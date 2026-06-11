@@ -1,18 +1,16 @@
 # Supabase / Postgres schema (draft)
 
-This folder holds a **first-pass cloud database schema** for the future hosted Internship Fit & Skill-Gap Analyzer. It is design documentation in SQL form—not a live database and not wired into the Next.js app yet.
+This folder holds a **first-pass cloud database schema** for the future hosted Internship Fit & Skill-Gap Analyzer. It is design documentation in SQL form—you apply it manually in Supabase; migrations tooling is not added yet.
 
 ## What exists today
 
 - [`schema.sql`](schema.sql) — tables, indexes, RLS policies for user-owned saved analyses
 - Clerk auth shell in the Next.js app (`web/src/`) — sign-in, sign-up, protected `/dashboard`
+- **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses` only)
 
 ## What is not implemented yet
 
-- Supabase project connection or `@supabase/supabase-js` client
-- Environment variables for Supabase URL / anon key in the app
-- Clerk ↔ Supabase JWT integration (third-party auth)
-- Reading or writing any rows from the dashboard
+- Inserting, updating, or deleting analysis data from the web app
 - Python analysis API or cloud save flow
 
 **Cloud saving does not work.** The working analyzer remains the Python CLI and local Streamlit app at the repository root.
@@ -61,11 +59,11 @@ See comments at the top of `schema.sql` for the full design note.
 
 ## Recommended next step
 
-**Version 12 Step 4 (or equivalent):** add Supabase client/env scaffolding in the Next.js app and test an **empty** signed-in dashboard query (e.g. list zero `job_analyses` rows) to prove Clerk token → Supabase RLS works—still without saving real analyses.
+After the dashboard connection check works with zero rows, a future branch can add **cloud save** flows (still behind RLS)—likely starting with `profiles` / `analysis_runs` / `job_analyses` inserts from a Python API or server actions, not from this scaffold alone.
 
-Future env placeholders (not added to the app yet):
+Env vars (in `web/.env.example`, values in `.env.local` only):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Use the Supabase **anon** key in the browser; never expose the service role key client-side.
+Use the Supabase **publishable (anon)** key in the browser; never expose the service role key client-side.
