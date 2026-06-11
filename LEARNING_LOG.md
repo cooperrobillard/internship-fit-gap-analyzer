@@ -2223,3 +2223,21 @@ What I learned:
 - After adding a service boundary, documentation and UI copy need to catch up so the product is not misleading.
 - A two-server local workflow should be easy to run before adding deployment complexity.
 - Cleanup steps can make a project more demo-ready without adding new architecture.
+
+## Version 12 Step 15 — added local full-stack demo script
+
+Added a script for running the local full-stack web demo.
+
+This step created a small shell script that starts the FastAPI Python analysis service, checks the API health endpoint, and then starts the Next.js development server. The script makes it easier to demo the current hosted-app prototype locally without remembering multiple commands.
+
+Key decisions:
+- Keep this as a local development helper, not deployment.
+- Start FastAPI and Next.js together while preserving the existing architecture.
+- Avoid Docker, production process managers, API authentication, or deployment configuration for now.
+- Keep Clerk and Supabase secrets in local environment files and out of Git.
+- Preserve the existing Python/Streamlit app unchanged.
+
+What I learned:
+- A local full-stack project often needs a repeatable startup workflow before deployment.
+- Cleanup behavior matters when a script starts background processes.
+- Developer-experience improvements can make a project easier to demo without adding new product features.
