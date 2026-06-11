@@ -2264,3 +2264,26 @@ Key decisions:
 Next implementation branch:
 
 * feature/fastapi-hosting-prep
+
+## Version 13 Step 2 — Prepare FastAPI service for backend hosting
+
+Prepared the FastAPI analysis service for a future backend deployment step.
+
+Changes included:
+
+* Confirmed the hosted backend entrypoint should be `api.main:app`.
+* Added or confirmed package/module support for the `api` service.
+* Documented local and hosting-style FastAPI start commands.
+* Documented the `/health` endpoint as the backend health check.
+* Documented the `/analyze` endpoint as the analysis API boundary.
+* Added or confirmed environment-based CORS configuration using `ALLOWED_ORIGINS`.
+* Preserved local development defaults for the Next.js app.
+* Kept the API privacy boundary: pasted resume and job text are analyzed in memory and are not written to disk, SQLite, Supabase, or external APIs.
+
+Important caution:
+
+* The FastAPI backend is still a prototype and does not yet include production API authentication.
+
+Next step:
+
+* Version 13 Step 3 — prepare Next.js/Vercel environment configuration.
