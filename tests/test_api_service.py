@@ -50,6 +50,34 @@ def test_analyze_rejects_blank_job_text():
     assert response.status_code == 422
 
 
+def test_analyze_matched_and_missing_skills_are_disjoint():
+    resume_text = "Python SQL Git data analysis"
+    job_text = (
+        "We are looking for an intern with Python, SQL, FastAPI, "
+        "and cloud deployment experience."
+    )
+
+    response = client.post(
+        "/analyze",
+        json={
+            "resumeText": resume_text,
+            "jobText": job_text,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    matched_names = {item["skill"] for item in payload["matchedSkills"]}
+    missing_names = {item["skill"] for item in payload["missingSkills"]}
+
+    assert "python" in matched_names
+    assert "sql" in matched_names
+    assert "fastapi" in missing_names
+    assert "fastapi" not in matched_names
+    assert matched_names.isdisjoint(missing_names)
+
+
 def test_analyze_returns_matched_and_missing_skills():
     response = client.post(
         "/analyze",
@@ -236,6 +264,7 @@ if __name__ == "__main__":
     test_health_returns_ok()
     test_analyze_rejects_blank_resume_text()
     test_analyze_rejects_blank_job_text()
+    test_analyze_matched_and_missing_skills_are_disjoint()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_response_excludes_raw_resume_and_job_text()
     test_parse_allowed_origins_defaults_when_unset()

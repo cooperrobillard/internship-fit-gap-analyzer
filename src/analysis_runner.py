@@ -146,14 +146,33 @@ def _count_skills_by_category(skills_by_category):
     return skill_count
 
 
+def _job_skills_matched_with_resume(job_skills, skill_gaps):
+    """
+    Job skills that also appear in the resume (per category).
+
+    Equivalent to job_skills minus skill_gaps; keeps lists disjoint from gaps.
+    """
+    matched_by_category = {}
+
+    for category, job_skill_list in job_skills.items():
+        gap_skills = set(skill_gaps.get(category, []))
+        matched_by_category[category] = [
+            skill for skill in job_skill_list if skill not in gap_skills
+        ]
+
+    return matched_by_category
+
+
 def _format_job_for_ui(job_result):
     """
     Build a simple per-job summary for future UI display.
 
-    matched_skills and missing_skills stay grouped by category.
+    matched_skills: job skills also found in the resume.
+    missing_skills: job skills not found in the resume (skill gaps).
     """
-    matched_skills = job_result["job_skills"]
+    job_skills = job_result["job_skills"]
     missing_skills = job_result["skill_gaps"]
+    matched_skills = _job_skills_matched_with_resume(job_skills, missing_skills)
 
     return {
         "job_name": job_result["job_name"],
