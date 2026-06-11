@@ -1672,6 +1672,186 @@ def test_streamlit_app_does_not_use_deprecated_use_container_width():
     assert "use_container_width" not in streamlit_app_source
 
 
+def test_build_saved_analyses_csv_download_includes_headers():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        csv_text = module.build_saved_analyses_csv_download(database_path)
+
+        assert csv_text.strip().splitlines()[0] == ",".join(
+            module.SAVED_ANALYSES_CSV_COLUMNS
+        )
+
+
+def test_build_saved_analyses_csv_download_includes_saved_job_result_rows():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        csv_text = module.build_saved_analyses_csv_download(database_path)
+        lines = csv_text.strip().splitlines()
+
+        assert len(lines) >= 2
+        assert "sample_ai_engineering_internship.txt" in csv_text
+        assert ",1," in csv_text or ",1\n" in csv_text
+
+
+def test_build_saved_skill_gaps_csv_download_includes_headers():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        csv_text = module.build_saved_skill_gaps_csv_download(database_path)
+
+        assert csv_text.strip().splitlines()[0] == ",".join(
+            module.SAVED_SKILL_GAPS_CSV_COLUMNS
+        )
+
+
+def test_build_saved_skill_gaps_csv_download_includes_saved_missing_skill_rows():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        csv_text = module.build_saved_skill_gaps_csv_download(database_path)
+        lines = csv_text.strip().splitlines()
+
+        assert len(lines) >= 2
+        assert "sample_ai_engineering_internship.txt" in csv_text
+
+
+def test_saved_export_csv_helpers_handle_missing_database_safely():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        analyses_csv = module.build_saved_analyses_csv_download(database_path)
+        skill_gaps_csv = module.build_saved_skill_gaps_csv_download(database_path)
+
+        assert analyses_csv.strip() == ",".join(module.SAVED_ANALYSES_CSV_COLUMNS)
+        assert skill_gaps_csv.strip() == ",".join(module.SAVED_SKILL_GAPS_CSV_COLUMNS)
+
+
+def test_saved_export_csv_helpers_handle_empty_database_safely():
+    module = _load_streamlit_app_module()
+    from database import initialize_database
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        connection = initialize_database(database_path)
+        connection.close()
+
+        analyses_csv = module.build_saved_analyses_csv_download(database_path)
+        skill_gaps_csv = module.build_saved_skill_gaps_csv_download(database_path)
+
+        assert analyses_csv.strip() == ",".join(module.SAVED_ANALYSES_CSV_COLUMNS)
+        assert skill_gaps_csv.strip() == ",".join(module.SAVED_SKILL_GAPS_CSV_COLUMNS)
+
+
+def test_read_database_backup_bytes_returns_bytes_when_database_exists():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        backup_bytes = module.read_database_backup_bytes(database_path)
+
+        assert backup_bytes is not None
+        assert len(backup_bytes) > 0
+        assert backup_bytes == database_path.read_bytes()
+
+
+def test_read_database_backup_bytes_handles_missing_database_safely():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        assert module.read_database_backup_bytes(database_path) is None
+
+
+def test_saved_export_helpers_do_not_write_csv_files_to_disk():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        temp_path = Path(temp_folder)
+        database_path = temp_path / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        before_files = set(temp_path.iterdir())
+
+        module.build_saved_analyses_csv_download(database_path)
+        module.build_saved_skill_gaps_csv_download(database_path)
+        module.read_database_backup_bytes(database_path)
+
+        after_files = set(temp_path.iterdir())
+
+        assert before_files == after_files
+        assert not any(path.suffix == ".csv" for path in after_files)
+
+
+def test_saved_export_csvs_exclude_raw_resume_and_job_text():
+    module = _load_streamlit_app_module()
+
+    secret_job = "SECRET_EXPORT_JOB_PHRASE_55555"
+    secret_resume = "SECRET_EXPORT_RESUME_PHRASE_44444"
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+
+        result = module.run_pasted_job_analysis(
+            f"{secret_job} Python SQL required.",
+            resume_path=module.RESUME_LABEL_PASTED,
+            resume_text=secret_resume,
+        )
+        module.store_analysis_result(
+            result,
+            save_to_database=True,
+            database_path=database_path,
+        )
+
+        analyses_csv = module.build_saved_analyses_csv_download(database_path)
+        skill_gaps_csv = module.build_saved_skill_gaps_csv_download(database_path)
+
+        assert secret_job not in analyses_csv
+        assert secret_resume not in analyses_csv
+        assert secret_job not in skill_gaps_csv
+        assert secret_resume not in skill_gaps_csv
+
+
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_streamlit_app_exposes_layout_tab_helpers()
@@ -1772,4 +1952,14 @@ if __name__ == "__main__":
     test_sample_analysis_produces_non_empty_download_exports()
     test_pasted_job_analysis_produces_download_exports()
     test_streamlit_app_does_not_use_deprecated_use_container_width()
+    test_build_saved_analyses_csv_download_includes_headers()
+    test_build_saved_analyses_csv_download_includes_saved_job_result_rows()
+    test_build_saved_skill_gaps_csv_download_includes_headers()
+    test_build_saved_skill_gaps_csv_download_includes_saved_missing_skill_rows()
+    test_saved_export_csv_helpers_handle_missing_database_safely()
+    test_saved_export_csv_helpers_handle_empty_database_safely()
+    test_read_database_backup_bytes_returns_bytes_when_database_exists()
+    test_read_database_backup_bytes_handles_missing_database_safely()
+    test_saved_export_helpers_do_not_write_csv_files_to_disk()
+    test_saved_export_csvs_exclude_raw_resume_and_job_text()
     print("All streamlit app tests passed.")

@@ -6,6 +6,7 @@
 import csv
 import io
 import re
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -722,6 +723,30 @@ DELETE_SAVED_CONFIRM_RESET_PENDING_SESSION_KEY = (
 )
 DELETE_SAVED_SELECTED_SESSION_KEY = "delete_saved_analysis_selected_id"
 DELETE_SAVED_SUCCESS_SESSION_KEY = "delete_saved_analysis_success_message"
+SAVED_EXPORTS_MISSING_MESSAGE = (
+    "Saved export downloads will appear here after you save an analysis "
+    "with SQLite saving enabled."
+)
+SAVED_ANALYSES_CSV_COLUMNS = [
+    "run_id",
+    "job_result_id",
+    "run_timestamp",
+    "job_name",
+    "matched_skills_count",
+    "missing_skills_count",
+]
+SAVED_SKILL_GAPS_CSV_COLUMNS = [
+    "run_id",
+    "job_result_id",
+    "job_name",
+    "category",
+    "skill",
+]
+DATABASE_BACKUP_FILENAME = "analysis_results_backup.db"
+DATABASE_BACKUP_PRIVACY_NOTE = (
+    "The database backup may contain saved job-analysis metadata and "
+    "skill-gap results. Treat it as private local data."
+)
 
 
 def normalize_saved_result(saved_result):
@@ -1685,6 +1710,199 @@ def build_skill_gaps_csv_download(display):
     return output.getvalue()
 
 
+def query_all_saved_skill_gaps(connection):
+    """
+    Return every saved skill gap with job result ID when available.
+
+    Uses run_id and job_filename to join skill_gaps to job_results.
+    """
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            skill_gaps.run_id,
+            job_results.id,
+            skill_gaps.job_filename,
+            skill_gaps.category,
+            skill_gaps.skill
+        FROM skill_gaps
+        LEFT JOIN job_results
+            ON skill_gaps.run_id = job_results.run_id
+            AND skill_gaps.job_filename = job_results.job_filename
+        ORDER BY skill_gaps.run_id DESC,
+                 skill_gaps.job_filename ASC,
+                 skill_gaps.category ASC,
+                 skill_gaps.skill ASC;
+        """
+    )
+
+    skill_gaps = []
+
+    for row in cursor.fetchall():
+        skill_gaps.append(
+            {
+                "run_id": row[0],
+                "job_result_id": row[1],
+                "job_filename": row[2],
+                "category": row[3],
+                "skill": row[4],
+            }
+        )
+
+    return skill_gaps
+
+
+def load_all_saved_skill_gaps(database_path=DEFAULT_DATABASE_PATH):
+    """
+    Load every saved skill gap from SQLite.
+
+    Returns a dict with exists flag and skill gap records for export helpers.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        return {
+            "exists": False,
+            "database_path": database_path,
+            "skill_gaps": [],
+        }
+
+    connection = sqlite3.connect(database_path)
+
+    try:
+        skill_gaps = query_all_saved_skill_gaps(connection)
+    finally:
+        connection.close()
+
+    return {
+        "exists": True,
+        "database_path": database_path,
+        "skill_gaps": skill_gaps,
+    }
+
+
+def build_saved_analyses_csv_download(database_path=DEFAULT_DATABASE_PATH):
+    """
+    Build an in-memory CSV summary of every saved job result.
+
+    Does not include raw resume text or raw job-description text.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(SAVED_ANALYSES_CSV_COLUMNS)
+
+    saved_data = load_all_sorted_saved_results(database_path)
+
+    if saved_data["exists"]:
+        for saved_job in saved_data["saved_jobs"]:
+            normalized_job = normalize_saved_result(saved_job)
+            writer.writerow(
+                [
+                    normalized_job.get("run_id", ""),
+                    normalized_job.get("job_result_id", ""),
+                    normalized_job.get("run_timestamp", ""),
+                    normalized_job.get("job_filename", ""),
+                    normalized_job.get("matched_skills_count", ""),
+                    normalized_job.get("missing_skills_count", ""),
+                ]
+            )
+
+    return output.getvalue()
+
+
+def build_saved_skill_gaps_csv_download(database_path=DEFAULT_DATABASE_PATH):
+    """
+    Build an in-memory CSV of every saved missing skill.
+
+    Does not include raw resume text or raw job-description text.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(SAVED_SKILL_GAPS_CSV_COLUMNS)
+
+    saved_gaps = load_all_saved_skill_gaps(database_path)
+
+    if saved_gaps["exists"]:
+        for gap in saved_gaps["skill_gaps"]:
+            writer.writerow(
+                [
+                    gap.get("run_id", ""),
+                    gap.get("job_result_id", ""),
+                    gap.get("job_filename", ""),
+                    gap.get("category", ""),
+                    gap.get("skill", ""),
+                ]
+            )
+
+    return output.getvalue()
+
+
+def read_database_backup_bytes(database_path=DEFAULT_DATABASE_PATH):
+    """
+    Read the existing SQLite database file as bytes for download.
+
+    Returns None when the database file does not exist.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.is_file():
+        return None
+
+    return database_path.read_bytes()
+
+
+def render_saved_analysis_exports(st, database_path=DEFAULT_DATABASE_PATH):
+    """Show in-memory CSV and SQLite backup downloads for saved analyses."""
+    st.subheader("Export & backup")
+
+    saved_data = load_all_sorted_saved_results(database_path)
+
+    if not saved_data["exists"]:
+        st.info(SAVED_EXPORTS_MISSING_MESSAGE)
+        return
+
+    st.caption(
+        "Downloads are generated in memory only. Nothing is written to the project folder."
+    )
+
+    analyses_csv = build_saved_analyses_csv_download(database_path)
+    skill_gaps_csv = build_saved_skill_gaps_csv_download(database_path)
+    backup_bytes = read_database_backup_bytes(database_path)
+
+    export_col_analyses, export_col_gaps, export_col_backup = st.columns(3)
+
+    with export_col_analyses:
+        st.download_button(
+            label="Download saved analyses CSV",
+            data=analyses_csv,
+            file_name="saved_analyses_summary.csv",
+            mime="text/csv",
+            key="download_saved_analyses_csv",
+        )
+
+    with export_col_gaps:
+        st.download_button(
+            label="Download saved skill gaps CSV",
+            data=skill_gaps_csv,
+            file_name="saved_skill_gaps.csv",
+            mime="text/csv",
+            key="download_saved_skill_gaps_csv",
+        )
+
+    with export_col_backup:
+        if backup_bytes is not None:
+            st.download_button(
+                label="Download SQLite backup",
+                data=backup_bytes,
+                file_name=DATABASE_BACKUP_FILENAME,
+                mime="application/x-sqlite3",
+                key="download_database_backup",
+            )
+
+    st.caption(DATABASE_BACKUP_PRIVACY_NOTE)
+
+
 def render_analysis_downloads(st, display):
     """Show in-memory Markdown and CSV download buttons for the current result."""
     st.markdown("**Download exports**")
@@ -2106,9 +2324,11 @@ def _render_saved_analyses_tab(st):
             "Enable **Save this analysis to local SQLite database** on the "
             "**Analyze** tab after you run an analysis."
         )
+        render_saved_analysis_exports(st)
         return
 
     render_saved_analysis_history(st, saved_history_display)
+    render_saved_analysis_exports(st)
 
     saved_results_search_query = render_saved_result_search_input(
         st,
