@@ -1,15 +1,15 @@
 """
 Local FastAPI prototype for the rule-based Python analyzer.
 
-- Not authenticated yet
-- Not deployed
+- Optional shared-secret request validation on /analyze (not full production auth)
 - Does not save analyses or raw pasted text
 - Does not replace the Streamlit app
 """
 
 import os
+import secrets
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.analysis_service import analyze_request
@@ -51,6 +51,36 @@ def get_allowed_origins() -> list[str]:
     return parse_allowed_origins()
 
 
+def get_analysis_api_shared_secret() -> str | None:
+    """Shared secret for /analyze when ANALYSIS_API_SHARED_SECRET is set."""
+    raw = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    if raw is None or not raw.strip():
+        return None
+    return raw.strip()
+
+
+def verify_analysis_api_key(
+    x_analysis_api_key: str | None = Header(None, alias="X-Analysis-Api-Key"),
+) -> None:
+    """
+    Require X-Analysis-Api-Key when ANALYSIS_API_SHARED_SECRET is configured.
+
+    /health is not protected. When the secret env var is unset, local dev works
+    as before.
+    """
+    secret = get_analysis_api_shared_secret()
+    if secret is None:
+        return
+
+    if x_analysis_api_key is None or not secrets.compare_digest(
+        x_analysis_api_key, secret
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing analysis API key",
+        )
+
+
 app = FastAPI(
     title="Internship Fit Gap Analyzer API",
     description=(
@@ -65,7 +95,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-Analysis-Api-Key"],
 )
 
 
@@ -75,7 +105,10 @@ def health() -> dict[str, str]:
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+def analyze(
+    request: AnalyzeRequest,
+    _: None = Depends(verify_analysis_api_key),
+) -> AnalyzeResponse:
     """
     Analyze pasted resume and job description text in memory.
 

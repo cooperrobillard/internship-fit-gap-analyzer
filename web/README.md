@@ -12,13 +12,13 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Cloud save write contract** — [`src/lib/supabase/save-analysis-contract.ts`](src/lib/supabase/save-analysis-contract.ts) and [`database/WRITE_PATH.md`](database/WRITE_PATH.md)
 - **Supabase insert helper** — [`src/lib/supabase/save-analysis.ts`](src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`)
 - **Dashboard test cloud save** — controlled sample/mock save on `/dashboard` to verify Clerk + Supabase + RLS writes (not real analysis)
-- **Web analysis prototype** — dashboard form calls the local FastAPI service via [`src/lib/analysis/api-analysis-client.ts`](src/lib/analysis/api-analysis-client.ts) (`POST /analyze`; does not save pasted text)
+- **Web analysis prototype** — dashboard form calls [`src/lib/analysis/api-analysis-client.ts`](src/lib/analysis/api-analysis-client.ts) (`POST /api/analyze`; Next.js forwards to FastAPI; does not save pasted text)
 - **Web → cloud save mapping** — [`src/lib/analysis/to-cloud-save-input.ts`](src/lib/analysis/to-cloud-save-input.ts) maps `WebAnalysisInput` + `WebAnalysisResult` into `CloudAnalysisSaveInput` (skills + metadata only; raw pasted resume/job text is intentionally excluded)
 - **Prototype analysis cloud save** — dashboard **Save this prototype analysis** runs the mapper + `saveCloudAnalysis` after analysis (matched/missing skills and optional metadata only)
 
 ## Hosted prototype status
 
-The **hosted prototype** runs on **Vercel** (this app) + **Render** (FastAPI) + **Supabase** (database) + **Clerk** (auth). It is **not production-secure SaaS** yet — the public analysis API does not have production authentication, and a full privacy/security review is still outstanding.
+The **hosted prototype** runs on **Vercel** (this app) + **Render** (FastAPI) + **Supabase** (database) + **Clerk** (auth). It is **not production-secure SaaS** yet — analysis uses a shared-secret validation layer between Vercel and Render, not full user-facing API auth, and a full privacy/security review is still outstanding.
 
 - Use **generic sample text** in the hosted dashboard when demoing; avoid pasting sensitive resume or job descriptions into the public prototype.
 - The FastAPI service analyzes pasted text **in memory** and does not intentionally persist raw resume/job body text, but the deployment should not be treated as safe for private data until API auth and policy work are complete.
@@ -30,7 +30,7 @@ See [`docs/VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](../docs/VERSION_13_HOSTE
 - Comparing or loading detailed skill rows from the saved list UI
 - Billing, organizations, or deployment configuration
 
-The Python CLI and local Streamlit app remain available for full offline workflows. Local development still uses FastAPI on port 8000; the hosted Vercel app points at the Render API via `NEXT_PUBLIC_ANALYSIS_API_URL`.
+The Python CLI and local Streamlit app remain available for full offline workflows. Local development still uses FastAPI on port 8000; the browser calls `/api/analyze`, and the Next.js route handler forwards to FastAPI using `ANALYSIS_API_URL`.
 
 ## Run locally
 
@@ -89,7 +89,7 @@ npm run dev
 
 Next.js app: [http://localhost:3000](http://localhost:3000) — dashboard at `/dashboard`.
 
-Sign in, paste resume/job text, and click **Analyze pasted text** (`POST /analyze`). Local prototype only — not deployed. **Save this prototype analysis** stores skills and metadata in Supabase; raw pasted text is not saved.
+Sign in, paste resume/job text, and click **Analyze pasted text** (`POST /api/analyze` → FastAPI). Local prototype only — not deployed. **Save this prototype analysis** stores skills and metadata in Supabase; raw pasted text is not saved.
 
 Other useful commands:
 
@@ -122,7 +122,8 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 | Variable | Local example | Production |
 |----------|---------------|------------|
-| `NEXT_PUBLIC_ANALYSIS_API_URL` | `http://127.0.0.1:8000` | Deployed Render/Railway FastAPI URL |
+| `ANALYSIS_API_URL` | `http://127.0.0.1:8000` | Deployed Render/Railway FastAPI URL (server only) |
+| `ANALYSIS_API_SHARED_SECRET` | (optional locally) | Same secret on Vercel and Render for hosted validation |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk development instance | Clerk production instance |
 | `CLERK_SECRET_KEY` | Clerk secret (server only) | Clerk production secret (Vercel server env) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Same (hosted project) |
@@ -135,9 +136,10 @@ Optional Clerk route variables (`NEXT_PUBLIC_CLERK_SIGN_IN_URL`, etc.) are liste
 - `NEXT_PUBLIC_*` variables are **browser-visible** — only put values safe to expose (publishable keys, public URLs).
 - Never put `CLERK_SECRET_KEY` in client code or `NEXT_PUBLIC_*` names.
 - Never use the Supabase **service role** key in the browser — use the anon key only.
-- `NEXT_PUBLIC_ANALYSIS_API_URL` must point at a running FastAPI service; the dashboard analysis form fails if the API is unreachable.
+- `ANALYSIS_API_URL` must point at a running FastAPI service; the dashboard analysis form fails if the API is unreachable.
+- Set `ANALYSIS_API_SHARED_SECRET` on both Vercel and Render with the same value to enable hosted request validation. Never use `NEXT_PUBLIC_` for the secret.
 
-Centralized readers: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getAnalysisApiBaseUrl`, `getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is still accepted as a fallback for local `.env.local` files during migration.
+Centralized readers: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is still accepted as a fallback for local `.env.local` files during migration.
 
 ## Database schema (draft)
 

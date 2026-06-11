@@ -17,6 +17,14 @@ client = TestClient(app)
 
 SAMPLE_RESUME = "Python, Git, SQL, and technical documentation experience."
 SAMPLE_JOB = "Intern role requiring Python, SQL, pandas, and machine learning."
+TEST_SHARED_SECRET = "test-analysis-api-shared-secret"
+
+
+def _analyze_payload() -> dict[str, str]:
+    return {
+        "resumeText": SAMPLE_RESUME,
+        "jobText": SAMPLE_JOB,
+    }
 
 
 def test_health_returns_ok():
@@ -235,6 +243,93 @@ def test_cors_allows_production_origin_from_env():
         importlib.reload(api_main_module)
 
 
+def test_analyze_works_when_shared_secret_unset():
+    original = os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+
+    try:
+        response = client.post("/analyze", json=_analyze_payload())
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["matchedSkillsCount"] >= 1
+    finally:
+        if original is not None:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+
+def test_analyze_fails_when_shared_secret_set_but_header_missing():
+    original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+
+    try:
+        response = client.post("/analyze", json=_analyze_payload())
+
+        assert response.status_code == 401
+        assert "analysis api key" in response.json()["detail"].lower()
+    finally:
+        if original is None:
+            os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+        else:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+
+def test_analyze_fails_when_shared_secret_set_but_header_wrong():
+    original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+
+    try:
+        response = client.post(
+            "/analyze",
+            json=_analyze_payload(),
+            headers={"X-Analysis-Api-Key": "wrong-secret"},
+        )
+
+        assert response.status_code == 401
+        assert "analysis api key" in response.json()["detail"].lower()
+    finally:
+        if original is None:
+            os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+        else:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+
+def test_analyze_succeeds_when_shared_secret_set_and_header_matches():
+    original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+
+    try:
+        response = client.post(
+            "/analyze",
+            json=_analyze_payload(),
+            headers={"X-Analysis-Api-Key": TEST_SHARED_SECRET},
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["matchedSkillsCount"] >= 1
+    finally:
+        if original is None:
+            os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+        else:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+
+def test_health_works_when_shared_secret_set():
+    original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+
+    try:
+        response = client.get("/health")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+    finally:
+        if original is None:
+            os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+        else:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+
 def test_analyze_does_not_create_tracked_generated_files():
     repo_root = Path(__file__).resolve().parent.parent
     outputs_folder = repo_root / "data" / "outputs"
@@ -273,5 +368,10 @@ if __name__ == "__main__":
     test_parse_allowed_origins_default_never_includes_wildcard()
     test_cors_allows_local_nextjs_origin()
     test_cors_allows_production_origin_from_env()
+    test_analyze_works_when_shared_secret_unset()
+    test_analyze_fails_when_shared_secret_set_but_header_missing()
+    test_analyze_fails_when_shared_secret_set_but_header_wrong()
+    test_analyze_succeeds_when_shared_secret_set_and_header_matches()
+    test_health_works_when_shared_secret_set()
     test_analyze_does_not_create_tracked_generated_files()
     print("All API service tests passed.")

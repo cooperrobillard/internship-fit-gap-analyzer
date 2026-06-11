@@ -1,15 +1,19 @@
 /**
- * Browser client for the local FastAPI analysis service prototype.
+ * Browser client for the analysis API via the Next.js route handler.
  *
- * - Reads NEXT_PUBLIC_ANALYSIS_API_URL (defaults to http://127.0.0.1:8000)
- * - Sends pasted text to POST /analyze for in-memory analysis only
- * - Does not store resume/job text, call Supabase, or use Clerk
+ * - Calls POST /api/analyze (server forwards to FastAPI with a shared secret)
+ * - Does not store resume/job text, call Supabase, or expose server secrets
  */
 
-import { getAnalysisApiBaseUrl } from "@/lib/env-config";
 import type { WebAnalysisInput, WebAnalysisResult } from "./types";
 
-export { getAnalysisApiBaseUrl } from "@/lib/env-config";
+/** Relative App Router endpoint the dashboard calls from the browser. */
+export const ANALYSIS_API_ROUTE = "/api/analyze";
+
+/** Display helper for UI copy (browser-safe; no backend URL or secrets). */
+export function getAnalysisApiBaseUrl(): string {
+  return ANALYSIS_API_ROUTE;
+}
 
 type ApiAnalyzeResponse = {
   matchedSkills: { skill: string; category: string }[];
@@ -34,16 +38,14 @@ function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
 }
 
 /**
- * Call the local FastAPI /analyze endpoint with pasted resume and job text.
+ * Run analysis through the Next.js API route (forwards to FastAPI server-side).
  * Text is sent only for this request; this helper does not persist it.
  */
 export async function analyzeWithApi(
   input: WebAnalysisInput,
 ): Promise<ApiAnalysisClientResult> {
-  const baseUrl = getAnalysisApiBaseUrl();
-
   try {
-    const response = await fetch(`${baseUrl}/analyze`, {
+    const response = await fetch(ANALYSIS_API_ROUTE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -57,10 +59,25 @@ export async function analyzeWithApi(
     });
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          status: "error",
+          message: "Sign in to run analysis.",
+        };
+      }
+
       if (response.status === 422) {
         return {
           status: "error",
           message: "Resume text and job description text are required.",
+        };
+      }
+
+      if (response.status === 502 || response.status === 503) {
+        return {
+          status: "error",
+          message:
+            "Analysis service is unavailable. Check that the FastAPI server is running and try again.",
         };
       }
 

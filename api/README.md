@@ -40,6 +40,7 @@ Health check URL: `http://127.0.0.1:8000/health` (local) or `https://<your-host>
 | Variable | Purpose |
 |----------|---------|
 | `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (see below) |
+| `ANALYSIS_API_SHARED_SECRET` | Optional shared secret for `/analyze` request validation (see below) |
 | `PORT` | Set by the host platform; passed to uvicorn `--port` |
 
 Do not commit `.env` files or secrets to the repository.
@@ -75,6 +76,20 @@ After deploy, confirm the browser receives `Access-Control-Allow-Origin` for you
 
 The API analyzes pasted resume and job description text **in memory only**. It does not write raw resume or job text to disk, SQLite, Supabase, or external APIs.
 
+## Request validation (`/analyze`)
+
+When `ANALYSIS_API_SHARED_SECRET` is set on the server, `POST /analyze` requires a matching request header:
+
+```http
+X-Analysis-Api-Key: <same value as ANALYSIS_API_SHARED_SECRET>
+```
+
+Missing or wrong values return `401`. When the env var is unset, local development works as before (no header required).
+
+`GET /health` stays public and does not require the header.
+
+The Next.js dashboard calls `/api/analyze`, which forwards to FastAPI with this header using server-only env vars. This is a **first protection layer** (shared secret between app and API), not full production authentication. Do not log the secret.
+
 ## Security
 
-This is still a **prototype**. There is no production API authentication yet. Do not expose the service to untrusted public traffic without rate limiting and an auth strategy.
+This is still a **prototype**. Shared-secret validation is not a substitute for user auth, rate limiting, or a full API security review. Do not expose the service to untrusted public traffic without additional controls.
