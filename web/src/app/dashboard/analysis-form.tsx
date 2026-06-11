@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { runDemoRuleAnalysis } from "@/lib/analysis/demo-rule-analyzer";
-import type { WebAnalysisResult } from "@/lib/analysis/types";
+import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
@@ -50,6 +50,7 @@ export function AnalysisForm() {
   const [resumeText, setResumeText] = useState("");
   const [jobText, setJobText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [lastInput, setLastInput] = useState<WebAnalysisInput | null>(null);
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
 
   function handleAnalyze() {
@@ -64,15 +65,19 @@ export function AnalysisForm() {
 
     setValidationError(null);
 
-    const analysisResult = runDemoRuleAnalysis({
+    const analysisInput: WebAnalysisInput = {
       resumeText: trimmedResume,
       jobText: trimmedJob,
       jobTitle: jobTitle.trim() || undefined,
       company: company.trim() || undefined,
       sourceUrl: sourceUrl.trim() || undefined,
       notes: notes.trim() || undefined,
-    });
+    };
 
+    const analysisResult = runDemoRuleAnalysis(analysisInput);
+
+    // `lastInput` + `result` are ready for mapWebAnalysisToCloudSaveInput when save is wired.
+    setLastInput(analysisInput);
     setResult(analysisResult);
   }
 
@@ -188,8 +193,10 @@ export function AnalysisForm() {
             />
           </div>
           <p className="mt-4 text-xs text-zinc-500">
-            Optional metadata above is not saved. Use Test cloud save separately
-            to verify Supabase writes with sample data only.
+            Optional metadata above is not saved yet. A future save action can map{" "}
+            {lastInput ? "this run" : "the result"} to the cloud contract (skills +
+            metadata only, no pasted text). Use Test cloud save separately to
+            verify Supabase writes with sample data only.
           </p>
         </div>
       ) : null}

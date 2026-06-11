@@ -89,6 +89,19 @@ The signed-in dashboard includes **Test cloud save** ([`test-save-action.tsx`](.
 | Persistence | **Does not** save pasted text or connect results to `saveCloudAnalysis` yet |
 | Analyzer | Temporary demo taxonomy—not the full Python `src/` analyzer |
 
+## Step 10 — web result → cloud save contract (implemented)
+
+[`to-cloud-save-input.ts`](../src/lib/analysis/to-cloud-save-input.ts) exports `mapWebAnalysisToCloudSaveInput(input, result)`:
+
+| Behavior | Detail |
+|----------|--------|
+| Input | `WebAnalysisInput` + `WebAnalysisResult` from the dashboard prototype |
+| Output | `CloudAnalysisSaveInput` for `buildCloudAnalysisWritePlan` / `saveCloudAnalysis` |
+| Metadata | `runLabel` (job title/company when set, else default), plus optional `jobTitle`, `company`, `sourceUrl`, `notes` |
+| Skills | `matchedSkills` and `missingSkills` from the analysis result |
+| Privacy | **Does not** include `resumeText` or `jobText`; notes are user-entered only |
+| UI | **Not connected** — no save button on the analysis form yet |
+
 ## Next implementation step
 
-Map **`WebAnalysisResult` → `saveCloudAnalysis`** (skills + metadata only, no raw text) after reviewing the boundary—or replace the demo adapter with a Python analysis service. Python service integration remains a separate milestone.
+Add a real **Save this analysis** control on the dashboard: call `mapWebAnalysisToCloudSaveInput(lastInput, result)` then `saveCloudAnalysis` (same pattern as test save). Or replace the demo adapter with a Python analysis service — that remains a separate milestone.
