@@ -55,20 +55,26 @@ function AnalysisRow({ analysis }: { analysis: SavedCloudAnalysis }) {
   );
 }
 
-export function SavedAnalysesPanel() {
+type SavedAnalysesPanelProps = {
+  /** Increment to reload the list (e.g. after test cloud save). */
+  refreshKey?: number;
+};
+
+export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
   const sessionId = session?.id ?? null;
 
   const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null);
-  const completedSessionIdRef = useRef<string | null>(null);
+  const completedFetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!configured || !isLoaded || !sessionId || !session) {
       return;
     }
 
-    if (completedSessionIdRef.current === sessionId) {
+    const fetchKey = `${sessionId}:${refreshKey}`;
+    if (completedFetchKeyRef.current === fetchKey) {
       return;
     }
 
@@ -76,6 +82,8 @@ export function SavedAnalysesPanel() {
     let cancelled = false;
 
     async function loadSavedAnalyses() {
+      setLoadResult(null);
+
       const result = await fetchRecentSavedAnalyses(() =>
         activeSession.getToken(),
       );
@@ -84,7 +92,7 @@ export function SavedAnalysesPanel() {
         return;
       }
 
-      completedSessionIdRef.current = sessionId;
+      completedFetchKeyRef.current = fetchKey;
       setLoadResult(result);
     }
 
@@ -94,7 +102,7 @@ export function SavedAnalysesPanel() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configured, isLoaded, sessionId]);
+  }, [configured, isLoaded, sessionId, refreshKey]);
 
   if (!configured) {
     return (
@@ -136,7 +144,7 @@ export function SavedAnalysesPanel() {
         <p className="font-medium">Loading saved cloud analyses…</p>
         <p className="mt-2 text-sky-800/90">
           Read-only list from <code className="text-xs">job_analyses</code> (metadata
-          and counts only—no job body text). Cloud saving is not implemented yet.
+          and counts only—no job body text).
         </p>
       </div>
     );
@@ -157,8 +165,8 @@ export function SavedAnalysesPanel() {
         <p className="font-medium">Could not load saved cloud analyses</p>
         <p className="mt-2">{loadResult.message}</p>
         <p className="mt-3 text-red-900/80">
-          This is read-model scaffolding only. Creating or saving analyses from the
-          web app is not implemented yet.
+          Real web analysis saving is not implemented yet. Only the controlled test
+          save action writes sample rows.
         </p>
       </div>
     );
@@ -169,13 +177,13 @@ export function SavedAnalysesPanel() {
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
         <p className="font-medium text-zinc-900">Saved cloud analyses (read model)</p>
         <p className="mt-2">
-          No saved cloud analyses yet for your account. Rows appear here only after a
-          future cloud save path writes to <code className="text-xs">job_analyses</code>
-          —this dashboard does not create or save analyses yet.
+          No saved cloud analyses yet for your account. Use{" "}
+          <strong>Test cloud save</strong> above to insert one sample row and verify
+          Clerk + Supabase + RLS write behavior.
         </p>
         <p className="mt-3 text-xs text-zinc-500">
-          Use the Python CLI or local Streamlit app for analyses today. The Python
-          analysis service is not connected to this dashboard yet.
+          Real resume/job analysis from this web UI is not implemented yet. Use the
+          Python CLI or local Streamlit app for analyses today.
         </p>
       </div>
     );
@@ -187,7 +195,7 @@ export function SavedAnalysesPanel() {
       <p className="mt-2 text-zinc-600">
         Showing your {loadResult.analyses.length} most recent rows from{" "}
         <code className="text-xs">job_analyses</code> (metadata and skill counts
-        only). Creating or saving analyses from this app is not implemented yet.
+        only). Real analysis saving is not implemented—test save writes sample rows only.
       </p>
       <ul className="mt-4 space-y-3">
         {loadResult.analyses.map((analysis) => (

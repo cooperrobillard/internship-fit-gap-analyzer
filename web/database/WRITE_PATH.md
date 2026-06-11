@@ -68,6 +68,17 @@ Internship search data is sensitive. The first hosted write path stores **derive
 | UI | **Not connected** — helper only; future Step 8+ can add a dev/test save control |
 | Auth | Caller supplies Clerk-authenticated Supabase client + `clerkUserId`; assumes RLS |
 
+## Step 8 — dashboard test save (implemented)
+
+The signed-in dashboard includes **Test cloud save** ([`test-save-action.tsx`](../src/app/dashboard/test-save-action.tsx)):
+
+| Behavior | Detail |
+|----------|--------|
+| Purpose | Exercises `saveCloudAnalysis()` with a fixed sample `CloudAnalysisSaveInput` |
+| Data | Metadata + skill rows only — **no** raw resume or job text |
+| Honesty | Labeled as test/scaffold; not the real analysis workflow |
+| After save | Saved analyses list refreshes via a simple `refreshKey` |
+
 ## Next implementation step
 
-Expose saving behind a **small test/dev-only dashboard control** or wire to a future analysis result — not automatic production save until reviewed. Python analysis service integration remains a separate milestone.
+Wire cloud save to a **real web analysis result** (likely after a Python analysis service or in-browser analyzer). Python service integration remains a separate milestone.

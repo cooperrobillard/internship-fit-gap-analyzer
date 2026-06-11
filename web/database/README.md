@@ -9,11 +9,12 @@ This folder holds a **first-pass cloud database schema** for the future hosted I
 - **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses`)
 - **Version 12 Step 5:** read-only saved-analysis list from `job_analyses` (`web/src/lib/supabase/saved-analyses.ts`) — first table read as a list, not only a count
 - **Version 12 Step 6:** write-path design — [`WRITE_PATH.md`](WRITE_PATH.md) and [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts) (first write path avoids raw resume/job text)
-- **Version 12 Step 7:** insert helper — [`save-analysis.ts`](../src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`; not wired to dashboard UI yet)
+- **Version 12 Step 7:** insert helper — [`save-analysis.ts`](../src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`)
+- **Version 12 Step 8:** dashboard **Test cloud save** — sample rows only via [`test-save-action.tsx`](../src/app/dashboard/test-save-action.tsx)
 
 ## What is not implemented yet
 
-- User-facing cloud save from the dashboard (helper exists for programmatic/dev use only)
+- Real resume/job analysis save from the web UI (test action writes mock data only)
 - Python analysis API or cloud save flow
 
 **User-facing cloud saving does not work yet** (no save button in the UI). The working analyzer remains the Python CLI and local Streamlit app at the repository root.

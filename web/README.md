@@ -10,11 +10,12 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md)
 - **Supabase client scaffolding** — Clerk-aware browser client, read-only status check, and read-only saved-analysis list from `job_analyses` (metadata/counts only)
 - **Cloud save write contract** — [`src/lib/supabase/save-analysis-contract.ts`](src/lib/supabase/save-analysis-contract.ts) and [`database/WRITE_PATH.md`](database/WRITE_PATH.md)
-- **Supabase insert helper** — [`src/lib/supabase/save-analysis.ts`](src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`; programmatic only, not wired to UI)
+- **Supabase insert helper** — [`src/lib/supabase/save-analysis.ts`](src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`)
+- **Dashboard test cloud save** — controlled sample/mock save on `/dashboard` to verify Clerk + Supabase + RLS writes (not real analysis)
 
 ## What is not implemented yet
 
-- User-facing cloud saving from the dashboard (insert helper exists but no save button or analysis flow yet)
+- Real resume/job analysis saving from the web UI (test save writes sample rows only)
 - Python analysis API or service integration
 - Saving, comparing, or loading real analyses from this UI
 - Billing, organizations, or deployment configuration
