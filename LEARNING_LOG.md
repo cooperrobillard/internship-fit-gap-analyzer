@@ -2330,3 +2330,33 @@ Important caution:
 Next step:
 
 * Version 13 Step 5 — deploy backend prototype to Render or Railway.
+
+## Version 13 Step 5 — Deploy FastAPI backend prototype to Render
+
+Deployed the FastAPI analysis service prototype to Render as a Python web service.
+
+Render deployment settings:
+
+* Runtime: Python 3
+* Root directory: repository root
+* Build command: `pip install -r requirements.txt`
+* Start command: `uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+* Health check path: `/health`
+
+Verified:
+
+* Render built and started the backend service.
+* `GET /health` returned a healthy response.
+* `POST /analyze` returned the expected analysis response shape using safe sample text.
+* CORS still uses explicit allowed origins through `ALLOWED_ORIGINS`.
+
+Important caution:
+
+* This is a prototype backend deployment, not a production-secure API.
+* CORS is not authentication.
+* Real resume/job text should not be pasted into public logs, docs, screenshots, or commits.
+* Production API authentication or request validation should be added before serious public use.
+
+Next step:
+
+* Version 13 Step 6 — deploy the Next.js frontend prototype to Vercel and point it to the Render backend URL.
