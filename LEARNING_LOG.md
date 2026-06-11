@@ -2131,3 +2131,21 @@ What I learned:
 - A boundary defines the shape of data that future services can exchange.
 - A temporary adapter can make the UI testable before the real backend service is connected.
 - Separating analysis, saving, and cloud persistence keeps each branch safer and easier to debug.
+
+## Version 12 Step 10 — mapped web analysis results to cloud save contract
+
+Added a mapping layer between the web analysis prototype and the cloud saved-analysis write contract.
+
+This step created a helper that converts a web analysis input and result into the existing cloud save payload shape. The mapping carries over job metadata, matched skills, and missing skills, while intentionally excluding raw pasted resume text and raw job-description text.
+
+Key decisions:
+- Add the mapping layer before adding a real “Save this analysis” button.
+- Keep analysis, mapping, and Supabase writes separated.
+- Exclude raw resume and job text from the cloud save payload.
+- Preserve the existing Python/Streamlit app unchanged.
+- Keep the dashboard honest that real cloud saving from the analysis form is not connected yet.
+
+What I learned:
+- Mapping helpers create clean boundaries between UI state and persistence contracts.
+- Excluding sensitive raw text at the mapping layer helps enforce privacy before data reaches the database helper.
+- Separating mapping from saving makes the next branch safer and easier to test.
