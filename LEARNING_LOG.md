@@ -2446,3 +2446,26 @@ Important caution:
 Next step:
 
 * Version 13 Step 8 — add a hosted prototype notice and deployment status section to the web app or README.
+
+## Version 13 Step 8 — Hosted prototype notice and deployment status
+
+Added visible hosted-prototype messaging to the web app after the first successful Vercel + Render deployment.
+
+Changes included:
+
+* Added a clear notice that the hosted app is still a prototype.
+* Clarified that the analyzer is currently rule-based.
+* Clarified that the frontend is deployed on Vercel and connected to the Render FastAPI backend.
+* Added or documented the current deployment stack: Vercel, Render, Supabase, and Clerk.
+* Added a warning not to paste sensitive resume or job text into the hosted prototype yet.
+* Preserved the existing analysis, auth, and cloud-save behavior.
+
+Important caution:
+
+* The app is hosted, but it is not production-secure SaaS yet.
+* CORS is working, but CORS is not authentication.
+* The backend still needs production API authentication or request validation before broad sharing.
+
+Next step:
+
+* Version 13 Step 9 — add a hosted demo verification checklist or begin API authentication/request validation planning.
