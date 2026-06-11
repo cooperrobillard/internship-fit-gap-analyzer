@@ -2287,3 +2287,24 @@ Important caution:
 Next step:
 
 * Version 13 Step 3 — prepare Next.js/Vercel environment configuration.
+
+## Version 13 Step 3 — Prepare Next.js for Vercel environment configuration
+
+Prepared the Next.js frontend for a future Vercel deployment step.
+
+Changes included:
+
+* Updated the web environment example file with the required Clerk, Supabase, and analysis API variables.
+* Documented that local values belong in `web/.env.local` and production values belong in the Vercel project dashboard.
+* Clarified that `NEXT_PUBLIC_ANALYSIS_API_URL` should point to the local FastAPI server during development and the deployed Render/Railway FastAPI URL in production.
+* Clarified that `NEXT_PUBLIC_` variables are browser-visible and should only contain values that are safe to expose.
+* Preserved the rule that real secrets must never be committed.
+* Preserved the rule that Supabase service-role keys must never be used in browser code.
+
+Important caution:
+
+* This was configuration preparation only. The web app has not been deployed to Vercel yet.
+
+Next step:
+
+* Version 13 Step 4 — configure production CORS strategy between the deployed frontend and FastAPI backend.
