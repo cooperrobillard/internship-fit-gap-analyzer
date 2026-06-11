@@ -75,12 +75,26 @@ Important limits:
 - **Local only.** Deletes affect `data/outputs/analysis_results.db` on your machine only.
 - **Skill gaps keyed by run + job name.** `skill_gaps` rows do not store `job_result_id`; deletion matches `run_id` and `job_filename`. Normal UI saves have one result per job name per run.
 - **Search is substring-based.** No date-range, category, or gap-count filters.
-- **No saved-record editing.** You cannot change labels, metadata, or stored skill rows from the UI.
-- **No company/title metadata.** Labels use stored job filename, timestamps, IDs, and counts only.
+- **No saved-record editing.** You cannot change labels, metadata, or stored skill rows after save.
 - **Gap priority summary stays global.** Search filters browsing and pickers but not the all-saves priority summary.
 - **Parent run cleanup.** An empty `analysis_runs` row is removed only when its last `job_results` row is deleted; multi-job runs keep the parent when siblings remain.
 
 See [`VERSION_7_CHECKPOINT.md`](VERSION_7_CHECKPOINT.md) for the full Version 7 workflow and commands.
+
+## Saved-analysis metadata limitations (Version 10)
+
+The local Streamlit UI can save optional **source URL** and **notes** per job result when SQLite saving is enabled.
+
+Important limits:
+
+- **Save-time only.** Metadata is entered on the Analyze tab before save; there is no post-save edit UI.
+- **Optional fields.** Blank source URL and notes are not stored as meaningful values.
+- **Local SQLite only.** Metadata is not synced to cloud storage.
+- **No application tracker.** No status fields (applied, rejected, etc.), tags, or reminders.
+- **Display labels still use job name.** Optional job title/company from the UI compose the stored `job_filename` label; source URL and notes are separate fields.
+- **CLI saves omit metadata by default.** Terminal `--database` runs do not prompt for source URL or notes unless added in a future CLI step.
+
+See [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md).
 
 ## Keyword matching limitations
 

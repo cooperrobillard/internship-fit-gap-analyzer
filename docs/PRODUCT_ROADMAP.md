@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 9**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, portable pasted/uploaded text workflows, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, in-memory current-analysis downloads, saved-data CSV exports and SQLite backup download, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
+As of **Version 10**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, portable pasted/uploaded text workflows, optional SQLite persistence in both CLI and UI, optional saved-analysis **source URL and notes** metadata, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, in-memory current-analysis downloads, saved-data CSV exports and SQLite backup download, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
 
 **What exists today:**
 
@@ -23,6 +23,7 @@ As of **Version 9**, the project is a **stable, rule-based Python CLI tool** wit
 - Version 7 additions: improved saved-result labels, newest-first sorting across all saves, **Search saved analyses**, guarded **Delete Saved Analysis** (one record at a time, localhost only).
 - Version 8 additions: auto-discovering `run_tests.py` (every top-level `tests/test_*.py` file), documented script-style test architecture ([`TESTING.md`](TESTING.md)), Streamlit `width="stretch"` maintenance (replacing deprecated `use_container_width`).
 - Version 9 additions: portable resume input (pasted and uploaded UTF-8 `.txt`), optional job title/company metadata labels, uploaded job-description input, simplified Streamlit layout and analysis input flow, current-analysis Markdown/CSV downloads, saved-analysis CSV exports and SQLite backup download (localhost only).
+- Version 10 additions: optional saved-analysis **source URL** and **notes** on `job_results`, idempotent SQLite migration, Streamlit metadata inputs and save flow, search/display/CSV support (localhost only).
 
 **What does not exist today:**
 
@@ -169,13 +170,27 @@ Delivered:
 
 **Explicitly not Version 9:** semantic matching, fit scores, deployment, auth, cloud persistence, source URL/notes/tags, PDF/DOCX parsing, restore/import from backup, SQLite schema migration.
 
+### Version 10: Saved-analysis metadata — **complete**
+
+**Goal:** Store optional **source URL** and **notes** per saved job result locally.
+
+Plan: [`VERSION_10_PLAN.md`](VERSION_10_PLAN.md). Checkpoint: [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md).
+
+Delivered:
+
+- nullable `source_url` and `notes` on `job_results` with idempotent migration,
+- Streamlit optional inputs and save-flow wiring,
+- saved-history table, detail view, search, and CSV export support.
+
+**Explicitly not Version 10:** statuses, tags, application tracker, post-save editing, restore/import, deployment, auth, semantic matching.
+
 ### Future versions (not committed)
 
-The items below are **candidates for a future planning step**. No version number, scope, or implementation order is selected yet. **Begin with a small planning/audit step**—likely starting with richer saved-analysis metadata (source URL and notes), which may require a SQLite schema/migration decision.
+The items below are **candidates for a future step**. No version number or scope is committed yet.
 
 | Candidate area | Notes |
 |----------------|--------|
-| **Source URL and notes metadata** | Likely needs deliberate SQLite schema/migration design |
+| **Publish-readiness polish** | README/quickstart, demo workflow, privacy audit, local launch polish (possible Version 11) |
 | **Restore/import planning** | Research only; Version 9 shipped backup download, not import |
 | **Richer saved-analysis organization** | Tags, filters, favorites—only with clear scope |
 | **Test-framework migration** | unittest or pytest **only if** triggers in [`TESTING.md`](TESTING.md) are met |
@@ -209,6 +224,7 @@ Treat these as **prerequisites**, not suggestions:
 | Version 7 organization validated | Labels, search, and guarded deletion work during real local use |
 | Version 8 testing reliability validated | `run_tests.py` runs full suite; test architecture documented |
 | Version 9 usability/portability validated | Pasted/uploaded workflows, downloads, exports feel useful locally |
+| Version 10 metadata validated | Optional source URL/notes save, search, and export work locally |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -253,13 +269,15 @@ Version 8 (complete)
   → full test-runner coverage, TESTING.md, Streamlit width maintenance
 Version 9 (complete)
   → portable inputs, UI polish, current downloads, saved exports/backup
-Next (planning only — no version number committed)
-  → audit metadata/schema needs; evaluate source URL/notes, restore/import research, hosted research, or other candidates in table above
+Version 10 (complete)
+  → optional source URL/notes metadata on saved job results
+Next (not committed)
+  → publish-readiness polish (possible Version 11); see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md)
 Future (optional, much later)
   → private hosted UI, auth/cloud architecture, semantic matching; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep `python3 run_tests.py` green; use the CLI and local Streamlit UI (including exports) during real internship search; **begin the next milestone with a separate planning step** (see [`VERSION_9_CHECKPOINT.md`](VERSION_9_CHECKPOINT.md)). Hosted deployment and other future candidates remain uncommitted.
+**Immediate recommendation:** Keep `python3 run_tests.py` green; use the CLI and local Streamlit UI during real internship search; consider **Version 11 publish-readiness** next (see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md)). Hosted deployment remains uncommitted.
 
 ---
 
@@ -324,6 +342,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Built a local Streamlit UI with optional SQLite save, searchable saved-history views, saved-analysis comparison, a recurring gap priority summary, and guarded single-result deletion (Versions 4–7).
 - Improved test reliability with auto-discovering `run_tests.py` and documented script-style test architecture (Version 8).
 - Polished the local Streamlit UI with portable pasted/uploaded text workflows, in-memory downloads, and saved-data exports/backup (Version 9).
+- Added optional saved-analysis source URL and notes metadata with SQLite migration (Version 10).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -342,11 +361,11 @@ Update the one-liner when a hosted UI exists—still without overstating AI capa
 
 ## 11. Near-term next steps
 
-Actionable items after **Version 9 complete**—**no automatic next implementation**:
+Actionable items after **Version 10 complete**—**no automatic next implementation**:
 
 1. **Run the usual gate** before any merge: `python3 run_tests.py` and `python3 src/main.py`.
-2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs, downloads, and exports.
-3. **Start the next milestone with planning only** — see future candidates in §4 and [`VERSION_9_CHECKPOINT.md`](VERSION_9_CHECKPOINT.md).
+2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs, downloads, exports, and optional metadata.
+3. **Consider Version 11 publish-readiness** — see [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md).
 4. **Update README “Planned next steps”** when a new milestone is actually planned or shipped.
 5. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment until explicitly planned.
 
@@ -358,4 +377,4 @@ Actionable items after **Version 9 complete**—**no automatic next implementati
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 9 complete (local UI usability and portability); next milestone uncommitted; no hosted deployment.*
+*Last aligned with: Version 10 complete (saved-analysis metadata); possible Version 11 publish-readiness next; no hosted deployment.*
