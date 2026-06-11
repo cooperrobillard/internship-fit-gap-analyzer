@@ -2,13 +2,21 @@
 
 Implementation checklist for moving the **local full-stack prototype** to a **first hosted prototype**. This is a practical deployment path—not a full architecture spec.
 
-Related: [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), root [`README.md`](../README.md), [`web/README.md`](../web/README.md).
+Related: [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md), [`VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md), root [`README.md`](../README.md), [`web/README.md`](../web/README.md).
+
+---
+
+## Hosted prototype status (checkpoint)
+
+**Version 13 Steps 5–6 (deploy docs) are complete.** The first full-stack hosted prototype (Vercel + Render + Clerk + Supabase) was deployed and verified. Detailed lessons, working scope, and cleanup priorities are in [`VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md).
+
+**Next:** Version 13 Step 8 — hosted prototype notice in the web app or README.
 
 ---
 
 ## Current goal
 
-- Move from local-only (FastAPI on `:8000`, Next.js on `:3000`) toward a **first hosted full-stack prototype**.
+- ~~Move from local-only toward a **first hosted full-stack prototype**.~~ **Done** — see checkpoint doc; continue hardening and honest UX.
 - Keep the **stable local Python/Streamlit app** intact at the repository root—it is not replaced by the hosted web path.
 
 ---
@@ -117,8 +125,9 @@ Check off in this order to reduce broken intermediate states:
    - `NEXT_PUBLIC_ANALYSIS_API_URL` → deployed FastAPI URL
 
 8. **Deploy Next.js frontend**
-   - Vercel project rooted at `web/`
+   - Vercel project rooted at `web/` — see [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md)
    - Build command: `npm run build` (default)
+   - Set `NEXT_PUBLIC_ANALYSIS_API_URL` to the Render API URL; update Render `ALLOWED_ORIGINS` with the Vercel host
 
 9. **Test full hosted flow**
    - Sign in (Clerk)
@@ -142,16 +151,9 @@ Check off in this order to reduce broken intermediate states:
 
 ---
 
-## Recommended next implementation branch
+## Recommended next implementation step
 
-**`feature/fastapi-hosting-prep`**
-
-Scope for that branch (not this doc):
-
-- Production uvicorn start command and platform config notes
-- CORS driven by environment variable
-- Optional health/readiness improvements for the host
-- No deployment execution required in the first PR—prep only
+**Version 13 Step 8** — Add a hosted prototype notice and deployment status copy to the web UI or root README (see checkpoint doc).
 
 ---
 
