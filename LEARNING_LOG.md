@@ -1783,3 +1783,33 @@ This improved my understanding of:
 - CSV creation with Python's standard library,
 - separating UI exports from disk-based CLI outputs,
 - and making a local prototype feel more like a usable product.
+
+## Version 9 Step 6 — Saved-analysis exports and backup
+
+Added saved-analysis export and backup downloads to the local Streamlit UI.
+
+When a saved SQLite database exists, the app can now provide:
+- a saved analyses summary CSV,
+- a saved skill gaps CSV,
+- and a SQLite database backup download.
+
+The CSV exports and database backup are generated from existing local saved data without writing new export files into the repository. This improves local data portability and makes the app more practical as an internship-search tool.
+
+The exports intentionally avoid raw resume text and raw full job-description text. The SQLite backup is still private local data because it may contain saved job-analysis metadata and skill-gap results.
+
+This step intentionally did not add cloud backup, restore/import behavior, database migrations, source URLs, notes, tags, authentication, deployment configuration, semantic matching, fit scores, or new dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit checks for no-database and saved-database export states
+- manual download checks for saved analyses CSV, saved skill gaps CSV, and SQLite backup
+- privacy and generated-file checks
+
+This improved my understanding of:
+- local data portability,
+- generating CSV exports from saved records,
+- reading a SQLite database backup as bytes,
+- protecting private local data,
+- and adding practical user value without introducing cloud architecture.
