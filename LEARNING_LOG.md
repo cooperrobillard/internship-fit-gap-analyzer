@@ -2003,3 +2003,21 @@ What I learned:
 - Authentication in a Next.js app involves provider setup, route protection, public auth pages, and signed-in/signed-out UI states.
 - Environment variables separate private local configuration from committed source code.
 - A protected dashboard can be built before the database exists, as long as the UI clearly labels unfinished features.
+
+## Version 12 Step 3 — designed Supabase user-owned analysis schema
+
+Designed the first cloud database schema for the future hosted account-based version.
+
+This step added a draft Supabase/Postgres schema for user-owned analysis data, including profiles, resume profiles, analysis runs, job analyses, missing skill gaps, and matched skills. The schema uses Clerk user IDs as the ownership field and includes first-pass Row Level Security policies so users can only access rows that belong to their account.
+
+Key decisions:
+- Keep the existing local Python/Streamlit app unchanged.
+- Design the cloud schema before wiring Supabase into the app.
+- Store Clerk user IDs as text because Clerk IDs are strings.
+- Use Row Level Security as the main database-level protection model.
+- Treat storing raw resume text and job-description text as a privacy-sensitive design question before public launch.
+
+What I learned:
+- Moving from local SQLite to hosted Postgres requires explicit user ownership on every saved-data table.
+- Row Level Security policies act like database-level filters that restrict which rows a signed-in user can read or modify.
+- Authentication alone is not enough; the database schema also needs user-specific access boundaries.
