@@ -12,7 +12,7 @@ const placeholderCards = [
   },
   {
     title: "Skill gaps",
-    body: "Web analysis prototype shows matched/missing skills from pasted text and can save structured results to Supabase.",
+    body: "Local FastAPI analysis returns matched/missing skills; optional cloud save stores structured results only.",
   },
   {
     title: "Job tracker",
@@ -34,15 +34,14 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
           You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
-          Clerk authentication is active. You can run a minimal pasted-text web
-          analysis prototype (with optional cloud save of structured results),
-          verify Supabase connectivity, list saved cloud analyses, and run a
-          controlled test cloud save. The full Python analyzer service is not
-          connected yet.
+          The analysis form calls a <strong>local FastAPI service</strong> (not
+          deployed). Cloud save stores skills and metadata only — not raw resume
+          or job text. Supabase status, saved analyses, and test cloud save are
+          available below.
         </p>
         <p className="mt-4 text-sm text-amber-800">
-          For real analyses today, use the Python CLI and local Streamlit app in
-          the repository root.
+          For full local workflows (CLI, SQLite history, uploads), use the Python
+          CLI and Streamlit app in the repository root.
         </p>
 
         <DashboardInteractiveSection />
@@ -51,8 +50,8 @@ export default async function DashboardPage() {
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-zinc-900">Coming soon</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Placeholder cards for future dashboard areas. Web analysis prototype and
-          test cloud save exist; full product flows are not complete yet.
+          Placeholder cards for future dashboard areas. Local web + API prototype
+          exists; hosted deployment is not ready yet.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {placeholderCards.map((card) => (

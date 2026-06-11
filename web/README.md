@@ -6,7 +6,7 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 
 - Landing page describing the planned hosted product
 - **Clerk authentication shell** — sign-in, sign-up, protected dashboard route, header nav with `UserButton`
-- Dashboard placeholder cards (no real data or cloud saving)
+- Dashboard with local FastAPI analysis, prototype cloud save, and saved-analyses read model
 - **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md)
 - **Supabase client scaffolding** — Clerk-aware browser client, read-only status check, and read-only saved-analysis list from `job_analyses` (metadata/counts only)
 - **Cloud save write contract** — [`src/lib/supabase/save-analysis-contract.ts`](src/lib/supabase/save-analysis-contract.ts) and [`database/WRITE_PATH.md`](database/WRITE_PATH.md)
@@ -22,7 +22,7 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - Comparing or loading detailed skill rows from the saved list UI
 - Billing, organizations, or deployment configuration
 
-The **working analyzer** remains the Python CLI and local Streamlit app at the repository root. Use those for real analyses until later branches wire this frontend to a backend.
+The Python CLI and local Streamlit app remain available for full offline workflows. The web dashboard uses the local FastAPI service during development.
 
 ## Run locally
 
@@ -57,21 +57,28 @@ The sign-in/sign-up URLs and fallback redirects are already documented in `.env.
 
 The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. Prototype cloud save writes structured results only. Do not use the Supabase service role key in browser code.
 
-### Local two-server development (analysis form)
+### Local two-server workflow
 
-**Terminal 1 — FastAPI (repository root):**
+The dashboard analysis form requires the FastAPI service running locally.
+
+**Terminal 1 (repository root):**
 
 ```bash
 python3 -m uvicorn api.main:app --reload --port 8000
 ```
 
-**Terminal 2 — Next.js (`web/`):**
+Health check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+**Terminal 2:**
 
 ```bash
+cd web
 npm run dev
 ```
 
-Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard), sign in, paste resume/job text, and click **Analyze pasted text**. The form calls `POST {NEXT_PUBLIC_ANALYSIS_API_URL}/analyze`. The API is local/prototype only—not deployed. **Save this prototype analysis** still saves matched/missing skills and metadata to Supabase only; raw pasted resume/job text is not stored.
+Next.js app: [http://localhost:3000](http://localhost:3000) — dashboard at `/dashboard`.
+
+Sign in, paste resume/job text, and click **Analyze pasted text** (`POST /analyze`). Local prototype only — not deployed. **Save this prototype analysis** stores skills and metadata in Supabase; raw pasted text is not saved.
 
 Other useful commands:
 
@@ -100,7 +107,7 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 ## Database schema (draft)
 
-See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The dashboard **reads** `job_analyses` list metadata when configured; **cloud saving is not implemented**.
+See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The dashboard reads `job_analyses` metadata and supports prototype cloud save (structured results only).
 
 ## Related docs
 

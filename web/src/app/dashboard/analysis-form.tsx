@@ -160,19 +160,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
   return (
     <div className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}>
-      <p className="font-medium text-violet-950">Web analysis prototype</p>
+      <p className="font-medium text-violet-950">Web analysis (local prototype)</p>
       <p className="mt-2 text-violet-900/90">
-        Analyze pasted resume and job description text through the{" "}
-        <strong>local FastAPI analysis service</strong> (
-        <code className="text-xs">{getAnalysisApiBaseUrl()}</code>). Start it
-        from the repository root with{" "}
-        <code className="text-xs">
-          python3 -m uvicorn api.main:app --reload --port 8000
-        </code>
-        . This is a local development prototype only—not deployed and not
-        authenticated. Pasted text is sent for analysis in this session only; you
-        can save the structured result (skills + metadata) to Supabase after
-        analyzing. Raw resume and job description text are never stored.
+        Calls the <strong>local FastAPI Python analyzer</strong> at{" "}
+        <code className="text-xs">{getAnalysisApiBaseUrl()}</code>. Local
+        development only — not a deployed service. Optional cloud save stores
+        skills and metadata only; raw resume and job text are not saved.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -281,9 +274,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </div>
           <div className="mt-5 border-t border-violet-100 pt-4">
             <p className="text-xs text-zinc-600">
-              This saves the prototype result only (skills + metadata). The
-              analysis API is local and not deployed. Raw pasted resume and job
-              text are not saved.
+              Saves analysis results and metadata only — not raw pasted text.
             </p>
 
             {!configured ? (

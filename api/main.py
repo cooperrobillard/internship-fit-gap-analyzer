@@ -21,8 +21,9 @@ _LOCAL_DEV_ORIGINS = [
 app = FastAPI(
     title="Internship Fit Gap Analyzer API",
     description=(
-        "Local prototype HTTP wrapper around the existing rule-based Python analyzer. "
-        "For development only — not authenticated, not deployed, and does not persist analyses."
+        "Local prototype HTTP wrapper around the rule-based Python analyzer in src/. "
+        "Used by the Next.js dashboard during local development only — not authenticated, "
+        "not deployed, and does not persist analyses or raw pasted text."
     ),
     version="0.1.0",
 )

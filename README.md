@@ -95,7 +95,17 @@ curl -s -X POST http://127.0.0.1:8000/analyze \
   -d '{"resumeText":"Python and SQL experience","jobText":"Intern role requiring Python, SQL, and pandas."}'
 ```
 
-For local web integration, also run the Next.js app in `web/` (`npm run dev`) and set `NEXT_PUBLIC_ANALYSIS_API_URL` in `web/.env.local` (see `web/README.md`). The dashboard analysis form calls this API during local development only.
+### 7. Local web + API development
+
+Three separate local surfaces — all development-only, nothing deployed:
+
+| Surface | Command | Role |
+|---------|---------|------|
+| **Streamlit** | `python3 -m streamlit run streamlit_app.py` | Full local UI (CLI features, SQLite, uploads) |
+| **FastAPI** | `python3 -m uvicorn api.main:app --reload --port 8000` | Python analysis boundary for the web app |
+| **Next.js** | `cd web && npm run dev` | Hosted-style dashboard (Clerk, Supabase, analysis form) |
+
+The Next.js dashboard calls the local FastAPI `/analyze` endpoint. Set `NEXT_PUBLIC_ANALYSIS_API_URL` in `web/.env.local` (see `web/README.md`). FastAPI must be running before using the dashboard analysis form.
 
 For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
 

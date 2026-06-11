@@ -14,15 +14,19 @@ User (single machine)
   │     └── analysis_runner.py → extract/compare/summarize → markdown/CSV/SQLite
   ├── Streamlit UI (streamlit_app.py, localhost)
   │     └── same analysis_runner + database.py helpers
+  ├── FastAPI (api/main.py, localhost:8000)
+  │     └── analysis_runner via HTTP — local dev boundary for Next.js
+  ├── Next.js (web/, localhost:3000)
+  │     └── Clerk + Supabase scaffold; calls local FastAPI for analysis
   └── Local SQLite (optional, data/outputs/analysis_results.db)
         └── analysis_runs, job_results, skill_gaps (+ optional source_url, notes)
 ```
 
-- **Analysis logic** lives in `src/` and is shared by CLI and Streamlit.
-- **Persistence** is optional, file-based SQLite on the local filesystem.
-- **Local API prototype only** — `api/main.py` (FastAPI on port 8000) wraps the rule-based analyzer for development; not authenticated, not deployed, and not wired to the Next.js app yet.
+- **Analysis logic** lives in `src/` and is shared by CLI, Streamlit, and FastAPI.
+- **Persistence** is optional, file-based SQLite on the local filesystem (CLI/Streamlit).
+- **Local FastAPI prototype** — `api/main.py` wraps the rule-based analyzer; wired to the Next.js dashboard during local development only. Still needs deployment, API authentication, hosting, and production CORS/security decisions before going live.
 - **No hosted service layer** — no production API deployment, no auth middleware on the API, no cloud DB from the API.
-- **No multi-tenant boundary** — one user, one machine, one DB path.
+- **No multi-tenant boundary** — one user, one machine, one DB path (local tools); Supabase cloud writes are prototype-only.
 
 ---
 
