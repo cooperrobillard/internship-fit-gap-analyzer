@@ -2149,3 +2149,21 @@ What I learned:
 - Mapping helpers create clean boundaries between UI state and persistence contracts.
 - Excluding sensitive raw text at the mapping layer helps enforce privacy before data reaches the database helper.
 - Separating mapping from saving makes the next branch safer and easier to test.
+
+## Version 12 Step 11 — added prototype analysis cloud save action
+
+Connected the web analysis prototype to the cloud save path.
+
+This step added a “Save this prototype analysis” action after a pasted-text analysis result is generated. The dashboard now maps the prototype analysis result into the cloud save contract and uses the Supabase insert helper to save matched skills, missing skills, counts, and optional metadata to the cloud database.
+
+Key decisions:
+- Connect the prototype analysis result to the existing mapper and Supabase insert helper.
+- Keep the save button clearly labeled as a prototype action.
+- Avoid saving raw resume text or raw job-description text.
+- Keep the full Python analysis service disconnected for now.
+- Preserve the existing local Python/Streamlit app unchanged.
+
+What I learned:
+- Connecting a feature end-to-end is easier after separating analysis, mapping, and saving into smaller layers.
+- Privacy boundaries need to be enforced at the UI, mapping, and persistence layers.
+- A prototype save flow can validate the cloud architecture before the production analysis service exists.
