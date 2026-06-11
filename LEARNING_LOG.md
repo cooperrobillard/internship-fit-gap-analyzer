@@ -1967,3 +1967,21 @@ What I learned:
 - Publish-readiness includes setup clarity, demo instructions, and privacy boundaries, not only deployment.
 - A local SQLite app should not simply have authentication bolted onto it without redesigning the data model and storage boundaries.
 - The next hosted version needs an intentional architecture decision before implementation.
+
+## Version 12 Step 1 — added Next.js web-app scaffold
+
+Started the transition from the local Streamlit prototype toward a larger hosted account-based web application.
+
+This step added a separate Next.js app in the `web/` folder while preserving the existing Python/Streamlit app. The new web app is only a scaffold for now. It introduces the future hosted product direction without adding authentication, cloud persistence, or a Python API service yet.
+
+Key decisions:
+- Keep the existing Python/Streamlit analyzer working.
+- Add the future hosted frontend in a separate `web/` folder.
+- Use Next.js as the frontend foundation.
+- Defer Clerk-style authentication, Postgres/Supabase database work, and Python analysis service integration to later branches.
+- Avoid claiming that account saving or hosted analysis works before those features exist.
+
+What I learned:
+- A larger web app can be introduced safely beside an existing working app.
+- Separating the frontend scaffold from the Python analyzer reduces risk.
+- The hosted architecture should be built in layers: frontend first, then auth, then database, then analysis-service integration.
