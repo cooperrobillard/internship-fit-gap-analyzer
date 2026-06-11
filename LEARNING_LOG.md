@@ -2414,3 +2414,35 @@ Important caution:
 
 Next step:
 - Version 13 Step 7 — hosted deployment checkpoint and production-readiness cleanup list.
+
+## Version 13 Step 7 — Hosted deployment checkpoint
+
+Created a hosted deployment checkpoint after successfully deploying the first full-stack prototype.
+
+Current hosted architecture:
+
+* Vercel hosts the Next.js frontend.
+* Render hosts the FastAPI backend.
+* Supabase provides the cloud database layer.
+* Clerk provides authentication.
+* The frontend calls the hosted Render `/analyze` endpoint through `NEXT_PUBLIC_ANALYSIS_API_URL`.
+
+Captured deployment lessons:
+
+* Vercel production deployments may need to be redeployed or promoted after project setting changes.
+* The Vercel project root must be `web`.
+* Local `.env.local` files may be hidden in Finder, so terminal commands are useful for copying values safely.
+* The actual app uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+* Render CORS must include the exact Vercel browser origin shown in request headers.
+* CORS origins should not include trailing slashes.
+* Chrome DevTools Network and `curl -i -X OPTIONS` are useful for diagnosing CORS failures.
+
+Important caution:
+
+* This is a hosted prototype, not production-secure SaaS.
+* CORS is not authentication.
+* The backend still needs production API authentication or request validation before serious public use.
+
+Next step:
+
+* Version 13 Step 8 — add a hosted prototype notice and deployment status section to the web app or README.
