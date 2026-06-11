@@ -20,7 +20,8 @@ User (single machine)
 
 - **Analysis logic** lives in `src/` and is shared by CLI and Streamlit.
 - **Persistence** is optional, file-based SQLite on the local filesystem.
-- **No network service layer** — no API, no auth middleware, no cloud DB.
+- **Local API prototype only** — `api/main.py` (FastAPI on port 8000) wraps the rule-based analyzer for development; not authenticated, not deployed, and not wired to the Next.js app yet.
+- **No hosted service layer** — no production API deployment, no auth middleware on the API, no cloud DB from the API.
 - **No multi-tenant boundary** — one user, one machine, one DB path.
 
 ---

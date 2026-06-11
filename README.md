@@ -75,6 +75,28 @@ python3 -m streamlit run streamlit_app.py
 
 Opens a browser tab on your machine only—not a public website.
 
+### 6. Local FastAPI analysis API (prototype)
+
+```bash
+python3 -m uvicorn api.main:app --reload --port 8000
+```
+
+Local prototype only — not authenticated, not deployed, and does not save analyses.
+
+- `GET /health` → `{"status":"ok"}`
+- `POST /analyze` → JSON body with `resumeText`, `jobText`, and optional `jobTitle`, `company`, `sourceUrl`, `notes`
+
+Example:
+
+```bash
+curl -s http://127.0.0.1:8000/health
+curl -s -X POST http://127.0.0.1:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"resumeText":"Python and SQL experience","jobText":"Intern role requiring Python, SQL, and pandas."}'
+```
+
+The Next.js web app is not connected to this API yet.
+
 For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
 
 ## Safe demo workflow
