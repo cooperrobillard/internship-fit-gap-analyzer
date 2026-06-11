@@ -1,18 +1,19 @@
 # Internship Fit & Skill-Gap Analyzer — Web Frontend
 
-This folder is the **future hosted web-app frontend** for the Internship Fit & Skill-Gap Analyzer. It is a Next.js scaffold that will eventually replace the localhost-only experience with a portfolio-ready hosted product.
+This folder is the **future hosted web-app frontend** for the Internship Fit & Skill-Gap Analyzer. It is a Next.js app that will eventually replace the localhost-only experience with a portfolio-ready hosted product.
 
 ## What exists today
 
-- A simple landing page describing the planned hosted product
-- Placeholder UI only (e.g. “Auth coming soon”, “Dashboard coming soon”)
+- Landing page describing the planned hosted product
+- **Clerk authentication shell** — sign-in, sign-up, protected dashboard route, header nav with `UserButton`
+- Dashboard placeholder cards (no real data or cloud saving)
 
 ## What is not implemented yet
 
-- Clerk-style authentication
 - Postgres / Supabase-style database
 - Python analysis API or service integration
 - Saving, comparing, or loading real analyses from this UI
+- Billing, organizations, or deployment configuration
 
 The **working analyzer** remains the Python CLI and local Streamlit app at the repository root. Use those for real analyses until later branches wire this frontend to a backend.
 
@@ -22,6 +23,24 @@ From this `web/` directory:
 
 ```bash
 npm install
+```
+
+Create `web/.env.local` from the example file and add your Clerk development keys:
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` and set:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — from the [Clerk Dashboard](https://dashboard.clerk.com/) (development instance)
+- `CLERK_SECRET_KEY` — from the same Clerk application
+
+The sign-in/sign-up URLs and fallback redirects are already documented in `.env.example`.
+
+Start the dev server:
+
+```bash
 npm run dev
 ```
 
@@ -34,6 +53,24 @@ npm run lint
 npm run build
 ```
 
+`npm run build` requires valid Clerk keys in `.env.local`.
+
+## Auth routes
+
+| Route | Access |
+|-------|--------|
+| `/` | Public landing page |
+| `/sign-in` | Public Clerk sign-in |
+| `/sign-up` | Public Clerk sign-up |
+| `/dashboard` | Protected — requires sign-in |
+
+Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
+
+## Environment files
+
+- Commit `.env.example` (placeholders only)
+- **Do not commit** `.env.local` or any file containing `CLERK_SECRET_KEY`
+
 ## Related docs
 
-Architecture and deployment planning for the hosted version live in the repo root under `docs/` (outside this folder). This README covers only the Next.js frontend scaffold.
+Architecture and deployment planning for the hosted version live in the repo root under `docs/` (outside this folder). This README covers only the Next.js frontend.
