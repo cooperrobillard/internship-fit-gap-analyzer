@@ -33,6 +33,43 @@ def test_streamlit_app_exposes_layout_tab_helpers():
     assert hasattr(module, "_render_results_tab")
     assert hasattr(module, "_render_saved_analyses_tab")
     assert hasattr(module, "_render_data_management_tab")
+    assert hasattr(module, "render_app_welcome")
+
+
+def test_build_app_intro_markdown_mentions_local_demo_and_optional_sqlite():
+    module = _load_streamlit_app_module()
+
+    intro = module.build_app_intro_markdown()
+
+    assert "local" in intro.lower()
+    assert "private" in intro.lower()
+    assert "sample analysis" in intro.lower()
+    assert "sqlite" in intro.lower()
+    assert "optional" in intro.lower()
+
+
+def test_build_demo_how_to_use_markdown_covers_core_workflow():
+    module = _load_streamlit_app_module()
+
+    how_to = module.build_demo_how_to_use_markdown()
+
+    assert "analyze" in how_to.lower()
+    assert module.WORKFLOW_SAMPLE_LABEL in how_to
+    assert "results" in how_to.lower()
+    assert "saved analyses" in how_to.lower()
+
+
+def test_build_app_privacy_notes_markdown_covers_memory_and_metadata():
+    module = _load_streamlit_app_module()
+
+    privacy = module.build_app_privacy_notes_markdown()
+
+    assert "in memory" in privacy.lower()
+    assert "sqlite" in privacy.lower()
+    assert "source url" in privacy.lower()
+    assert "notes" in privacy.lower()
+    assert "raw resume" in privacy.lower()
+    assert "raw job-description" in privacy.lower()
 
 
 def test_get_analysis_workflow_choices_includes_sample_paste_and_upload():
@@ -2021,6 +2058,9 @@ def test_build_saved_analyses_csv_download_includes_metadata_values():
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_streamlit_app_exposes_layout_tab_helpers()
+    test_build_app_intro_markdown_mentions_local_demo_and_optional_sqlite()
+    test_build_demo_how_to_use_markdown_covers_core_workflow()
+    test_build_app_privacy_notes_markdown_covers_memory_and_metadata()
     test_get_analysis_workflow_choices_includes_sample_paste_and_upload()
     test_label_to_analysis_workflow_key_maps_user_facing_labels()
     test_run_sample_analysis_uses_bundled_sample_resume_and_job()

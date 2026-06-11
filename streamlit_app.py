@@ -58,6 +58,68 @@ JOB_INPUT_UPLOADED = "upload"
 JOB_INPUT_PASTE_LABEL = "Paste job description"
 JOB_INPUT_UPLOAD_LABEL = "Upload job description (.txt)"
 
+APP_INTRO_SUMMARY = (
+    "Rule-based internship fit and skill-gap analysis on your machine. "
+    "Compare resume skills to job descriptions, see missing skills and recurring gaps. "
+    "This is a **local, private** tool—not a deployed web app and not an AI job-fit score."
+)
+APP_INTRO_SAMPLE_NOTE = (
+    "**Try sample analysis** uses bundled public sample files and is safe for demos."
+)
+APP_INTRO_SQLITE_NOTE = (
+    "Saving to SQLite is **optional**. Enable it on the **Analyze** tab only when you "
+    "want local history on this computer."
+)
+
+
+def build_app_intro_markdown():
+    """Build the top-of-app introduction shown under the page title."""
+    return "\n\n".join(
+        [
+            APP_INTRO_SUMMARY,
+            APP_INTRO_SAMPLE_NOTE,
+            APP_INTRO_SQLITE_NOTE,
+        ]
+    )
+
+
+def build_demo_how_to_use_markdown():
+    """Build concise demo instructions for the collapsed how-to expander."""
+    return "\n".join(
+        [
+            "1. Open the **Analyze** tab.",
+            "2. Choose **Try sample analysis** for a quick safe demo, or paste/upload a job description.",
+            "3. For custom jobs, pick a resume source and add optional job labels or saved metadata.",
+            "4. Review results on the **Results** tab. Download the current report in memory if needed.",
+            "5. Optionally enable **Save this analysis to local SQLite database** to keep local history.",
+            "6. Use **Saved analyses** for search, comparison, exports, and backup download.",
+        ]
+    )
+
+
+def build_app_privacy_notes_markdown():
+    """Build compact privacy notes for the collapsed privacy expander."""
+    return "\n".join(
+        [
+            "- Pasted or uploaded **resume text** stays in memory during analysis.",
+            "- Pasted or uploaded **job descriptions** stay in memory during analysis.",
+            "- **Saved analyses** are stored locally only when SQLite saving is enabled on this machine.",
+            "- Optional **source URL** and **notes** are saved as metadata when you choose to save.",
+            "- **Raw resume text** and **raw job-description text** are not written to SQLite or CSV exports.",
+        ]
+    )
+
+
+def render_app_welcome(st):
+    """Show the polished app introduction, demo steps, and privacy notes."""
+    st.markdown(build_app_intro_markdown())
+
+    with st.expander("How to use this demo", expanded=False):
+        st.markdown(build_demo_how_to_use_markdown())
+
+    with st.expander("Privacy notes", expanded=False):
+        st.markdown(build_app_privacy_notes_markdown())
+
 
 def private_resume_exists(private_resume_path=PRIVATE_RESUME_PATH):
     """Return True when the local private resume file is present."""
@@ -2521,10 +2583,7 @@ def main():
     st.set_page_config(page_title="Internship Fit Analyzer (local)", layout="wide")
 
     st.title("Internship Fit & Skill-Gap Analyzer")
-    st.caption(
-        "Local prototype — rule-based skill-gap analysis for internship search. "
-        "Not an AI job-fit score."
-    )
+    render_app_welcome(st)
 
     analyze_tab, results_tab, saved_tab, data_tab = st.tabs(
         [
