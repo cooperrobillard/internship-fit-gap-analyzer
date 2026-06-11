@@ -2469,3 +2469,26 @@ Important caution:
 Next step:
 
 * Version 13 Step 9 — add a hosted demo verification checklist or begin API authentication/request validation planning.
+
+## Version 13 Step 9 — API request validation layer
+
+Added the first request-validation layer between the hosted Next.js frontend and the Render FastAPI backend.
+
+Changes included:
+- Added `ANALYSIS_API_SHARED_SECRET` support to FastAPI.
+- Required `X-Analysis-Api-Key` on `/analyze` when the shared secret is configured.
+- Kept `/health` public for hosting health checks.
+- Added a Next.js route handler so browser requests go to `/api/analyze` instead of directly calling Render.
+- Protected the route handler with Clerk server-side auth where supported.
+- Forwarded analysis requests from Vercel to Render using server-only environment variables.
+- Preserved the existing analysis request and response shape.
+- Added tests for missing, wrong, and correct shared-secret behavior.
+
+Important caution:
+- This is request validation, not full production security.
+- CORS is still useful but is not authentication.
+- The shared secret must be stored only in Vercel and Render environment variables.
+- The shared secret must never use a `NEXT_PUBLIC_` prefix.
+
+Next step:
+- Redeploy Render and Vercel with the new environment variables, then verify the hosted protected analysis flow.
