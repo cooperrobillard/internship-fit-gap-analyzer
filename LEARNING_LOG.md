@@ -1900,3 +1900,21 @@ What I learned:
 - SQLite schema changes need migration logic when a local database may already exist.
 - Backward compatibility means older code paths and older saved data should continue working after a schema update.
 - Optional function parameters can add new behavior without forcing every existing caller to change immediately.
+
+## Version 10 Step 2 — added Streamlit saved-analysis metadata fields
+
+Added local Streamlit UI support for optional saved-analysis metadata.
+
+This step connected the Version 10 database metadata fields to the local UI by allowing source URL and notes to be entered before saving an analysis. Saved results can now show this metadata, and saved-analysis exports/search behavior can include the metadata where appropriate.
+
+Key decisions:
+- Keep source URL and notes optional.
+- Store the metadata only when saving to the local SQLite database.
+- Preserve the simplified Version 9 analysis input flow.
+- Avoid storing raw resume text or raw job-description text.
+- Avoid expanding into full application tracking, tags, statuses, deployment, authentication, or AI matching.
+
+What I learned:
+- UI fields need to be connected to the save path, display path, search path, and export path to feel complete.
+- Optional metadata should be normalized before storage so blank or whitespace-only values behave consistently.
+- A small UI feature can touch several helper functions, so focused tests are important.
