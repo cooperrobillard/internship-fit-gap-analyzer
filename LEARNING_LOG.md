@@ -2205,3 +2205,21 @@ What I learned:
 - A frontend can call a local backend service through a clearly defined JSON contract.
 - Local cross-origin development may require explicit CORS handling.
 - Connecting the real Python analysis boundary makes the hosted app direction more credible without rewriting the analyzer in TypeScript.
+
+## Version 12 Step 14 — cleaned up web FastAPI prototype language and local dev commands
+
+Cleaned up the web app language and local development instructions after connecting the dashboard analysis form to the FastAPI Python service.
+
+This step clarified that the dashboard analysis form now calls the local FastAPI service, while the hosted/deployed service is not live yet. It also improved the local two-server workflow for running the Python API and Next.js app together.
+
+Key decisions:
+- Keep this as a cleanup branch, not a feature branch.
+- Clarify that the web analysis form uses the local Python service boundary.
+- Keep privacy language clear: raw pasted resume and job-description text are not saved.
+- Keep the existing Python/Streamlit app unchanged.
+- Avoid adding deployment, Docker, API authentication, or production infrastructure yet.
+
+What I learned:
+- After adding a service boundary, documentation and UI copy need to catch up so the product is not misleading.
+- A two-server local workflow should be easy to run before adding deployment complexity.
+- Cleanup steps can make a project more demo-ready without adding new architecture.
