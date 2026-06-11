@@ -1882,3 +1882,21 @@ What I learned:
 - SQLite schema changes need more caution than UI-only changes because existing local databases may already exist.
 - A migration should be idempotent, meaning it can run safely more than once without duplicating or breaking anything.
 - Planning the data model before implementation helps prevent fragile code and protects saved user data.
+
+## Version 10 Step 1 — added saved-analysis metadata storage
+
+Added database support for optional saved-analysis metadata.
+
+This step introduced storage for source URL and notes on saved job results while keeping the project backward-compatible with existing saved databases. The migration was designed to be idempotent, meaning it can run safely more than once without duplicating columns or damaging existing saved data.
+
+Key decisions:
+- Store metadata as optional saved job-result fields.
+- Keep existing callers working by making metadata parameters optional.
+- Preserve existing saved analyses during migration.
+- Avoid storing raw resume text or raw job-description text.
+- Keep this branch database-only before adding Streamlit UI fields.
+
+What I learned:
+- SQLite schema changes need migration logic when a local database may already exist.
+- Backward compatibility means older code paths and older saved data should continue working after a schema update.
+- Optional function parameters can add new behavior without forcing every existing caller to change immediately.
