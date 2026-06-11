@@ -7,10 +7,11 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - Landing page describing the planned hosted product
 - **Clerk authentication shell** — sign-in, sign-up, protected dashboard route, header nav with `UserButton`
 - Dashboard placeholder cards (no real data or cloud saving)
+- **Draft Supabase/Postgres schema** — [`database/schema.sql`](database/schema.sql) and [`database/README.md`](database/README.md) (not connected to the app)
 
 ## What is not implemented yet
 
-- Postgres / Supabase-style database
+- Supabase client, env vars, or live database connection (schema is draft SQL only)
 - Python analysis API or service integration
 - Saving, comparing, or loading real analyses from this UI
 - Billing, organizations, or deployment configuration
@@ -70,6 +71,10 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 - Commit `.env.example` (placeholders only)
 - **Do not commit** `.env.local` or any file containing `CLERK_SECRET_KEY`
+
+## Database schema (draft)
+
+See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. **Cloud saving is not implemented**—the schema is for a future Supabase integration branch.
 
 ## Related docs
 
