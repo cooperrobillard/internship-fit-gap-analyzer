@@ -1949,3 +1949,21 @@ Key decisions:
 What I learned:
 - Publish-readiness is not only deployment; it also means the product explains itself clearly.
 - A future hosted/account-based version will be easier to design once the local product experience is cleaner.
+
+## Version 11 Step 2 — added README quickstart and deployment-readiness checklist
+
+Added publish-readiness documentation for the local version of the project.
+
+This step made the repository easier to understand, run, and demo by adding or improving the README quickstart and creating a deployment-readiness checklist. The checklist separates what is already demo-ready from what still needs to change before a hosted multi-user version exists.
+
+Key decisions:
+- Keep the current project positioned as a local/private Streamlit tool.
+- Document the safe sample workflow and local setup commands.
+- Clearly state privacy boundaries around resumes, job descriptions, SQLite saving, source URL, and notes.
+- Avoid jumping directly into Clerk, authentication, cloud databases, deployment, or a rewrite.
+- Use this step to prepare for the next larger direction: an account-based hosted web app.
+
+What I learned:
+- Publish-readiness includes setup clarity, demo instructions, and privacy boundaries, not only deployment.
+- A local SQLite app should not simply have authentication bolted onto it without redesigning the data model and storage boundaries.
+- The next hosted version needs an intentional architecture decision before implementation.
