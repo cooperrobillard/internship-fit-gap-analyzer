@@ -1,5 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { DashboardInteractiveSection } from "@/components/dashboard-interactive-section";
+import {
+  DeploymentStatusSection,
+  HostedPrototypeNotice,
+} from "@/components/hosted-prototype-info";
 
 const placeholderCards = [
   {
@@ -27,22 +31,22 @@ export default async function DashboardPage() {
     <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
       <section className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
         <p className="mb-3 inline-block rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-          Account dashboard (shell)
+          Account dashboard
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Your future account dashboard
+          Your account dashboard
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
           You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
-          The analysis form calls a <strong>local FastAPI service</strong> (not
-          deployed). Cloud save stores skills and metadata only — not raw resume
-          or job text. Supabase status, saved analyses, and test cloud save are
-          available below.
+          The analysis form calls the <strong>hosted FastAPI service</strong> on
+          Render. Cloud save stores skills and metadata only — not raw resume or
+          job text.
         </p>
-        <p className="mt-4 text-sm text-amber-800">
-          For full local workflows (CLI, SQLite history, uploads), use the Python
-          CLI and Streamlit app in the repository root.
-        </p>
+
+        <div className="mt-6 space-y-6">
+          <HostedPrototypeNotice />
+          <DeploymentStatusSection />
+        </div>
 
         <DashboardInteractiveSection />
       </section>
@@ -50,8 +54,8 @@ export default async function DashboardPage() {
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-zinc-900">Coming soon</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Placeholder cards for future dashboard areas. Local web + API prototype
-          exists; hosted deployment is not ready yet.
+          Placeholder cards for future dashboard areas. Core hosted analysis and
+          prototype save are live; product polish and security hardening continue.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {placeholderCards.map((card) => (

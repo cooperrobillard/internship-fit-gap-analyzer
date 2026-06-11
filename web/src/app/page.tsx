@@ -1,5 +1,9 @@
 import { Show } from "@clerk/nextjs";
 import Link from "next/link";
+import {
+  DeploymentStatusSection,
+  HostedPrototypeNotice,
+} from "@/components/hosted-prototype-info";
 
 export default function Home() {
   return (
@@ -7,7 +11,7 @@ export default function Home() {
       <main className="mx-auto max-w-4xl px-6 py-12">
         <section className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
           <p className="mb-3 inline-block rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-            Future hosted product
+            Hosted prototype
           </p>
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
             Compare resume skills against internship and co-op postings
@@ -36,8 +40,8 @@ export default function Home() {
                 •
               </span>
               <span>
-                Save analyses in a future account-based dashboard with private,
-                cloud-backed history
+                Save structured analysis results in a cloud-backed dashboard
+                (skills and metadata — not raw resume text)
               </span>
             </li>
           </ul>
@@ -48,8 +52,8 @@ export default function Home() {
                 Create an account to explore the auth shell
               </p>
               <p className="mt-2 text-sm text-sky-900/80">
-                Sign in or sign up to reach the protected dashboard placeholder.
-                Analysis and cloud saving are not live yet.
+                Sign in or sign up to open the dashboard prototype. Use generic
+                sample text only — not sensitive resumes.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
@@ -72,8 +76,8 @@ export default function Home() {
             <div className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
               <p className="font-medium text-emerald-950">You are signed in</p>
               <p className="mt-2 text-sm text-emerald-900/80">
-                Open the dashboard to see placeholder account sections. Real saved
-                analyses and cloud history will arrive in later branches.
+                Open the dashboard to run hosted rule-based analysis and optional
+                prototype cloud save. This is not production-secure SaaS yet.
               </p>
               <Link
                 href="/dashboard"
@@ -84,6 +88,11 @@ export default function Home() {
             </div>
           </Show>
         </section>
+
+        <div className="mt-8 space-y-6">
+          <HostedPrototypeNotice />
+          <DeploymentStatusSection />
+        </div>
 
         <section className="mt-10">
           <h3 className="text-xl font-semibold text-zinc-900">Product flow</h3>
@@ -129,76 +138,20 @@ export default function Home() {
           </ol>
         </section>
 
-        <section className="mt-10 rounded-xl border border-amber-200 bg-amber-50 p-6">
-          <h3 className="text-xl font-semibold text-amber-950">Current status</h3>
-          <ul className="mt-4 space-y-3 text-sm leading-relaxed text-amber-950/90">
-            <li>
-              <strong className="font-medium">Auth shell is live.</strong> Clerk
-              sign-in, sign-up, and a protected dashboard route are wired in this
-              Next.js app.
-            </li>
-            <li>
-              <strong className="font-medium">The working analyzer lives elsewhere.</strong>{" "}
-              The rule-based Python CLI and local Streamlit UI in the repository
-              root remain the functional tools for running analyses today.
-            </li>
-            <li>
-              <strong className="font-medium">Database and API integration come later.</strong>{" "}
-              Postgres/Supabase-style persistence and a Python analysis service
-              are not implemented on this branch.
-            </li>
-          </ul>
-        </section>
-
-        <section className="mt-10">
-          <h3 className="text-xl font-semibold text-zinc-900">
-            Future hosted architecture
-          </h3>
-          <p className="mt-2 text-zinc-600">
-            Target shape for the full product (planned, not fully implemented):
+        <section className="mt-10 rounded-xl border border-zinc-200 bg-zinc-50 p-6">
+          <h3 className="text-xl font-semibold text-zinc-900">Also available locally</h3>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+            The rule-based Python <strong>CLI</strong> and <strong>Streamlit</strong> app
+            in the repository root remain the full-featured local tools (SQLite history,
+            uploads, exports). The hosted web path is a separate prototype surface.
           </p>
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                title: "Next.js frontend",
-                body: "This folder—the public-facing app and account dashboard UI.",
-                status: "In progress (scaffold + auth shell)",
-              },
-              {
-                title: "Clerk-style authentication",
-                body: "Sign-in, sessions, and per-user access control for private data.",
-                status: "Auth shell on this branch",
-              },
-              {
-                title: "Postgres / Supabase-style database",
-                body: "Cloud-backed storage for saved analyses and user-scoped history.",
-                status: "Not started",
-              },
-              {
-                title: "Python analysis service",
-                body: "Reuses the existing rule-based analyzer logic via a dedicated API layer.",
-                status: "Not started",
-              },
-            ].map((item) => (
-              <li
-                key={item.title}
-                className="rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm"
-              >
-                <p className="font-medium text-zinc-900">{item.title}</p>
-                <p className="mt-1 text-zinc-600">{item.body}</p>
-                <p className="mt-2 text-xs font-medium text-zinc-500">
-                  {item.status}
-                </p>
-              </li>
-            ))}
-          </ul>
         </section>
       </main>
 
       <footer className="mt-12 border-t border-zinc-200 bg-white py-6">
         <p className="mx-auto max-w-4xl px-6 text-center text-sm text-zinc-500">
-          Internship Fit &amp; Skill-Gap Analyzer — hosted web scaffold with Clerk
-          auth shell. Cloud persistence and analysis API are not live yet.
+          Internship Fit &amp; Skill-Gap Analyzer — hosted prototype (Vercel +
+          Render + Supabase + Clerk). Not production-secure SaaS.
         </p>
       </footer>
     </div>

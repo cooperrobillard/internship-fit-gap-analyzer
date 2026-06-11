@@ -16,13 +16,21 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Web → cloud save mapping** — [`src/lib/analysis/to-cloud-save-input.ts`](src/lib/analysis/to-cloud-save-input.ts) maps `WebAnalysisInput` + `WebAnalysisResult` into `CloudAnalysisSaveInput` (skills + metadata only; raw pasted resume/job text is intentionally excluded)
 - **Prototype analysis cloud save** — dashboard **Save this prototype analysis** runs the mapper + `saveCloudAnalysis` after analysis (matched/missing skills and optional metadata only)
 
+## Hosted prototype status
+
+The **hosted prototype** runs on **Vercel** (this app) + **Render** (FastAPI) + **Supabase** (database) + **Clerk** (auth). It is **not production-secure SaaS** yet — the public analysis API does not have production authentication, and a full privacy/security review is still outstanding.
+
+- Use **generic sample text** in the hosted dashboard when demoing; avoid pasting sensitive resume or job descriptions into the public prototype.
+- The FastAPI service analyzes pasted text **in memory** and does not intentionally persist raw resume/job body text, but the deployment should not be treated as safe for private data until API auth and policy work are complete.
+
+See [`docs/VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](../docs/VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md) for deployment lessons and cleanup priorities.
+
 ## What is not implemented yet
-- Deployed/hosted analysis API (local FastAPI on port 8000 only)
-- API authentication
+- Production API authentication on Render
 - Comparing or loading detailed skill rows from the saved list UI
 - Billing, organizations, or deployment configuration
 
-The Python CLI and local Streamlit app remain available for full offline workflows. The web dashboard uses the local FastAPI service during development.
+The Python CLI and local Streamlit app remain available for full offline workflows. Local development still uses FastAPI on port 8000; the hosted Vercel app points at the Render API via `NEXT_PUBLIC_ANALYSIS_API_URL`.
 
 ## Run locally
 
