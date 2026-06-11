@@ -2186,3 +2186,22 @@ What I learned:
 - A service boundary lets a frontend call existing backend logic without rewriting it.
 - API request and response models define a contract between the web app and Python analyzer.
 - Wrapping existing code safely is better than duplicating the analyzer in another language.
+
+## Version 12 Step 13 — connected web analysis form to FastAPI service
+
+Connected the Next.js dashboard analysis form to the local FastAPI analysis service.
+
+This step replaced the main web analysis form behavior with a call to the Python API boundary. The dashboard can now send pasted resume and job text to the local FastAPI `/analyze` endpoint, receive matched and missing skills, display the result, and continue using the existing prototype cloud save path for the result data.
+
+Key decisions:
+- Use the FastAPI service as the bridge to the existing Python analyzer.
+- Keep the API local/prototype-only for now.
+- Keep the temporary TypeScript analyzer as a reference or fallback only if needed.
+- Do not save raw resume text or raw job-description text.
+- Do not connect API authentication, deployment, Docker, or production infrastructure yet.
+- Preserve Supabase saving as a separate result-only cloud save path.
+
+What I learned:
+- A frontend can call a local backend service through a clearly defined JSON contract.
+- Local cross-origin development may require explicit CORS handling.
+- Connecting the real Python analysis boundary makes the hosted app direction more credible without rewriting the analyzer in TypeScript.
