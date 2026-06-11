@@ -2040,3 +2040,21 @@ What I learned:
 - Supabase client setup requires public project URL/key values, while private service-role keys must never be exposed in frontend code.
 - Clerk and Supabase need to agree on the signed-in user identity so Row Level Security can protect user-owned rows.
 - A cloud integration can start with a read-only status check before adding data creation or persistence.
+
+## Version 12 Step 5 — added cloud saved-analysis read model
+
+Added the first read-only cloud saved-analysis model for the hosted web app.
+
+This step created a TypeScript read model for user-owned rows in the Supabase `job_analyses` table and added a dashboard panel that can display loading, not-configured, empty, error, or saved-analysis list states. The dashboard still does not create or save analyses, but it now has the first real read path for future cloud-backed saved history.
+
+Key decisions:
+- Read from `job_analyses` before adding any write path.
+- Avoid selecting or displaying raw `job_text`.
+- Keep the existing Python/Streamlit app unchanged.
+- Keep the cloud dashboard honest that saving and Python analysis integration are still future work.
+- Let Supabase RLS remain responsible for filtering rows to the signed-in Clerk user.
+
+What I learned:
+- A read model is a small layer that shapes database rows into the data the UI needs.
+- Building read-only database access first is safer than immediately adding writes.
+- User-owned cloud data needs both application-level care and database-level Row Level Security.
