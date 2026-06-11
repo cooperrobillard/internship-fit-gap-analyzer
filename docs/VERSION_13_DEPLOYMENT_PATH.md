@@ -2,7 +2,7 @@
 
 Implementation checklist for moving the **local full-stack prototype** to a **first hosted prototype**. This is a practical deployment path—not a full architecture spec.
 
-Related: [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), root [`README.md`](../README.md), [`web/README.md`](../web/README.md).
+Related: [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), root [`README.md`](../README.md), [`web/README.md`](../web/README.md).
 
 ---
 
@@ -99,7 +99,7 @@ Check off in this order to reduce broken intermediate states:
    - Do not commit env files or secrets
 
 4. **Deploy FastAPI backend**
-   - Render or Railway service from repo root
+   - Render Web Service — see [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md) (Railway is an alternative with similar settings)
    - Confirm `GET /health` returns `{"status":"ok"}` on the public URL
 
 5. **Configure Supabase**
