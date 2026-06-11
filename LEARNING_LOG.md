@@ -2076,3 +2076,22 @@ What I learned:
 - A write contract helps define the data boundary before adding persistence.
 - Insert order matters when tables are connected by foreign keys.
 - Privacy decisions should be made before the app starts writing user data to the cloud.
+
+## Version 12 Step 7 — added Supabase saved-analysis insert helper
+
+Added the first Supabase insert helper for future cloud saved analyses.
+
+This step implemented a helper that uses the saved-analysis write contract to create analysis run, job analysis, matched skill, and missing skill rows in Supabase. The helper is not connected to the UI yet, but it defines the first real cloud write path for the hosted web app.
+
+Key decisions:
+- Insert parent rows before child rows.
+- Use the signed-in Clerk user ID as the ownership field.
+- Rely on Supabase Row Level Security for user-owned access.
+- Avoid saving raw resume text or raw job-description text.
+- Attempt best-effort cleanup if a later insert fails after parent rows are created.
+- Keep this helper separate from the UI until the write behavior is tested carefully.
+
+What I learned:
+- Cloud writes need clear insert order when foreign keys connect tables.
+- A save helper should return safe result states instead of leaking raw database errors into the UI.
+- Partial failure handling matters because multiple related rows are created during one save operation.
