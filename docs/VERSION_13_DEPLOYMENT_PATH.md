@@ -94,8 +94,9 @@ Check off in this order to reduce broken intermediate states:
    - Ensure `data/skills_taxonomy.json` and `data/skill_aliases.json` are available to the deployed API
 
 3. **Configure production CORS**
-   - Replace hardcoded localhost origins with `ALLOWED_ORIGINS` (or equivalent)
-   - Allow only the Vercel production (and preview, if desired) origin(s)
+   - Set `ALLOWED_ORIGINS` on Render/Railway to include the deployed Vercel frontend URL(s)
+   - Local defaults are localhost only; do not use `*` in production
+   - Do not commit env files or secrets
 
 4. **Deploy FastAPI backend**
    - Render or Railway service from repo root
@@ -134,7 +135,7 @@ Check off in this order to reduce broken intermediate states:
 |---------|--------|
 | **Production start command** | Document Render/Railway start command; bind `0.0.0.0` and platform `PORT` |
 | **Hosting dependency check** | Verify taxonomy/alias JSON paths work when cwd is repo root on the host |
-| **CORS env strategy** | Move from localhost-only origins to `ALLOWED_ORIGINS` for Vercel URL(s) |
+| **CORS env strategy** | Set `ALLOWED_ORIGINS` on the API host to include each Vercel production/preview URL |
 | **Hosted API URL wiring** | Set `NEXT_PUBLIC_ANALYSIS_API_URL` on Vercel to the public FastAPI URL |
 | **Supabase RLS + JWT** | Confirm Clerk JWT `sub` matches `clerk_user_id` on inserts; test cross-user isolation |
 | **Env name alignment** | Reconcile `NEXT_PUBLIC_SUPABASE_ANON_KEY` vs `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in code |

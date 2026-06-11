@@ -1,4 +1,5 @@
 # Tests for the local FastAPI analysis service prototype in api/.
+import importlib
 import os
 import sys
 from pathlib import Path
@@ -9,7 +10,8 @@ if str(repo_root) not in sys.path:
 
 from fastapi.testclient import TestClient
 
-from api.main import app, parse_allowed_origins
+import api.main as api_main_module
+from api.main import app, get_allowed_origins, parse_allowed_origins
 
 client = TestClient(app)
 
@@ -143,6 +145,23 @@ def test_parse_allowed_origins_ignores_empty_entries():
     ]
 
 
+def test_parse_allowed_origins_default_never_includes_wildcard():
+    original = os.environ.pop("ALLOWED_ORIGINS", None)
+
+    try:
+        for raw in (None, "", "   ", ","):
+            origins = parse_allowed_origins(raw)
+            assert "*" not in origins
+            assert origins == [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+            ]
+        assert "*" not in get_allowed_origins()
+    finally:
+        if original is not None:
+            os.environ["ALLOWED_ORIGINS"] = original
+
+
 def test_cors_allows_local_nextjs_origin():
     response = client.options(
         "/analyze",
@@ -155,6 +174,37 @@ def test_cors_allows_local_nextjs_origin():
 
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
+def test_cors_allows_production_origin_from_env():
+    """Reload app so middleware picks up ALLOWED_ORIGINS (read at import)."""
+    original = os.environ.get("ALLOWED_ORIGINS")
+    placeholder_origin = "https://your-vercel-app.vercel.app"
+    os.environ["ALLOWED_ORIGINS"] = placeholder_origin
+
+    importlib.reload(api_main_module)
+
+    try:
+        prod_client = TestClient(api_main_module.app)
+        response = prod_client.options(
+            "/analyze",
+            headers={
+                "Origin": placeholder_origin,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+
+        assert response.status_code == 200
+        assert (
+            response.headers.get("access-control-allow-origin") == placeholder_origin
+        )
+    finally:
+        if original is None:
+            os.environ.pop("ALLOWED_ORIGINS", None)
+        else:
+            os.environ["ALLOWED_ORIGINS"] = original
+        importlib.reload(api_main_module)
 
 
 def test_analyze_does_not_create_tracked_generated_files():
@@ -191,6 +241,8 @@ if __name__ == "__main__":
     test_parse_allowed_origins_defaults_when_unset()
     test_parse_allowed_origins_trims_comma_separated_values()
     test_parse_allowed_origins_ignores_empty_entries()
+    test_parse_allowed_origins_default_never_includes_wildcard()
     test_cors_allows_local_nextjs_origin()
+    test_cors_allows_production_origin_from_env()
     test_analyze_does_not_create_tracked_generated_files()
     print("All API service tests passed.")

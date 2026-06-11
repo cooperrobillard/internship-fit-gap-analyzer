@@ -39,10 +39,37 @@ Health check URL: `http://127.0.0.1:8000/health` (local) or `https://<your-host>
 
 | Variable | Purpose |
 |----------|---------|
-| `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (e.g. `https://your-app.vercel.app`). When unset or blank, defaults to `http://localhost:3000` and `http://127.0.0.1:3000` for local Next.js dev. |
+| `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (see below) |
 | `PORT` | Set by the host platform; passed to uvicorn `--port` |
 
-Do not commit `.env` files. Do not set `ALLOWED_ORIGINS` to `*` unless you have a deliberate reason and understand the risk.
+Do not commit `.env` files or secrets to the repository.
+
+## CORS configuration
+
+The API uses `ALLOWED_ORIGINS` (comma-separated). Values are trimmed; empty entries are ignored. The list is read at process start.
+
+**Local default** (when `ALLOWED_ORIGINS` is unset or blank):
+
+- `http://localhost:3000`
+- `http://127.0.0.1:3000`
+
+No production domains are baked into code. The default never includes `*`.
+
+**Production** (set on Render/Railway when the Vercel URL is known):
+
+```bash
+ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,https://your-custom-domain.com
+```
+
+**Vercel preview deployments** (optional — add preview URLs you use):
+
+```bash
+ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,https://your-git-branch-your-project.vercel.app
+```
+
+Do **not** use `ALLOWED_ORIGINS=*` for normal production deployment. When you add a custom domain or new preview URL, update the backend host environment variables — do not commit env files.
+
+After deploy, confirm the browser receives `Access-Control-Allow-Origin` for your Vercel origin on `OPTIONS`/`POST /analyze`.
 
 ## Privacy
 

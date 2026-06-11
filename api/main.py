@@ -25,7 +25,8 @@ def parse_allowed_origins(raw_value: str | None = None) -> list[str]:
     """
     Parse ALLOWED_ORIGINS (comma-separated) for CORS.
 
-    When unset, blank, or only empty entries, returns local Next.js dev origins.
+    When unset, blank, or only empty entries, returns local Next.js dev origins only.
+    Never defaults to "*".
     """
     if raw_value is None:
         raw_value = os.environ.get("ALLOWED_ORIGINS")
@@ -45,6 +46,11 @@ def parse_allowed_origins(raw_value: str | None = None) -> list[str]:
     return origins
 
 
+def get_allowed_origins() -> list[str]:
+    """CORS allow_origins list from ALLOWED_ORIGINS (or local dev defaults)."""
+    return parse_allowed_origins()
+
+
 app = FastAPI(
     title="Internship Fit Gap Analyzer API",
     description=(
@@ -57,7 +63,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=parse_allowed_origins(),
+    allow_origins=get_allowed_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
