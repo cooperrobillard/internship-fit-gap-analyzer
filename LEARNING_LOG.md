@@ -2021,3 +2021,22 @@ What I learned:
 - Moving from local SQLite to hosted Postgres requires explicit user ownership on every saved-data table.
 - Row Level Security policies act like database-level filters that restrict which rows a signed-in user can read or modify.
 - Authentication alone is not enough; the database schema also needs user-specific access boundaries.
+
+## Version 12 Step 4 — added Supabase client scaffold
+
+Added the first Supabase client scaffolding for the future hosted web app.
+
+This step installed the Supabase JavaScript client, added safe environment-variable placeholders, created a Clerk-aware Supabase client helper, and added a dashboard status section for checking the future cloud database connection. It does not yet save analyses, write data, or connect the Python analyzer to the web app.
+
+Key decisions:
+- Add Supabase wiring after the Clerk auth shell.
+- Keep the existing Python/Streamlit app unchanged.
+- Use Clerk session tokens for future Supabase RLS-backed queries.
+- Keep Supabase service-role secrets out of browser code.
+- Show a safe dashboard status instead of pretending cloud saving works.
+- Defer real saved-analysis writes and Python analysis service integration to later branches.
+
+What I learned:
+- Supabase client setup requires public project URL/key values, while private service-role keys must never be exposed in frontend code.
+- Clerk and Supabase need to agree on the signed-in user identity so Row Level Security can protect user-owned rows.
+- A cloud integration can start with a read-only status check before adding data creation or persistence.
