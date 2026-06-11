@@ -1813,3 +1813,35 @@ This improved my understanding of:
 - reading a SQLite database backup as bytes,
 - protecting private local data,
 - and adding practical user value without introducing cloud architecture.
+
+## Version 9 checkpoint — usability and portability
+
+Completed Version 9 as a usability, portability, and local-product-polish phase.
+
+Version 9 moved the project closer to a practical private/local tool by improving the Streamlit workflow and making analysis results easier to use outside the app.
+
+Completed work:
+- Added portable resume input through safe sample, private local file, pasted text, and uploaded UTF-8 `.txt` resume options.
+- Added optional job title and company labels for clearer saved-analysis names.
+- Added uploaded UTF-8 `.txt` job-description input.
+- Simplified the local Streamlit layout.
+- Simplified the analysis input flow so the sample path uses the sample resume and sample job together.
+- Added current-analysis downloads for Markdown reports and CSV skill-gap summaries.
+- Added saved-analysis CSV exports and SQLite backup downloads.
+
+The project remains intentionally local and rule-based. Version 9 did not add deployment, authentication, cloud persistence, semantic matching, fit scores, source URLs, notes, tags, PDF/DOCX parsing, or restore/import behavior.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- privacy/generated-file checks
+
+This checkpoint improved my understanding of:
+- product usability,
+- portable input workflows,
+- clearer UI flow,
+- in-memory downloads,
+- local data export,
+- privacy-conscious handling of user text,
+- and the difference between a useful local tool and a fully deployed production application.
