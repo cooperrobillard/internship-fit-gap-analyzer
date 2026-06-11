@@ -1918,3 +1918,18 @@ What I learned:
 - UI fields need to be connected to the save path, display path, search path, and export path to feel complete.
 - Optional metadata should be normalized before storage so blank or whitespace-only values behave consistently.
 - A small UI feature can touch several helper functions, so focused tests are important.
+
+## Version 10 Step 3 — documented saved-analysis metadata checkpoint
+
+Completed a short Version 10 checkpoint after adding saved-analysis metadata.
+
+Version 10 added optional source URL and notes support across the local saved-analysis workflow. The project now stores this metadata safely in SQLite, passes it through the Streamlit save flow, shows it in saved analyses, includes it in search, and exports it in the saved analyses CSV.
+
+Key decisions:
+- Keep Version 10 focused on source URL and notes.
+- Avoid expanding into statuses, tags, full application tracking, deployment, authentication, or AI matching.
+- Keep the checkpoint short so the project can move faster toward publish-readiness.
+
+Verification:
+- Confirmed tests still pass.
+- Confirmed generated/private files are not tracked.
