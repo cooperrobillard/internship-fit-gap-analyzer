@@ -2308,3 +2308,25 @@ Important caution:
 Next step:
 
 * Version 13 Step 4 — configure production CORS strategy between the deployed frontend and FastAPI backend.
+
+## Version 13 Step 4 — Configure production CORS strategy
+
+Configured and documented the CORS strategy for the future hosted FastAPI backend.
+
+Changes included:
+
+* Confirmed or added `ALLOWED_ORIGINS` as the backend environment variable for CORS.
+* Kept local development defaults limited to `http://localhost:3000` and `http://127.0.0.1:3000`.
+* Avoided using `*` as the default allowed origin list.
+* Documented how the deployed Vercel frontend URL should be added to the backend host environment variables.
+* Added or strengthened tests for parsing comma-separated origins and preserving safe local defaults.
+* Verified that the backend health endpoint and API tests still pass.
+
+Important caution:
+
+* CORS controls which browser origins can call the backend, but it is not the same thing as API authentication.
+* The FastAPI service is still a prototype and needs production API authentication before serious public use.
+
+Next step:
+
+* Version 13 Step 5 — deploy backend prototype to Render or Railway.
