@@ -3,6 +3,9 @@
 # This file calls the same backend functions as the CLI (no subprocess).
 # Run from the repo root:
 #   python3 -m streamlit run streamlit_app.py
+import csv
+import io
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -1586,6 +1589,134 @@ def render_saved_analysis_history(st, display):
         st.info("No recurring gaps saved yet.")
 
 
+def sanitize_download_filename(job_name, suffix):
+    """
+    Build a safe download basename from a job name and suffix.
+
+    Example suffixes: "analysis", "skill_gaps"
+    """
+    if not job_name or not str(job_name).strip():
+        base = "analysis_result"
+    else:
+        base = str(job_name).strip().lower()
+        base = base.replace(" — ", "_").replace(" - ", "_")
+        base = re.sub(r"[^\w.-]+", "_", base)
+        base = re.sub(r"_+", "_", base).strip("_.")
+
+        if not base:
+            base = "analysis_result"
+
+    return f"{base}_{suffix}"
+
+
+def build_download_filenames(display):
+    """Return Markdown and CSV download filenames for one analysis display."""
+    if len(display["jobs"]) == 1:
+        job_name = display["jobs"][0]["job_name"]
+    else:
+        job_name = "multi_job_analysis"
+
+    markdown_name = f"{sanitize_download_filename(job_name, 'analysis')}.md"
+    csv_name = f"{sanitize_download_filename(job_name, 'skill_gaps')}.csv"
+
+    return markdown_name, csv_name
+
+
+def build_analysis_markdown_download(display):
+    """
+    Build an in-memory Markdown report from a display summary.
+
+    Does not include raw resume text or raw job-description text.
+    """
+    lines = ["# Internship Fit & Skill-Gap Analysis", ""]
+
+    for job in display["jobs"]:
+        lines.append(f"## Job: {job['job_name']}")
+        lines.append("")
+        lines.append("### Summary")
+        lines.append(f"- Jobs analyzed: {display['jobs_analyzed_count']}")
+        lines.append(f"- Recurring gaps: {display['recurring_gaps_count']}")
+        top_gap = display["top_recurring_gap_skill"] or "None"
+        lines.append(f"- Top recurring gap: {top_gap}")
+        lines.append(f"- Matched skills: {job['matched_skills_count']}")
+        lines.append(f"- Missing skills: {job['missing_skills_count']}")
+        lines.append("")
+
+        lines.append("### Matched skills")
+        if job["has_matched_skills"]:
+            for skill_line in job["matched_skills_lines"]:
+                lines.append(f"- {skill_line}")
+        else:
+            lines.append("- None found.")
+        lines.append("")
+
+        lines.append("### Missing skills")
+        if job["has_missing_skills"]:
+            for skill_line in job["missing_skills_lines"]:
+                lines.append(f"- {skill_line}")
+        else:
+            lines.append("- None found.")
+        lines.append("")
+
+    lines.append("## Recurring gaps")
+    if display["has_recurring_gaps"]:
+        for gap_line in display["recurring_gaps_lines"]:
+            lines.append(f"- {gap_line}")
+    else:
+        lines.append("- None found.")
+
+    return "\n".join(lines) + "\n"
+
+
+def build_skill_gaps_csv_download(display):
+    """
+    Build an in-memory CSV of missing skills for the current analysis.
+
+    Always includes a header row, even when there are no missing skills.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["job_name", "category", "skill"])
+
+    for job in display["jobs"]:
+        for row in job["missing_skills_rows"]:
+            writer.writerow([job["job_name"], row["Category"], row["Skill"]])
+
+    return output.getvalue()
+
+
+def render_analysis_downloads(st, display):
+    """Show in-memory Markdown and CSV download buttons for the current result."""
+    st.markdown("**Download exports**")
+    st.caption(
+        "Downloads are generated in memory only. Nothing is written to the project folder."
+    )
+
+    markdown_content = build_analysis_markdown_download(display)
+    csv_content = build_skill_gaps_csv_download(display)
+    markdown_filename, csv_filename = build_download_filenames(display)
+
+    download_col_md, download_col_csv = st.columns(2)
+
+    with download_col_md:
+        st.download_button(
+            label="Download Markdown report",
+            data=markdown_content,
+            file_name=markdown_filename,
+            mime="text/markdown",
+            key="download_analysis_markdown",
+        )
+
+    with download_col_csv:
+        st.download_button(
+            label="Download skill-gap CSV",
+            data=csv_content,
+            file_name=csv_filename,
+            mime="text/csv",
+            key="download_skill_gaps_csv",
+        )
+
+
 def build_display_summary(analysis_result):
     """
     Build a plain dict of display-friendly lists/strings from a backend result.
@@ -1961,6 +2092,7 @@ def _render_results_tab(st):
         return
 
     display = build_display_summary(st.session_state["analysis_result"])
+    render_analysis_downloads(st, display)
     render_analysis_results(st, display)
 
 

@@ -1553,6 +1553,117 @@ def test_uploaded_job_text_is_not_written_to_disk_or_database_body():
         assert stored_job_filename == "Uploaded job: internship.txt"
 
 
+def test_sanitize_download_filename_removes_unsafe_characters():
+    module = _load_streamlit_app_module()
+
+    assert (
+        module.sanitize_download_filename(
+            "Mitre / Systems Engineering Intern",
+            "analysis",
+        )
+        == "mitre_systems_engineering_intern_analysis"
+    )
+    assert (
+        module.sanitize_download_filename("Acme Corp — Data Intern", "skill_gaps")
+        == "acme_corp_data_intern_skill_gaps"
+    )
+
+
+def test_build_analysis_markdown_download_includes_job_name_and_sections():
+    module = _load_streamlit_app_module()
+
+    display = module.build_display_summary(module.run_sample_analysis())
+
+    markdown = module.build_analysis_markdown_download(display)
+    job_name = display["jobs"][0]["job_name"]
+
+    assert "# Internship Fit & Skill-Gap Analysis" in markdown
+    assert f"## Job: {job_name}" in markdown
+    assert "### Summary" in markdown
+    assert "### Matched skills" in markdown
+    assert "### Missing skills" in markdown
+    assert "## Recurring gaps" in markdown
+    assert "Jobs analyzed:" in markdown
+
+
+def test_build_analysis_markdown_download_excludes_raw_resume_and_job_text():
+    module = _load_streamlit_app_module()
+
+    secret_job = "SECRET_JOB_DESCRIPTION_PHRASE_XYZ12345"
+    secret_resume = "SECRET_RESUME_PHRASE_ABC67890"
+    result = module.run_pasted_job_analysis(
+        f"{secret_job} Python SQL required.",
+        resume_path=module.RESUME_LABEL_PASTED,
+        resume_text=secret_resume,
+    )
+    display = module.build_display_summary(result)
+    markdown = module.build_analysis_markdown_download(display)
+
+    assert secret_job not in markdown
+    assert secret_resume not in markdown
+
+
+def test_build_skill_gaps_csv_download_includes_headers_and_rows():
+    module = _load_streamlit_app_module()
+
+    display = module.build_display_summary(module.run_sample_analysis())
+    csv_text = module.build_skill_gaps_csv_download(display)
+
+    lines = csv_text.strip().splitlines()
+    assert lines[0] == "job_name,category,skill"
+    assert len(lines) >= 2
+
+
+def test_build_skill_gaps_csv_download_handles_no_missing_skills():
+    module = _load_streamlit_app_module()
+
+    display = {
+        "jobs": [
+            {
+                "job_name": "Example job",
+                "missing_skills_rows": [],
+            }
+        ]
+    }
+
+    csv_text = module.build_skill_gaps_csv_download(display)
+
+    assert csv_text.strip() == "job_name,category,skill"
+
+
+def test_sample_analysis_produces_non_empty_download_exports():
+    module = _load_streamlit_app_module()
+
+    display = module.build_display_summary(module.run_sample_analysis())
+    markdown = module.build_analysis_markdown_download(display)
+    csv_text = module.build_skill_gaps_csv_download(display)
+    markdown_filename, csv_filename = module.build_download_filenames(display)
+
+    assert len(markdown.strip()) > 0
+    assert csv_text.startswith("job_name,category,skill")
+    assert markdown_filename.endswith(".md")
+    assert csv_filename.endswith(".csv")
+
+
+def test_pasted_job_analysis_produces_download_exports():
+    module = _load_streamlit_app_module()
+
+    result = module.run_pasted_job_analysis(
+        "Internship requiring Python, SQL, and technical documentation.",
+        job_name=module.build_pasted_job_name(
+            job_title="Data Intern",
+            company="Acme Corp",
+        ),
+    )
+    display = module.build_display_summary(result)
+    markdown = module.build_analysis_markdown_download(display)
+    csv_text = module.build_skill_gaps_csv_download(display)
+
+    assert "Acme Corp — Data Intern" in markdown
+    assert "job_name,category,skill" in csv_text
+    assert "Acme Corp — Data Intern" in csv_text
+
+
 def test_streamlit_app_does_not_use_deprecated_use_container_width():
     """Guard against reintroducing deprecated Streamlit width arguments."""
     repo_root = Path(__file__).resolve().parent.parent
@@ -1653,5 +1764,12 @@ if __name__ == "__main__":
     test_build_pasted_job_name_uses_uploaded_filename_fallback()
     test_build_pasted_job_name_prefers_metadata_over_uploaded_filename()
     test_uploaded_job_text_is_not_written_to_disk_or_database_body()
+    test_sanitize_download_filename_removes_unsafe_characters()
+    test_build_analysis_markdown_download_includes_job_name_and_sections()
+    test_build_analysis_markdown_download_excludes_raw_resume_and_job_text()
+    test_build_skill_gaps_csv_download_includes_headers_and_rows()
+    test_build_skill_gaps_csv_download_handles_no_missing_skills()
+    test_sample_analysis_produces_non_empty_download_exports()
+    test_pasted_job_analysis_produces_download_exports()
     test_streamlit_app_does_not_use_deprecated_use_container_width()
     print("All streamlit app tests passed.")
