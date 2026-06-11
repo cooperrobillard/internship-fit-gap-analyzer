@@ -2113,3 +2113,21 @@ What I learned:
 - Testing a full cloud write path requires the auth layer, database client, RLS policies, insert helper, and read model to work together.
 - A controlled test save is safer than immediately connecting user-provided resume/job text.
 - UI copy matters when a button exists only for development or verification.
+
+## Version 12 Step 9 — added web analysis prototype boundary
+
+Added the first minimal analysis workflow to the hosted web dashboard.
+
+This step created a small pasted-text analysis form, shared TypeScript result types, and a temporary rule-based web adapter. The adapter compares a small set of known skills between pasted resume text and pasted job text so the dashboard can show matched and missing skills before the full Python analysis service is connected.
+
+Key decisions:
+- Add the web analysis boundary before connecting the Python service.
+- Keep the prototype honest that the full analyzer still lives in Python.
+- Do not save pasted resume text or job-description text from this form.
+- Do not connect the analysis form to Supabase saving yet.
+- Preserve the existing local Python/Streamlit app unchanged.
+
+What I learned:
+- A boundary defines the shape of data that future services can exchange.
+- A temporary adapter can make the UI testable before the real backend service is connected.
+- Separating analysis, saving, and cloud persistence keeps each branch safer and easier to debug.
