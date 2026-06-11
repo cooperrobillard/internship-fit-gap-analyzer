@@ -1753,3 +1753,33 @@ This improved my understanding of:
 - hiding irrelevant controls,
 - preserving behavior during layout cleanup,
 - and making a prototype feel closer to a usable product.
+
+## Version 9 Step 5 — Current analysis downloads
+
+Added in-app download buttons for the current Streamlit analysis result.
+
+After running an analysis, the Results area can now generate:
+- a Markdown report, and
+- a CSV skill-gap summary.
+
+The downloads are generated in memory and do not write files into `data/outputs/` or other project folders. This makes the local UI more practical because a user can save or share an analysis result without using terminal commands.
+
+The Markdown report includes the analyzed job name, summary counts, matched skills, missing skills, and recurring gaps. The CSV export includes missing-skill rows with job name, category, and skill columns.
+
+This step intentionally did not change CLI output behavior, backend analysis logic, database schema, saved-history behavior, authentication, deployment configuration, source URLs, notes, tags, fit scores, semantic matching, or dependencies.
+
+Validation completed:
+- `python3 tests/test_streamlit_app.py`
+- `python3 run_tests.py`
+- `python3 -m py_compile streamlit_app.py tests/test_streamlit_app.py`
+- manual Streamlit checks for sample, pasted, and uploaded job workflows
+- manual download checks for Markdown and CSV files
+- privacy and generated-file checks
+
+This improved my understanding of:
+- generating downloadable content in memory,
+- using Streamlit download buttons,
+- safe filename generation,
+- CSV creation with Python's standard library,
+- separating UI exports from disk-based CLI outputs,
+- and making a local prototype feel more like a usable product.
