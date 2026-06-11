@@ -38,22 +38,14 @@ Create `web/.env.local` from the example file and add your Clerk development key
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and set:
-
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — from the [Clerk Dashboard](https://dashboard.clerk.com/) (development instance)
-- `CLERK_SECRET_KEY` — from the same Clerk application
-- `NEXT_PUBLIC_SUPABASE_URL` — Project URL from your [Supabase](https://supabase.com/) project
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Publishable (anon) key from the same project
-- `NEXT_PUBLIC_ANALYSIS_API_URL` — local FastAPI base URL (default `http://127.0.0.1:8000`)
-
-The sign-in/sign-up URLs and fallback redirects are already documented in `.env.example`.
+See [Vercel environment configuration](#vercel-environment-configuration) below for variable details. Copy from [`.env.example`](.env.example) and fill in Clerk and Supabase values from each provider’s dashboard.
 
 ### Supabase setup (manual, for connection check)
 
 1. Create a **development** Supabase project.
 2. Run [`database/schema.sql`](database/schema.sql) in the Supabase SQL editor.
 3. Configure **Clerk as a Supabase third-party auth provider** (see [Clerk + Supabase docs](https://clerk.com/docs/guides/development/integrations/databases/supabase)).
-4. Copy Project URL and Publishable key into `web/.env.local`.
+4. Copy Project URL and anon key into `web/.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. Prototype cloud save writes structured results only. Do not use the Supabase service role key in browser code.
 
@@ -115,6 +107,29 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 - Commit `.env.example` (placeholders only)
 - **Do not commit** `.env.local` or any file containing `CLERK_SECRET_KEY`
+
+## Vercel environment configuration
+
+**Local:** values go in `web/.env.local` (git-ignored). **Production:** set the same variable names in the Vercel project dashboard (Settings → Environment Variables). Do not deploy secrets in client bundles beyond what `NEXT_PUBLIC_*` already exposes.
+
+| Variable | Local example | Production |
+|----------|---------------|------------|
+| `NEXT_PUBLIC_ANALYSIS_API_URL` | `http://127.0.0.1:8000` | Deployed Render/Railway FastAPI URL |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk development instance | Clerk production instance |
+| `CLERK_SECRET_KEY` | Clerk secret (server only) | Clerk production secret (Vercel server env) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Same (hosted project) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Same (anon key only) |
+
+Optional Clerk route variables (`NEXT_PUBLIC_CLERK_SIGN_IN_URL`, etc.) are listed in `.env.example` with safe local defaults.
+
+**Safety rules:**
+
+- `NEXT_PUBLIC_*` variables are **browser-visible** — only put values safe to expose (publishable keys, public URLs).
+- Never put `CLERK_SECRET_KEY` in client code or `NEXT_PUBLIC_*` names.
+- Never use the Supabase **service role** key in the browser — use the anon key only.
+- `NEXT_PUBLIC_ANALYSIS_API_URL` must point at a running FastAPI service; the dashboard analysis form fails if the API is unreachable.
+
+Centralized readers: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getAnalysisApiBaseUrl`, `getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is still accepted as a fallback for local `.env.local` files during migration.
 
 ## Database schema (draft)
 

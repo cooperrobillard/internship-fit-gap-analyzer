@@ -6,9 +6,10 @@
  * - Does not store resume/job text, call Supabase, or use Clerk
  */
 
+import { getAnalysisApiBaseUrl } from "@/lib/env-config";
 import type { WebAnalysisInput, WebAnalysisResult } from "./types";
 
-const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
+export { getAnalysisApiBaseUrl } from "@/lib/env-config";
 
 type ApiAnalyzeResponse = {
   matchedSkills: { skill: string; category: string }[];
@@ -21,15 +22,6 @@ type ApiAnalyzeResponse = {
 export type ApiAnalysisClientResult =
   | { status: "success"; result: WebAnalysisResult }
   | { status: "error"; message: string };
-
-/** Base URL for the local FastAPI analysis service. */
-export function getAnalysisApiBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_ANALYSIS_API_URL?.trim();
-  if (!configured) {
-    return DEFAULT_ANALYSIS_API_URL;
-  }
-  return configured.replace(/\/$/, "");
-}
 
 function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
   return {
