@@ -1864,3 +1864,21 @@ Verification:
 - Confirmed Version 9 was merged and documented.
 - Confirmed the custom test suite passed before starting Version 10 planning.
 - Kept the planning branch documentation-only.
+
+## Version 10 Step 0 — planned saved-analysis metadata
+
+Created the Version 10 planning document before making database or UI changes.
+
+This step clarified that Version 10 should start with richer saved-analysis metadata, especially optional source URL and notes, but that implementation needs to be handled carefully because it affects SQLite persistence.
+
+Key decisions:
+- Treat source URL and notes as the strongest first metadata fields.
+- Keep status, tags, full application tracking, restore/import, deployment, authentication, and AI/semantic matching out of this first Version 10 scope.
+- Avoid storing raw resume text or raw job-description text.
+- Plan for schema-safe, backward-compatible database changes before adding Streamlit UI fields.
+- Keep Version 10 moving in small branches rather than combining metadata, UI, exports, and application tracking all at once.
+
+What I learned:
+- SQLite schema changes need more caution than UI-only changes because existing local databases may already exist.
+- A migration should be idempotent, meaning it can run safely more than once without duplicating or breaking anything.
+- Planning the data model before implementation helps prevent fragile code and protects saved user data.
