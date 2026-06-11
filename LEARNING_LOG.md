@@ -2378,3 +2378,39 @@ Important lesson:
 
 Next step:
 - Redeploy the Render backend with the bugfix, then continue to Version 13 Step 6 — deploy the Next.js frontend prototype to Vercel.
+
+## Version 13 Step 6 — Deploy Next.js frontend prototype to Vercel
+
+Deployed the Next.js frontend prototype to Vercel and pointed it to the hosted Render FastAPI backend.
+
+Vercel deployment settings:
+- Framework preset: Next.js
+- Root directory: `web`
+- Production branch: `main`
+- Build command: `npm run build`
+- Analysis API URL: Render FastAPI backend
+
+Configured Vercel environment variables for:
+- Clerk authentication
+- Supabase client access
+- Render FastAPI API URL
+
+Updated Render CORS so the deployed Vercel frontend origin can call the hosted FastAPI backend.
+
+Verified:
+- Vercel landing page loads.
+- Sign-in/sign-up routes load.
+- Dashboard protection works.
+- Signed-in dashboard loads.
+- Hosted frontend can call the hosted Render `/analyze` endpoint.
+- Safe sample analysis returns the expected matched/missing skill result.
+- Prototype save flow was tested against Supabase if Clerk/Supabase/RLS were configured.
+
+Important caution:
+- This is the first hosted prototype, not a production-secure SaaS.
+- CORS is not API authentication.
+- The backend still needs production API authentication or request validation before serious public use.
+- Raw resume/job text is still not intentionally stored by the hosted analysis API.
+
+Next step:
+- Version 13 Step 7 — hosted deployment checkpoint and production-readiness cleanup list.
