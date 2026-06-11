@@ -1985,3 +1985,21 @@ What I learned:
 - A larger web app can be introduced safely beside an existing working app.
 - Separating the frontend scaffold from the Python analyzer reduces risk.
 - The hosted architecture should be built in layers: frontend first, then auth, then database, then analysis-service integration.
+
+## Version 12 Step 2 — added Clerk-style auth shell
+
+Added the first authentication shell for the future hosted web app.
+
+This step connected the Next.js frontend scaffold to Clerk-style authentication. The web app now has Clerk provider setup, sign-in and sign-up routes, signed-in/signed-out navigation states, and a protected dashboard route. The dashboard is still a placeholder for the future account-based product and does not yet save analyses or connect to a cloud database.
+
+Key decisions:
+- Add authentication structure before adding cloud persistence.
+- Keep the existing Python/Streamlit app unchanged.
+- Keep Supabase/Postgres work for a later branch.
+- Keep the dashboard honest by showing future saved-analysis areas without claiming they work yet.
+- Keep Clerk secrets in local environment files and out of Git.
+
+What I learned:
+- Authentication in a Next.js app involves provider setup, route protection, public auth pages, and signed-in/signed-out UI states.
+- Environment variables separate private local configuration from committed source code.
+- A protected dashboard can be built before the database exists, as long as the UI clearly labels unfinished features.
