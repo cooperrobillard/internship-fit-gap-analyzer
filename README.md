@@ -21,14 +21,15 @@ Matching is **keyword- and alias-based**. It does not understand meaning, requir
 
 ## Current status
 
-**Version 7** adds **saved-result organization and local data management** (improved labels, search, guarded deletion) to the Version 6 local Streamlit UI, on top of the Version 3 CLI and backend.
+**Version 9** adds **local Streamlit usability and portability** (portable pasted/uploaded text workflows, simplified layout, in-memory downloads, saved-data exports) on top of Version 7–8 saved-management and test reliability, with the Version 3 CLI and backend unchanged.
 
 The project can:
 
 * run analysis on a **folder of job files** (default sample data or private `--jobs` folder),
 * run analysis on a **single job file** with `--job-file`,
 * call shared backend functions (`src/analysis_runner.py`) that return structured results,
-* run a **local Streamlit UI** (`streamlit_app.py`) for sample job and pasted job analysis,
+* run a **local Streamlit UI** (`streamlit_app.py`) for sample, pasted, and uploaded job analysis with flexible resume input,
+* **download current analysis** reports (Markdown and skill-gap CSV) and **export saved data** (summary CSV, skill-gaps CSV, SQLite backup) from the UI when saved data exists,
 * **optionally save UI runs** to `data/outputs/analysis_results.db` and use **saved-history views** with improved labels, **text search**, **two-way comparison**, **recurring gap priority summary**, and **guarded single-result deletion** in the UI,
 * generate markdown and CSV outputs (CLI),
 * optionally save to SQLite (`--database`),
@@ -108,7 +109,7 @@ resume + job description(s) + taxonomy + aliases
 → terminal summary (CLI)
 ```
 
-Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. The local Streamlit UI calls the same backend for sample job and pasted job preview runs.
+Folder mode reads every `.txt` file in a jobs folder. Single-file mode (`--job-file`) analyzes one job path. The local Streamlit UI calls the same backend for sample, pasted, and uploaded job preview runs.
 
 ## Setup
 
@@ -217,7 +218,7 @@ python3 tests/test_database.py
 
 Note: `python3 -m unittest discover -s tests -p "test_*.py"` currently reports **0 tests** because most test files are executable scripts, not `unittest.TestCase` classes. Use `run_tests.py` or the per-file commands above.
 
-### Local Streamlit UI (Versions 4–7)
+### Local Streamlit UI (Versions 4–9)
 
 Run from the project root. Opens a browser tab on your machine only—not a public website.
 
@@ -227,22 +228,24 @@ python3 -m streamlit run streamlit_app.py
 
 The UI can:
 
-* analyze the **sample job file** against a selected resume,
-* analyze a **pasted job description** against a selected resume,
-* use the **sample resume** (`data/resume/sample_resume.txt`) by default,
-* use your **private local resume** (`data/resume/resume.txt`) if that file exists on your machine,
+* **Try sample analysis** with the bundled sample resume and sample job,
+* **paste a job description** or **upload a UTF-8 `.txt` job description**,
+* use the **sample resume**, **private local resume** (if present), **pasted resume text**, or **uploaded `.txt` resume** where relevant,
+* add optional **job title and company** metadata for clearer saved labels,
+* **download current analysis** as Markdown and skill-gap CSV from the **Results** tab (in memory only),
 * **optionally save** an analysis run to `data/outputs/analysis_results.db` (checkbox),
 * show **Saved Analysis History** and **Recent Saved Runs** with **improved labels** (job name, saved time, run/result IDs, gap counts) when that database exists,
 * **search saved analyses** by job name, date, or IDs (filters browsing and pickers, not the gap priority summary),
 * **compare two saved analyses** (shared and unique missing skills; requires at least two saved job results),
 * show a **Saved Gap Priority Summary** of recurring missing skills across all saved analyses,
-* **delete one selected saved analysis** permanently after explicit confirmation (local SQLite only).
+* **export saved data** (summary CSV, skill-gaps CSV) and **download a SQLite backup** when a saved database exists,
+* **delete one selected saved analysis** permanently after explicit confirmation (local SQLite only; **Data management** tab).
 
 Comparison uses **missing skills stored in SQLite** only—it does not compare matched-skill lists because individual matched skill names are not saved to the database. The gap priority summary is descriptive, not a ranked recommendation engine. Deletion has **no undo**.
 
-Preview runs do not write markdown/CSV report files unless you use the CLI. Optional UI SQLite saving uses the same local database path family as `--database`.
+Preview runs do not write markdown/CSV report files to `data/outputs/` unless you use the CLI. UI downloads and exports are generated in memory only. Optional UI SQLite saving uses the same local database path family as `--database`.
 
-**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence, [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison, and [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) for saved-result management.
+**Privacy:** Do not commit `data/resume/resume.txt`, pasted job text, uploaded file contents, or generated files under `data/outputs/` (including `.db` files). See [`docs/VERSION_5_CHECKPOINT.md`](docs/VERSION_5_CHECKPOINT.md) for persistence, [`docs/VERSION_6_CHECKPOINT.md`](docs/VERSION_6_CHECKPOINT.md) for comparison, [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) for saved-result management, and [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) for portability and exports.
 
 ### Help and other options
 
@@ -324,6 +327,7 @@ Output files:
 | [`docs/VERSION_7_CHECKPOINT.md`](docs/VERSION_7_CHECKPOINT.md) | Version 7 checkpoint: labels, search, guarded deletion |
 | [`docs/VERSION_8_PLAN.md`](docs/VERSION_8_PLAN.md) | Version 8 plan: testing and maintenance reliability |
 | [`docs/VERSION_8_CHECKPOINT.md`](docs/VERSION_8_CHECKPOINT.md) | Version 8 checkpoint: test runner, TESTING.md, Streamlit maintenance |
+| [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) | Version 9 checkpoint: usability, portability, downloads, exports |
 | [`docs/TESTING.md`](docs/TESTING.md) | Canonical testing guide |
 | [`docs/LOCAL_UI_PLAN.md`](docs/LOCAL_UI_PLAN.md) | Local UI plan and implementation status |
 | [`docs/VERSION_3_CHECKPOINT.md`](docs/VERSION_3_CHECKPOINT.md) | Version 3 summary and test commands |
@@ -347,4 +351,4 @@ This project supports learning Python, CLI design, testing, file I/O, JSON, proj
 
 ## Planned next steps
 
-See [`docs/VERSION_8_CHECKPOINT.md`](docs/VERSION_8_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Version 8 testing and maintenance reliability is **complete** (`run_tests.py` runs every top-level `tests/test_*.py` file; see [`docs/TESTING.md`](docs/TESTING.md)). The **next milestone** should begin with a separate planning step—no Version 9 scope is committed yet. Hosted deployment and optional AI-assisted extraction remain uncommitted future candidates.
+See [`docs/VERSION_9_CHECKPOINT.md`](docs/VERSION_9_CHECKPOINT.md) and [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md). Version 9 usability and portability work is **complete** (portable inputs, UI polish, downloads, saved exports/backup). The **next phase** should begin with a separate planning step—likely starting with richer saved-analysis metadata (source URL and notes), which may require a SQLite schema decision. Hosted deployment, restore/import, and optional AI-assisted extraction remain uncommitted future candidates.

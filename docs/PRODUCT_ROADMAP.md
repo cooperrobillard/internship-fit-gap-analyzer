@@ -10,7 +10,7 @@ For what the project does today, see the [README](../README.md), [`VERSION_2_CHE
 
 ## 1. Current project state
 
-As of **Version 8**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
+As of **Version 9**, the project is a **stable, rule-based Python CLI tool** with a **local Streamlit UI prototype**, portable pasted/uploaded text workflows, optional SQLite persistence in both CLI and UI, saved-analysis comparison, searchable saved-history management, guarded single-result deletion, in-memory current-analysis downloads, saved-data CSV exports and SQLite backup download, and an auto-discovering test gate (`python3 run_tests.py`) on a clean public repo.
 
 **What exists today:**
 
@@ -22,6 +22,7 @@ As of **Version 8**, the project is a **stable, rule-based Python CLI tool** wit
 - Version 6 additions: read-only **Compare Saved Analyses** (two saved job results, missing-skill comparison), read-only **Saved Gap Priority Summary** across all saved analyses (localhost only).
 - Version 7 additions: improved saved-result labels, newest-first sorting across all saves, **Search saved analyses**, guarded **Delete Saved Analysis** (one record at a time, localhost only).
 - Version 8 additions: auto-discovering `run_tests.py` (every top-level `tests/test_*.py` file), documented script-style test architecture ([`TESTING.md`](TESTING.md)), Streamlit `width="stretch"` maintenance (replacing deprecated `use_container_width`).
+- Version 9 additions: portable resume input (pasted and uploaded UTF-8 `.txt`), optional job title/company metadata labels, uploaded job-description input, simplified Streamlit layout and analysis input flow, current-analysis Markdown/CSV downloads, saved-analysis CSV exports and SQLite backup download (localhost only).
 
 **What does not exist today:**
 
@@ -31,7 +32,7 @@ As of **Version 8**, the project is a **stable, rule-based Python CLI tool** wit
 - Semantic matching, embeddings, or RAG
 - Docker, CI deployment pipelines for the app itself
 - Production hosting or a live product at cooperrobillard.com/jobfit
-- Bulk delete, undo/archive, saved-record editing, tags/favorites, or fit-score ranking in the UI
+- Bulk delete, undo/archive, saved-record editing, tags/favorites, fit-score ranking, or restore/import from backup in the UI
 - Hosted deployment, authentication, or cloud database
 - Matched-skill list comparison from saved SQLite data (only counts are stored)
 
@@ -150,21 +151,42 @@ Delivered:
 
 **Explicitly not Version 8:** pytest adoption, unittest migration, deployment, auth, new product features, fit scores, semantic matching.
 
+### Version 9: Local UI usability and portability — **complete**
+
+**Goal:** Make the local Streamlit app more usable, portable, and closer to a practical private or publishable tool.
+
+Checkpoint: [`VERSION_9_CHECKPOINT.md`](VERSION_9_CHECKPOINT.md).
+
+Delivered:
+
+- **portable resume input** — pasted and uploaded UTF-8 `.txt` resume (in memory only),
+- **optional job title/company metadata** — clearer saved labels without schema change,
+- **uploaded job-description input** — UTF-8 `.txt` upload alongside paste,
+- **UI layout cleanup** — tabbed Analyze / Results / Saved analyses / Data management flow,
+- **simplified analysis input flow** — sample, paste, and upload workflows,
+- **current-analysis downloads** — in-memory Markdown report and skill-gap CSV,
+- **saved-data exports and backup** — saved analyses summary CSV, saved skill gaps CSV, SQLite backup download.
+
+**Explicitly not Version 9:** semantic matching, fit scores, deployment, auth, cloud persistence, source URL/notes/tags, PDF/DOCX parsing, restore/import from backup, SQLite schema migration.
+
 ### Future versions (not committed)
 
-The items below are **candidates for a future planning step**. No version number, scope, or implementation order is selected yet.
+The items below are **candidates for a future planning step**. No version number, scope, or implementation order is selected yet. **Begin with a small planning/audit step**—likely starting with richer saved-analysis metadata (source URL and notes), which may require a SQLite schema/migration decision.
 
 | Candidate area | Notes |
 |----------------|--------|
-| **Local export / backup** | Research export or backup of saved SQLite data |
-| **Limited saved-result metadata** | Only with deliberate, minimal schema design |
+| **Source URL and notes metadata** | Likely needs deliberate SQLite schema/migration design |
+| **Restore/import planning** | Research only; Version 9 shipped backup download, not import |
+| **Richer saved-analysis organization** | Tags, filters, favorites—only with clear scope |
 | **Test-framework migration** | unittest or pytest **only if** triggers in [`TESTING.md`](TESTING.md) are met |
-| **Streamlit / UI maintenance** | Ongoing deprecation and layout fixes beyond Version 8 |
+| **Streamlit / UI maintenance** | Ongoing deprecation and layout fixes |
 | **Deployment-readiness research** | Architecture notes, privacy rules, platform comparison—**not deployment** |
+| **Authentication / cloud architecture** | Much later; solo local tool remains the default |
 | **Private hosted UI** | Unlisted or access-gated hosted instance—**only after** local workflows feel worthwhile |
-| **Optional AI-assisted extraction** | LLM-based skill extraction—**maybe never**; rule-based path remains valuable |
+| **Semantic matching** | Embeddings/RAG/LLM—**much later**; rule-based path remains valuable |
+| **Optional AI-assisted extraction** | LLM-based skill extraction—**maybe never**; rule-based path remains fallback |
 
-**Explicitly not committed:** production multi-user SaaS, Clerk/auth by default, cloud database, semantic matching, fit-score ranking, or automatic implementation of any row above.
+**Explicitly not committed:** production multi-user SaaS, Clerk/auth by default, cloud database, fit-score ranking, automatic restore/import, or automatic implementation of any row above.
 
 Optional AI-assisted extraction (e.g. OpenAI API for structured skill extraction) remains a **maybe-never** candidate: only if rule-based matching becomes a clear bottleneck and privacy/cost tradeoffs are acceptable. The rule-based path would remain as fallback.
 
@@ -186,6 +208,7 @@ Treat these as **prerequisites**, not suggestions:
 | Version 6 comparison validated | Two-way missing-skill comparison + gap priority summary feel useful locally |
 | Version 7 organization validated | Labels, search, and guarded deletion work during real local use |
 | Version 8 testing reliability validated | `run_tests.py` runs full suite; test architecture documented |
+| Version 9 usability/portability validated | Pasted/uploaded workflows, downloads, exports feel useful locally |
 | Written privacy rules for hosted mode | Decide what never leaves the server, what is logged, retention |
 
 **Do not start hosted UI work** until a local prototype answers: “Is this actually useful for my internship search workflow?”
@@ -228,13 +251,15 @@ Version 7 (complete)
   → labels, sorting, search, guarded single-result deletion
 Version 8 (complete)
   → full test-runner coverage, TESTING.md, Streamlit width maintenance
+Version 9 (complete)
+  → portable inputs, UI polish, current downloads, saved exports/backup
 Next (planning only — no version number committed)
-  → evaluate export/backup, metadata, hosted research, or other candidates in table above
+  → audit metadata/schema needs; evaluate source URL/notes, restore/import research, hosted research, or other candidates in table above
 Future (optional, much later)
-  → private hosted UI and/or AI-assisted extraction; never required for portfolio value
+  → private hosted UI, auth/cloud architecture, semantic matching; never required for portfolio value
 ```
 
-**Immediate recommendation:** Keep `python3 run_tests.py` green; use Version 7 saved-management workflows during real internship search; **begin the next milestone with a separate planning step** (see [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md)). Hosted deployment and other future candidates remain uncommitted.
+**Immediate recommendation:** Keep `python3 run_tests.py` green; use the CLI and local Streamlit UI (including exports) during real internship search; **begin the next milestone with a separate planning step** (see [`VERSION_9_CHECKPOINT.md`](VERSION_9_CHECKPOINT.md)). Hosted deployment and other future candidates remain uncommitted.
 
 ---
 
@@ -298,6 +323,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 - Extended a Version 1 MVP with optional SQLite persistence and pandas summaries (Version 2).
 - Built a local Streamlit UI with optional SQLite save, searchable saved-history views, saved-analysis comparison, a recurring gap priority summary, and guarded single-result deletion (Versions 4–7).
 - Improved test reliability with auto-discovering `run_tests.py` and documented script-style test architecture (Version 8).
+- Polished the local Streamlit UI with portable pasted/uploaded text workflows, in-memory downloads, and saved-data exports/backup (Version 9).
 
 **Avoid claiming (until actually built and deployed):**
 
@@ -308,7 +334,7 @@ When the project is ready to cite publicly, describe it **accurately**:
 
 **Possible one-liner (today):**
 
-> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs, searchable saved-history views, two-way saved-analysis comparison, a gap priority summary, and guarded local deletion—test-backed and privacy-conscious, not deployed.
+> Rule-based Python CLI and local Streamlit UI that surface recurring internship skill gaps from resume and job-description text, with optional SQLite/pandas outputs, portable pasted/uploaded text workflows, searchable saved-history views, two-way saved-analysis comparison, a gap priority summary, guarded local deletion, and in-memory downloads/exports—test-backed and privacy-conscious, not deployed.
 
 Update the one-liner when a hosted UI exists—still without overstating AI capabilities unless an AI milestone is real.
 
@@ -316,11 +342,11 @@ Update the one-liner when a hosted UI exists—still without overstating AI capa
 
 ## 11. Near-term next steps
 
-Actionable items after **Version 8 complete**—**no automatic next implementation**:
+Actionable items after **Version 9 complete**—**no automatic next implementation**:
 
 1. **Run the usual gate** before any merge: `python3 run_tests.py` and `python3 src/main.py`.
-2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs.
-3. **Start the next milestone with planning only** — see future candidates in §4 and [`VERSION_8_CHECKPOINT.md`](VERSION_8_CHECKPOINT.md).
+2. **Keep using the CLI and local Streamlit UI** for real internship search with private resume/job inputs, downloads, and exports.
+3. **Start the next milestone with planning only** — see future candidates in §4 and [`VERSION_9_CHECKPOINT.md`](VERSION_9_CHECKPOINT.md).
 4. **Update README “Planned next steps”** when a new milestone is actually planned or shipped.
 5. **Register intent for cooperrobillard.com/jobfit** as a future landing path only—no deployment until explicitly planned.
 
@@ -332,4 +358,4 @@ Actionable items after **Version 8 complete**—**no automatic next implementati
 - **Update when:** a version milestone ships, UI/deployment decision changes, or privacy rules evolve.
 - **Related docs:** [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), [`LIMITATIONS.md`](LIMITATIONS.md), [`PORTFOLIO_SUMMARY.md`](PORTFOLIO_SUMMARY.md), [README](../README.md).
 
-*Last aligned with: Version 8 complete (testing and maintenance reliability); next milestone uncommitted; no hosted deployment.*
+*Last aligned with: Version 9 complete (local UI usability and portability); next milestone uncommitted; no hosted deployment.*
