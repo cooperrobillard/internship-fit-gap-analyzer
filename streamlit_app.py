@@ -510,6 +510,8 @@ def store_analysis_result(
     analysis_result,
     save_to_database,
     database_path=DEFAULT_DATABASE_PATH,
+    source_url=None,
+    notes=None,
 ):
     """
     Optionally save an analysis result for session state.
@@ -519,7 +521,12 @@ def store_analysis_result(
     if not save_to_database:
         return analysis_result, None
 
-    saved_path = save_analysis_to_database(analysis_result, database_path)
+    analysis_to_save = apply_saved_job_metadata_to_analysis_result(
+        analysis_result,
+        source_url=source_url,
+        notes=notes,
+    )
+    saved_path = save_analysis_to_database(analysis_to_save, database_path)
     updated_result = dict(analysis_result)
     updated_result["database_path"] = Path(saved_path)
 
@@ -686,7 +693,7 @@ SAVED_GAP_PRIORITY_GUIDANCE = (
     "or build projects around next."
 )
 SAVED_SEARCH_GUIDANCE = (
-    "Search by job name, saved date, run ID, or job-result ID."
+    "Search by job name, saved date, run ID, job-result ID, source URL, or notes."
 )
 SAVED_SEARCH_NO_MATCH_MESSAGE = "No saved analyses match this search."
 SAVED_COMPARISON_SEARCH_INSUFFICIENT_MESSAGE = (
@@ -734,6 +741,8 @@ SAVED_ANALYSES_CSV_COLUMNS = [
     "job_name",
     "matched_skills_count",
     "missing_skills_count",
+    "source_url",
+    "notes",
 ]
 SAVED_SKILL_GAPS_CSV_COLUMNS = [
     "run_id",
@@ -749,6 +758,11 @@ DATABASE_BACKUP_PRIVACY_NOTE = (
 )
 
 
+SAVED_METADATA_NOTES_CAPTION = (
+    "Source URL and notes are saved locally only when SQLite saving is enabled."
+)
+
+
 def normalize_saved_result(saved_result):
     """Return a saved-result dict with consistent keys for labels and sorting."""
     normalized = dict(saved_result)
@@ -756,7 +770,53 @@ def normalize_saved_result(saved_result):
     if "job_result_id" not in normalized and "id" in normalized:
         normalized["job_result_id"] = normalized["id"]
 
+    normalized.setdefault("source_url", None)
+    normalized.setdefault("notes", None)
+
     return normalized
+
+
+def apply_saved_job_metadata_to_analysis_result(
+    analysis_result,
+    source_url=None,
+    notes=None,
+):
+    """
+    Attach optional saved-analysis metadata to each job_results entry.
+
+    Uses the same whitespace normalization as other optional metadata fields.
+    """
+    normalized_source_url = normalize_optional_metadata_field(source_url)
+    normalized_notes = normalize_optional_metadata_field(notes)
+
+    updated_result = dict(analysis_result)
+    updated_job_results = []
+
+    for job_result in updated_result["job_results"]:
+        job_with_metadata = dict(job_result)
+        job_with_metadata["source_url"] = normalized_source_url
+        job_with_metadata["notes"] = normalized_notes
+        updated_job_results.append(job_with_metadata)
+
+    updated_result["job_results"] = updated_job_results
+    return updated_result
+
+
+def build_saved_job_result_detail_lines(saved_result):
+    """Build readable detail lines for saved source URL and notes when present."""
+    saved_result = normalize_saved_result(saved_result)
+    lines = []
+
+    source_url = saved_result.get("source_url")
+    notes = saved_result.get("notes")
+
+    if source_url:
+        lines.append(f"Source URL: {source_url}")
+
+    if notes:
+        lines.append(f"Notes: {notes}")
+
+    return lines
 
 
 def format_saved_timestamp(run_timestamp):
@@ -845,6 +905,8 @@ def build_saved_result_search_text(saved_result):
         str(saved_result.get("run_timestamp") or ""),
         str(saved_result.get("run_id", "")),
         str(saved_result.get("job_result_id", "")),
+        str(saved_result.get("source_url") or ""),
+        str(saved_result.get("notes") or ""),
         format_saved_result_label(saved_result),
     ]
 
@@ -910,6 +972,8 @@ def recent_saved_jobs_to_rows(recent_jobs):
                 "Result ID": normalized_job.get("job_result_id"),
                 "Matched skills": normalized_job["matched_skills_count"],
                 "Missing skills": normalized_job["missing_skills_count"],
+                "Source URL": normalized_job.get("source_url") or "",
+                "Notes": normalized_job.get("notes") or "",
             }
         )
 
@@ -1541,6 +1605,18 @@ def render_recent_saved_runs(st, display, show_heading=True):
         width="stretch",
     )
 
+    recent_jobs = display.get("recent_jobs", [])
+    jobs_with_metadata = [
+        job for job in recent_jobs if build_saved_job_result_detail_lines(job)
+    ]
+
+    if jobs_with_metadata:
+        with st.expander("View saved source URL and notes"):
+            for job in jobs_with_metadata:
+                st.markdown(f"**{job.get('job_filename', 'Unknown job')}**")
+                for line in build_saved_job_result_detail_lines(job):
+                    st.write(line)
+
 
 def build_saved_history_display(
     database_path=DEFAULT_DATABASE_PATH,
@@ -1805,6 +1881,8 @@ def build_saved_analyses_csv_download(database_path=DEFAULT_DATABASE_PATH):
                     normalized_job.get("job_filename", ""),
                     normalized_job.get("matched_skills_count", ""),
                     normalized_job.get("missing_skills_count", ""),
+                    normalized_job.get("source_url") or "",
+                    normalized_job.get("notes") or "",
                 ]
             )
 
@@ -2159,10 +2237,12 @@ def _render_analyze_tab(st):
         help="Optional. Creates or updates the local database file on this machine only.",
     )
 
-    def apply_analysis_result(analysis_result):
+    def apply_analysis_result(analysis_result, source_url=None, notes=None):
         result, save_message = store_analysis_result(
             analysis_result,
             save_to_database=save_to_database,
+            source_url=source_url,
+            notes=notes,
         )
         st.session_state["analysis_result"] = result
 
@@ -2173,6 +2253,10 @@ def _render_analyze_tab(st):
 
     resume_selection = None
     resume_source_key = RESUME_SOURCE_SAMPLE
+    sample_source_url = None
+    sample_notes = None
+    saved_source_url = None
+    saved_notes = None
 
     if not is_sample_analysis_workflow(workflow_key):
         resume_selection = _render_resume_source_selector(
@@ -2213,14 +2297,32 @@ def _render_analyze_tab(st):
             f"Job: `{DEFAULT_JOB_PATH.relative_to(REPO_ROOT)}`"
         )
 
+        with st.expander("Optional saved-analysis metadata", expanded=False):
+            sample_source_url = st.text_input(
+                "Source URL (optional)",
+                placeholder="e.g. https://example.com/careers/internship",
+                key="sample_saved_source_url",
+            )
+            sample_notes = st.text_area(
+                "Notes (optional)",
+                height=100,
+                placeholder="e.g. Apply by Friday. Referral from Alex.",
+                key="sample_saved_notes",
+            )
+            st.caption(SAVED_METADATA_NOTES_CAPTION)
+
         if st.button("Run sample analysis", type="primary"):
             apply_analysis_result(
-                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH)
+                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH),
+                source_url=sample_source_url,
+                notes=sample_notes,
             )
 
         if "analysis_result" not in st.session_state:
             apply_analysis_result(
-                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH)
+                run_sample_analysis(resume_path=SAMPLE_RESUME_PATH),
+                source_url=sample_source_url,
+                notes=sample_notes,
             )
     else:
         with st.expander("Optional job labels (title and company)", expanded=False):
@@ -2232,6 +2334,16 @@ def _render_analyze_tab(st):
                 "Company (optional)",
                 placeholder="e.g. Example Company",
             )
+            saved_source_url = st.text_input(
+                "Source URL (optional)",
+                placeholder="e.g. https://example.com/careers/internship",
+            )
+            saved_notes = st.text_area(
+                "Notes (optional)",
+                height=100,
+                placeholder="e.g. Apply by Friday. Referral from Alex.",
+            )
+            st.caption(SAVED_METADATA_NOTES_CAPTION)
 
         pasted_job_text = None
         uploaded_job_bytes = None
@@ -2296,7 +2408,9 @@ def _render_analyze_tab(st):
                             job_name=job_name,
                             resume_path=resume_input["resume_path"],
                             resume_text=resume_input["resume_text"],
-                        )
+                        ),
+                        source_url=saved_source_url,
+                        notes=saved_notes,
                     )
 
     if st.session_state.get("database_save_message"):

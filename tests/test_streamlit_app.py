@@ -1852,6 +1852,172 @@ def test_saved_export_csvs_exclude_raw_resume_and_job_text():
         assert secret_resume not in skill_gaps_csv
 
 
+def test_apply_saved_job_metadata_to_analysis_result_trims_whitespace():
+    module = _load_streamlit_app_module()
+
+    analysis_result = module.run_sample_analysis()
+    updated = module.apply_saved_job_metadata_to_analysis_result(
+        analysis_result,
+        source_url="  https://example.com/intern  ",
+        notes="  Apply by Friday  ",
+    )
+
+    assert updated["job_results"][0]["source_url"] == "https://example.com/intern"
+    assert updated["job_results"][0]["notes"] == "Apply by Friday"
+
+
+def test_apply_saved_job_metadata_to_analysis_result_treats_blank_as_none():
+    module = _load_streamlit_app_module()
+
+    analysis_result = module.run_sample_analysis()
+    updated = module.apply_saved_job_metadata_to_analysis_result(
+        analysis_result,
+        source_url="   ",
+        notes="",
+    )
+
+    assert updated["job_results"][0]["source_url"] is None
+    assert updated["job_results"][0]["notes"] is None
+
+
+def test_filter_saved_results_matches_source_url_and_notes():
+    module = _load_streamlit_app_module()
+
+    saved_results = [
+        {
+            "job_filename": "alpha_engineering_internship.txt",
+            "run_timestamp": "2026-06-07T16:32:00",
+            "run_id": 1,
+            "job_result_id": 1,
+            "missing_skills_count": 4,
+            "matched_skills_count": 6,
+            "source_url": "https://careers.example.com/intern",
+            "notes": "Apply before Friday",
+        }
+    ]
+
+    by_url = module.filter_saved_results(saved_results, "careers.example.com")
+    by_notes = module.filter_saved_results(saved_results, "apply before friday")
+
+    assert len(by_url) == 1
+    assert len(by_notes) == 1
+
+
+def test_store_analysis_result_saves_metadata_to_database():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+            source_url="https://example.com/jobs/data-intern",
+            notes="Phone screen next week",
+        )
+
+        saved_data = module.load_all_sorted_saved_results(database_path)
+
+        assert saved_data["saved_jobs"][0]["source_url"] == (
+            "https://example.com/jobs/data-intern"
+        )
+        assert saved_data["saved_jobs"][0]["notes"] == "Phone screen next week"
+
+
+def test_store_analysis_result_passes_metadata_to_database_save_helper():
+    module = _load_streamlit_app_module()
+    captured = {}
+
+    def fake_save_analysis_to_database(analysis_result, database_path):
+        captured["analysis_result"] = analysis_result
+        return database_path
+
+    original_save = module.save_analysis_to_database
+    module.save_analysis_to_database = fake_save_analysis_to_database
+
+    try:
+        with TemporaryDirectory() as temp_folder:
+            database_path = Path(temp_folder) / "analysis_results.db"
+            analysis_result = module.run_sample_analysis()
+
+            module.store_analysis_result(
+                analysis_result,
+                save_to_database=True,
+                database_path=database_path,
+                source_url="https://example.com/posting",
+                notes="Referral from Alex",
+            )
+
+            saved_job = captured["analysis_result"]["job_results"][0]
+            assert saved_job["source_url"] == "https://example.com/posting"
+            assert saved_job["notes"] == "Referral from Alex"
+    finally:
+        module.save_analysis_to_database = original_save
+
+
+def test_recent_saved_jobs_to_rows_includes_metadata_columns():
+    module = _load_streamlit_app_module()
+
+    rows = module.recent_saved_jobs_to_rows(
+        [
+            {
+                "job_filename": "sample_job.txt",
+                "run_timestamp": "2026-06-07T16:32:00",
+                "run_id": 1,
+                "job_result_id": 1,
+                "missing_skills_count": 3,
+                "matched_skills_count": 5,
+                "source_url": "https://example.com/posting",
+                "notes": "Follow up soon",
+            }
+        ]
+    )
+
+    assert rows[0]["Source URL"] == "https://example.com/posting"
+    assert rows[0]["Notes"] == "Follow up soon"
+
+
+def test_build_saved_job_result_detail_lines_includes_metadata_when_present():
+    module = _load_streamlit_app_module()
+
+    lines = module.build_saved_job_result_detail_lines(
+        {
+            "job_filename": "sample_job.txt",
+            "source_url": "https://example.com/posting",
+            "notes": "Apply by Friday",
+        }
+    )
+
+    assert lines == [
+        "Source URL: https://example.com/posting",
+        "Notes: Apply by Friday",
+    ]
+
+
+def test_build_saved_analyses_csv_download_includes_metadata_values():
+    module = _load_streamlit_app_module()
+
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "analysis_results.db"
+        analysis_result = module.run_sample_analysis()
+
+        module.store_analysis_result(
+            analysis_result,
+            save_to_database=True,
+            database_path=database_path,
+            source_url="https://example.com/posting",
+            notes="Saved locally only",
+        )
+
+        csv_text = module.build_saved_analyses_csv_download(database_path)
+
+        assert "source_url,notes" in csv_text
+        assert "https://example.com/posting" in csv_text
+        assert "Saved locally only" in csv_text
+
+
 if __name__ == "__main__":
     test_streamlit_app_imports_safely()
     test_streamlit_app_exposes_layout_tab_helpers()
@@ -1962,4 +2128,12 @@ if __name__ == "__main__":
     test_read_database_backup_bytes_handles_missing_database_safely()
     test_saved_export_helpers_do_not_write_csv_files_to_disk()
     test_saved_export_csvs_exclude_raw_resume_and_job_text()
+    test_apply_saved_job_metadata_to_analysis_result_trims_whitespace()
+    test_apply_saved_job_metadata_to_analysis_result_treats_blank_as_none()
+    test_filter_saved_results_matches_source_url_and_notes()
+    test_store_analysis_result_saves_metadata_to_database()
+    test_store_analysis_result_passes_metadata_to_database_save_helper()
+    test_recent_saved_jobs_to_rows_includes_metadata_columns()
+    test_build_saved_job_result_detail_lines_includes_metadata_when_present()
+    test_build_saved_analyses_csv_download_includes_metadata_values()
     print("All streamlit app tests passed.")
