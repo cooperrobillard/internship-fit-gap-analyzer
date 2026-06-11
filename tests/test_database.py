@@ -21,6 +21,8 @@ from database import query_missing_skills_for_job_result
 from database import query_saved_gap_priorities
 from database import delete_saved_job_result
 from database import delete_saved_job_result_from_database
+from database import connect_to_database
+from database import migrate_database_schema
 
 
 def table_exists(connection, table_name):
@@ -40,6 +42,309 @@ def table_exists(connection, table_name):
 
     result = cursor.fetchone()
     return result is not None
+
+
+def table_has_column(connection, table_name, column_name):
+    """Return True when table_name has column_name."""
+    cursor = connection.cursor()
+    cursor.execute(f"PRAGMA table_info({table_name});")
+    column_names = [row[1] for row in cursor.fetchall()]
+    return column_name in column_names
+
+
+def create_legacy_database_without_metadata(database_path):
+    """
+    Create a Version-9-shaped database without source_url or notes columns.
+
+    Used to test migration on an existing saved database file.
+    """
+    connection = connect_to_database(database_path)
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS analysis_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_timestamp TEXT NOT NULL,
+            resume_path TEXT NOT NULL,
+            jobs_path TEXT NOT NULL,
+            taxonomy_path TEXT NOT NULL,
+            aliases_path TEXT NOT NULL,
+            total_jobs INTEGER NOT NULL
+        );
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS job_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            job_filename TEXT NOT NULL,
+            matched_skills_count INTEGER NOT NULL,
+            missing_skills_count INTEGER NOT NULL,
+            FOREIGN KEY (run_id) REFERENCES analysis_runs (id)
+        );
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS skill_gaps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            job_filename TEXT NOT NULL,
+            skill TEXT NOT NULL,
+            category TEXT NOT NULL,
+            FOREIGN KEY (run_id) REFERENCES analysis_runs (id)
+        );
+        """
+    )
+    connection.commit()
+    return connection
+
+
+def test_new_database_has_metadata_columns():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        assert table_has_column(connection, "job_results", "source_url")
+        assert table_has_column(connection, "job_results", "notes")
+
+        connection.close()
+
+
+def test_migrate_database_schema_is_idempotent():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = create_legacy_database_without_metadata(database_path)
+
+        migrate_database_schema(connection)
+        migrate_database_schema(connection)
+
+        assert table_has_column(connection, "job_results", "source_url")
+        assert table_has_column(connection, "job_results", "notes")
+
+        connection.close()
+
+
+def test_insert_job_result_works_without_metadata():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=1,
+        )
+
+        job_result_id = insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            matched_skills_count=3,
+            missing_skills_count=5,
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+
+        assert job_result_id == 1
+        assert saved_jobs[0]["source_url"] is None
+        assert saved_jobs[0]["notes"] is None
+
+        connection.close()
+
+
+def test_insert_job_result_stores_source_url_and_notes():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=1,
+        )
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="Acme Corp — Data Intern",
+            matched_skills_count=4,
+            missing_skills_count=2,
+            source_url="https://example.com/jobs/data-intern",
+            notes="Apply before Friday. Referral from Alex.",
+        )
+
+        saved_jobs = query_all_saved_job_results(connection)
+
+        assert saved_jobs[0]["source_url"] == "https://example.com/jobs/data-intern"
+        assert saved_jobs[0]["notes"] == "Apply before Friday. Referral from Alex."
+
+        connection.close()
+
+
+def test_query_all_saved_job_results_returns_metadata():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=1,
+        )
+
+        insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            matched_skills_count=1,
+            missing_skills_count=1,
+            source_url="https://example.com/posting",
+            notes="Follow up next week",
+        )
+
+        connection.close()
+
+        saved_data = get_all_saved_job_results(database_path)
+
+        assert saved_data["exists"] is True
+        assert saved_data["saved_jobs"][0]["source_url"] == "https://example.com/posting"
+        assert saved_data["saved_jobs"][0]["notes"] == "Follow up next week"
+
+
+def test_get_saved_job_result_for_comparison_returns_metadata():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = initialize_database(database_path)
+
+        run_id = insert_analysis_run(
+            connection=connection,
+            resume_path="data/resume/sample_resume.txt",
+            jobs_path="data/sample_jobs",
+            taxonomy_path="data/skills_taxonomy.json",
+            aliases_path="data/skill_aliases.json",
+            total_jobs=1,
+        )
+
+        job_result_id = insert_job_result(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            matched_skills_count=1,
+            missing_skills_count=1,
+            source_url="https://example.com/posting",
+            notes="Phone screen scheduled",
+        )
+
+        insert_skill_gap(
+            connection=connection,
+            run_id=run_id,
+            job_filename="sample_job.txt",
+            skill="sql",
+            category="data",
+        )
+
+        connection.close()
+
+        saved_result = get_saved_job_result_for_comparison(
+            database_path,
+            job_result_id,
+        )
+
+        assert saved_result["source_url"] == "https://example.com/posting"
+        assert saved_result["notes"] == "Phone screen scheduled"
+        assert saved_result["missing_skills"] == ["sql"]
+
+
+def test_migration_preserves_existing_saved_data():
+    with TemporaryDirectory() as temp_folder:
+        database_path = Path(temp_folder) / "test_analysis_results.db"
+        connection = create_legacy_database_without_metadata(database_path)
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO analysis_runs (
+                run_timestamp,
+                resume_path,
+                jobs_path,
+                taxonomy_path,
+                aliases_path,
+                total_jobs
+            )
+            VALUES (?, ?, ?, ?, ?, ?);
+            """,
+            (
+                "2026-06-10T12:00:00",
+                "data/resume/sample_resume.txt",
+                "data/sample_jobs",
+                "data/skills_taxonomy.json",
+                "data/skill_aliases.json",
+                1,
+            ),
+        )
+        run_id = cursor.lastrowid
+
+        cursor.execute(
+            """
+            INSERT INTO job_results (
+                run_id,
+                job_filename,
+                matched_skills_count,
+                missing_skills_count
+            )
+            VALUES (?, ?, ?, ?);
+            """,
+            (run_id, "legacy_job.txt", 2, 1),
+        )
+        job_result_id = cursor.lastrowid
+
+        cursor.execute(
+            """
+            INSERT INTO skill_gaps (
+                run_id,
+                job_filename,
+                skill,
+                category
+            )
+            VALUES (?, ?, ?, ?);
+            """,
+            (run_id, "legacy_job.txt", "sql", "data"),
+        )
+        connection.commit()
+        connection.close()
+
+        saved_data = get_all_saved_job_results(database_path)
+
+        assert saved_data["exists"] is True
+        assert len(saved_data["saved_jobs"]) == 1
+        assert saved_data["saved_jobs"][0]["job_result_id"] == job_result_id
+        assert saved_data["saved_jobs"][0]["job_filename"] == "legacy_job.txt"
+        assert saved_data["saved_jobs"][0]["matched_skills_count"] == 2
+        assert saved_data["saved_jobs"][0]["missing_skills_count"] == 1
+        assert saved_data["saved_jobs"][0]["source_url"] is None
+        assert saved_data["saved_jobs"][0]["notes"] is None
+
+        comparison = get_saved_job_result_for_comparison(
+            database_path,
+            job_result_id,
+        )
+
+        assert comparison["job_filename"] == "legacy_job.txt"
+        assert comparison["missing_skills"] == ["sql"]
+        assert comparison["source_url"] is None
+        assert comparison["notes"] is None
 
 
 def test_initialize_database_creates_database_file():
@@ -980,6 +1285,13 @@ def test_delete_saved_job_result_from_database_when_file_missing():
 
 
 if __name__ == "__main__":
+    test_new_database_has_metadata_columns()
+    test_migrate_database_schema_is_idempotent()
+    test_insert_job_result_works_without_metadata()
+    test_insert_job_result_stores_source_url_and_notes()
+    test_query_all_saved_job_results_returns_metadata()
+    test_get_saved_job_result_for_comparison_returns_metadata()
+    test_migration_preserves_existing_saved_data()
     test_initialize_database_creates_database_file()
     test_initialize_database_creates_expected_tables()
     test_insert_analysis_run_adds_row_and_returns_id()

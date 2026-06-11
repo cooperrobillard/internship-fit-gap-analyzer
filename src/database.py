@@ -16,9 +16,70 @@ def connect_to_database(database_path):
     return connection
 
 
+def _table_has_column(connection, table_name, column_name):
+    """Return True when table_name has column_name."""
+    cursor = connection.cursor()
+    cursor.execute(f"PRAGMA table_info({table_name});")
+    column_names = [row[1] for row in cursor.fetchall()]
+    return column_name in column_names
+
+
+def _normalize_optional_metadata(value):
+    """
+    Normalize optional saved-result metadata for storage or display.
+
+    Returns None when the value is missing or whitespace-only.
+    """
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    if not normalized:
+        return None
+
+    return normalized
+
+
+def migrate_database_schema(connection):
+    """
+    Upgrade an existing database to the current schema.
+
+    Safe to call more than once. Does not drop tables or delete rows.
+    """
+    cursor = connection.cursor()
+
+    if table_exists(connection, "job_results"):
+        if not _table_has_column(connection, "job_results", "source_url"):
+            cursor.execute(
+                "ALTER TABLE job_results ADD COLUMN source_url TEXT;"
+            )
+
+        if not _table_has_column(connection, "job_results", "notes"):
+            cursor.execute("ALTER TABLE job_results ADD COLUMN notes TEXT;")
+
+    connection.commit()
+
+
+def table_exists(connection, table_name):
+    """Return True when a table exists in the SQLite database."""
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?;
+        """,
+        (table_name,),
+    )
+
+    return cursor.fetchone() is not None
+
+
 def create_tables(connection):
     """
-    Create the database tables needed for Version 2.
+    Create the database tables needed for Version 2 and later metadata.
 
     This does not insert any data yet.
     It only creates the structure where data will eventually be stored.
@@ -44,6 +105,8 @@ def create_tables(connection):
             job_filename TEXT NOT NULL,
             matched_skills_count INTEGER NOT NULL,
             missing_skills_count INTEGER NOT NULL,
+            source_url TEXT,
+            notes TEXT,
             FOREIGN KEY (run_id) REFERENCES analysis_runs (id)
         );
         """)
@@ -71,7 +134,41 @@ def initialize_database(database_path):
     """
     connection = connect_to_database(database_path)
     create_tables(connection)
+    migrate_database_schema(connection)
     return connection
+
+
+def _prepare_existing_database_connection(connection):
+    """Ensure an opened database has the current schema before reads or writes."""
+    migrate_database_schema(connection)
+
+
+def _saved_job_result_row_to_dict(row):
+    """Turn one saved job result SQL row into a dictionary."""
+    return {
+        "job_result_id": row[0],
+        "run_id": row[1],
+        "run_timestamp": row[2],
+        "job_filename": row[3],
+        "matched_skills_count": row[4],
+        "missing_skills_count": row[5],
+        "source_url": _normalize_optional_metadata(row[6]),
+        "notes": _normalize_optional_metadata(row[7]),
+    }
+
+
+def _saved_job_result_select_columns():
+    """Return the shared SELECT column list for saved job result queries."""
+    return """
+        job_results.id,
+        job_results.run_id,
+        analysis_runs.run_timestamp,
+        job_results.job_filename,
+        job_results.matched_skills_count,
+        job_results.missing_skills_count,
+        job_results.source_url,
+        job_results.notes
+    """
 
 
 def insert_analysis_run(
@@ -129,6 +226,8 @@ def insert_job_result(
     job_filename,
     matched_skills_count,
     missing_skills_count,
+    source_url=None,
+    notes=None,
 ):
     """
     Insert one job result into the job_results table.
@@ -136,7 +235,8 @@ def insert_job_result(
     This records:
     - which analysis run the job belongs to,
     - which job file was analyzed,
-    - how many skills matched and how many were missing.
+    - how many skills matched and how many were missing,
+    - optional source_url and notes metadata.
 
     The function returns the ID of the new row.
     """
@@ -148,15 +248,19 @@ def insert_job_result(
             run_id,
             job_filename,
             matched_skills_count,
-            missing_skills_count
+            missing_skills_count,
+            source_url,
+            notes
         )
-        VALUES (?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?);
         """,
         (
             run_id,
             str(job_filename),
             matched_skills_count,
             missing_skills_count,
+            _normalize_optional_metadata(source_url),
+            _normalize_optional_metadata(notes),
         ),
     )
 
@@ -337,6 +441,7 @@ def get_saved_gap_priority_summary(database_path, limit=10):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         skill_gaps_count = _count_table_rows(connection, "skill_gaps")
 
         if skill_gaps_count == 0:
@@ -378,6 +483,7 @@ def get_database_summary(database_path):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         analysis_runs_count = _count_table_rows(connection, "analysis_runs")
         job_results_count = _count_table_rows(connection, "job_results")
         skill_gaps_count = _count_table_rows(connection, "skill_gaps")
@@ -408,16 +514,12 @@ def query_recent_saved_jobs(connection, limit=10):
     Each item includes run ID, timestamp, job name, and skill counts.
     """
     cursor = connection.cursor()
+    select_columns = _saved_job_result_select_columns()
 
     cursor.execute(
-        """
+        f"""
         SELECT
-            job_results.id,
-            job_results.run_id,
-            analysis_runs.run_timestamp,
-            job_results.job_filename,
-            job_results.matched_skills_count,
-            job_results.missing_skills_count
+            {select_columns}
         FROM job_results
         JOIN analysis_runs ON job_results.run_id = analysis_runs.id
         ORDER BY analysis_runs.run_timestamp DESC,
@@ -432,16 +534,7 @@ def query_recent_saved_jobs(connection, limit=10):
 
     recent_jobs = []
     for row in rows:
-        recent_jobs.append(
-            {
-                "job_result_id": row[0],
-                "run_id": row[1],
-                "run_timestamp": row[2],
-                "job_filename": row[3],
-                "matched_skills_count": row[4],
-                "missing_skills_count": row[5],
-            }
-        )
+        recent_jobs.append(_saved_job_result_row_to_dict(row))
 
     return recent_jobs
 
@@ -453,16 +546,12 @@ def query_all_saved_job_results(connection):
     Ordered newest run first, then newest job result within each run.
     """
     cursor = connection.cursor()
+    select_columns = _saved_job_result_select_columns()
 
     cursor.execute(
-        """
+        f"""
         SELECT
-            job_results.id,
-            job_results.run_id,
-            analysis_runs.run_timestamp,
-            job_results.job_filename,
-            job_results.matched_skills_count,
-            job_results.missing_skills_count
+            {select_columns}
         FROM job_results
         JOIN analysis_runs ON job_results.run_id = analysis_runs.id
         ORDER BY analysis_runs.run_timestamp DESC,
@@ -475,16 +564,7 @@ def query_all_saved_job_results(connection):
 
     saved_jobs = []
     for row in rows:
-        saved_jobs.append(
-            {
-                "job_result_id": row[0],
-                "run_id": row[1],
-                "run_timestamp": row[2],
-                "job_filename": row[3],
-                "matched_skills_count": row[4],
-                "missing_skills_count": row[5],
-            }
-        )
+        saved_jobs.append(_saved_job_result_row_to_dict(row))
 
     return saved_jobs
 
@@ -546,6 +626,7 @@ def get_all_saved_job_results(database_path):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         saved_jobs = query_all_saved_job_results(connection)
     finally:
         connection.close()
@@ -571,17 +652,14 @@ def get_saved_job_result_for_comparison(database_path, job_result_id):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         cursor = connection.cursor()
+        select_columns = _saved_job_result_select_columns()
 
         cursor.execute(
-            """
+            f"""
             SELECT
-                job_results.id,
-                job_results.run_id,
-                analysis_runs.run_timestamp,
-                job_results.job_filename,
-                job_results.matched_skills_count,
-                job_results.missing_skills_count
+                {select_columns}
             FROM job_results
             JOIN analysis_runs ON job_results.run_id = analysis_runs.id
             WHERE job_results.id = ?;
@@ -599,15 +677,9 @@ def get_saved_job_result_for_comparison(database_path, job_result_id):
             job_result_id,
         )
 
-        return {
-            "job_result_id": row[0],
-            "run_id": row[1],
-            "run_timestamp": row[2],
-            "job_filename": row[3],
-            "matched_skills_count": row[4],
-            "missing_skills_count": row[5],
-            "missing_skills": missing_skills,
-        }
+        saved_result = _saved_job_result_row_to_dict(row)
+        saved_result["missing_skills"] = missing_skills
+        return saved_result
     finally:
         connection.close()
 
@@ -630,6 +702,7 @@ def get_recent_saved_jobs(database_path, limit=10):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         recent_jobs = query_recent_saved_jobs(connection, limit=limit)
     finally:
         connection.close()
@@ -801,6 +874,7 @@ def delete_saved_job_result_from_database(database_path, job_result_id):
     connection = sqlite3.connect(database_path)
 
     try:
+        _prepare_existing_database_connection(connection)
         return delete_saved_job_result(connection, job_result_id)
     finally:
         connection.close()
@@ -846,6 +920,8 @@ def save_analysis_results(
             job_filename=job_result["job_name"],
             matched_skills_count=matched_skills_count,
             missing_skills_count=missing_skills_count,
+            source_url=job_result.get("source_url"),
+            notes=job_result.get("notes"),
         )
 
         for category, missing_skills in job_result["skill_gaps"].items():
