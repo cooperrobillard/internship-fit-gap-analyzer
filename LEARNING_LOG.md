@@ -2360,3 +2360,21 @@ Important caution:
 Next step:
 
 * Version 13 Step 6 — deploy the Next.js frontend prototype to Vercel and point it to the Render backend URL.
+
+## Version 13 Step 5.5 — Fix API matched/missing skill consistency
+
+Fixed a FastAPI analysis response consistency issue discovered during Render deployment verification.
+
+The hosted `/analyze` test revealed that a skill could appear in both `matchedSkills` and `missingSkills`.
+
+Changes included:
+- Added or strengthened a regression test for API matched/missing skill consistency.
+- Ensured skills present only in the job text appear as missing, not matched.
+- Ensured skills present in both resume and job text appear as matched.
+- Ensured no skill appears in both result lists.
+
+Important lesson:
+- Deployment verification should check not only whether the service responds, but whether the response content is logically correct.
+
+Next step:
+- Redeploy the Render backend with the bugfix, then continue to Version 13 Step 6 — deploy the Next.js frontend prototype to Vercel.
