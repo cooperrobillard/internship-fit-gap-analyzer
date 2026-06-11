@@ -1,4 +1,5 @@
 # Tests for the local FastAPI analysis service prototype in api/.
+import os
 import sys
 from pathlib import Path
 
@@ -8,7 +9,7 @@ if str(repo_root) not in sys.path:
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from api.main import app, parse_allowed_origins
 
 client = TestClient(app)
 
@@ -99,6 +100,49 @@ def test_analyze_response_excludes_raw_resume_and_job_text():
     assert secret_job not in response_text
 
 
+def test_parse_allowed_origins_defaults_when_unset():
+    original = os.environ.pop("ALLOWED_ORIGINS", None)
+
+    try:
+        assert parse_allowed_origins() == [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        assert parse_allowed_origins(None) == [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        assert parse_allowed_origins("") == [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        assert parse_allowed_origins("   ") == [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+    finally:
+        if original is not None:
+            os.environ["ALLOWED_ORIGINS"] = original
+
+
+def test_parse_allowed_origins_trims_comma_separated_values():
+    assert parse_allowed_origins(
+        " https://app.example.com , https://preview.example.com "
+    ) == [
+        "https://app.example.com",
+        "https://preview.example.com",
+    ]
+
+
+def test_parse_allowed_origins_ignores_empty_entries():
+    assert parse_allowed_origins(
+        "https://app.example.com,, ,https://preview.example.com,"
+    ) == [
+        "https://app.example.com",
+        "https://preview.example.com",
+    ]
+
+
 def test_cors_allows_local_nextjs_origin():
     response = client.options(
         "/analyze",
@@ -144,6 +188,9 @@ if __name__ == "__main__":
     test_analyze_rejects_blank_job_text()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_response_excludes_raw_resume_and_job_text()
+    test_parse_allowed_origins_defaults_when_unset()
+    test_parse_allowed_origins_trims_comma_separated_values()
+    test_parse_allowed_origins_ignores_empty_entries()
     test_cors_allows_local_nextjs_origin()
     test_analyze_does_not_create_tracked_generated_files()
     print("All API service tests passed.")
