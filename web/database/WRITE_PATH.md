@@ -102,6 +102,19 @@ The signed-in dashboard includes **Test cloud save** ([`test-save-action.tsx`](.
 | Privacy | **Does not** include `resumeText` or `jobText`; notes are user-entered only |
 | UI | **Not connected** — no save button on the analysis form yet |
 
+## Step 11 — prototype form → cloud save (implemented)
+
+[`analysis-form.tsx`](../src/app/dashboard/analysis-form.tsx) **Save this prototype analysis** completes the first browser-to-cloud loop:
+
+| Behavior | Detail |
+|----------|--------|
+| Flow | pasted text → demo analysis → `mapWebAnalysisToCloudSaveInput` → `saveCloudAnalysis` → saved analyses panel |
+| Auth | Clerk session token via `createClerkSupabaseClient`; signed-in user required |
+| Data saved | Matched/missing skills + optional metadata (`run_label`, job title, company, source URL, notes) |
+| Privacy | **Does not** save `resumeText` or `jobText` |
+| Honesty | UI states this is the prototype result only; full Python analyzer not connected |
+| Refresh | Shared `refreshKey` bumps after prototype or test save so the read model reloads |
+
 ## Next implementation step
 
-Add a real **Save this analysis** control on the dashboard: call `mapWebAnalysisToCloudSaveInput(lastInput, result)` then `saveCloudAnalysis` (same pattern as test save). Or replace the demo adapter with a Python analysis service — that remains a separate milestone.
+Replace the demo rule-based adapter with a Python analysis service, or extend the saved list UI to load per-skill detail rows. Raw resume/job text storage remains out of scope until policy is decided.

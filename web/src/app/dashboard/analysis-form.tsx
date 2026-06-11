@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useAuth, useSession } from "@clerk/nextjs";
+import { useState, type ReactNode } from "react";
 import { runDemoRuleAnalysis } from "@/lib/analysis/demo-rule-analyzer";
+import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
+import {
+  createClerkSupabaseClient,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
+import { saveCloudAnalysis } from "@/lib/supabase/save-analysis";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
@@ -42,7 +49,20 @@ function SkillList({
   );
 }
 
-export function AnalysisForm() {
+type SaveUiState =
+  | { kind: "idle" }
+  | { kind: "saving" }
+  | { kind: "success"; jobAnalysisId: string }
+  | { kind: "error"; message: string };
+
+type AnalysisFormProps = {
+  onSaveSuccess?: () => void;
+};
+
+export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
+  const configured = isSupabaseConfigured();
+  const { isLoaded, session } = useSession();
+  const { userId } = useAuth();
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
@@ -52,6 +72,15 @@ export function AnalysisForm() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [lastInput, setLastInput] = useState<WebAnalysisInput | null>(null);
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
+  const [saveUiState, setSaveUiState] = useState<SaveUiState>({ kind: "idle" });
+
+  const canAttemptSave =
+    configured &&
+    isLoaded &&
+    Boolean(session) &&
+    Boolean(userId) &&
+    Boolean(lastInput) &&
+    Boolean(result);
 
   function handleAnalyze() {
     const trimmedResume = resumeText.trim();
@@ -60,10 +89,13 @@ export function AnalysisForm() {
     if (!trimmedResume || !trimmedJob) {
       setValidationError("Resume text and job description text are required.");
       setResult(null);
+      setLastInput(null);
+      setSaveUiState({ kind: "idle" });
       return;
     }
 
     setValidationError(null);
+    setSaveUiState({ kind: "idle" });
 
     const analysisInput: WebAnalysisInput = {
       resumeText: trimmedResume,
@@ -76,9 +108,38 @@ export function AnalysisForm() {
 
     const analysisResult = runDemoRuleAnalysis(analysisInput);
 
-    // `lastInput` + `result` are ready for mapWebAnalysisToCloudSaveInput when save is wired.
     setLastInput(analysisInput);
     setResult(analysisResult);
+  }
+
+  async function handleSavePrototype() {
+    if (
+      !canAttemptSave ||
+      !session ||
+      !userId ||
+      !lastInput ||
+      !result ||
+      saveUiState.kind === "saving"
+    ) {
+      return;
+    }
+
+    setSaveUiState({ kind: "saving" });
+
+    const saveInput = mapWebAnalysisToCloudSaveInput(lastInput, result);
+    const supabase = createClerkSupabaseClient(() => session.getToken());
+    const saveResult = await saveCloudAnalysis(supabase, userId, saveInput);
+
+    if (saveResult.status === "error") {
+      setSaveUiState({ kind: "error", message: saveResult.message });
+      return;
+    }
+
+    setSaveUiState({
+      kind: "success",
+      jobAnalysisId: saveResult.jobAnalysisId,
+    });
+    onSaveSuccess?.();
   }
 
   return (
@@ -88,9 +149,9 @@ export function AnalysisForm() {
         Analyze pasted resume and job description text with a{" "}
         <strong>temporary rule-based adapter</strong> in the browser. This is an
         early web prototype—the full Python analyzer and analysis service are not
-        connected yet. Pasted text is analyzed in this session only and is{" "}
-        <strong>not saved</strong> by this form. Cloud saving of real analyses is
-        not connected yet.
+        connected yet. Pasted text is analyzed in this session only; you can save
+        the structured prototype result (skills + metadata) to Supabase after
+        analyzing. Raw resume and job description text are never stored.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -192,14 +253,77 @@ export function AnalysisForm() {
               emptyMessage="None from the demo taxonomy."
             />
           </div>
-          <p className="mt-4 text-xs text-zinc-500">
-            Optional metadata above is not saved yet. A future save action can map{" "}
-            {lastInput ? "this run" : "the result"} to the cloud contract (skills +
-            metadata only, no pasted text). Use Test cloud save separately to
-            verify Supabase writes with sample data only.
-          </p>
+          <div className="mt-5 border-t border-violet-100 pt-4">
+            <p className="text-xs text-zinc-600">
+              This saves the prototype result only. The full Python analysis
+              service is not connected yet. Raw pasted resume and job text are not
+              saved.
+            </p>
+
+            {!configured ? (
+              <p className="mt-2 text-xs text-zinc-500">
+                Supabase is not configured. Add env vars to{" "}
+                <code className="text-xs">web/.env.local</code> before saving.
+              </p>
+            ) : null}
+
+            {!isLoaded ? (
+              <p className="mt-2 text-xs text-zinc-500">Loading Clerk session…</p>
+            ) : null}
+
+            {isLoaded && !userId ? (
+              <p className="mt-2 text-xs text-zinc-500">
+                Sign in to save this prototype analysis.
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void handleSavePrototype()}
+              disabled={!canAttemptSave || saveUiState.kind === "saving"}
+              className="mt-3 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saveUiState.kind === "saving"
+                ? "Saving prototype analysis…"
+                : "Save this prototype analysis"}
+            </button>
+
+            {saveUiState.kind === "success" ? (
+              <p className="mt-3 text-sm text-emerald-900">
+                Prototype analysis saved. Job analysis id:{" "}
+                <code className="text-xs">
+                  {saveUiState.jobAnalysisId.slice(0, 8)}…
+                </code>
+                . The saved analyses list below should refresh.
+              </p>
+            ) : null}
+
+            {saveUiState.kind === "error" ? (
+              <p className="mt-3 text-sm text-red-900">{saveUiState.message}</p>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Shares a refresh key between prototype save and the saved-analyses panel. */
+export function DashboardAnalysisWithRefresh({
+  children,
+}: {
+  children: (props: {
+    refreshKey: number;
+    onSaveSuccess: () => void;
+  }) => ReactNode;
+}) {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const onSaveSuccess = () => setRefreshKey((key) => key + 1);
+
+  return (
+    <>
+      <AnalysisForm onSaveSuccess={onSaveSuccess} />
+      {children({ refreshKey, onSaveSuccess })}
+    </>
   );
 }

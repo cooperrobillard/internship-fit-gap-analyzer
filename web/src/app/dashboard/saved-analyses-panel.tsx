@@ -165,8 +165,8 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
         <p className="font-medium">Could not load saved cloud analyses</p>
         <p className="mt-2">{loadResult.message}</p>
         <p className="mt-3 text-red-900/80">
-          Real web analysis saving is not implemented yet. Only the controlled test
-          save action writes sample rows.
+          Check Supabase configuration and RLS policies, then try saving again from
+          the prototype form or test save action.
         </p>
       </div>
     );
@@ -177,13 +177,13 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
         <p className="font-medium text-zinc-900">Saved cloud analyses (read model)</p>
         <p className="mt-2">
-          No saved cloud analyses yet for your account. Use{" "}
-          <strong>Test cloud save</strong> above to insert one sample row and verify
-          Clerk + Supabase + RLS write behavior.
+          No saved cloud analyses yet for your account. Run the web analysis
+          prototype and use <strong>Save this prototype analysis</strong>, or use{" "}
+          <strong>Test cloud save</strong> to insert a sample row.
         </p>
         <p className="mt-3 text-xs text-zinc-500">
-          Real resume/job analysis from this web UI is not implemented yet. Use the
-          Python CLI or local Streamlit app for analyses today.
+          Prototype saves store skills and metadata only—no raw resume or job text.
+          The full Python analyzer is not connected yet.
         </p>
       </div>
     );
@@ -195,7 +195,7 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
       <p className="mt-2 text-zinc-600">
         Showing your {loadResult.analyses.length} most recent rows from{" "}
         <code className="text-xs">job_analyses</code> (metadata and skill counts
-        only). Real analysis saving is not implemented—test save writes sample rows only.
+        only—no resume or job body text).
       </p>
       <ul className="mt-4 space-y-3">
         {loadResult.analyses.map((analysis) => (

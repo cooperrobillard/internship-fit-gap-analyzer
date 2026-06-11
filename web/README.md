@@ -14,12 +14,12 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Dashboard test cloud save** — controlled sample/mock save on `/dashboard` to verify Clerk + Supabase + RLS writes (not real analysis)
 - **Web analysis prototype** — pasted resume/job text analyzed in-browser via [`src/lib/analysis/demo-rule-analyzer.ts`](src/lib/analysis/demo-rule-analyzer.ts) (temporary adapter; does not save pasted text)
 - **Web → cloud save mapping** — [`src/lib/analysis/to-cloud-save-input.ts`](src/lib/analysis/to-cloud-save-input.ts) maps `WebAnalysisInput` + `WebAnalysisResult` into `CloudAnalysisSaveInput` (skills + metadata only; raw pasted resume/job text is intentionally excluded)
+- **Prototype analysis cloud save** — dashboard **Save this prototype analysis** runs the mapper + `saveCloudAnalysis` after the demo rule-based analysis (matched/missing skills and optional metadata only)
 
 ## What is not implemented yet
-
-- **Save this analysis** for the web prototype (mapping layer exists; dashboard does not call `saveCloudAnalysis` for real runs yet — test save writes sample rows only)
 - Python analysis API or service integration (full analyzer remains in repo `src/`)
-- Saving, comparing, or loading real analyses from this UI
+- Full Python analyzer service integration (prototype uses a temporary browser adapter, not repo `src/`)
+- Comparing or loading detailed skill rows from the saved list UI
 - Billing, organizations, or deployment configuration
 
 The **working analyzer** remains the Python CLI and local Streamlit app at the repository root. Use those for real analyses until later branches wire this frontend to a backend.

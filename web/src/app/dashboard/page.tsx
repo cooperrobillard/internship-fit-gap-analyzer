@@ -1,12 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
-import { AnalysisForm } from "./analysis-form";
-import { DashboardCloudSaveSection } from "./test-save-action";
-import { SupabaseStatus } from "./supabase-status";
+import { DashboardInteractiveSection } from "@/components/dashboard-interactive-section";
 
 const placeholderCards = [
   {
     title: "Saved analyses",
-    body: "Cloud read model lists job_analyses metadata. Test cloud save writes sample rows only—not real analysis yet.",
+    body: "Cloud read model lists job_analyses metadata. Prototype analysis save and test cloud save both write structured rows.",
   },
   {
     title: "Resume profiles",
@@ -14,7 +12,7 @@ const placeholderCards = [
   },
   {
     title: "Skill gaps",
-    body: "Web analysis prototype shows matched/missing skills from pasted text. Cloud save of real results is a future step.",
+    body: "Web analysis prototype shows matched/missing skills from pasted text and can save structured results to Supabase.",
   },
   {
     title: "Job tracker",
@@ -37,18 +35,17 @@ export default async function DashboardPage() {
         <p className="mt-4 max-w-2xl text-zinc-600">
           You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
           Clerk authentication is active. You can run a minimal pasted-text web
-          analysis prototype, verify Supabase connectivity, list saved cloud analyses,
-          and run a controlled test cloud save. The full Python analyzer service is
-          not connected yet.
+          analysis prototype (with optional cloud save of structured results),
+          verify Supabase connectivity, list saved cloud analyses, and run a
+          controlled test cloud save. The full Python analyzer service is not
+          connected yet.
         </p>
         <p className="mt-4 text-sm text-amber-800">
           For real analyses today, use the Python CLI and local Streamlit app in
           the repository root.
         </p>
 
-        <AnalysisForm />
-        <SupabaseStatus />
-        <DashboardCloudSaveSection />
+        <DashboardInteractiveSection />
       </section>
 
       <section className="mt-10">
