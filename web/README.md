@@ -12,11 +12,12 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Cloud save write contract** — [`src/lib/supabase/save-analysis-contract.ts`](src/lib/supabase/save-analysis-contract.ts) and [`database/WRITE_PATH.md`](database/WRITE_PATH.md)
 - **Supabase insert helper** — [`src/lib/supabase/save-analysis.ts`](src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`)
 - **Dashboard test cloud save** — controlled sample/mock save on `/dashboard` to verify Clerk + Supabase + RLS writes (not real analysis)
+- **Web analysis prototype** — pasted resume/job text analyzed in-browser via [`src/lib/analysis/demo-rule-analyzer.ts`](src/lib/analysis/demo-rule-analyzer.ts) (temporary adapter; does not save pasted text)
 
 ## What is not implemented yet
 
-- Real resume/job analysis saving from the web UI (test save writes sample rows only)
-- Python analysis API or service integration
+- Cloud saving of real web analysis results (test save writes sample rows only)
+- Python analysis API or service integration (full analyzer remains in repo `src/`)
 - Saving, comparing, or loading real analyses from this UI
 - Billing, organizations, or deployment configuration
 

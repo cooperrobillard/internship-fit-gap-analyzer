@@ -79,6 +79,16 @@ The signed-in dashboard includes **Test cloud save** ([`test-save-action.tsx`](.
 | Honesty | Labeled as test/scaffold; not the real analysis workflow |
 | After save | Saved analyses list refreshes via a simple `refreshKey` |
 
+## Step 9 — web analysis boundary (implemented)
+
+[`analysis-form.tsx`](../src/app/dashboard/analysis-form.tsx) and [`demo-rule-analyzer.ts`](../src/lib/analysis/demo-rule-analyzer.ts) produce `WebAnalysisResult` (matched/missing skills) from pasted text in the browser.
+
+| Behavior | Detail |
+|----------|--------|
+| Output shape | Aligns with cloud save contract (`AnalysisSkill` ≈ `SkillResult`) |
+| Persistence | **Does not** save pasted text or connect results to `saveCloudAnalysis` yet |
+| Analyzer | Temporary demo taxonomy—not the full Python `src/` analyzer |
+
 ## Next implementation step
 
-Wire cloud save to a **real web analysis result** (likely after a Python analysis service or in-browser analyzer). Python service integration remains a separate milestone.
+Map **`WebAnalysisResult` → `saveCloudAnalysis`** (skills + metadata only, no raw text) after reviewing the boundary—or replace the demo adapter with a Python analysis service. Python service integration remains a separate milestone.

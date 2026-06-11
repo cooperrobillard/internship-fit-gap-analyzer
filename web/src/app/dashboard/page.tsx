@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { AnalysisForm } from "./analysis-form";
 import { DashboardCloudSaveSection } from "./test-save-action";
 import { SupabaseStatus } from "./supabase-status";
 
@@ -13,7 +14,7 @@ const placeholderCards = [
   },
   {
     title: "Skill gaps",
-    body: "Future view of matched and missing skills across saved runs. No live analysis here yet.",
+    body: "Web analysis prototype shows matched/missing skills from pasted text. Cloud save of real results is a future step.",
   },
   {
     title: "Job tracker",
@@ -35,15 +36,17 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
           You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
-          Clerk authentication is active. Supabase scaffolding can verify connectivity
-          list saved cloud analyses, and run a controlled test cloud save. This page
-          does not run real resume/job analysis or call a Python analysis service yet.
+          Clerk authentication is active. You can run a minimal pasted-text web
+          analysis prototype, verify Supabase connectivity, list saved cloud analyses,
+          and run a controlled test cloud save. The full Python analyzer service is
+          not connected yet.
         </p>
         <p className="mt-4 text-sm text-amber-800">
           For real analyses today, use the Python CLI and local Streamlit app in
           the repository root.
         </p>
 
+        <AnalysisForm />
         <SupabaseStatus />
         <DashboardCloudSaveSection />
       </section>
@@ -51,8 +54,8 @@ export default async function DashboardPage() {
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-zinc-900">Coming soon</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Placeholder cards only—no cloud save or analysis execution behind these
-          yet.
+          Placeholder cards for future dashboard areas. Web analysis prototype and
+          test cloud save exist; full product flows are not complete yet.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {placeholderCards.map((card) => (
