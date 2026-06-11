@@ -8,10 +8,11 @@ This folder holds a **first-pass cloud database schema** for the future hosted I
 - Clerk auth shell in the Next.js app (`web/src/`) — sign-in, sign-up, protected `/dashboard`
 - **Version 12 Step 4:** `@supabase/supabase-js` browser client (`web/src/lib/supabase/client.ts`) and dashboard **read-only** status check (count on `job_analyses`)
 - **Version 12 Step 5:** read-only saved-analysis list from `job_analyses` (`web/src/lib/supabase/saved-analyses.ts`) — first table read as a list, not only a count
+- **Version 12 Step 6:** write-path design — [`WRITE_PATH.md`](WRITE_PATH.md) and [`save-analysis-contract.ts`](../src/lib/supabase/save-analysis-contract.ts) (no inserts yet; first write path avoids raw resume/job text)
 
 ## What is not implemented yet
 
-- Inserting, updating, or deleting analysis data from the web app
+- Executing Supabase inserts from the web app (contract only)
 - Python analysis API or cloud save flow
 
 **Cloud saving does not work.** The working analyzer remains the Python CLI and local Streamlit app at the repository root.
@@ -60,7 +61,7 @@ See comments at the top of `schema.sql` for the full design note.
 
 ## Recommended next step
 
-After the dashboard read model works (empty list or existing rows), a future branch can add **cloud save** flows (still behind RLS)—likely starting with `profiles` / `analysis_runs` / `job_analyses` inserts from a Python API or server actions, not from the read-only dashboard alone.
+**Version 12 Step 7:** implement the insert helper described in [`WRITE_PATH.md`](WRITE_PATH.md), using `buildCloudAnalysisWritePlan()` — still behind a controlled dev/test action, not full production save.
 
 Env vars (in `web/.env.example`, values in `.env.local` only):
 
