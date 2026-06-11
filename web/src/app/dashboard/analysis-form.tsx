@@ -2,7 +2,10 @@
 
 import { useAuth, useSession } from "@clerk/nextjs";
 import { useState, type ReactNode } from "react";
-import { runDemoRuleAnalysis } from "@/lib/analysis/demo-rule-analyzer";
+import {
+  analyzeWithApi,
+  getAnalysisApiBaseUrl,
+} from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
 import {
@@ -70,6 +73,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [resumeText, setResumeText] = useState("");
   const [jobText, setJobText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lastInput, setLastInput] = useState<WebAnalysisInput | null>(null);
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
   const [saveUiState, setSaveUiState] = useState<SaveUiState>({ kind: "idle" });
@@ -82,12 +87,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     Boolean(lastInput) &&
     Boolean(result);
 
-  function handleAnalyze() {
+  async function handleAnalyze() {
     const trimmedResume = resumeText.trim();
     const trimmedJob = jobText.trim();
 
     if (!trimmedResume || !trimmedJob) {
       setValidationError("Resume text and job description text are required.");
+      setAnalysisError(null);
       setResult(null);
       setLastInput(null);
       setSaveUiState({ kind: "idle" });
@@ -95,7 +101,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     }
 
     setValidationError(null);
+    setAnalysisError(null);
     setSaveUiState({ kind: "idle" });
+    setIsAnalyzing(true);
+    setResult(null);
+    setLastInput(null);
 
     const analysisInput: WebAnalysisInput = {
       resumeText: trimmedResume,
@@ -106,10 +116,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       notes: notes.trim() || undefined,
     };
 
-    const analysisResult = runDemoRuleAnalysis(analysisInput);
+    const apiResult = await analyzeWithApi(analysisInput);
+    setIsAnalyzing(false);
+
+    if (apiResult.status === "error") {
+      setAnalysisError(apiResult.message);
+      return;
+    }
 
     setLastInput(analysisInput);
-    setResult(analysisResult);
+    setResult(apiResult.result);
   }
 
   async function handleSavePrototype() {
@@ -146,11 +162,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     <div className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}>
       <p className="font-medium text-violet-950">Web analysis prototype</p>
       <p className="mt-2 text-violet-900/90">
-        Analyze pasted resume and job description text with a{" "}
-        <strong>temporary rule-based adapter</strong> in the browser. This is an
-        early web prototype—the full Python analyzer and analysis service are not
-        connected yet. Pasted text is analyzed in this session only; you can save
-        the structured prototype result (skills + metadata) to Supabase after
+        Analyze pasted resume and job description text through the{" "}
+        <strong>local FastAPI analysis service</strong> (
+        <code className="text-xs">{getAnalysisApiBaseUrl()}</code>). Start it
+        from the repository root with{" "}
+        <code className="text-xs">
+          python3 -m uvicorn api.main:app --reload --port 8000
+        </code>
+        . This is a local development prototype only—not deployed and not
+        authenticated. Pasted text is sent for analysis in this session only; you
+        can save the structured result (skills + metadata) to Supabase after
         analyzing. Raw resume and job description text are never stored.
       </p>
 
@@ -225,17 +246,22 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         <p className="mt-3 text-sm text-red-800">{validationError}</p>
       ) : null}
 
+      {analysisError ? (
+        <p className="mt-3 text-sm text-red-800">{analysisError}</p>
+      ) : null}
+
       <button
         type="button"
-        onClick={handleAnalyze}
-        className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900"
+        onClick={() => void handleAnalyze()}
+        disabled={isAnalyzing}
+        className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Analyze pasted text
+        {isAnalyzing ? "Analyzing pasted text…" : "Analyze pasted text"}
       </button>
 
       {result ? (
         <div className="mt-6 rounded-lg border border-violet-200 bg-white p-4 text-zinc-800">
-          <p className="font-medium text-zinc-900">Analysis result (demo)</p>
+          <p className="font-medium text-zinc-900">Analysis result</p>
           <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
           <p className="mt-3 text-sm text-zinc-700">
             Matched: <strong>{result.matchedSkillsCount}</strong> · Missing:{" "}
@@ -245,19 +271,19 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <SkillList
               title="Matched skills"
               skills={result.matchedSkills}
-              emptyMessage="None from the demo taxonomy."
+              emptyMessage="None matched from the Python taxonomy."
             />
             <SkillList
               title="Missing skills"
               skills={result.missingSkills}
-              emptyMessage="None from the demo taxonomy."
+              emptyMessage="None missing from the Python taxonomy."
             />
           </div>
           <div className="mt-5 border-t border-violet-100 pt-4">
             <p className="text-xs text-zinc-600">
-              This saves the prototype result only. The full Python analysis
-              service is not connected yet. Raw pasted resume and job text are not
-              saved.
+              This saves the prototype result only (skills + metadata). The
+              analysis API is local and not deployed. Raw pasted resume and job
+              text are not saved.
             </p>
 
             {!configured ? (

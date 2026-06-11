@@ -95,7 +95,7 @@ curl -s -X POST http://127.0.0.1:8000/analyze \
   -d '{"resumeText":"Python and SQL experience","jobText":"Intern role requiring Python, SQL, and pandas."}'
 ```
 
-The Next.js web app is not connected to this API yet.
+For local web integration, also run the Next.js app in `web/` (`npm run dev`) and set `NEXT_PUBLIC_ANALYSIS_API_URL` in `web/.env.local` (see `web/README.md`). The dashboard analysis form calls this API during local development only.
 
 For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
 

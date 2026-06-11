@@ -12,13 +12,13 @@ This folder is the **future hosted web-app frontend** for the Internship Fit & S
 - **Cloud save write contract** — [`src/lib/supabase/save-analysis-contract.ts`](src/lib/supabase/save-analysis-contract.ts) and [`database/WRITE_PATH.md`](database/WRITE_PATH.md)
 - **Supabase insert helper** — [`src/lib/supabase/save-analysis.ts`](src/lib/supabase/save-analysis.ts) (`saveCloudAnalysis`)
 - **Dashboard test cloud save** — controlled sample/mock save on `/dashboard` to verify Clerk + Supabase + RLS writes (not real analysis)
-- **Web analysis prototype** — pasted resume/job text analyzed in-browser via [`src/lib/analysis/demo-rule-analyzer.ts`](src/lib/analysis/demo-rule-analyzer.ts) (temporary adapter; does not save pasted text)
+- **Web analysis prototype** — dashboard form calls the local FastAPI service via [`src/lib/analysis/api-analysis-client.ts`](src/lib/analysis/api-analysis-client.ts) (`POST /analyze`; does not save pasted text)
 - **Web → cloud save mapping** — [`src/lib/analysis/to-cloud-save-input.ts`](src/lib/analysis/to-cloud-save-input.ts) maps `WebAnalysisInput` + `WebAnalysisResult` into `CloudAnalysisSaveInput` (skills + metadata only; raw pasted resume/job text is intentionally excluded)
-- **Prototype analysis cloud save** — dashboard **Save this prototype analysis** runs the mapper + `saveCloudAnalysis` after the demo rule-based analysis (matched/missing skills and optional metadata only)
+- **Prototype analysis cloud save** — dashboard **Save this prototype analysis** runs the mapper + `saveCloudAnalysis` after analysis (matched/missing skills and optional metadata only)
 
 ## What is not implemented yet
-- Python analysis API or service integration (full analyzer remains in repo `src/`)
-- Full Python analyzer service integration (prototype uses a temporary browser adapter, not repo `src/`)
+- Deployed/hosted analysis API (local FastAPI on port 8000 only)
+- API authentication
 - Comparing or loading detailed skill rows from the saved list UI
 - Billing, organizations, or deployment configuration
 
@@ -44,6 +44,7 @@ Edit `.env.local` and set:
 - `CLERK_SECRET_KEY` — from the same Clerk application
 - `NEXT_PUBLIC_SUPABASE_URL` — Project URL from your [Supabase](https://supabase.com/) project
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Publishable (anon) key from the same project
+- `NEXT_PUBLIC_ANALYSIS_API_URL` — local FastAPI base URL (default `http://127.0.0.1:8000`)
 
 The sign-in/sign-up URLs and fallback redirects are already documented in `.env.example`.
 
@@ -54,15 +55,23 @@ The sign-in/sign-up URLs and fallback redirects are already documented in `.env.
 3. Configure **Clerk as a Supabase third-party auth provider** (see [Clerk + Supabase docs](https://clerk.com/docs/guides/development/integrations/databases/supabase)).
 4. Copy Project URL and Publishable key into `web/.env.local`.
 
-The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. **Cloud saving is not implemented yet.** Python analyzer integration is not implemented yet. Do not use the Supabase service role key in browser code.
+The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. Prototype cloud save writes structured results only. Do not use the Supabase service role key in browser code.
 
-Start the dev server:
+### Local two-server development (analysis form)
+
+**Terminal 1 — FastAPI (repository root):**
+
+```bash
+python3 -m uvicorn api.main:app --reload --port 8000
+```
+
+**Terminal 2 — Next.js (`web/`):**
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard), sign in, paste resume/job text, and click **Analyze pasted text**. The form calls `POST {NEXT_PUBLIC_ANALYSIS_API_URL}/analyze`. The API is local/prototype only—not deployed. **Save this prototype analysis** still saves matched/missing skills and metadata to Supabase only; raw pasted resume/job text is not stored.
 
 Other useful commands:
 

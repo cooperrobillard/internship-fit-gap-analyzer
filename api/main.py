@@ -8,9 +8,15 @@ Local FastAPI prototype for the rule-based Python analyzer.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.analysis_service import analyze_request
 from api.models import AnalyzeRequest, AnalyzeResponse
+
+_LOCAL_DEV_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 app = FastAPI(
     title="Internship Fit Gap Analyzer API",
@@ -19,6 +25,13 @@ app = FastAPI(
         "For development only — not authenticated, not deployed, and does not persist analyses."
     ),
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_LOCAL_DEV_ORIGINS,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 

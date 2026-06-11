@@ -99,6 +99,20 @@ def test_analyze_response_excludes_raw_resume_and_job_text():
     assert secret_job not in response_text
 
 
+def test_cors_allows_local_nextjs_origin():
+    response = client.options(
+        "/analyze",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
 def test_analyze_does_not_create_tracked_generated_files():
     repo_root = Path(__file__).resolve().parent.parent
     outputs_folder = repo_root / "data" / "outputs"
@@ -130,5 +144,6 @@ if __name__ == "__main__":
     test_analyze_rejects_blank_job_text()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_response_excludes_raw_resume_and_job_text()
+    test_cors_allows_local_nextjs_origin()
     test_analyze_does_not_create_tracked_generated_files()
     print("All API service tests passed.")
