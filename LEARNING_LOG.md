@@ -1933,3 +1933,19 @@ Key decisions:
 Verification:
 - Confirmed tests still pass.
 - Confirmed generated/private files are not tracked.
+
+## Version 11 Step 1 — polished Streamlit app for local demo
+
+Improved the local Streamlit app so it is easier to understand and demo.
+
+This step focused on publish-readiness without changing the underlying architecture. The app now presents itself more clearly as a local/private internship fit and skill-gap analyzer, explains the safe sample workflow, and summarizes privacy boundaries around pasted/uploaded resumes, job descriptions, SQLite saving, and optional saved metadata.
+
+Key decisions:
+- Improve the current local Streamlit product before jumping to hosting or accounts.
+- Keep the app local/private for now.
+- Preserve the existing analysis, saved-history, metadata, search, comparison, deletion, and export behavior.
+- Avoid adding Clerk, authentication, cloud databases, deployment, or a rewrite in this step.
+
+What I learned:
+- Publish-readiness is not only deployment; it also means the product explains itself clearly.
+- A future hosted/account-based version will be easier to design once the local product experience is cleaner.
