@@ -2058,3 +2058,21 @@ What I learned:
 - A read model is a small layer that shapes database rows into the data the UI needs.
 - Building read-only database access first is safer than immediately adding writes.
 - User-owned cloud data needs both application-level care and database-level Row Level Security.
+
+## Version 12 Step 6 — added cloud saved-analysis write contract
+
+Designed the first cloud saved-analysis write path for the hosted web app.
+
+This step added a small TypeScript contract for the future Supabase save helper and documented the planned insert order. The first hosted write path is intentionally designed to save analysis results and job metadata without storing raw resume text or raw job-description text.
+
+Key decisions:
+- Define the write payload before implementing Supabase inserts.
+- Save matched skills, missing skills, counts, and optional metadata.
+- Avoid saving raw resume text or raw job text in the first hosted write path.
+- Keep the existing Python/Streamlit app unchanged.
+- Keep this branch free of UI changes and database writes.
+
+What I learned:
+- A write contract helps define the data boundary before adding persistence.
+- Insert order matters when tables are connected by foreign keys.
+- Privacy decisions should be made before the app starts writing user data to the cloud.
