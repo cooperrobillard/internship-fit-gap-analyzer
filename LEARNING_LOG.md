@@ -2608,3 +2608,33 @@ Verification:
 
 Learning:
 This step reinforced the difference between unit tests and smoke tests. Unit tests check isolated behavior, while a hosted smoke test checks whether the real deployed pieces still work together.
+
+## Version 14 Step 3 — Update README for hosted prototype
+
+Updated the project README so it accurately explains the current local app and hosted full-stack prototype.
+
+What changed:
+- Clarified that the project is a rule-based internship fit and skill-gap analyzer.
+- Documented the current hosted architecture: Vercel Next.js frontend, Clerk auth, Supabase/Postgres saved analyses with RLS, and Render FastAPI backend.
+- Explained what currently works locally and in the hosted prototype.
+- Added or clarified links to hosted smoke testing and existing test documentation.
+- Kept privacy/security language conservative and honest.
+- Clarified that the hosted app is still a prototype and should not be treated as production-secure SaaS.
+
+What stayed the same:
+- No app code changed.
+- No database schema changed.
+- No environment files or secrets were added.
+- No private resume/job text was added.
+- No new features were claimed beyond the current implementation.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+
+Learning:
+This step reinforced that a README is part of product reliability. It should help someone understand what exists, how to run it, how to test it, and what not to assume yet.
