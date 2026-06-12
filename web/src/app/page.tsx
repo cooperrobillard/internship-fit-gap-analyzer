@@ -1,9 +1,6 @@
 import { Show } from "@clerk/nextjs";
 import Link from "next/link";
-import {
-  DeploymentStatusSection,
-  HostedPrototypeNotice,
-} from "@/components/hosted-prototype-info";
+import { HostedPrototypeNotice } from "@/components/hosted-prototype-info";
 
 export default function Home() {
   return (
@@ -14,46 +11,41 @@ export default function Home() {
             Hosted prototype
           </p>
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
-            Compare resume skills against internship and co-op postings
+            Compare resume skills against internship and job postings
           </h2>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-zinc-600">
-            Internship Fit &amp; Skill-Gap Analyzer helps you see which skills your
-            resume already covers, which skills a posting expects, and where the
-            gaps are—so you can focus your learning and applications with clearer
-            priorities.
+            Paste resume text and a job description to see which skills you already
+            show, which skills the posting expects, and where the gaps are. Matching
+            is <strong>rule-based</strong> (keyword taxonomy)—not AI—and this
+            deployment is a <strong>demo prototype</strong>, not production software.
           </p>
           <ul className="mt-6 space-y-2 text-zinc-700">
             <li className="flex gap-2">
               <span className="text-sky-600" aria-hidden="true">
                 •
               </span>
-              <span>Identify matched skills and missing skills per posting</span>
+              <span>Matched and missing skills for each comparison</span>
             </li>
             <li className="flex gap-2">
               <span className="text-sky-600" aria-hidden="true">
                 •
               </span>
-              <span>Spot recurring gaps across multiple internship descriptions</span>
+              <span>Optional cloud save of skills and job metadata (not raw resume text)</span>
             </li>
             <li className="flex gap-2">
               <span className="text-sky-600" aria-hidden="true">
                 •
               </span>
-              <span>
-                Save structured analysis results in a cloud-backed dashboard
-                (skills and metadata — not raw resume text)
-              </span>
+              <span>Sign-in so your saved analyses stay private to your account</span>
             </li>
           </ul>
 
           <Show when="signed-out">
             <div className="mt-8 rounded-xl border border-sky-200 bg-sky-50 p-5">
-              <p className="font-medium text-sky-950">
-                Create an account to explore the auth shell
-              </p>
+              <p className="font-medium text-sky-950">Try the dashboard</p>
               <p className="mt-2 text-sm text-sky-900/80">
-                Sign in or sign up to open the dashboard prototype. Use generic
-                sample text only — not sensitive resumes.
+                Sign in or create an account to run a comparison and optionally save
+                results.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
@@ -76,8 +68,8 @@ export default function Home() {
             <div className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
               <p className="font-medium text-emerald-950">You are signed in</p>
               <p className="mt-2 text-sm text-emerald-900/80">
-                Open the dashboard to run hosted rule-based analysis and optional
-                prototype cloud save. This is not production-secure SaaS yet.
+                Open the dashboard to paste sample-safe text, run analysis, and
+                optionally save structured results.
               </p>
               <Link
                 href="/dashboard"
@@ -89,37 +81,33 @@ export default function Home() {
           </Show>
         </section>
 
-        <div className="mt-8 space-y-6">
+        <div className="mt-8">
           <HostedPrototypeNotice />
-          <DeploymentStatusSection />
         </div>
 
         <section className="mt-10">
-          <h3 className="text-xl font-semibold text-zinc-900">Product flow</h3>
-          <p className="mt-2 text-zinc-600">
-            Planned experience for the hosted version:
-          </p>
+          <h3 className="text-xl font-semibold text-zinc-900">How it works</h3>
           <ol className="mt-6 grid gap-4 sm:grid-cols-2">
             {[
               {
                 step: "1",
-                title: "Add resume",
-                body: "Paste or upload resume text so the analyzer knows which skills you already show.",
+                title: "Paste resume text",
+                body: "Add the skills and experience you want to compare—use generic sample text in this prototype.",
               },
               {
                 step: "2",
-                title: "Add job posting",
-                body: "Provide an internship or co-op description to compare against your resume.",
+                title: "Paste a job description",
+                body: "Add an internship or co-op posting to compare against your resume.",
               },
               {
                 step: "3",
-                title: "Review skill gaps",
-                body: "See matched skills, missing skills, and recurring gaps across postings.",
+                title: "Review gaps",
+                body: "See matched skills, missing skills, and a short summary from the rule-based analyzer.",
               },
               {
                 step: "4",
-                title: "Save and compare analyses",
-                body: "Keep a private history, revisit postings, and compare runs over time.",
+                title: "Save optional results",
+                body: "Store skills and metadata in your account to revisit later (not full resume or job body text).",
               },
             ].map((item) => (
               <li
@@ -141,17 +129,17 @@ export default function Home() {
         <section className="mt-10 rounded-xl border border-zinc-200 bg-zinc-50 p-6">
           <h3 className="text-xl font-semibold text-zinc-900">Also available locally</h3>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-            The rule-based Python <strong>CLI</strong> and <strong>Streamlit</strong> app
-            in the repository root remain the full-featured local tools (SQLite history,
-            uploads, exports). The hosted web path is a separate prototype surface.
+            The Python <strong>CLI</strong> and <strong>Streamlit</strong> app in
+            this repository offer the full offline workflow—SQLite history, file
+            uploads, and exports. The hosted dashboard is a separate demo surface.
           </p>
         </section>
       </main>
 
       <footer className="mt-12 border-t border-zinc-200 bg-white py-6">
         <p className="mx-auto max-w-4xl px-6 text-center text-sm text-zinc-500">
-          Internship Fit &amp; Skill-Gap Analyzer — hosted prototype (Vercel +
-          Render + Supabase + Clerk). Not production-secure SaaS.
+          Internship Fit &amp; Skill-Gap Analyzer — hosted prototype. Not
+          production-secure SaaS.
         </p>
       </footer>
     </div>

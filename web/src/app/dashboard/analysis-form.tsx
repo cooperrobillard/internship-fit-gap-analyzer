@@ -2,10 +2,7 @@
 
 import { useAuth, useSession } from "@clerk/nextjs";
 import { useState, type ReactNode } from "react";
-import {
-  analyzeWithApi,
-  getAnalysisApiBaseUrl,
-} from "@/lib/analysis/api-analysis-client";
+import { analyzeWithApi } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
 import {
@@ -181,12 +178,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
   return (
     <div className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}>
-      <p className="font-medium text-violet-950">Web analysis (local prototype)</p>
+      <p className="font-medium text-violet-950">Run analysis</p>
       <p className="mt-2 text-violet-900/90">
-        Calls the <strong>local FastAPI Python analyzer</strong> at{" "}
-        <code className="text-xs">{getAnalysisApiBaseUrl()}</code>. Local
-        development only — not a deployed service. Optional cloud save stores
-        skills and metadata only; raw resume and job text are not saved.
+        Paste <strong>generic sample text</strong> for now—not a real private
+        resume or job posting. The rule-based Python analyzer returns matched and
+        missing skills. You can optionally save skills and metadata afterward.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -239,7 +235,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           onChange={(event) => setResumeText(event.target.value)}
           rows={5}
           className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-          placeholder="Paste resume text here…"
+          placeholder="e.g. Python SQL Git data analysis"
         />
       </label>
 
@@ -252,7 +248,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           onChange={(event) => setJobText(event.target.value)}
           rows={5}
           className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-          placeholder="Paste job description here…"
+          placeholder="e.g. Intern role requiring Python, SQL, and FastAPI experience"
         />
       </label>
 
@@ -276,7 +272,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         disabled={isAnalyzing}
         className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isAnalyzing ? "Analyzing pasted text…" : "Analyze pasted text"}
+        {isAnalyzing ? "Running analysis…" : "Run analysis"}
       </button>
 
       {result ? (
@@ -291,19 +287,15 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <SkillList
               title="Matched skills"
               skills={result.matchedSkills}
-              emptyMessage="None matched from the Python taxonomy."
+              emptyMessage="No matched skills found."
             />
             <SkillList
               title="Missing skills"
               skills={result.missingSkills}
-              emptyMessage="None missing from the Python taxonomy."
+              emptyMessage="No missing skills found."
             />
           </div>
           <div className="mt-5 border-t border-violet-100 pt-4">
-            <p className="text-xs text-zinc-600">
-              Saves analysis results and metadata only — not raw pasted text.
-            </p>
-
             {!configured ? (
               <p className="mt-2 text-xs text-zinc-500">
                 Supabase is not configured. Add env vars to{" "}
@@ -317,13 +309,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
             {isLoaded && !userId ? (
               <p className="mt-2 text-xs text-zinc-500">
-                Sign in to save this prototype analysis.
+                Sign in to save this analysis.
               </p>
             ) : null}
 
             {saveUiState.kind === "saving" ? (
               <p className="mt-3 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
-                Saving to Supabase… skills and metadata only (no raw pasted text).
+                Saving to your account…
               </p>
             ) : null}
 
@@ -333,9 +325,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               disabled={!canAttemptSave || saveUiState.kind === "saving"}
               className="mt-3 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saveUiState.kind === "saving"
-                ? "Saving prototype analysis…"
-                : "Save this prototype analysis"}
+              {saveUiState.kind === "saving" ? "Saving…" : "Save analysis"}
             </button>
 
             {saveUiState.kind === "success" ? (
@@ -343,13 +333,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
                 role="status"
               >
-                <p className="font-medium">Prototype analysis saved</p>
+                <p className="font-medium">Analysis saved</p>
                 <p className="mt-1">
-                  Reference id{" "}
-                  <code className="text-xs">
-                    {saveUiState.jobAnalysisId.slice(0, 8)}…
-                  </code>
-                  . The saved analyses list below should refresh.
+                  Your saved analyses list below should update shortly.
                 </p>
               </div>
             ) : null}
@@ -359,7 +345,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
                 role="alert"
               >
-                <p className="font-medium">Could not save prototype analysis</p>
+                <p className="font-medium">Could not save analysis</p>
                 <p className="mt-1">{saveUiState.message}</p>
               </div>
             ) : null}

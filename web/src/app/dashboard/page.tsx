@@ -1,26 +1,23 @@
 import { auth } from "@clerk/nextjs/server";
 import { DashboardInteractiveSection } from "@/components/dashboard-interactive-section";
-import {
-  DeploymentStatusSection,
-  HostedPrototypeNotice,
-} from "@/components/hosted-prototype-info";
+import { HostedPrototypeNotice } from "@/components/hosted-prototype-info";
 
 const placeholderCards = [
   {
     title: "Saved analyses",
-    body: "Cloud read model lists job_analyses metadata. Prototype analysis save and test cloud save both write structured rows.",
+    body: "Your saved rows appear below after you run analysis and save, or use the test save.",
   },
   {
     title: "Resume profiles",
-    body: "Future place to manage resume versions used for comparisons. Not implemented yet.",
+    body: "Future: manage resume versions for comparisons. Not available yet.",
   },
   {
-    title: "Skill gaps",
-    body: "Local FastAPI analysis returns matched/missing skills; optional cloud save stores structured results only.",
+    title: "Recurring gaps",
+    body: "Future: spot skills missing across many postings. Available in the local CLI and Streamlit app today.",
   },
   {
     title: "Job tracker",
-    body: "Future lightweight tracker for postings, source links, and notes. Coming later.",
+    body: "Future: lightweight tracker for postings and application status.",
   },
 ];
 
@@ -31,31 +28,31 @@ export default async function DashboardPage() {
     <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
       <section className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
         <p className="mb-3 inline-block rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-          Account dashboard
+          Dashboard
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Your account dashboard
+          Compare resume to job posting
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600">
-          You are signed in{userId ? ` (user ${userId.slice(0, 8)}…)` : ""}.
-          The analysis form calls the <strong>hosted FastAPI service</strong> on
-          Render. Cloud save stores skills and metadata only — not raw resume or
-          job text.
+          {userId
+            ? "Paste sample-safe text below, run analysis, and optionally save structured results to your account."
+            : "Sign in to run analysis and save results."}{" "}
+          Cloud save stores skills and job metadata only—not full resume or job body
+          text.
         </p>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6">
           <HostedPrototypeNotice />
-          <DeploymentStatusSection />
         </div>
 
         <DashboardInteractiveSection />
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-semibold text-zinc-900">Coming soon</h2>
+        <h2 className="text-xl font-semibold text-zinc-900">Coming later</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Placeholder cards for future dashboard areas. Core hosted analysis and
-          prototype save are live; product polish and security hardening continue.
+          Placeholder areas for future dashboard features. Analysis and cloud save
+          work today.
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {placeholderCards.map((card) => (

@@ -112,13 +112,11 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (!configured) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Saved cloud analyses</p>
+        <p className="font-medium text-zinc-900">Your saved analyses</p>
         <p className="mt-2">
-          Supabase is not configured. Add{" "}
-          <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-          <code className="text-xs">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> to{" "}
-          <code className="text-xs">web/.env.local</code> to list saved rows from{" "}
-          <code className="text-xs">job_analyses</code>.
+          Supabase is not configured, so saved analyses cannot load. Add env vars to{" "}
+          <code className="text-xs">web/.env.local</code> (see{" "}
+          <code className="text-xs">web/.env.example</code>).
         </p>
       </div>
     );
@@ -127,10 +125,7 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (!isLoaded) {
     return (
       <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
-        <p className="font-medium">Loading saved cloud analyses…</p>
-        <p className="mt-2 text-sky-800/90">
-          Waiting for Clerk session before loading your saved list.
-        </p>
+        <p className="font-medium">Loading your saved analyses…</p>
       </div>
     );
   }
@@ -138,8 +133,8 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (!sessionId) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Saved cloud analyses</p>
-        <p className="mt-2">Sign in to load your saved analysis list.</p>
+        <p className="font-medium text-zinc-900">Your saved analyses</p>
+        <p className="mt-2">Sign in to see analyses you have saved.</p>
       </div>
     );
   }
@@ -147,10 +142,10 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (isLoading || loadResult === null) {
     return (
       <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
-        <p className="font-medium">Loading saved cloud analyses…</p>
-        <p className="mt-2 text-sky-800/90">
-          Fetching your recent rows from Supabase (metadata and skill counts
-          only—no resume or job body text).
+        <p className="font-medium">Loading your saved analyses…</p>
+        <p className="mt-2 text-sm text-sky-800/90">
+          Showing job title, company, skill counts, and dates—not full resume or job
+          text.
         </p>
       </div>
     );
@@ -160,9 +155,7 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
         <p className="font-medium">Supabase is not configured</p>
-        <p className="mt-2">
-          Cannot load saved cloud analyses without Supabase environment variables.
-        </p>
+        <p className="mt-2">Saved analyses cannot load without Supabase env vars.</p>
       </div>
     );
   }
@@ -174,12 +167,12 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
           className="rounded-md border border-red-200 bg-white/60 px-3 py-2"
           role="alert"
         >
-          <p className="font-medium">Could not load saved cloud analyses</p>
+          <p className="font-medium">Could not load saved analyses</p>
           <p className="mt-1">{loadResult.message}</p>
         </div>
-        <p className="mt-3 text-red-900/80">
-          This is usually a Supabase configuration, Clerk token, or RLS policy
-          issue. Confirm your env vars and try again.
+        <p className="mt-3 text-sm text-red-900/80">
+          Check your connection and try again. If this keeps happening, confirm
+          Supabase and Clerk are configured correctly.
         </p>
         <button
           type="button"
@@ -195,14 +188,11 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (loadResult.analyses.length === 0) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Saved cloud analyses (read model)</p>
+        <p className="font-medium text-zinc-900">Your saved analyses</p>
         <p className="mt-2">
-          No saved cloud analyses yet for your account. Run an analysis and use{" "}
-          <strong>Save this prototype analysis</strong>, or use{" "}
-          <strong>Test cloud save</strong> to insert a sample row.
-        </p>
-        <p className="mt-3 text-xs text-zinc-500">
-          Prototype saves store skills and metadata only—no raw resume or job text.
+          Nothing saved yet. Run an analysis above and click{" "}
+          <strong>Save analysis</strong>, or use <strong>Test Supabase save</strong>{" "}
+          to verify cloud storage.
         </p>
       </div>
     );
@@ -210,11 +200,10 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
 
   return (
     <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-      <p className="font-medium text-zinc-900">Saved cloud analyses (read model)</p>
+      <p className="font-medium text-zinc-900">Your saved analyses</p>
       <p className="mt-2 text-zinc-600">
-        Showing your {loadResult.analyses.length} most recent rows from{" "}
-        <code className="text-xs">job_analyses</code> (metadata and skill counts
-        only—no resume or job body text).
+        Your {loadResult.analyses.length} most recent saved comparison
+        {loadResult.analyses.length === 1 ? "" : "s"} (skills and metadata only).
       </p>
       <ul className="mt-4 space-y-3">
         {loadResult.analyses.map((analysis) => (

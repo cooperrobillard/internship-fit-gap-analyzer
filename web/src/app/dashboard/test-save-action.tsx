@@ -96,11 +96,10 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
 
   return (
     <div className={`${boxClass} border-amber-200 bg-amber-50 text-amber-950`}>
-      <p className="font-medium text-amber-950">Test cloud save</p>
+      <p className="font-medium text-amber-950">Test Supabase save</p>
       <p className="mt-2 text-amber-900/90">
-        This saves a small sample analysis to Supabase to verify the write path.
-        This is <strong>not</strong> the real analysis workflow yet. No resume or
-        job posting text is stored.
+        Inserts a small fixed sample row to verify cloud storage and RLS—without
+        running analysis or storing resume or job text.
       </p>
 
       {!configured ? (
@@ -111,13 +110,11 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
       ) : null}
 
       {!isLoaded ? (
-        <p className="mt-3 text-sm text-amber-900/80">Loading Clerk session…</p>
+        <p className="mt-3 text-sm text-amber-900/80">Loading sign-in session…</p>
       ) : null}
 
       {isLoaded && !userId ? (
-        <p className="mt-3 text-sm text-amber-900/80">
-          Sign in to run the test save.
-        </p>
+        <p className="mt-3 text-sm text-amber-900/80">Sign in to run the test save.</p>
       ) : null}
 
       <button
@@ -126,12 +123,12 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
         disabled={!canAttemptSave || uiState.kind === "saving"}
         className="mt-4 rounded-md bg-amber-800 px-4 py-2 text-sm font-medium text-white hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {uiState.kind === "saving" ? "Saving sample analysis…" : "Run test cloud save"}
+        {uiState.kind === "saving" ? "Saving sample…" : "Save sample row"}
       </button>
 
       {uiState.kind === "saving" ? (
         <p className="mt-3 rounded-md border border-amber-200 bg-amber-100/60 px-3 py-2 text-sm text-amber-950">
-          Saving sample row to Supabase…
+          Saving sample row…
         </p>
       ) : null}
 
@@ -140,12 +137,8 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
           className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
           role="status"
         >
-          <p className="font-medium">Sample analysis saved</p>
-          <p className="mt-1">
-            Reference id{" "}
-            <code className="text-xs">{uiState.jobAnalysisId.slice(0, 8)}…</code>.
-            The list below should refresh.
-          </p>
+          <p className="font-medium">Sample row saved</p>
+          <p className="mt-1">Your saved analyses list below should update shortly.</p>
         </div>
       ) : null}
 
