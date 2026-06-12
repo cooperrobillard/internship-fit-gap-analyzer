@@ -2744,3 +2744,37 @@ Verification:
 
 Learning:
 This step reinforced how the hosted app can recreate local Streamlit product value using user-owned Supabase data. Aggregating structured saved results is safer than storing raw resume or job-description text and is enough to power meaningful recurring skill-gap insights.
+
+## Version 15 Step 2 — Add hosted saved-analysis detail view
+
+Added a richer saved-analysis detail view to the hosted Next.js dashboard.
+
+What changed:
+- Added a way to select or open a saved analysis from the hosted saved analyses list.
+- Displayed available structured metadata such as job title, company, source URL, notes, and saved date.
+- Displayed structured analysis results such as matched skills and missing skills.
+- Added or preserved clear empty/error states for missing metadata, no selected analysis, no saved analyses, and load failures.
+- Kept saved-analysis data user-owned through the existing Clerk/Supabase/RLS flow.
+
+Why this matters:
+This step moves the hosted app closer to feature parity with the original local/Streamlit saved-analysis workflow. Users need to review saved analyses in detail, not only see summary rows or aggregate gap stats.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed saved analyses can be opened/reviewed and existing save/read behavior still works.
+
+Learning:
+This step reinforced the value of separating structured saved results from raw private text. The hosted app can provide meaningful saved-analysis review while continuing to avoid storing raw resume or job-description content by default.
