@@ -2813,3 +2813,38 @@ Verification:
 
 Learning:
 This step reinforced that metadata can make saved structured analysis results feel much more useful without needing to store raw private resume or job-description text.
+
+## Version 15 Step 4 — Add saved-analysis search/filter foundation
+
+Added a search/filter foundation for hosted saved analyses in the Next.js dashboard.
+
+What changed:
+- Added saved-analysis search so users can find saved results by structured fields such as job title, company, notes, source URL, and/or skills.
+- Added a simple filter foundation where useful.
+- Added or preserved clear empty/no-match states.
+- Preserved the richer saved-analysis detail view.
+- Preserved hosted recurring gap stats.
+- Kept the implementation focused on structured saved analysis data rather than raw resume/job-description text.
+
+Why this matters:
+As users save more job analyses, the dashboard needs basic organization tools. Search/filtering makes the hosted app feel more like a real job-search workspace and brings it closer to the original local/Streamlit saved-result workflow.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No database schema or RLS policy changed.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed saved-analysis search/filter behavior worked and existing saved-analysis/detail/stats behavior still worked.
+
+Learning:
+This step reinforced that feature parity is not only about adding new analysis logic. Organization features like search and filtering make saved results usable once the app becomes a real ongoing job-search tool.
