@@ -66,6 +66,8 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   const sessionId = session?.id ?? null;
 
   const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
   const completedFetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -73,20 +75,18 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
       return;
     }
 
-    const fetchKey = `${sessionId}:${refreshKey}`;
+    const fetchKey = `${sessionId}:${refreshKey}:${retryNonce}`;
     if (completedFetchKeyRef.current === fetchKey) {
       return;
     }
 
-    const activeSession = session;
     let cancelled = false;
 
-    async function loadSavedAnalyses() {
+    async function runLoad() {
+      setIsLoading(true);
       setLoadResult(null);
 
-      const result = await fetchRecentSavedAnalyses(() =>
-        activeSession.getToken(),
-      );
+      const result = await fetchRecentSavedAnalyses(() => session!.getToken());
 
       if (cancelled) {
         return;
@@ -94,25 +94,31 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
 
       completedFetchKeyRef.current = fetchKey;
       setLoadResult(result);
+      setIsLoading(false);
     }
 
-    void loadSavedAnalyses();
+    void runLoad();
 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configured, isLoaded, sessionId, refreshKey]);
+  }, [configured, isLoaded, sessionId, session, refreshKey, retryNonce]);
+
+  function handleRetry() {
+    completedFetchKeyRef.current = null;
+    setRetryNonce((nonce) => nonce + 1);
+  }
 
   if (!configured) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
         <p className="font-medium text-zinc-900">Saved cloud analyses</p>
         <p className="mt-2">
-          Supabase is not configured. Add env vars to{" "}
+          Supabase is not configured. Add{" "}
+          <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+          <code className="text-xs">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> to{" "}
           <code className="text-xs">web/.env.local</code> to list saved rows from{" "}
-          <code className="text-xs">job_analyses</code>. Creating or saving analyses
-          from this app is not implemented yet.
+          <code className="text-xs">job_analyses</code>.
         </p>
       </div>
     );
@@ -123,7 +129,7 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
       <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
         <p className="font-medium">Loading saved cloud analyses…</p>
         <p className="mt-2 text-sky-800/90">
-          Waiting for Clerk session before the read-only list query.
+          Waiting for Clerk session before loading your saved list.
         </p>
       </div>
     );
@@ -131,20 +137,20 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
 
   if (!sessionId) {
     return (
-      <div className={`${boxClass} border-red-200 bg-red-50 text-red-950`}>
-        <p className="font-medium">Saved cloud analyses unavailable</p>
+      <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
+        <p className="font-medium text-zinc-900">Saved cloud analyses</p>
         <p className="mt-2">Sign in to load your saved analysis list.</p>
       </div>
     );
   }
 
-  if (loadResult === null) {
+  if (isLoading || loadResult === null) {
     return (
       <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
         <p className="font-medium">Loading saved cloud analyses…</p>
         <p className="mt-2 text-sky-800/90">
-          Read-only list from <code className="text-xs">job_analyses</code> (metadata
-          and counts only—no job body text).
+          Fetching your recent rows from Supabase (metadata and skill counts
+          only—no resume or job body text).
         </p>
       </div>
     );
@@ -154,7 +160,9 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
         <p className="font-medium">Supabase is not configured</p>
-        <p className="mt-2">Cannot load saved cloud analyses without Supabase env vars.</p>
+        <p className="mt-2">
+          Cannot load saved cloud analyses without Supabase environment variables.
+        </p>
       </div>
     );
   }
@@ -162,12 +170,24 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   if (loadResult.status === "error") {
     return (
       <div className={`${boxClass} border-red-200 bg-red-50 text-red-950`}>
-        <p className="font-medium">Could not load saved cloud analyses</p>
-        <p className="mt-2">{loadResult.message}</p>
+        <div
+          className="rounded-md border border-red-200 bg-white/60 px-3 py-2"
+          role="alert"
+        >
+          <p className="font-medium">Could not load saved cloud analyses</p>
+          <p className="mt-1">{loadResult.message}</p>
+        </div>
         <p className="mt-3 text-red-900/80">
-          Check Supabase configuration and RLS policies, then try saving again from
-          the prototype form or test save action.
+          This is usually a Supabase configuration, Clerk token, or RLS policy
+          issue. Confirm your env vars and try again.
         </p>
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100"
+        >
+          Try again
+        </button>
       </div>
     );
   }
@@ -177,13 +197,12 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
         <p className="font-medium text-zinc-900">Saved cloud analyses (read model)</p>
         <p className="mt-2">
-          No saved cloud analyses yet for your account. Run the web analysis
-          prototype and use <strong>Save this prototype analysis</strong>, or use{" "}
+          No saved cloud analyses yet for your account. Run an analysis and use{" "}
+          <strong>Save this prototype analysis</strong>, or use{" "}
           <strong>Test cloud save</strong> to insert a sample row.
         </p>
         <p className="mt-3 text-xs text-zinc-500">
           Prototype saves store skills and metadata only—no raw resume or job text.
-          The full Python analyzer is not connected yet.
         </p>
       </div>
     );

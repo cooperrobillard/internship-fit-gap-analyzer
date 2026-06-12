@@ -154,6 +154,10 @@ Centralized reader: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getSupaba
 
 If **Analyze pasted text** fails on Vercel, the dashboard shows a short error near the form. Common causes: Render is waking up from sleep (retry after ~30 seconds), `ANALYSIS_API_URL` is missing or wrong on Vercel, `ANALYSIS_API_SHARED_SECRET` does not match between Vercel and Render, or the FastAPI service is down. Confirm `GET /health` on Render and redeploy after env changes.
 
+### Hosted save/read troubleshooting
+
+If **Save this prototype analysis** or the saved analyses list fails, check `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` on Vercel, confirm Clerk is configured as a Supabase third-party auth provider, and verify RLS policies from `web/database/schema.sql` are applied. Retry after signing in again.
+
 ## Database schema (draft)
 
 See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The dashboard reads `job_analyses` metadata and supports prototype cloud save (structured results only).

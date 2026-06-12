@@ -3,6 +3,10 @@ import {
   isSupabaseConfigured,
   type AccessTokenGetter,
 } from "@/lib/supabase/client";
+import {
+  getSafeSavedAnalysisErrorMessage,
+  isMissingSupabaseConfigError,
+} from "@/lib/supabase/supabase-errors";
 
 /** Safe list fields from job_analyses — excludes job_text and other sensitive columns. */
 const SAVED_ANALYSIS_LIST_FIELDS =
@@ -26,45 +30,6 @@ export type SavedAnalysesResult =
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
-function classifyReadError(error: {
-  message?: string;
-  code?: string;
-  details?: string;
-}): string {
-  const code = error.code ?? "";
-  const combined = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
-
-  if (
-    code === "PGRST301" ||
-    combined.includes("jwt") ||
-    combined.includes("401") ||
-    combined.includes("403") ||
-    combined.includes("unauthorized") ||
-    combined.includes("permission denied") ||
-    combined.includes("row-level security")
-  ) {
-    return (
-      "Could not read saved analyses: Clerk ↔ Supabase authentication failed. " +
-      "Confirm third-party auth and RLS are configured."
-    );
-  }
-
-  if (
-    combined.includes("relation") &&
-    combined.includes("does not exist")
-  ) {
-    return (
-      "Could not read saved analyses: job_analyses table not found. " +
-      "Run web/database/schema.sql in Supabase."
-    );
-  }
-
-  const suffix = code ? ` (${code})` : "";
-  return (
-    (error.message?.trim() || "Could not load saved cloud analyses.") + suffix
-  );
-}
-
 /**
  * Read the signed-in user's recent saved job analyses from Supabase (read-only).
  * Uses the Clerk-aware browser client from Step 4.
@@ -78,6 +43,16 @@ export async function fetchRecentSavedAnalyses(
   }
 
   try {
+    const token = await getAccessToken();
+    if (!token) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("read", null, {
+          reason: "session",
+        }),
+      };
+    }
+
     const supabase = createClerkSupabaseClient(getAccessToken);
 
     const { data, error } = await supabase
@@ -87,20 +62,31 @@ export async function fetchRecentSavedAnalyses(
       .limit(limit);
 
     if (error) {
-      return { status: "error", message: classifyReadError(error) };
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("read", error),
+      };
     }
 
     return {
       status: "success",
       analyses: (data ?? []) as SavedCloudAnalysis[],
     };
-  } catch (err) {
+  } catch (error) {
+    if (isMissingSupabaseConfigError(error)) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("read", null, {
+          reason: "config",
+        }),
+      };
+    }
+
     return {
       status: "error",
-      message:
-        err instanceof Error
-          ? err.message
-          : "Unexpected error while loading saved analyses.",
+      message: getSafeSavedAnalysisErrorMessage("read", null, {
+        reason: "network",
+      }),
     };
   }
 }

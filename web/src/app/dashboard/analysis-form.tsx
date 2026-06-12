@@ -13,6 +13,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { saveCloudAnalysis } from "@/lib/supabase/save-analysis";
+import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
@@ -142,20 +143,40 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
     setSaveUiState({ kind: "saving" });
 
-    const saveInput = mapWebAnalysisToCloudSaveInput(lastInput, result);
-    const supabase = createClerkSupabaseClient(() => session.getToken());
-    const saveResult = await saveCloudAnalysis(supabase, userId, saveInput);
+    try {
+      const token = await session.getToken();
+      if (!token) {
+        setSaveUiState({
+          kind: "error",
+          message: getSafeSavedAnalysisErrorMessage("save", null, {
+            reason: "session",
+          }),
+        });
+        return;
+      }
 
-    if (saveResult.status === "error") {
-      setSaveUiState({ kind: "error", message: saveResult.message });
-      return;
+      const saveInput = mapWebAnalysisToCloudSaveInput(lastInput, result);
+      const supabase = createClerkSupabaseClient(() => session.getToken());
+      const saveResult = await saveCloudAnalysis(supabase, userId, saveInput);
+
+      if (saveResult.status === "error") {
+        setSaveUiState({ kind: "error", message: saveResult.message });
+        return;
+      }
+
+      setSaveUiState({
+        kind: "success",
+        jobAnalysisId: saveResult.jobAnalysisId,
+      });
+      onSaveSuccess?.();
+    } catch {
+      setSaveUiState({
+        kind: "error",
+        message: getSafeSavedAnalysisErrorMessage("save", null, {
+          reason: "network",
+        }),
+      });
     }
-
-    setSaveUiState({
-      kind: "success",
-      jobAnalysisId: saveResult.jobAnalysisId,
-    });
-    onSaveSuccess?.();
   }
 
   return (
@@ -300,6 +321,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               </p>
             ) : null}
 
+            {saveUiState.kind === "saving" ? (
+              <p className="mt-3 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
+                Saving to Supabase… skills and metadata only (no raw pasted text).
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={() => void handleSavePrototype()}
@@ -312,17 +339,29 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             </button>
 
             {saveUiState.kind === "success" ? (
-              <p className="mt-3 text-sm text-emerald-900">
-                Prototype analysis saved. Job analysis id:{" "}
-                <code className="text-xs">
-                  {saveUiState.jobAnalysisId.slice(0, 8)}…
-                </code>
-                . The saved analyses list below should refresh.
-              </p>
+              <div
+                className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+                role="status"
+              >
+                <p className="font-medium">Prototype analysis saved</p>
+                <p className="mt-1">
+                  Reference id{" "}
+                  <code className="text-xs">
+                    {saveUiState.jobAnalysisId.slice(0, 8)}…
+                  </code>
+                  . The saved analyses list below should refresh.
+                </p>
+              </div>
             ) : null}
 
             {saveUiState.kind === "error" ? (
-              <p className="mt-3 text-sm text-red-900">{saveUiState.message}</p>
+              <div
+                className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+                role="alert"
+              >
+                <p className="font-medium">Could not save prototype analysis</p>
+                <p className="mt-1">{saveUiState.message}</p>
+              </div>
             ) : null}
           </div>
         </div>

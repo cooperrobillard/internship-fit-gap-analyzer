@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase/client";
 import type { CloudAnalysisSaveInput } from "@/lib/supabase/save-analysis-contract";
 import { saveCloudAnalysis } from "@/lib/supabase/save-analysis";
+import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
@@ -57,20 +58,40 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
 
     setUiState({ kind: "saving" });
 
-    const supabase = createClerkSupabaseClient(() => session.getToken());
-    const result = await saveCloudAnalysis(
-      supabase,
-      userId,
-      DASHBOARD_TEST_SAVE_INPUT,
-    );
+    try {
+      const token = await session.getToken();
+      if (!token) {
+        setUiState({
+          kind: "error",
+          message: getSafeSavedAnalysisErrorMessage("save", null, {
+            reason: "session",
+          }),
+        });
+        return;
+      }
 
-    if (result.status === "error") {
-      setUiState({ kind: "error", message: result.message });
-      return;
+      const supabase = createClerkSupabaseClient(() => session.getToken());
+      const result = await saveCloudAnalysis(
+        supabase,
+        userId,
+        DASHBOARD_TEST_SAVE_INPUT,
+      );
+
+      if (result.status === "error") {
+        setUiState({ kind: "error", message: result.message });
+        return;
+      }
+
+      setUiState({ kind: "success", jobAnalysisId: result.jobAnalysisId });
+      onSaveSuccess?.();
+    } catch {
+      setUiState({
+        kind: "error",
+        message: getSafeSavedAnalysisErrorMessage("save", null, {
+          reason: "network",
+        }),
+      });
     }
-
-    setUiState({ kind: "success", jobAnalysisId: result.jobAnalysisId });
-    onSaveSuccess?.();
   }
 
   return (
@@ -108,17 +129,34 @@ export function TestSaveAction({ onSaveSuccess }: TestSaveActionProps) {
         {uiState.kind === "saving" ? "Saving sample analysis…" : "Run test cloud save"}
       </button>
 
-      {uiState.kind === "success" ? (
-        <p className="mt-3 text-sm text-emerald-900">
-          Sample analysis saved. Job analysis id:{" "}
-          <code className="text-xs">{uiState.jobAnalysisId.slice(0, 8)}…</code>.
-          The list below should refresh. Real web analysis and the Python service
-          are not connected yet.
+      {uiState.kind === "saving" ? (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-100/60 px-3 py-2 text-sm text-amber-950">
+          Saving sample row to Supabase…
         </p>
       ) : null}
 
+      {uiState.kind === "success" ? (
+        <div
+          className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
+          <p className="font-medium">Sample analysis saved</p>
+          <p className="mt-1">
+            Reference id{" "}
+            <code className="text-xs">{uiState.jobAnalysisId.slice(0, 8)}…</code>.
+            The list below should refresh.
+          </p>
+        </div>
+      ) : null}
+
       {uiState.kind === "error" ? (
-        <p className="mt-3 text-sm text-red-900">{uiState.message}</p>
+        <div
+          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          role="alert"
+        >
+          <p className="font-medium">Test save failed</p>
+          <p className="mt-1">{uiState.message}</p>
+        </div>
       ) : null}
     </div>
   );
