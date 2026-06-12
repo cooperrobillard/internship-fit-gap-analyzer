@@ -221,6 +221,7 @@ Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_repor
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Demo-ready vs. not production-ready |
 | [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
+| [`docs/PUBLIC_PRODUCT_ROADMAP.md`](docs/PUBLIC_PRODUCT_ROADMAP.md) | Public app vision, parity audit, Version 15+ plan |
 | [`docs/VERCEL_FRONTEND_DEPLOYMENT.md`](docs/VERCEL_FRONTEND_DEPLOYMENT.md) | Vercel setup |
 | [`docs/RENDER_BACKEND_DEPLOYMENT.md`](docs/RENDER_BACKEND_DEPLOYMENT.md) | Render setup |
 

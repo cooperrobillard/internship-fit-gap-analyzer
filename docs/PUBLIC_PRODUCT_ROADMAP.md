@@ -1,0 +1,259 @@
+# Public Product Roadmap — Job Fit & Skill-Gap Analyzer
+
+Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
+
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), root [`README.md`](../README.md).
+
+---
+
+## 1. Product north star
+
+| | |
+|---|---|
+| **Public name** | Job Fit & Skill-Gap Analyzer |
+| **What it is** | A rule-based web app that compares resume text to a job description and shows matched skills, missing skills, and patterns across many postings |
+| **Who it is for** | Job seekers comparing their skills to roles (internships, co-ops, entry-level, and other jobs—not internship-only) |
+| **Problem solved** | “What does this posting expect that I don’t show yet?” and “What skills keep showing up as gaps across roles I care about?” |
+
+**Not the goal (yet):** AI/semantic matching, auto-scoring “fit,” or storing full resume/job documents by default.
+
+**Serious public bar:** Account-based, user-owned data, clear privacy, calm errors, and a UI people would recommend—not a portfolio-only demo.
+
+---
+
+## 2. Current state summary
+
+### Local app (stable)
+
+| Piece | Status |
+|-------|--------|
+| **CLI** (`src/main.py`) | Multi-job analysis, markdown/CSV outputs, optional SQLite, pandas recurring-gap CSVs |
+| **Streamlit** (`streamlit_app.py`) | Sample, paste, and **file upload**; save/search/**compare**/delete; exports and DB backup |
+| **SQLite** | Full saved-analysis history, skill rows, metadata (no raw resume/job body text in DB) |
+| **Analyzer** | Rule-based taxonomy + aliases in `src/` |
+
+### Hosted web app (prototype)
+
+| Piece | Status |
+|-------|--------|
+| **Frontend** | Next.js on Vercel (`web/`) |
+| **Auth** | Clerk sign-in/sign-up, protected `/dashboard` |
+| **Analysis** | Browser → `/api/analyze` → Render FastAPI (`api/`) with optional shared-secret validation |
+| **Cloud DB** | Supabase/Postgres, RLS per Clerk user |
+| **Save** | Structured matched/missing skills + metadata (title, company, URL, notes)—**no raw resume/job text** |
+| **Read** | Recent saved list (metadata + counts); no detail drill-down, search, compare, delete, or export in UI yet |
+| **Ops** | Hosted smoke-test checklist, improved analysis/save/read error handling |
+
+### Architecture (hosted)
+
+```text
+Browser → Vercel (Next.js) → Clerk
+              → POST /api/analyze → Render (FastAPI) → src/ analyzer (in-memory)
+              → Supabase (job_analyses, matched_skills, skill_gaps, RLS)
+```
+
+---
+
+## 3. Feature parity audit
+
+| Capability | Local? | Hosted? | Public v1? | Priority | Notes |
+|------------|--------|---------|------------|----------|-------|
+| Single job analysis | Yes | Yes | Yes | P0 | Hosted via paste + `/api/analyze` |
+| Resume input (paste) | Yes | Yes | Yes | P0 | |
+| Resume input (upload) | Yes (Streamlit) | No | Should have | P1 | Needs upload UX + privacy review |
+| Job description input (paste) | Yes | Yes | Yes | P0 | |
+| Job description input (upload) | Yes (Streamlit) | No | Should have | P1 | Same as resume upload |
+| Job title / company metadata | Yes | Yes | Yes | P0 | On save form today |
+| Source URL / notes | Yes | Yes | Yes | P0 | On save form today |
+| Matched / missing skills display | Yes | Yes | Yes | P0 | Per-run only on hosted |
+| Saved analysis history | Yes | Partial | Yes | P0 | Hosted: list of recent rows only |
+| Saved analysis detail view | Yes | No | Yes | P0 | Hosted list does not open skill rows |
+| Saved analysis search / filter | Yes | No | Should have | P1 | Streamlit search tab |
+| Recurring gap stats | Yes | No | Yes | P0 | CLI pandas + Streamlit; **key product gap on hosted** |
+| Saved analysis comparison | Yes | No | Should have | P1 | Two-way compare in Streamlit |
+| Deletion | Yes | No | Yes | P0 | RLS allows; no hosted UI yet |
+| Export / download | Yes | No | Should have | P1 | CSV/MD locally; hosted TBD |
+| SQLite local persistence | Yes | N/A | N/A | — | Stays local tool |
+| Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
+| Clerk auth | N/A | Yes | Yes | P0 | |
+| RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
+| Persistent resume profiles | No | No | Later | P2 | Schema has `resume_profiles`; not wired |
+| Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
+| Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
+| UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
+| Custom domain | No | No | Later | P2 | Vercel default URL today |
+| Semantic / AI matching | No | No | Later | P3 | Explicitly out of v1 scope |
+| Rate limiting / abuse protection | No | Partial | Yes | P0 | Shared secret on API only; need more |
+| Error monitoring / logging | Minimal | Minimal | Yes | P1 | Calm UI errors; no full observability |
+
+**Legend:** P0 = blocks public launch · P1 = strong post-launch or fast follow · P2+ = later
+
+---
+
+## 4. Public v1 requirements
+
+### Must have before public launch
+
+- [ ] Hosted **recurring gap stats** across saved analyses (core value prop)
+- [ ] Hosted **saved analysis detail** (view matched/missing skills for a saved row)
+- [ ] Hosted **delete** own analyses (and cascade skill rows)
+- [ ] **Privacy policy** + in-app data explanation (what is stored, what is not)
+- [ ] **Auth + RLS** re-verified with multiple test users
+- [ ] **Safe data model** unchanged: structured skills + metadata; no raw resume/job text by default
+- [ ] **Abuse basics**: API rate limiting or equivalent; review shared-secret model
+- [ ] **Hosted smoke test** passes on production after each deploy
+- [ ] **Error handling** remains user-safe (no secrets, tokens, or stack traces in UI)
+- [ ] **Internship-only copy** removed or broadened to “any job” in public surfaces
+
+### Should have soon after launch
+
+- [ ] Search / filter saved analyses
+- [ ] Compare two saved analyses
+- [ ] Export (CSV or similar) of user-owned summary data
+- [ ] Resume/job **file upload** on web (with explicit privacy copy)
+- [ ] Basic monitoring (Vercel/Render/Supabase dashboards + alerts)
+- [ ] Custom domain decision
+
+### Can wait until later
+
+- [ ] Persistent **resume profiles** (with per-analysis resume choice)
+- [ ] Semantic / AI matching
+- [ ] Application-status / job tracker product features
+- [ ] Full visual redesign (Version 19 track)
+- [ ] Raw resume/job text storage (only with explicit product + legal decision)
+- [ ] Billing, teams, orgs
+
+---
+
+## 5. Production readiness checklist
+
+Use before calling the app “public”:
+
+| Area | Check |
+|------|--------|
+| **Auth** | Clerk production instance; sign-in/out; session edge cases |
+| **RLS** | User A cannot read/write User B rows; policies match `clerk_user_id` |
+| **Data model** | Saves skills + metadata only; `job_text` / raw body not written by app |
+| **Repo hygiene** | No `.env`, `.env.local`, private resumes, or generated outputs tracked |
+| **Privacy copy** | Landing + dashboard + dedicated privacy page |
+| **User controls** | Delete own analyses; export summary data |
+| **API security** | Shared secret + plan for rate limits; no public unauthenticated `/analyze` abuse |
+| **Validation** | Input limits on paste size; safe API errors |
+| **Monitoring** | Know where to read Vercel/Render/Supabase logs; basic alert path |
+| **Smoke test** | [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md) green |
+| **Backup** | Supabase backup/PITR awareness; no single-point “hope” |
+| **Launch** | Domain, support contact, honest “rule-based prototype → public v1” messaging |
+
+**Current honest status:** Demoable hosted prototype—not production-ready for strangers’ sensitive data.
+
+---
+
+## 6. Data / privacy model
+
+### Store now (intentional)
+
+- Per-analysis **matched skills** and **missing skills** (name + category)
+- **Metadata:** job title, company, source URL, notes, counts, timestamps
+- **User identity** via Clerk → `clerk_user_id` on all owned rows
+
+### Do not store by default (current behavior)
+
+- Raw **resume text** and **job description body text** on the hosted write path
+- Resume files or job posting files in Supabase (not implemented)
+
+Schema may include sensitive columns (e.g. `job_text`) for future use—they are **not** populated by the current app.
+
+### Future: resume profiles
+
+- **Desired:** Named resume profiles users reuse, with ability to pick a **different resume per analysis**
+- **Requires:** UX, schema wiring (`resume_profiles`), and privacy review before storing resume content in the cloud
+
+### User rights (target)
+
+- **Delete** saved analyses (and children) from the dashboard
+- **Export** structured history they own
+- **Clear copy** before any future “store full resume in cloud” feature
+
+---
+
+## 7. Design direction
+
+Target feel for the public app (Version 19+ visual system, informed earlier):
+
+| Aim for | Avoid |
+|---------|--------|
+| Bubbly, vibrant, happy, **summery** | Gray generic AI SaaS |
+| Sleek, modern, **professional** | Heavy card-grid “template” UI |
+| Technical / official enough to trust | Playful at the expense of clarity |
+| Approachable for students and job seekers | Internship-only or childish branding |
+
+**Layout:** Purposeful hierarchy, readable analysis results, clear save/history flows—not a wall of identical cards.
+
+**Copy:** Honest about rule-based matching; welcoming for any job type under **Job Fit & Skill-Gap Analyzer**.
+
+---
+
+## 8. Recommended implementation roadmap (Version 15+)
+
+### Version 15 — Hosted saved-analysis feature parity foundation
+
+- Richer **saved analysis detail** view (skills for one row)
+- **Recurring gap stats** on dashboard (aggregate missing skills across user’s saves)
+- Job metadata display polish in list + detail
+
+### Version 16 — Hosted saved-analysis management
+
+- **Search / filter** saved analyses
+- **Compare** two saved analyses
+- **Delete** saved analyses (UI + API path via Supabase client)
+- **Export** user-owned summary if useful
+
+### Version 17 — Resume profiles and input flexibility
+
+- **Resume profile** concept (create, label, select)
+- **Different resume per analysis** (profile or one-off paste)
+- **Upload** support with privacy planning (no silent raw-text storage)
+
+### Version 18 — Public readiness / security / privacy
+
+- Privacy page and data controls copy
+- Delete/export completeness
+- Rate limiting / abuse protection review
+- RLS and auth security pass
+- Input validation and size limits
+
+### Version 19 — Final UI redesign
+
+- Design system: vibrant, summery, non-generic
+- Landing + dashboard layout pass
+- Accessible components, mobile sanity
+
+### Version 20 — Domain and public launch
+
+- Custom domain on Vercel
+- Launch checklist + portfolio writeup
+- Post-launch smoke test in CI or runbook
+
+---
+
+## 9. Recommended next implementation step
+
+**Version 15 Step 1 — Add hosted recurring gap stats to the dashboard**
+
+**Why:** Recurring gaps are one of the strongest local features and central to the public product story (“what do I keep missing across postings?”). The hosted app already saves per-job missing skills in Supabase—aggregating them is the highest-leverage parity gap after basic save/list.
+
+**Suggested scope for Step 1:**
+
+1. Query user’s saved `skill_gaps` / `job_analyses` via existing Clerk Supabase client (RLS-scoped).
+2. Compute recurring missing skills (count + skill name; optional category).
+3. Dashboard panel: table or simple stats (top gaps, total postings analyzed).
+4. Empty state when user has no saves yet.
+5. Tests only if matching an existing web helper pattern; otherwise manual + smoke test.
+
+**Out of scope for Step 1:** compare view, delete, upload, resume profiles, redesign, semantic matching.
+
+---
+
+## Document maintenance
+
+Update this file when hosted parity changes or public v1 scope shifts. Do not mark production-ready until section 5 checklist is honestly complete.
