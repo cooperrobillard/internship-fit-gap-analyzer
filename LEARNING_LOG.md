@@ -2492,3 +2492,25 @@ Important caution:
 
 Next step:
 - Redeploy Render and Vercel with the new environment variables, then verify the hosted protected analysis flow.
+
+## Version 13 Step 10 — Verify Clerk/Supabase RLS saved-analysis flow
+
+Verified the hosted Clerk/Supabase saved-analysis flow on the deployed prototype.
+
+Checks performed:
+- Signed in as one Clerk user and saved a safe sample analysis.
+- Confirmed the saved analysis appeared in that user’s saved analyses panel.
+- Signed in as a second Clerk user and confirmed the first user’s saved analysis was not visible.
+- Saved a separate safe sample analysis as the second user.
+- Confirmed each user only saw their own saved analyses.
+- Checked Supabase tables to confirm rows were associated with distinct Clerk user IDs.
+
+Important result:
+- The hosted prototype’s saved-analysis flow is working with user-owned data isolation through Clerk/Supabase RLS.
+
+Important caution:
+- This confirms the current prototype save/read path, but it is not a full production security audit.
+- RLS protects database rows, while API request validation protects the FastAPI analysis endpoint. Both are useful but neither replaces a complete privacy/security review.
+
+Next step:
+- Version 13 Step 11 — clean up hosted deployment docs/env naming and decide the next product/security priority.
