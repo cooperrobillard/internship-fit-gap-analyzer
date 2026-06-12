@@ -2514,3 +2514,26 @@ Important caution:
 
 Next step:
 - Version 13 Step 11 — clean up hosted deployment docs/env naming and decide the next product/security priority.
+
+## Version 13 Step 11 — Clean up hosted env naming and deployment docs
+
+Cleaned up hosted deployment environment-variable naming after the first successful Vercel + Render + Supabase + Clerk deployment.
+
+Changes included:
+
+* Made deployment docs and env examples match the actual hosted app configuration.
+* Standardized Supabase frontend env naming around `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+* Removed or clarified older references to `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+* Clarified that the browser now calls the Next.js `/api/analyze` route instead of calling Render directly.
+* Clarified that `ANALYSIS_API_URL` is server-only and points from Vercel to Render.
+* Clarified that `ANALYSIS_API_SHARED_SECRET` is server-only and must be set in both Vercel and Render.
+* Preserved the rule that secrets must never use a `NEXT_PUBLIC_` prefix.
+
+Important caution:
+
+* This was a cleanup step, not a new security feature.
+* The hosted prototype still needs continued security/privacy review before broad public use.
+
+Next step:
+
+* Version 13 Step 12 — choose the next product/security implementation priority.
