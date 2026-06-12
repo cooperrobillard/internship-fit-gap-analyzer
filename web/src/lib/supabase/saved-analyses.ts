@@ -29,7 +29,7 @@ export {
 
 /** Safe list fields from job_analyses — excludes job_text and other sensitive columns. */
 const SAVED_ANALYSIS_LIST_FIELDS =
-  "id, job_title, company, source_url, notes, matched_skills_count, missing_skills_count, created_at";
+  "id, job_title, company, source_url, notes, matched_skills_count, missing_skills_count, created_at, matched_skills(skill, category), skill_gaps(skill, category)";
 
 const SAVED_ANALYSIS_DETAIL_FIELDS = `${SAVED_ANALYSIS_LIST_FIELDS}, matched_skills(skill, category), skill_gaps(skill, category)`;
 
@@ -51,13 +51,19 @@ export type SavedCloudAnalysis = {
   created_at: string;
 };
 
+/** List row with skill names for client-side search (no raw resume/job text). */
+export type SavedCloudAnalysisListItem = SavedCloudAnalysis & {
+  matchedSkills: SavedAnalysisSkill[];
+  missingSkills: SavedAnalysisSkill[];
+};
+
 export type SavedAnalysisDetail = SavedCloudAnalysis & {
   matchedSkills: SavedAnalysisSkill[];
   missingSkills: SavedAnalysisSkill[];
 };
 
 export type SavedAnalysesResult =
-  | { status: "success"; analyses: SavedCloudAnalysis[] }
+  | { status: "success"; analyses: SavedCloudAnalysisListItem[] }
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
@@ -67,10 +73,12 @@ export type SavedAnalysisDetailResult =
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
-type JobAnalysisDetailRow = SavedCloudAnalysis & {
+type JobAnalysisListRow = SavedCloudAnalysis & {
   matched_skills: SavedAnalysisSkill[] | null;
   skill_gaps: SavedAnalysisSkill[] | null;
 };
+
+type JobAnalysisDetailRow = JobAnalysisListRow;
 
 /** Format a saved-analysis timestamp for display. */
 export function formatSavedAnalysisDate(iso: string): string {
@@ -96,7 +104,7 @@ function sortSkills(skills: SavedAnalysisSkill[]): SavedAnalysisSkill[] {
   });
 }
 
-function mapDetailRow(row: JobAnalysisDetailRow): SavedAnalysisDetail {
+function mapListRow(row: JobAnalysisListRow): SavedCloudAnalysisListItem {
   return {
     id: row.id,
     job_title: row.job_title,
@@ -109,6 +117,10 @@ function mapDetailRow(row: JobAnalysisDetailRow): SavedAnalysisDetail {
     matchedSkills: sortSkills(row.matched_skills ?? []),
     missingSkills: sortSkills(row.skill_gaps ?? []),
   };
+}
+
+function mapDetailRow(row: JobAnalysisDetailRow): SavedAnalysisDetail {
+  return mapListRow(row);
 }
 
 /**
@@ -151,7 +163,7 @@ export async function fetchRecentSavedAnalyses(
 
     return {
       status: "success",
-      analyses: (data ?? []) as SavedCloudAnalysis[],
+      analyses: ((data ?? []) as JobAnalysisListRow[]).map(mapListRow),
     };
   } catch (error) {
     if (isMissingSupabaseConfigError(error)) {
