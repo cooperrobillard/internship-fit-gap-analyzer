@@ -2537,3 +2537,22 @@ Important caution:
 Next step:
 
 * Version 13 Step 12 — choose the next product/security implementation priority.
+
+## Version 13 Step 12 — Improve hosted analysis error handling
+
+Improved hosted analysis error handling for the Vercel + Render analysis flow.
+
+Changes included:
+- Added safer error handling in the Next.js `/api/analyze` route.
+- Added clearer handling for missing backend URL configuration.
+- Added clearer handling for backend unavailability, timeouts, non-JSON responses, and non-2xx backend responses.
+- Preserved the successful FastAPI analysis response shape.
+- Improved user-facing dashboard error messages so hosted failures are easier to understand.
+- Avoided exposing secrets, stack traces, or pasted resume/job text in error messages.
+- Added a short troubleshooting note to the web README.
+
+Important caution:
+- This improves hosted prototype reliability and demo behavior, but it is not a full production observability or security system.
+
+Next step:
+- Version 13 Step 13 — improve hosted save/read error handling for Supabase saved analyses.
