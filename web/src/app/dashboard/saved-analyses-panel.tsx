@@ -3,55 +3,55 @@
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 import { RecurringGapStatsPanel } from "@/app/dashboard/recurring-gap-stats-panel";
+import { SavedAnalysisDetailPanel } from "@/app/dashboard/saved-analysis-detail";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   fetchRecentSavedAnalyses,
-  savedAnalysisLabel,
+  formatSavedAnalysisDate,
+  getSavedAnalysisDisplayTitle,
   type SavedAnalysesResult,
   type SavedCloudAnalysis,
 } from "@/lib/supabase/saved-analyses";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
-function formatSavedAt(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-  return date.toLocaleString();
-}
-
-function AnalysisRow({ analysis }: { analysis: SavedCloudAnalysis }) {
-  const label = savedAnalysisLabel(analysis);
+function AnalysisRow({
+  analysis,
+  isSelected,
+  onSelect,
+}: {
+  analysis: SavedCloudAnalysis;
+  isSelected: boolean;
+  onSelect: (analysisId: string) => void;
+}) {
+  const label = getSavedAnalysisDisplayTitle(analysis);
 
   return (
-    <li className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-medium text-zinc-900">{label}</p>
-        <p className="text-xs text-zinc-500">{formatSavedAt(analysis.created_at)}</p>
-      </div>
-      {analysis.company && analysis.job_title ? (
-        <p className="mt-1 text-zinc-600">{analysis.company}</p>
-      ) : null}
-      <p className="mt-2 text-xs text-zinc-600">
-        Matched: {analysis.matched_skills_count} · Missing:{" "}
-        {analysis.missing_skills_count}
-      </p>
-      {analysis.source_url ? (
-        <p className="mt-2 truncate text-xs text-sky-800">
-          <a
-            href={analysis.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Source link
-          </a>
+    <li>
+      <button
+        type="button"
+        onClick={() => onSelect(analysis.id)}
+        aria-pressed={isSelected}
+        className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
+          isSelected
+            ? "border-sky-400 bg-sky-50 ring-1 ring-sky-300"
+            : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-white"
+        }`}
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-medium text-zinc-900">{label}</p>
+          <p className="text-xs text-zinc-500">
+            {formatSavedAnalysisDate(analysis.created_at)}
+          </p>
+        </div>
+        {analysis.company && analysis.job_title ? (
+          <p className="mt-1 text-zinc-600">{analysis.company}</p>
+        ) : null}
+        <p className="mt-2 text-xs text-zinc-600">
+          Matched: {analysis.matched_skills_count} · Missing:{" "}
+          {analysis.missing_skills_count}
         </p>
-      ) : null}
-      {analysis.notes ? (
-        <p className="mt-2 text-xs text-zinc-600 line-clamp-2">{analysis.notes}</p>
-      ) : null}
+      </button>
     </li>
   );
 }
@@ -69,6 +69,9 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
   const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(
+    null,
+  );
   const completedFetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -95,6 +98,19 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
 
       completedFetchKeyRef.current = fetchKey;
       setLoadResult(result);
+
+      if (result.status === "success") {
+        setSelectedAnalysisId((currentId) => {
+          if (!currentId) {
+            return null;
+          }
+          const stillExists = result.analyses.some(
+            (analysis) => analysis.id === currentId,
+          );
+          return stillExists ? currentId : null;
+        });
+      }
+
       setIsLoading(false);
     }
 
@@ -203,14 +219,23 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
     <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
       <p className="font-medium text-zinc-900">Your saved analyses</p>
       <p className="mt-2 text-zinc-600">
-        Your {loadResult.analyses.length} most recent saved comparison
-        {loadResult.analyses.length === 1 ? "" : "s"} (skills and metadata only).
+        Select a row to view full metadata and skill lists ({loadResult.analyses.length}{" "}
+        most recent).
       </p>
-      <ul className="mt-4 space-y-3">
+      <ul className="mt-4 space-y-2">
         {loadResult.analyses.map((analysis) => (
-          <AnalysisRow key={analysis.id} analysis={analysis} />
+          <AnalysisRow
+            key={analysis.id}
+            analysis={analysis}
+            isSelected={selectedAnalysisId === analysis.id}
+            onSelect={setSelectedAnalysisId}
+          />
         ))}
       </ul>
+      <SavedAnalysisDetailPanel
+        analysisId={selectedAnalysisId}
+        refreshKey={refreshKey}
+      />
     </div>
   );
 }

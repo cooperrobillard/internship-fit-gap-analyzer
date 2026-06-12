@@ -5,7 +5,7 @@ import { HostedPrototypeNotice } from "@/components/hosted-prototype-info";
 const placeholderCards = [
   {
     title: "Saved analyses",
-    body: "Your saved rows appear below after you run analysis and save, or use the test save.",
+    body: "Select a saved row to open metadata and matched/missing skill lists in the detail panel below the list.",
   },
   {
     title: "Resume profiles",
