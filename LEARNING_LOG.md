@@ -2710,3 +2710,37 @@ Verification:
 
 Learning:
 This step clarified the difference between a hosted prototype milestone and a finished public product. The hosted architecture is now the foundation; the next phase is rebuilding feature parity, production safety, and final design on top of it.
+
+## Version 15 Step 1 — Add hosted recurring gap stats
+
+Added hosted recurring skill-gap stats to the Next.js dashboard.
+
+What changed:
+- Added a dashboard view for recurring missing skills across the signed-in user's saved analyses.
+- Ranked missing skills by how often they appear across saved results.
+- Added clear empty/error states for cases where there are no saved analyses, no missing skills yet, or saved-analysis data cannot be loaded.
+- Preserved the existing hosted analysis and save/read behavior.
+- Kept the implementation based on structured saved analysis data rather than raw resume/job text.
+
+Why this matters:
+This is one of the most important feature-parity steps from the original local app. The product is more useful when it can show patterns across many job postings, not just results for one job at a time.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed recurring gap stats render and saved-analysis behavior still works.
+
+Learning:
+This step reinforced how the hosted app can recreate local Streamlit product value using user-owned Supabase data. Aggregating structured saved results is safer than storing raw resume or job-description text and is enough to power meaningful recurring skill-gap insights.
