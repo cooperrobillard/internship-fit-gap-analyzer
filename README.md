@@ -1,349 +1,229 @@
 # Internship Fit & Skill-Gap Analyzer
 
-A **rule-based** Python tool that compares internship or co-op job descriptions against a resume, surfaces **missing skills** (gaps), and summarizes **recurring gaps** across multiple postings.
+A **rule-based** internship fit and skill-gap analyzer. It compares resume text and job descriptions against a JSON **skill taxonomy** and **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
 
-This is a **local, private** internship fit and skill-gap analyzer—a learning and portfolio project you run on your own machine. It is **not** a deployed web app, an AI job matcher, or a semantic search tool.
+This is a **portfolio and learning project**—not production SaaS, not semantic/AI matching, and not a guarantee of job fit.
 
-## What it does
+## Current status
 
-The analyzer:
+| Surface | Status |
+|---------|--------|
+| **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
+| **Hosted prototype** | Demoable — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS |
 
-- loads resume and job-description text (files, CLI paths, or Streamlit paste/upload),
-- matches skills using a JSON **taxonomy** and **aliases** (keyword-based, not semantic),
-- reports skills found in the resume and each job,
-- lists **gaps per job** and **recurring gaps** across jobs,
-- writes markdown and CSV reports (CLI),
-- optionally saves results to **local SQLite** with searchable history, comparison, and deletion,
-- supports optional **source URL** and **notes** metadata on saved analyses (Streamlit),
-- offers **current-analysis downloads** and **saved-data CSV exports** plus SQLite backup (Streamlit).
+The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted prototype** is a separate dashboard path for sign-in, cloud save/read, and browser analysis—it is still prototype-stage, not production-hardened.
 
-Matching is **keyword- and alias-based**. It does not judge overall fit, required vs. preferred skills, or how strong resume evidence is.
+## Architecture (hosted prototype)
 
-## Main capabilities
+```text
+Browser
+  → Vercel (Next.js, web/)
+      → Clerk (sign-in, protected /dashboard)
+      → POST /api/analyze (Next.js route handler)
+          → Render (FastAPI, api/)
+              → rule-based analyzer (src/, in-memory)
+      → Supabase (saved analyses, RLS per Clerk user)
+```
 
-| Area | What you get |
-|------|----------------|
-| **Core analysis** | Rule-based resume vs. job skill comparison using taxonomy + aliases |
-| **CLI** | Folder or single-job analysis, markdown/CSV outputs, optional SQLite and pandas summaries |
-| **Local Streamlit UI** | Sample, pasted, and uploaded workflows on localhost only |
-| **SQLite persistence** | Optional save of analysis runs to a local `.db` file (CLI or UI) |
-| **Saved-analysis management** | Search, two-way comparison, gap priority summary, guarded single-result deletion |
-| **Metadata** | Optional source URL and notes per saved job result (no raw posting text stored) |
-| **Downloads & exports** | In-memory report/CSV for current runs; summary CSVs and DB backup for saved data |
-| **Tests** | Auto-discovering `run_tests.py` gate across 10 test files |
+- Browser analysis goes through **`/api/analyze`** on Vercel—not directly to Render.
+- Render **`POST /analyze`** accepts a server-only **`X-Analysis-Api-Key`** when `ANALYSIS_API_SHARED_SECRET` is set.
+- Cloud saves store **structured skills and metadata only**—not raw resume or job body text.
 
-## Quickstart
+Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](docs/VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md).
 
-Run all commands from the **project root**. Python 3 is required.
+## What works now
 
-### 1. Virtual environment (recommended)
+**Local**
+
+- CLI analysis (folder or single job file), markdown/CSV outputs
+- Streamlit UI (sample, paste, upload on localhost)
+- SQLite saved-analysis history (search, compare, delete)
+- pandas recurring-gap summary CSVs
+- Automated test suite via `run_tests.py`
+
+**Hosted prototype**
+
+- Next.js landing page and Clerk sign-in/sign-up
+- Protected dashboard with analysis form
+- Hosted analysis via `/api/analyze` → Render FastAPI
+- Supabase save/read of prototype analyses with per-user RLS
+- Hosted smoke-test checklist ([`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md))
+
+**Not built yet (or limited)**
+
+- Semantic or AI matching
+- PDF/DOCX parsing in the web app
+- Full application tracking, billing, or production security review
+- Detailed skill-row drill-down in the hosted saved list UI
+
+## Prototype limitations
+
+Be honest about what this is today:
+
+- **Rule-based matching only** — keywords and aliases, not meaning or evidence strength
+- **No semantic/AI matching**
+- **Hosted prototype is not production-secure** — shared-secret API validation between Vercel and Render, not full production auth; no formal security audit
+- **Do not paste sensitive resume or job text** into the hosted dashboard—use generic sample text for demos
+- **Local Streamlit** does not replace the hosted stack; both coexist for different workflows
+
+More detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md), [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
+
+## Run locally
+
+All commands from the **project root** unless noted. Python 3 required.
+
+### Setup
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-```
-
-### 2. Install dependencies
-
-```bash
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python3 -m pip install -r requirements.txt
 ```
 
-Main packages: **pandas** (optional summary CSVs) and **streamlit** (local UI).
-
-### 3. Run tests
+### Tests
 
 ```bash
 python3 run_tests.py
+python3 tests/test_api_service.py
 ```
 
-Expected final line: `All tests passed.`
+Expected: `All tests passed.` from `run_tests.py`.
 
-### 4. CLI sample analysis
+### CLI (sample data)
 
 ```bash
 python3 src/main.py
+python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
+python3 src/main.py --database data/outputs/analysis_results.db
+python3 src/main.py --pandas-summary
 ```
 
-Uses public sample resume and sample jobs (see [Safe demo workflow](#safe-demo-workflow) below).
-
-### 5. Local Streamlit UI
+### Streamlit (localhost only)
 
 ```bash
 python3 -m streamlit run streamlit_app.py
 ```
 
-Opens a browser tab on your machine only—not a public website.
+Use **Try sample analysis** for safe public demo data. Private paths: `data/resume/resume.txt`, `data/jobs/` (Git-ignored).
 
-### 6. Local FastAPI analysis API (prototype)
+### FastAPI (local analysis API)
 
 ```bash
 python3 -m uvicorn api.main:app --reload --port 8000
 ```
 
-Local prototype only — not authenticated, not deployed, and does not save analyses.
+`GET /health` → `{"status":"ok"}`. Optional shared-secret header when `ANALYSIS_API_SHARED_SECRET` is set locally.
 
-- `GET /health` → `{"status":"ok"}`
-- `POST /analyze` → JSON body with `resumeText`, `jobText`, and optional `jobTitle`, `company`, `sourceUrl`, `notes`
-
-Example:
+### Next.js web app
 
 ```bash
-curl -s http://127.0.0.1:8000/health
-curl -s -X POST http://127.0.0.1:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"resumeText":"Python and SQL experience","jobText":"Intern role requiring Python, SQL, and pandas."}'
+cd web
+cp .env.example .env.local    # fill in Clerk + Supabase + ANALYSIS_API_URL
+npm install
+npm run dev
 ```
 
-### 7. Local web + API development
+Dashboard: http://localhost:3000/dashboard. The browser calls **`/api/analyze`**; the route handler forwards to local FastAPI. See [`web/README.md`](web/README.md).
 
-Three separate local surfaces — all development-only, nothing deployed:
-
-| Surface | Command | Role |
-|---------|---------|------|
-| **Streamlit** | `python3 -m streamlit run streamlit_app.py` | Full local UI (CLI features, SQLite, uploads) |
-| **FastAPI** | `python3 -m uvicorn api.main:app --reload --port 8000` | Python analysis boundary for the web app |
-| **Next.js** | `cd web && npm run dev` | Hosted-style dashboard (Clerk, Supabase, analysis form) |
-
-The Next.js dashboard calls the local FastAPI `/analyze` endpoint. Set `NEXT_PUBLIC_ANALYSIS_API_URL` in `web/.env.local` (see `web/README.md`). FastAPI must be running before using the dashboard analysis form.
-
-### Run the local full-stack web demo
-
-One script starts FastAPI in the background, waits for `/health`, then runs Next.js in the foreground. **Local development only** — not deployment.
+### Full-stack local demo (one script)
 
 ```bash
 chmod +x scripts/run_local_full_stack_demo.sh
 ./scripts/run_local_full_stack_demo.sh
 ```
 
-| Service | URL |
-|---------|-----|
-| FastAPI | http://127.0.0.1:8000 |
-| Next.js | http://localhost:3000 |
+Starts FastAPI at http://127.0.0.1:8000 and Next.js at http://localhost:3000. Requires `web/.env.local` for Clerk/Supabase features.
 
-Clerk sign-in and Supabase dashboard features require values in `web/.env.local` (the script warns if that file is missing; it does not read secrets). Press **Control+C** to stop Next.js and clean up the background FastAPI process.
+## Testing
 
-For deployment readiness and what is *not* ready to host yet, see [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
+| Check | Command / doc |
+|-------|----------------|
+| Full Python suite | `python3 run_tests.py` |
+| FastAPI service | `python3 tests/test_api_service.py` |
+| Web lint + build | `cd web && npm run lint && npm run build` |
+| **Hosted prototype smoke test** | [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md) |
+| Testing guide | [`docs/TESTING.md`](docs/TESTING.md) |
+
+Run the hosted smoke test before demos or after Vercel/Render deploys.
+
+## Environment variables (web)
+
+For local web development, copy [`web/.env.example`](web/.env.example) to **`web/.env.local`** (never commit it).
+
+High-level groups:
+
+| Group | Examples | Notes |
+|-------|----------|--------|
+| **Clerk** | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Auth shell |
+| **Supabase** | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser client; use publishable key only |
+| **Analysis API** | `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET` | Server-only on Vercel; same secret on Render |
+
+Do **not** commit `.env`, `.env.local`, or `web/.env.local`. Do **not** put secrets in `NEXT_PUBLIC_*` variables. Full tables: [`web/README.md`](web/README.md).
+
+## Privacy and security
+
+**Repository**
+
+- Do not commit private resume/job files, generated `data/outputs/`, SQLite `.db` files, or environment files.
+- Use bundled samples under `data/sample_jobs/` and `data/resume/sample_resume.txt` for demos.
+
+**Local app**
+
+- Pasted/uploaded text in Streamlit is handled in memory for that session.
+- SQLite stores analysis results, skill lists, counts, and optional metadata—not raw resume or full job posting body text.
+
+**Hosted prototype**
+
+- Analysis runs **in memory** on Render; raw pasted text is **not intentionally stored** in Supabase.
+- Cloud save writes **matched/missing skills and metadata** (title, company, counts, etc.) per the current write contract.
+- **Not ready for sensitive personal data**—treat the public deployment as a demo prototype until a full privacy and security review is complete.
 
 ## Safe demo workflow
 
-Use **bundled public sample data** for portfolio demos, screenshots, and first-time exploration:
-
 | Path | Role |
 |------|------|
-| `data/resume/sample_resume.txt` | Default sample resume |
-| `data/sample_jobs/` | Default sample job descriptions |
+| `data/resume/sample_resume.txt` | Public sample resume |
+| `data/sample_jobs/` | Public sample job descriptions |
 
-**CLI (safe default):**
-
-```bash
-python3 src/main.py
-python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
-```
-
-**Streamlit (safe default):** choose **Try sample analysis** on the Analyze tab. It uses the same public sample files and does not require your real resume.
-
-For your own internship search, use Git-ignored private paths (never commit these):
-
-```bash
-python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
-```
-
-Place private job `.txt` files in `data/jobs/` and your real resume at `data/resume/resume.txt`.
-
-## Privacy
-
-- **Do not commit** private resume or job files, generated outputs under `data/outputs/`, or SQLite `.db` files.
-- **Pasted and uploaded** resume/job text in Streamlit is handled **in memory** for that session; it is not written to tracked repo files by default.
-- **SQLite saving is local and private** on your machine when you opt in (CLI `--database` or UI checkbox).
-- **Raw resume and job-description text is not stored** in SQLite—only analysis results, gap lists, counts, and optional metadata.
-- **Source URL and notes** are optional saved metadata you enter; they are not auto-extracted from posting body text.
-
-See also [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) and [`docs/VERSION_10_CHECKPOINT.md`](docs/VERSION_10_CHECKPOINT.md).
-
-## Current limitations
-
-Be honest about what this project is today:
-
-- **Rule-based matching only** — taxonomy and alias keywords, not meaning or evidence strength
-- **No semantic or AI matching** — no embeddings, RAG, or LLM extraction
-- **No authentication** — single-user local tool
-- **No cloud database** — SQLite is local filesystem only
-- **No multi-user data separation** — one shared local DB path if you use persistence
-- **No production deployment** — Streamlit runs on localhost; nothing is hosted for public use
-
-Details: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
-
-## Future direction
-
-After local demo polish (Version 11), the next major step is evaluating a **hosted account-based web app**—not bolting auth onto the current Streamlit + local SQLite stack.
-
-Likely future work (not built yet):
-
-- hosted web application (separate from localhost Streamlit),
-- user **accounts and authentication** (e.g. Clerk-style integration),
-- **cloud database** with per-user data isolation,
-- cleaner **standalone UI** decoupled from Streamlit,
-- careful **privacy and security redesign** before any public multi-user launch.
-
-See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) and [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
-
-## Current status
-
-**Version 10** added optional saved-analysis **source URL** and **notes** metadata. **Version 11** focuses on README quickstart clarity and deployment-readiness documentation.
-
-The project can:
-
-- run CLI analysis on sample or private inputs (folder or `--job-file`),
-- run the **local Streamlit UI** with sample, pasted, and uploaded workflows,
-- **optionally save** to `data/outputs/analysis_results.db` and manage saved history (search, compare, delete),
-- **download** current-analysis reports and **export** saved summary CSVs and SQLite backup from the UI,
-- pass automated tests via `python3 run_tests.py`.
-
-The Streamlit app is a **localhost prototype only**. It does not use OpenAI API, semantic matching, FastAPI, Docker, authentication, or production deployment.
+**Hosted dashboard:** use short generic skill phrases only—not real resumes or job postings.
 
 ## Project structure
 
 ```text
 internship-fit-gap-analyzer/
-  data/
-    jobs/                  private local job files (Git-ignored)
-    sample_jobs/           public sample job files (default)
-    outputs/               generated reports and CSVs (Git-ignored)
-    resume/
-      sample_resume.txt    public sample resume (default)
-      resume.txt           private local resume (Git-ignored)
-    skill_aliases.json
-    skills_taxonomy.json
-  docs/
-    DEPLOYMENT_READINESS.md
-    LIMITATIONS.md
-    PRODUCT_ROADMAP.md
-    TESTING.md
-    VERSION_*_CHECKPOINT.md
-  scripts/
-    inspect_database.py
-  src/
-    analysis_runner.py     shared workflow (CLI + UI)
-    main.py                CLI entry point
-    database.py            optional SQLite helpers
-    ...
-  tests/
-    test_*.py
-  streamlit_app.py         local Streamlit UI (localhost only)
-  run_tests.py             full test gate
-  requirements.txt
+  api/                 FastAPI analysis service (local + Render)
+  web/                 Next.js frontend (local + Vercel)
+  data/                taxonomy, aliases, samples (private paths Git-ignored)
+  docs/                architecture, deployment, smoke test, testing
+  scripts/             local full-stack demo, DB inspect
+  src/                 rule-based analyzer (CLI + API)
+  tests/               Python test files
+  streamlit_app.py     local Streamlit UI
+  run_tests.py         full Python test gate
 ```
 
-## How it works
-
-```text
-resume + job description(s) + taxonomy + aliases
-→ find skills in resume
-→ find skills in each job
-→ compare job skills vs resume skills → gaps per job
-→ count recurring gaps
-→ write markdown + CSV outputs (CLI)
-→ optionally SQLite + pandas summaries
-→ terminal summary (CLI) or Streamlit display
-```
-
-## CLI reference
-
-### Common commands
+## CLI quick reference
 
 ```bash
-# Default sample-data run
-python3 src/main.py
-
-# Single job file
-python3 src/main.py --job-file data/sample_jobs/sample_ai_engineering_internship.txt
-
-# Private resume and jobs folder
-python3 src/main.py --resume data/resume/resume.txt --jobs data/jobs
-
-# SQLite output
-python3 src/main.py --database data/outputs/analysis_results.db
-
-# pandas summary CSVs
-python3 src/main.py --pandas-summary
-
-# Inspect saved database
-python3 scripts/inspect_database.py data/outputs/analysis_results.db
-
-# Help
 python3 src/main.py --help
+python3 scripts/inspect_database.py data/outputs/analysis_results.db
 ```
 
-Do **not** pass `--jobs` and `--job-file` together.
-
-### Command-line options
-
-| Option | Purpose |
-|--------|---------|
-| `--resume` | Path to resume text file |
-| `--jobs` | Folder of job description `.txt` files |
-| `--job-file` | Path to one job description file |
-| `--taxonomy` | Skills taxonomy JSON path |
-| `--aliases` | Skill aliases JSON path |
-| `--outputs` | Output folder for reports and CSVs |
-| `--top-gaps` | Recurring gaps to show in terminal |
-| `--database` | Optional SQLite database file path |
-| `--pandas-summary` | Create extra pandas summary CSV files |
-
-### Output files (CLI)
-
-| File | Description |
-|------|-------------|
-| `data/outputs/gap_report.md` | Human-readable report |
-| `data/outputs/gap_summary.csv` | One row per missing skill per job |
-| `data/outputs/recurring_gaps.csv` | Gap counts across jobs |
-| `data/outputs/analysis_results.db` | Optional SQLite run history |
-
-## Streamlit UI (localhost)
-
-```bash
-python3 -m streamlit run streamlit_app.py
-```
-
-The UI supports:
-
-- **Try sample analysis** (public sample files),
-- **paste** or **upload** job descriptions and resumes (UTF-8 `.txt`),
-- optional **job title, company, source URL, and notes** before save,
-- **Results** tab with current-analysis Markdown and CSV downloads,
-- **Saved analyses** tab with search, two-way comparison, and gap priority summary,
-- **Data management** tab with exports, SQLite backup download, and guarded deletion.
-
-Preview runs do not write report files to `data/outputs/` unless you use the CLI. Optional SQLite saving uses the same local database path family as `--database`.
-
-## Testing
-
-Canonical full-suite command:
-
-```bash
-python3 run_tests.py
-```
-
-Focused runs:
-
-```bash
-python3 tests/test_streamlit_app.py
-python3 tests/test_database.py
-```
-
-`python3 -m unittest discover -s tests -p "test_*.py"` reports **0 tests** because most files are script-style tests, not `unittest.TestCase` classes. See [`docs/TESTING.md`](docs/TESTING.md).
+Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_report.md`, `gap_summary.csv`, `recurring_gaps.csv`, optional `analysis_results.db`.
 
 ## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | What is demo-ready vs. not deployment-ready |
-| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
+| [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md) | Pre-demo / post-deploy checklist |
+| [`web/README.md`](web/README.md) | Next.js app, env vars, local + hosted web |
 | [`docs/TESTING.md`](docs/TESTING.md) | Canonical testing guide |
-| [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Version milestones and future direction |
-| [`docs/VERSION_10_CHECKPOINT.md`](docs/VERSION_10_CHECKPOINT.md) | Saved-analysis metadata (source URL, notes) |
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
+| [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Demo-ready vs. not production-ready |
+| [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
+| [`docs/VERCEL_FRONTEND_DEPLOYMENT.md`](docs/VERCEL_FRONTEND_DEPLOYMENT.md) | Vercel setup |
+| [`docs/RENDER_BACKEND_DEPLOYMENT.md`](docs/RENDER_BACKEND_DEPLOYMENT.md) | Render setup |
 
 ## Learning purpose
 
-This project supports learning Python, CLI design, testing, file I/O, JSON, project structure, documentation, Git workflow, and optional SQLite/pandas usage—while building something useful for internship search planning.
+This project supports learning Python, CLI design, testing, SQLite, optional pandas, Git workflow, and a first hosted full-stack prototype (Next.js, Clerk, Supabase, FastAPI)—while building something useful for internship search planning.

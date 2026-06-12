@@ -1,6 +1,6 @@
 # Internship Fit & Skill-Gap Analyzer — Web Frontend
 
-This folder is the **future hosted web-app frontend** for the Internship Fit & Skill-Gap Analyzer. It is a Next.js app that will eventually replace the localhost-only experience with a portfolio-ready hosted product.
+This folder is the **hosted web-app frontend** for the Internship Fit & Skill-Gap Analyzer (Vercel). It runs alongside the stable local Python/Streamlit app—see the root [`README.md`](../README.md) for full project status.
 
 ## What exists today
 
