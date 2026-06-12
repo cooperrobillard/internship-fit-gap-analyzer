@@ -23,6 +23,11 @@ type ApiAnalyzeResponse = {
   summary: string;
 };
 
+type RouteErrorBody = {
+  detail?: unknown;
+  message?: unknown;
+};
+
 export type ApiAnalysisClientResult =
   | { status: "success"; result: WebAnalysisResult }
   | { status: "error"; message: string };
@@ -35,6 +40,84 @@ function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
     missingSkillsCount: payload.missingSkillsCount,
     summary: payload.summary,
   };
+}
+
+function formatValidationDetail(detail: unknown): string | null {
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === "object" && item !== null && "msg" in item) {
+          const msg = (item as { msg?: unknown }).msg;
+          return typeof msg === "string" ? msg : null;
+        }
+        return null;
+      })
+      .filter((msg): msg is string => Boolean(msg));
+
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+  }
+
+  return null;
+}
+
+function messageFromErrorBody(body: RouteErrorBody | null): string | null {
+  if (!body) {
+    return null;
+  }
+
+  const fromDetail = formatValidationDetail(body.detail);
+  if (fromDetail) {
+    return fromDetail;
+  }
+
+  if (typeof body.message === "string" && body.message.trim()) {
+    return body.message;
+  }
+
+  return null;
+}
+
+function messageForHttpStatus(status: number): string {
+  if (status === 401 || status === 403) {
+    return "Sign in to run analysis.";
+  }
+
+  if (status === 422) {
+    return "Resume text and job description text are required.";
+  }
+
+  if (status === 500) {
+    return "The analysis service is not configured correctly. Check deployment environment variables.";
+  }
+
+  if (status === 502) {
+    return "The backend returned an unexpected response.";
+  }
+
+  if (status === 503) {
+    return "The hosted analysis service is temporarily unavailable.";
+  }
+
+  if (status === 504) {
+    return "The analysis service is not responding yet. Please try again in a moment.";
+  }
+
+  return "The analysis service returned an error. Please try again.";
+}
+
+async function parseRouteErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as RouteErrorBody;
+    return messageFromErrorBody(body) ?? messageForHttpStatus(response.status);
+  } catch {
+    return messageForHttpStatus(response.status);
+  }
 }
 
 /**
@@ -59,32 +142,9 @@ export async function analyzeWithApi(
     });
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        return {
-          status: "error",
-          message: "Sign in to run analysis.",
-        };
-      }
-
-      if (response.status === 422) {
-        return {
-          status: "error",
-          message: "Resume text and job description text are required.",
-        };
-      }
-
-      if (response.status === 502 || response.status === 503) {
-        return {
-          status: "error",
-          message:
-            "Analysis service is unavailable. Check that the FastAPI server is running and try again.",
-        };
-      }
-
       return {
         status: "error",
-        message:
-          "Analysis service returned an error. Check the FastAPI server and try again.",
+        message: await parseRouteErrorMessage(response),
       };
     }
 
@@ -97,7 +157,7 @@ export async function analyzeWithApi(
     return {
       status: "error",
       message:
-        "Analysis service is unavailable. Start the FastAPI service and try again.",
+        "The hosted analysis service is temporarily unavailable. Please try again in a moment.",
     };
   }
 }

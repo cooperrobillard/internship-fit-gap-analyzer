@@ -150,6 +150,10 @@ Optional Clerk route variables (`NEXT_PUBLIC_CLERK_SIGN_IN_URL`, etc.) are liste
 
 Centralized reader: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is still accepted as a fallback for local `.env.local` files during migration.
 
+### Hosted analysis troubleshooting
+
+If **Analyze pasted text** fails on Vercel, the dashboard shows a short error near the form. Common causes: Render is waking up from sleep (retry after ~30 seconds), `ANALYSIS_API_URL` is missing or wrong on Vercel, `ANALYSIS_API_SHARED_SECRET` does not match between Vercel and Render, or the FastAPI service is down. Confirm `GET /health` on Render and redeploy after env changes.
+
 ## Database schema (draft)
 
 See [`database/README.md`](database/README.md) for the first-pass Postgres design: user-owned `profiles`, `resume_profiles`, `analysis_runs`, `job_analyses`, `skill_gaps`, and `matched_skills` with Clerk-based RLS. The dashboard reads `job_analyses` metadata and supports prototype cloud save (structured results only).

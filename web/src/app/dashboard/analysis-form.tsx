@@ -240,7 +240,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       ) : null}
 
       {analysisError ? (
-        <p className="mt-3 text-sm text-red-800">{analysisError}</p>
+        <div
+          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          role="alert"
+        >
+          <p className="font-medium">Analysis could not be completed</p>
+          <p className="mt-1">{analysisError}</p>
+        </div>
       ) : null}
 
       <button
