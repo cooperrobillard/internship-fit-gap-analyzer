@@ -2670,3 +2670,43 @@ Verification:
 
 Learning:
 This step reinforced that product polish is not only visual design. Clear copy, calm states, honest limitations, and privacy guidance make a prototype easier to demo and safer to share.
+
+## Version 14 Step 5 — Feature-parity and public-product roadmap audit
+
+Created a practical roadmap for turning the hosted prototype into a finished public Job Fit & Skill-Gap Analyzer.
+
+What changed:
+- Added a public-product roadmap audit.
+- Reframed the public product as Job Fit & Skill-Gap Analyzer while keeping the current repo name unchanged.
+- Compared local app capabilities, current hosted web capabilities, and final public product requirements.
+- Identified feature-parity gaps between the Streamlit/local app and hosted web app.
+- Clarified public v1 requirements, later enhancements, and production-readiness needs.
+- Captured the desired design direction: vibrant, bubbly, summery, sleek, modern, professional, and technical without feeling like a generic AI SaaS app.
+- Recommended Version 15 as the start of hosted feature-parity implementation.
+
+Important product decisions:
+- First public version can stay rule-based.
+- Semantic/AI matching can come later.
+- Save structured analysis results and metadata first.
+- Do not prioritize raw resume/job text storage yet.
+- Persistent resume profiles are desired eventually.
+- Users should be able to use a different resume per analysis.
+- The final goal is a serious public tool safe enough for strangers and friends/family to use.
+
+What stayed the same:
+- No app code changed.
+- No backend behavior changed.
+- No database schema changed.
+- No secrets or private data were added.
+- No new dependencies were added.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+
+Learning:
+This step clarified the difference between a hosted prototype milestone and a finished public product. The hosted architecture is now the foundation; the next phase is rebuilding feature parity, production safety, and final design on top of it.
