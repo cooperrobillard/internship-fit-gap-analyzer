@@ -2638,3 +2638,35 @@ Verification:
 
 Learning:
 This step reinforced that a README is part of product reliability. It should help someone understand what exists, how to run it, how to test it, and what not to assume yet.
+
+## Version 14 Step 4 — Final product polish before UI redesign
+
+Completed a small hosted product polish pass focused on clarity, copy, and user-facing states before any larger UI redesign.
+
+What changed:
+- Improved landing page and/or dashboard copy to make the project easier to understand.
+- Clarified the analysis flow for the hosted prototype.
+- Improved wording for relevant status, empty, success, or error states.
+- Reduced redundant prototype language where appropriate.
+- Preserved essential privacy and prototype warnings.
+
+What stayed the same:
+- No backend behavior changed.
+- No analyzer logic changed.
+- No database schema or RLS policy changed.
+- No Clerk/Supabase auth behavior changed.
+- No new features were added.
+- No new dependencies were added.
+- The hosted prototype is still described conservatively and honestly.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local browser review confirmed the copy/state polish did not obviously break the UI.
+
+Learning:
+This step reinforced that product polish is not only visual design. Clear copy, calm states, honest limitations, and privacy guidance make a prototype easier to demo and safer to share.
