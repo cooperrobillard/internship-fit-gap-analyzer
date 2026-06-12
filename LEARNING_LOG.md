@@ -2556,3 +2556,31 @@ Important caution:
 
 Next step:
 - Version 13 Step 13 — improve hosted save/read error handling for Supabase saved analyses.
+
+## Version 14 Step 1 — Improve hosted saved-analysis error handling
+
+Improved the hosted Supabase saved-analysis save/read flow so common hosted failures produce safer, clearer UI messages.
+
+What changed:
+- Added safer handling for Supabase save failures.
+- Added safer handling for saved-analysis list/read failures.
+- Improved save feedback states in the dashboard.
+- Added a small Supabase error-message helper.
+- Added a short hosted save/read troubleshooting note to the web README.
+
+What stayed the same:
+- Successful save/read behavior should remain unchanged.
+- The database schema was not changed.
+- RLS was not disabled or bypassed.
+- No service-role keys were added to browser code.
+- Raw resume/job text is still not intentionally saved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+
+Learning:
+This step reinforced the difference between developer-facing errors and user-facing errors. Hosted apps need safe, calm failure messages because env, auth, RLS, and network issues are normal deployment failure points.
