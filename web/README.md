@@ -165,3 +165,5 @@ See [`database/README.md`](database/README.md) for the first-pass Postgres desig
 ## Related docs
 
 Architecture and deployment planning for the hosted version live in the repo root under `docs/` (outside this folder). This README covers only the Next.js frontend.
+
+**Before demos:** run [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](../docs/HOSTED_PROTOTYPE_SMOKE_TEST.md).
