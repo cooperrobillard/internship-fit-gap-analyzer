@@ -2584,3 +2584,27 @@ Verification:
 
 Learning:
 This step reinforced the difference between developer-facing errors and user-facing errors. Hosted apps need safe, calm failure messages because env, auth, RLS, and network issues are normal deployment failure points.
+
+## Version 14 Step 2 — Add hosted prototype smoke test
+
+Added a concise hosted prototype smoke-test checklist for verifying the deployed app before demos or after deployment changes.
+
+What changed:
+- Added a repeatable checklist for the hosted Vercel + Render + Clerk + Supabase prototype.
+- Included pre-flight Git checks, automated local tests, hosted backend health checks, hosted frontend checks, Clerk auth checks, analysis checks, Supabase save/read checks, and user-isolation/RLS checks.
+- Added pass/fail criteria for deciding whether the prototype is safe to demo.
+
+Why this matters:
+The project is now hosted, so it needs a simple way to confirm the full deployed flow still works. A smoke test helps catch broken env vars, auth issues, backend downtime, Supabase/RLS problems, and privacy mistakes before showing the app.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Hosted Render `/health` check passed if manually verified.
+- Hosted browser analysis/save/read/RLS flow should be checked before demos.
+
+Learning:
+This step reinforced the difference between unit tests and smoke tests. Unit tests check isolated behavior, while a hosted smoke test checks whether the real deployed pieces still work together.
