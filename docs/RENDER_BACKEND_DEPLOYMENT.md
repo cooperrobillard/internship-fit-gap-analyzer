@@ -8,7 +8,7 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`api
 
 ## Purpose
 
-Host the rule-based Python analyzer behind HTTP so the Vercel Next.js app (or `curl`) can call `GET /health` and `POST /analyze` in a deployed environment. The Streamlit app and CLI remain local tools and are **not** deployed by this service.
+Host the rule-based Python analyzer behind HTTP so the Vercel Next.js app (via `/api/analyze`) or `curl` can call `GET /health` and `POST /analyze` in a deployed environment. The Streamlit app and CLI remain local tools and are **not** deployed by this service.
 
 ---
 
@@ -38,8 +38,9 @@ Set these in Render → your service → **Environment**:
 | Variable | Purpose |
 |----------|---------|
 | `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (no spaces required; trimming is supported) |
+| `ANALYSIS_API_SHARED_SECRET` | Shared secret for `/analyze` request validation (same value as Vercel; optional locally) |
 
-**Examples (placeholders only — use your real URLs):**
+**Examples for `ALLOWED_ORIGINS` (placeholders only — use your real URLs):**
 
 Local / smoke testing on Render before Vercel is wired:
 
@@ -63,6 +64,8 @@ https://your-vercel-app.vercel.app,https://your-git-branch-your-project.vercel.a
 |----------|---------|
 | `PYTHON_VERSION` | Optional — e.g. `3.13.5` if Render needs an explicit version pin |
 
+When `ANALYSIS_API_SHARED_SECRET` is set, `POST /analyze` requires header `X-Analysis-Api-Key` with the same value. `GET /health` stays public. The Vercel `/api/analyze` route handler sends this header server-side.
+
 Do **not** commit `.env` files or paste secrets into the repository. Do not set `ALLOWED_ORIGINS` to `*` for normal production use.
 
 ---
@@ -81,6 +84,17 @@ Expected: `{"status":"ok"}`
 
 **Analyze (use generic sample text only — not real private resumes):**
 
+When `ANALYSIS_API_SHARED_SECRET` is set:
+
+```bash
+curl -s -X POST https://YOUR_RENDER_SERVICE_URL/analyze \
+  -H "Content-Type: application/json" \
+  -H "X-Analysis-Api-Key: YOUR_SHARED_SECRET" \
+  -d '{"resumeText":"Python and SQL experience","jobText":"Intern role requiring Python, SQL, and pandas."}'
+```
+
+When the secret is unset (local dev only):
+
 ```bash
 curl -s -X POST https://YOUR_RENDER_SERVICE_URL/analyze \
   -H "Content-Type: application/json" \
@@ -89,7 +103,7 @@ curl -s -X POST https://YOUR_RENDER_SERVICE_URL/analyze \
 
 Expected: JSON with `matchedSkills`, `missingSkills`, counts, and `summary`. Raw input text must **not** appear in the response.
 
-Then set `NEXT_PUBLIC_ANALYSIS_API_URL` on Vercel to `https://YOUR_RENDER_SERVICE_URL` (no trailing slash) and confirm the dashboard analysis form works from the deployed frontend.
+Then set **`ANALYSIS_API_URL`** on Vercel to `https://YOUR_RENDER_SERVICE_URL` (no trailing slash), set the same **`ANALYSIS_API_SHARED_SECRET`** on Vercel and Render, and confirm the dashboard analysis form works from the deployed frontend via `/api/analyze`.
 
 ---
 
@@ -105,7 +119,8 @@ Then set `NEXT_PUBLIC_ANALYSIS_API_URL` on Vercel to `https://YOUR_RENDER_SERVIC
 
 - This is a **prototype backend deployment**.
 - **CORS is not API authentication** — it only controls which browser origins may call the API.
-- Add production API authentication, rate limiting, and abuse controls before serious public use.
+- **`ANALYSIS_API_SHARED_SECRET`** is a first request-validation layer between Vercel and Render—not full production auth.
+- Add rate limiting and abuse controls before serious public use.
 
 ---
 
@@ -116,6 +131,7 @@ Then set `NEXT_PUBLIC_ANALYSIS_API_URL` on Vercel to `https://YOUR_RENDER_SERVIC
 | Render cannot find the app | Start command must be `uvicorn api.main:app --host 0.0.0.0 --port $PORT`; root directory must be repo root (not `api/`) |
 | “No open ports” / service won’t bind | Start command must include `--host 0.0.0.0` and `--port $PORT` |
 | Browser calls from Vercel fail (CORS) | `ALLOWED_ORIGINS` on Render must include the exact Vercel origin (scheme + host, no path) |
+| `/analyze` returns 401 | `X-Analysis-Api-Key` must match `ANALYSIS_API_SHARED_SECRET`; Vercel route handler must send the header |
 | `502` / health check fails | Confirm `requirements.txt` installs `fastapi` and `uvicorn`; check Render logs for import errors |
 | Analysis returns errors | Confirm `data/skills_taxonomy.json` and `data/skill_aliases.json` exist in the deployed repo tree |
 

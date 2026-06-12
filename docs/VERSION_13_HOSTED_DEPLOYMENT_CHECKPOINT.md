@@ -10,11 +10,11 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`REN
 
 - **Next.js frontend** is deployed on **Vercel** (`web/`).
 - **FastAPI backend** is deployed on **Render** (`api.main:app`).
-- The frontend points to the Render backend via **`NEXT_PUBLIC_ANALYSIS_API_URL`**.
-- The hosted frontend can call the hosted **`POST /analyze`** endpoint with safe sample text.
+- The browser calls **`POST /api/analyze`** on Vercel; the route handler forwards to Render using **`ANALYSIS_API_URL`** and **`ANALYSIS_API_SHARED_SECRET`**.
+- The hosted frontend can run analysis with safe sample text end-to-end.
 - Render **`GET /health`** returns `{"status":"ok"}`.
 - **Clerk** environment variables are configured in Vercel.
-- **Supabase** frontend environment variables are configured in Vercel.
+- **Supabase** uses **`NEXT_PUBLIC_SUPABASE_URL`** and **`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`** on Vercel.
 - Render **`ALLOWED_ORIGINS`** includes the **actual Vercel browser origin** used in production/preview testing.
 - The project remains a **hosted prototype**, not production-secure SaaS.
 
@@ -26,6 +26,7 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`REN
 Browser
   └── Vercel (Next.js, web/)
         ├── Clerk (auth)
+        ├── POST /api/analyze (route handler)
         ├── Supabase (cloud DB read/write for prototype save)
         └── HTTPS → Render (FastAPI, api/)
               └── Rule-based analyzer (src/, in-memory only)
@@ -33,8 +34,8 @@ Browser
 
 | Component | Role |
 |-----------|------|
-| **Vercel** | Hosts `web/` — landing, sign-in, dashboard, analysis form |
-| **Render** | Hosts `api.main:app` — `/health`, `/analyze` |
+| **Vercel** | Hosts `web/` — landing, sign-in, dashboard, `/api/analyze` proxy |
+| **Render** | Hosts `api.main:app` — `/health`, `/analyze` (shared-secret validation when configured) |
 | **Supabase** | Postgres + RLS for saved analyses (metadata/skills, no raw body text) |
 | **Clerk** | User authentication; JWT for Supabase client |
 | **FastAPI** | Rule-based resume vs. job skill comparison in memory |
@@ -52,17 +53,20 @@ Local **Streamlit** and **CLI** remain separate tools on the developer machine.
 - After changing root directory or env vars, **redeploy** or **promote** the correct deployment.
 - **`.env.local` is hidden in Finder** on macOS — use terminal (`ls -la web/`, `cp web/.env.example web/.env.local`) to inspect or copy local env templates.
 - **Deployment URLs differ** — preview URLs, branch URLs, and the “clean” production URL may not match; use the exact origin the browser uses when configuring CORS.
+- **`ANALYSIS_API_URL`** and **`ANALYSIS_API_SHARED_SECRET`** are server-only on Vercel — never `NEXT_PUBLIC_*`.
 
 ### Supabase env naming
 
-- The deployed app uses **`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`** (with code fallback for `NEXT_PUBLIC_SUPABASE_ANON_KEY` in newer branches).
-- Some planning docs say `ANON_KEY` — they mean the same Supabase **anon/publishable** key. Align Vercel variable names with what `web/src/lib/supabase/client.ts` reads.
+- The deployed app uses **`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`** (Supabase publishable/anon key).
+- Legacy **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** still works as a code fallback for local migration.
+- Never use the Supabase **service role** key in browser code.
 
-### Render CORS
+### Render CORS and API validation
 
-- **`ALLOWED_ORIGINS` must include the exact browser origin** shown in DevTools → Network (scheme + host, **no path**).
+- **`ALLOWED_ORIGINS` must include the exact browser origin** shown in DevTools → Network (scheme + host, **no path**) when testing CORS from the browser.
 - **No trailing slash** on origins (e.g. `https://app.vercel.app` not `https://app.vercel.app/`).
 - **CORS is not authentication** — it only allows browser cross-origin calls.
+- **`ANALYSIS_API_SHARED_SECRET`** validates server-to-server calls from Vercel (`X-Analysis-Api-Key`); it is not full production auth.
 - Debug with **browser DevTools** (failed `OPTIONS`/`POST`) and:
   ```bash
   curl -i -X OPTIONS "https://YOUR_RENDER_HOST/analyze" \
@@ -81,7 +85,8 @@ Local **Streamlit** and **CLI** remain separate tools on the developer machine.
 
 - Vercel frontend loads (landing and auth routes).
 - Render backend responds on `/health`.
-- Hosted **analyze** flow works with **safe sample text** (matched/missing lists are disjoint after skill-consistency fix).
+- Hosted **analyze** flow works via `/api/analyze` with **safe sample text** (matched/missing lists are disjoint after skill-consistency fix).
+- Shared-secret validation between Vercel and Render when configured.
 - CORS allows the **actual Vercel origin** used in testing.
 - **Disallowed origins** are rejected (no wildcard default on the API).
 - Clerk sign-in shell and Supabase env wiring are in place on Vercel.
@@ -93,8 +98,8 @@ Local **Streamlit** and **CLI** remain separate tools on the developer machine.
 
 ## What remains prototype-only
 
-- No **production API authentication** on Render.
-- **CORS ≠ auth** — public `/analyze` is still abusable without rate limits.
+- Shared-secret validation is **not** full production API authentication.
+- **CORS ≠ auth** — public `/analyze` without the secret (or with a leaked secret) is still abusable without rate limits.
 - No **production security** claim or formal review.
 - No **PDF/DOCX** parsing.
 - No **semantic/AI** matching.
@@ -110,10 +115,10 @@ Local **Streamlit** and **CLI** remain separate tools on the developer machine.
 
 ### Priority 1 — before sharing broadly
 
-- [ ] Add **API authentication or request validation** between Vercel and Render (shared secret, JWT, or similar).
+- [x] Add **API request validation** between Vercel and Render (`ANALYSIS_API_SHARED_SECRET`).
 - [ ] Confirm **Clerk + Supabase RLS** with real signed-in users (cross-user isolation).
 - [ ] Add a clear **prototype / privacy notice** in the hosted UI.
-- [ ] **Reconcile env docs** — standardize on `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `ANON_KEY`) across README, Vercel, and code.
+- [x] **Reconcile env docs** — standardize on `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET`.
 - [ ] Audit repo for **committed secrets** and **private resume/job text** in issues or docs.
 
 ### Priority 2 — before portfolio / public demo polish
@@ -137,7 +142,7 @@ Local **Streamlit** and **CLI** remain separate tools on the developer machine.
 
 ## Recommended next implementation step
 
-**Version 13 Step 8** — Add a **hosted prototype notice** and **deployment status** section to the web app (dashboard or landing) and/or root `README.md`, so visitors see honest limits (prototype, no raw text storage, API not production-hardened).
+Continue **prototype honesty and hardening** — hosted UI notices, RLS verification with multiple users, and monitoring basics. See cleanup list above.
 
 ---
 

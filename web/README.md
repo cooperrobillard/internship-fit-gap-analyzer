@@ -53,7 +53,7 @@ See [Vercel environment configuration](#vercel-environment-configuration) below 
 1. Create a **development** Supabase project.
 2. Run [`database/schema.sql`](database/schema.sql) in the Supabase SQL editor.
 3. Configure **Clerk as a Supabase third-party auth provider** (see [Clerk + Supabase docs](https://clerk.com/docs/guides/development/integrations/databases/supabase)).
-4. Copy Project URL and anon key into `web/.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+4. Copy Project URL and publishable (anon) key into `web/.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 The signed-in dashboard runs a **read-only count** and can **list recent `job_analyses` rows** (safe fields only) when schema and RLS are configured. Prototype cloud save writes structured results only. Do not use the Supabase service role key in browser code.
 
@@ -120,26 +120,35 @@ Route protection is handled in `src/proxy.ts` (Next.js 16 network boundary).
 
 **Local:** values go in `web/.env.local` (git-ignored). **Production:** set the same variable names in the Vercel project dashboard (Settings → Environment Variables). Do not deploy secrets in client bundles beyond what `NEXT_PUBLIC_*` already exposes.
 
+### Vercel (required for hosted prototype)
+
 | Variable | Local example | Production |
 |----------|---------------|------------|
-| `ANALYSIS_API_URL` | `http://127.0.0.1:8000` | Deployed Render/Railway FastAPI URL (server only) |
-| `ANALYSIS_API_SHARED_SECRET` | (optional locally) | Same secret on Vercel and Render for hosted validation |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk development instance | Clerk production instance |
 | `CLERK_SECRET_KEY` | Clerk secret (server only) | Clerk production secret (Vercel server env) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Same (hosted project) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Same (anon key only) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key | Same (browser-safe key only) |
+| `ANALYSIS_API_URL` | `http://127.0.0.1:8000` | Render FastAPI base URL (server only, no trailing slash) |
+| `ANALYSIS_API_SHARED_SECRET` | (optional locally) | Same secret on Vercel and Render for hosted validation |
 
 Optional Clerk route variables (`NEXT_PUBLIC_CLERK_SIGN_IN_URL`, etc.) are listed in `.env.example` with safe local defaults.
+
+### Render (required for hosted prototype)
+
+| Variable | Purpose |
+|----------|---------|
+| `ALLOWED_ORIGINS` | Comma-separated browser origins (Vercel production/preview URLs) |
+| `ANALYSIS_API_SHARED_SECRET` | Same value as Vercel when hosted validation is enabled |
 
 **Safety rules:**
 
 - `NEXT_PUBLIC_*` variables are **browser-visible** — only put values safe to expose (publishable keys, public URLs).
-- Never put `CLERK_SECRET_KEY` in client code or `NEXT_PUBLIC_*` names.
-- Never use the Supabase **service role** key in the browser — use the anon key only.
+- Never put `CLERK_SECRET_KEY`, `ANALYSIS_API_URL`, or `ANALYSIS_API_SHARED_SECRET` in client code or `NEXT_PUBLIC_*` names.
+- Never use the Supabase **service role** key in the browser — use the publishable (anon) key only.
 - `ANALYSIS_API_URL` must point at a running FastAPI service; the dashboard analysis form fails if the API is unreachable.
-- Set `ANALYSIS_API_SHARED_SECRET` on both Vercel and Render with the same value to enable hosted request validation. Never use `NEXT_PUBLIC_` for the secret.
+- Set `ANALYSIS_API_SHARED_SECRET` on both Vercel and Render with the same value to enable hosted request validation.
 
-Centralized readers: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is still accepted as a fallback for local `.env.local` files during migration.
+Centralized reader: [`src/lib/env-config.ts`](src/lib/env-config.ts) (`getSupabaseAnonKey`). Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is still accepted as a fallback for local `.env.local` files during migration.
 
 ## Database schema (draft)
 

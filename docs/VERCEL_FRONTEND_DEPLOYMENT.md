@@ -1,6 +1,6 @@
 # Vercel Frontend Deployment
 
-Deploy the **Next.js prototype** from `web/` to [Vercel](https://vercel.com/) and point it at the hosted **Render FastAPI** analysis API. Manual dashboard setup—no `vercel.json` required for the first deploy.
+Deploy the **Next.js prototype** from `web/` to [Vercel](https://vercel.com/) and wire it to the hosted **Render FastAPI** analysis API through the protected `/api/analyze` route handler. Manual dashboard setup—no `vercel.json` required for the first deploy.
 
 Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), [`web/README.md`](../web/README.md).
 
@@ -8,7 +8,7 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`REN
 
 ## Purpose
 
-Host the Clerk + Supabase dashboard shell and wire the analysis form to the Render backend (`POST /analyze`). The local Streamlit app and CLI are **not** deployed by this step.
+Host the Clerk + Supabase dashboard shell. The browser calls **`POST /api/analyze`** on Vercel; the Next.js route handler forwards to Render with a server-only shared secret. The local Streamlit app and CLI are **not** deployed by this step.
 
 ---
 
@@ -38,10 +38,13 @@ Set in Vercel → Project → **Settings** → **Environment Variables** (Produc
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (browser) |
 | `CLERK_SECRET_KEY` | Clerk secret (server/middleware only) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (browser client) |
-| `NEXT_PUBLIC_ANALYSIS_API_URL` | Hosted FastAPI base URL, e.g. `https://internship-fit-gap-analyzer.onrender.com` (no trailing slash) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key for the browser client |
+| `ANALYSIS_API_URL` | Hosted FastAPI base URL, e.g. `https://internship-fit-gap-analyzer.onrender.com` (server only, no trailing slash) |
+| `ANALYSIS_API_SHARED_SECRET` | Shared secret sent to Render as `X-Analysis-Api-Key` (server only; same value on Render) |
 
-The repo also accepts legacy `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` locally; prefer `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Vercel.
+The code still accepts legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` locally as a fallback for the same Supabase key—prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` on Vercel.
+
+**Do not** set `NEXT_PUBLIC_ANALYSIS_API_URL` — the browser no longer calls Render directly.
 
 ---
 
@@ -64,22 +67,25 @@ Some Clerk docs use `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` / `AFTER_SIGN_UP_URL` 
 
 - **Do not commit** `web/.env.local` or any file with real secrets.
 - **Do not paste** production keys into docs, commits, or issues.
-- **`NEXT_PUBLIC_*`** variables are **browser-visible**—only public URLs and publishable/anon keys belong there.
-- **`CLERK_SECRET_KEY`** goes in Vercel env vars only—never in client code or `NEXT_PUBLIC_*` names.
+- **`NEXT_PUBLIC_*`** variables are **browser-visible**—only public URLs and publishable keys belong there.
+- **`CLERK_SECRET_KEY`**, **`ANALYSIS_API_URL`**, and **`ANALYSIS_API_SHARED_SECRET`** are server-only—never in client code or `NEXT_PUBLIC_*` names.
 - **Never** use the Supabase **service role** key in the browser.
 - This frontend is a **prototype**—do not describe it as production-secure yet.
 
 ---
 
-## Render CORS follow-up
+## Render follow-up
 
-After Vercel assigns your app URL, update the **Render** backend env var so browser calls from Vercel are allowed:
+After Vercel assigns your app URL:
+
+1. Set **`ANALYSIS_API_SHARED_SECRET`** on Render to the same value as Vercel.
+2. Update **`ALLOWED_ORIGINS`** on Render if you still need direct browser CORS for local dev or smoke tests:
 
 ```text
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://YOUR_VERCEL_APP_URL
 ```
 
-Replace `YOUR_VERCEL_APP_URL` with your real host (e.g. `your-project.vercel.app` or custom domain). Redeploy or restart the Render service after changing `ALLOWED_ORIGINS`.
+Replace `YOUR_VERCEL_APP_URL` with your real host (e.g. `your-project.vercel.app` or custom domain). Hosted analysis traffic goes Vercel → Render server-to-server; CORS mainly matters for local two-server dev and optional `curl` from a browser origin.
 
 ---
 
@@ -92,8 +98,7 @@ Use **generic sample text** only for analysis smoke tests—not real private res
 - [ ] `/sign-up` loads
 - [ ] `/dashboard` is protected (redirects or blocks when signed out)
 - [ ] Signed-in dashboard loads
-- [ ] Analysis form calls the Render backend (`NEXT_PUBLIC_ANALYSIS_API_URL`)
-- [ ] Sample analysis returns matched/missing skills with **no skill in both lists**
+- [ ] Analysis form calls `/api/analyze` and returns matched/missing skills with **no skill in both lists**
 - [ ] **Save this prototype analysis** works when Clerk + Supabase + RLS are configured
 - [ ] Saved analyses panel shows the saved row (metadata/counts only)
 
@@ -113,15 +118,15 @@ Use **generic sample text** only for analysis smoke tests—not real private res
 | Symptom | Check |
 |---------|--------|
 | Build runs from wrong folder | Root Directory must be **`web`** |
-| Analysis fails in browser | `NEXT_PUBLIC_ANALYSIS_API_URL` = Render URL; Render `ALLOWED_ORIGINS` includes exact Vercel origin (`https://…`, no path) |
-| CORS error in DevTools | Update Render `ALLOWED_ORIGINS` and restart API service |
+| Analysis fails (502/503) | `ANALYSIS_API_URL` = Render URL; FastAPI running; `ANALYSIS_API_SHARED_SECRET` matches on Vercel and Render |
+| Analysis returns 401 from API | `ANALYSIS_API_SHARED_SECRET` set on both Vercel and Render with the same value |
 | Auth / sign-in fails | Clerk production keys; allowed domains and redirect URLs include your Vercel host |
 | Dashboard 401 / middleware errors | `CLERK_SECRET_KEY` set on Vercel (not only publishable key) |
-| Supabase status / save fails | `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`; Clerk configured as Supabase third-party auth; RLS policies applied |
+| Supabase status / save fails | `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; Clerk configured as Supabase third-party auth; RLS policies applied |
 | Build fails locally on Vercel | Run `cd web && npm run build` with valid env vars; fix TypeScript/Clerk errors before redeploying |
 
 ---
 
 ## Next steps
 
-Confirm end-to-end flow against [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md) step 9. Keep raw resume/job text out of cloud storage—the prototype save path stores structured skills and metadata only.
+Confirm end-to-end flow against [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md). Keep raw resume/job text out of cloud storage—the prototype save path stores structured skills and metadata only.

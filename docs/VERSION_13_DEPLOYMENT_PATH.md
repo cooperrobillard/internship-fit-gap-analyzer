@@ -10,7 +10,7 @@ Related: [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RENDER_BACKEND_
 
 **Version 13 Steps 5–6 (deploy docs) are complete.** The first full-stack hosted prototype (Vercel + Render + Clerk + Supabase) was deployed and verified. Detailed lessons, working scope, and cleanup priorities are in [`VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md).
 
-**Next:** Version 13 Step 8 — hosted prototype notice in the web app or README.
+**Next:** Continue hardening (API validation, honest UX, env doc alignment). See checkpoint doc for current status.
 
 ---
 
@@ -65,16 +65,18 @@ Set these in each host’s dashboard—**never commit** `.env`, `.env.local`, or
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk browser SDK |
 | `CLERK_SECRET_KEY` | Clerk server/middleware (Vercel server only) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client (anon/publishable key) |
-| `NEXT_PUBLIC_ANALYSIS_API_URL` | Hosted FastAPI base URL (e.g. `https://your-api.onrender.com`) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key for the browser client |
+| `ANALYSIS_API_URL` | Hosted FastAPI base URL (server only; e.g. `https://your-api.onrender.com`) |
+| `ANALYSIS_API_SHARED_SECRET` | Shared secret for `/analyze` validation (server only; same value on Render) |
 
-**Note:** The web app code currently reads `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`—that is the same Supabase anon/publishable key. Align the Vercel variable name with the code in the hosting-prep branch, or set both names to the same value during migration.
+Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is still accepted in code as a fallback for the same Supabase key. Do **not** use `NEXT_PUBLIC_ANALYSIS_API_URL` — the browser calls `/api/analyze` on Vercel.
 
 ### Backend (Render or Railway)
 
 | Variable | Purpose |
 |----------|---------|
 | `ALLOWED_ORIGINS` | Comma-separated production CORS origins (e.g. `https://your-app.vercel.app`) |
+| `ANALYSIS_API_SHARED_SECRET` | Same value as Vercel when hosted validation is enabled |
 
 Additional backend env vars may be added in `feature/fastapi-hosting-prep` (start command, port binding, optional `PORT`).
 
@@ -122,17 +124,18 @@ Check off in this order to reduce broken intermediate states:
 
 7. **Configure Vercel env vars**
    - All web variables from the table above
-   - `NEXT_PUBLIC_ANALYSIS_API_URL` → deployed FastAPI URL
+   - `ANALYSIS_API_URL` → deployed FastAPI URL
+   - `ANALYSIS_API_SHARED_SECRET` → same value as Render
 
 8. **Deploy Next.js frontend**
    - Vercel project rooted at `web/` — see [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md)
    - Build command: `npm run build` (default)
-   - Set `NEXT_PUBLIC_ANALYSIS_API_URL` to the Render API URL; update Render `ALLOWED_ORIGINS` with the Vercel host
+   - Update Render `ALLOWED_ORIGINS` with the Vercel host if needed for local/CORS smoke tests
 
 9. **Test full hosted flow**
    - Sign in (Clerk)
    - Supabase status / saved analyses list
-   - Paste resume + job text → analyze via hosted API
+   - Paste resume + job text → analyze via `/api/analyze` (Vercel → Render)
    - Save prototype analysis → row appears in saved list
    - Confirm no raw resume/job text in Supabase tables
 
@@ -145,15 +148,15 @@ Check off in this order to reduce broken intermediate states:
 | **Production start command** | Document Render/Railway start command; bind `0.0.0.0` and platform `PORT` |
 | **Hosting dependency check** | Verify taxonomy/alias JSON paths work when cwd is repo root on the host |
 | **CORS env strategy** | Set `ALLOWED_ORIGINS` on the API host to include each Vercel production/preview URL |
-| **Hosted API URL wiring** | Set `NEXT_PUBLIC_ANALYSIS_API_URL` on Vercel to the public FastAPI URL |
+| **Hosted API URL wiring** | Set `ANALYSIS_API_URL` on Vercel (server only); browser uses `/api/analyze` |
+| **Shared secret** | Set matching `ANALYSIS_API_SHARED_SECRET` on Vercel and Render |
 | **Supabase RLS + JWT** | Confirm Clerk JWT `sub` matches `clerk_user_id` on inserts; test cross-user isolation |
-| **Env name alignment** | Reconcile `NEXT_PUBLIC_SUPABASE_ANON_KEY` vs `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in code |
 
 ---
 
 ## Recommended next implementation step
 
-**Version 13 Step 8** — Add a hosted prototype notice and deployment status copy to the web UI or root README (see checkpoint doc).
+See [`VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md) for cleanup priorities after the first successful deploy.
 
 ---
 

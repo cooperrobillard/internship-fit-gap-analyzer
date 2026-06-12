@@ -68,6 +68,6 @@ See comments at the top of `schema.sql` for the full design note.
 Env vars (in `web/.env.example`, values in `.env.local` only):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (preferred; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` still works in code)
 
 Use the Supabase **publishable (anon)** key in the browser; never expose the service role key client-side.

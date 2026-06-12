@@ -1,29 +1,18 @@
 /**
  * Browser-safe public environment configuration for the Next.js app.
  *
- * Only reads NEXT_PUBLIC_* variables and server-only vars used in server
- * components/middleware (e.g. CLERK_SECRET_KEY is not read here).
+ * Only reads NEXT_PUBLIC_* variables. Server-only secrets (e.g. CLERK_SECRET_KEY,
+ * ANALYSIS_API_URL, ANALYSIS_API_SHARED_SECRET) are read in route handlers only.
  */
-
-const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
-
-/** FastAPI analysis service base URL (no trailing slash). */
-export function getAnalysisApiBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_ANALYSIS_API_URL?.trim();
-  if (!configured) {
-    return DEFAULT_ANALYSIS_API_URL;
-  }
-  return configured.replace(/\/$/, "");
-}
 
 /**
- * Supabase anon (publishable) key for the browser client.
- * Prefers NEXT_PUBLIC_SUPABASE_ANON_KEY; falls back to legacy publishable name.
+ * Supabase publishable (anon) key for the browser client.
+ * Prefers NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY; falls back to legacy ANON_KEY name.
  */
 export function getSupabaseAnonKey(): string | undefined {
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  if (anonKey) {
-    return anonKey;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  if (publishableKey) {
+    return publishableKey;
   }
-  return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || undefined;
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || undefined;
 }
