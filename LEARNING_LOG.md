@@ -2778,3 +2778,38 @@ Verification:
 
 Learning:
 This step reinforced the value of separating structured saved results from raw private text. The hosted app can provide meaningful saved-analysis review while continuing to avoid storing raw resume or job-description content by default.
+
+## Version 15 Step 3 — Add job metadata polish for saved hosted analyses
+
+Improved metadata capture and display for hosted saved analyses.
+
+What changed:
+- Improved the hosted analysis/save flow around job metadata such as job title, company, source URL, and notes.
+- Made saved analyses easier to recognize in the hosted dashboard.
+- Improved metadata display in the saved-analysis list and/or richer detail view.
+- Added graceful fallbacks for missing metadata.
+- Preserved the structured-results-first data model without storing raw resume or job-description text.
+
+Why this matters:
+Saved analyses become much more useful when users can identify which job, company, or application context each result belongs to. This step moves the hosted app closer to a real public job-search tool instead of a basic analysis demo.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing recurring gap stats and saved-analysis detail behavior were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed metadata capture/display worked and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced that metadata can make saved structured analysis results feel much more useful without needing to store raw private resume or job-description text.
