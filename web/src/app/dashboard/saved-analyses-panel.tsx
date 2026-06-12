@@ -7,7 +7,9 @@ import { SavedAnalysisDetailPanel } from "@/app/dashboard/saved-analysis-detail"
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   fetchRecentSavedAnalyses,
+  formatNotesPreview,
   formatSavedAnalysisDate,
+  getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
   type SavedAnalysesResult,
   type SavedCloudAnalysis,
@@ -24,7 +26,9 @@ function AnalysisRow({
   isSelected: boolean;
   onSelect: (analysisId: string) => void;
 }) {
-  const label = getSavedAnalysisDisplayTitle(analysis);
+  const title = getSavedAnalysisDisplayTitle(analysis);
+  const companyLabel = getSavedAnalysisCompanyLabel(analysis);
+  const notesPreview = formatNotesPreview(analysis.notes);
 
   return (
     <li>
@@ -39,13 +43,22 @@ function AnalysisRow({
         }`}
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-medium text-zinc-900">{label}</p>
-          <p className="text-xs text-zinc-500">
+          <p className="font-medium text-zinc-900">{title}</p>
+          <p className="shrink-0 text-xs text-zinc-500">
             {formatSavedAnalysisDate(analysis.created_at)}
           </p>
         </div>
-        {analysis.company && analysis.job_title ? (
-          <p className="mt-1 text-zinc-600">{analysis.company}</p>
+        <p
+          className={`mt-1 text-sm ${
+            analysis.company?.trim() ? "text-zinc-600" : "text-zinc-500 italic"
+          }`}
+        >
+          {companyLabel}
+        </p>
+        {notesPreview ? (
+          <p className="mt-1 truncate text-xs text-zinc-500" title={notesPreview}>
+            {notesPreview}
+          </p>
         ) : null}
         <p className="mt-2 text-xs text-zinc-600">
           Matched: {analysis.matched_skills_count} · Missing:{" "}

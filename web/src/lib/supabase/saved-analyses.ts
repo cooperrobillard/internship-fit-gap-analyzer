@@ -1,4 +1,13 @@
 import {
+  formatOptionalMetadata,
+  formatNotesPreview,
+  formatSourceUrl,
+  getSavedAnalysisCompanyLabel,
+  getSavedAnalysisDisplayTitle,
+  normalizeOptionalMetadata,
+  type SourceUrlDisplay,
+} from "@/lib/saved-analysis-metadata";
+import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
   type AccessTokenGetter,
@@ -7,6 +16,16 @@ import {
   getSafeSavedAnalysisErrorMessage,
   isMissingSupabaseConfigError,
 } from "@/lib/supabase/supabase-errors";
+
+export {
+  formatNotesPreview,
+  formatOptionalMetadata,
+  formatSourceUrl,
+  getSavedAnalysisCompanyLabel,
+  getSavedAnalysisDisplayTitle,
+  normalizeOptionalMetadata,
+  type SourceUrlDisplay,
+};
 
 /** Safe list fields from job_analyses — excludes job_text and other sensitive columns. */
 const SAVED_ANALYSIS_LIST_FIELDS =
@@ -60,19 +79,6 @@ export function formatSavedAnalysisDate(iso: string): string {
     return iso;
   }
   return date.toLocaleString();
-}
-
-/** Primary title for a saved analysis row or detail header. */
-export function getSavedAnalysisDisplayTitle(
-  analysis: Pick<SavedCloudAnalysis, "job_title" | "company">,
-): string {
-  if (analysis.job_title?.trim()) {
-    return analysis.job_title.trim();
-  }
-  if (analysis.company?.trim()) {
-    return analysis.company.trim();
-  }
-  return "Untitled analysis";
 }
 
 /** @deprecated Use getSavedAnalysisDisplayTitle */
@@ -236,10 +242,3 @@ export async function fetchSavedAnalysisDetail(
   }
 }
 
-/** Display fallback for optional metadata fields. */
-export function formatOptionalMetadata(value: string | null | undefined): string {
-  if (value?.trim()) {
-    return value.trim();
-  }
-  return "Not provided";
-}

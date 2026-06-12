@@ -6,7 +6,10 @@ import {
   fetchSavedAnalysisDetail,
   formatOptionalMetadata,
   formatSavedAnalysisDate,
+  formatSourceUrl,
+  getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
+  normalizeOptionalMetadata,
   type SavedAnalysisDetailResult,
   type SavedAnalysisSkill,
 } from "@/lib/supabase/saved-analyses";
@@ -152,6 +155,9 @@ export function SavedAnalysisDetailPanel({
 
   const { analysis } = loadResult;
   const title = getSavedAnalysisDisplayTitle(analysis);
+  const companyLabel = getSavedAnalysisCompanyLabel(analysis);
+  const sourceUrl = formatSourceUrl(analysis.source_url);
+  const notesText = normalizeOptionalMetadata(analysis.notes);
 
   return (
     <div className={`${boxClass} border-sky-200 bg-sky-50/50 text-zinc-800`}>
@@ -159,44 +165,68 @@ export function SavedAnalysisDetailPanel({
         Selected analysis
       </p>
       <h3 className="mt-1 text-lg font-semibold text-zinc-900">{title}</h3>
+      <p
+        className={`mt-1 text-sm ${
+          analysis.company?.trim() ? "text-zinc-700" : "text-zinc-500 italic"
+        }`}
+      >
+        {companyLabel}
+      </p>
       <p className="mt-1 text-xs text-zinc-600">
         Saved {formatSavedAnalysisDate(analysis.created_at)} · Rule-based skill
         comparison (structured results only)
       </p>
 
-      <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-zinc-500">Job title</dt>
-          <dd className="font-medium text-zinc-900">
-            {formatOptionalMetadata(analysis.job_title)}
-          </dd>
+          <dd className="font-medium text-zinc-900">{title}</dd>
         </div>
         <div>
           <dt className="text-zinc-500">Company</dt>
-          <dd className="font-medium text-zinc-900">
-            {formatOptionalMetadata(analysis.company)}
+          <dd
+            className={`font-medium ${
+              analysis.company?.trim() ? "text-zinc-900" : "text-zinc-500 italic"
+            }`}
+          >
+            {companyLabel}
           </dd>
         </div>
         <div className="sm:col-span-2">
           <dt className="text-zinc-500">Source URL</dt>
-          <dd className="text-zinc-900">
-            {analysis.source_url?.trim() ? (
+          <dd className="min-w-0 text-zinc-900">
+            {sourceUrl.kind === "link" ? (
               <a
-                href={analysis.source_url}
+                href={sourceUrl.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-800 underline break-all"
+                className="break-all text-sky-800 underline"
+                title={sourceUrl.href}
               >
-                {analysis.source_url.trim()}
+                {sourceUrl.label}
               </a>
-            ) : (
-              "Not provided"
-            )}
+            ) : null}
+            {sourceUrl.kind === "text" ? (
+              <span className="break-all text-zinc-700" title={analysis.source_url ?? undefined}>
+                {sourceUrl.label}
+              </span>
+            ) : null}
+            {sourceUrl.kind === "missing" ? (
+              <span className="text-zinc-500">Not provided</span>
+            ) : null}
           </dd>
         </div>
         <div className="sm:col-span-2">
           <dt className="text-zinc-500">Notes</dt>
-          <dd className="text-zinc-900">{formatOptionalMetadata(analysis.notes)}</dd>
+          <dd className="min-w-0 text-zinc-900">
+            {notesText ? (
+              <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-white/80 px-3 py-2 text-zinc-800">
+                {notesText}
+              </p>
+            ) : (
+              <span className="text-zinc-500">{formatOptionalMetadata(analysis.notes)}</span>
+            )}
+          </dd>
         </div>
       </dl>
 

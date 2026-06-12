@@ -185,48 +185,73 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         missing skills. You can optionally save skills and metadata afterward.
       </p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="font-medium text-violet-950">Job title (optional)</span>
-          <input
-            type="text"
-            value={jobTitle}
-            onChange={(event) => setJobTitle(event.target.value)}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-            placeholder="e.g. Software Engineering Intern"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-violet-950">Company (optional)</span>
-          <input
-            type="text"
-            value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-            placeholder="e.g. Demo Company"
-          />
-        </label>
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium text-violet-950">Source URL (optional)</span>
-          <input
-            type="url"
-            value={sourceUrl}
-            onChange={(event) => setSourceUrl(event.target.value)}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-            placeholder="https://example.com/posting"
-          />
-        </label>
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium text-violet-950">Notes (optional)</span>
-          <input
-            type="text"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-            placeholder="Optional reminder for yourself"
-          />
-        </label>
-      </div>
+      <fieldset className="mt-4 rounded-lg border border-violet-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-violet-950">
+          Label this analysis (optional)
+        </legend>
+        <p className="text-sm text-violet-900/80">
+          These fields help you recognize saved analyses later. Only labels and
+          skill results are stored in the cloud—not resume or job description
+          text.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="font-medium text-violet-950">Job title</span>
+            <input
+              type="text"
+              value={jobTitle}
+              onChange={(event) => setJobTitle(event.target.value)}
+              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              placeholder="e.g. Software Engineering Intern"
+              autoComplete="organization-title"
+            />
+            <span className="mt-1 block text-xs text-violet-800/70">
+              Shown as the main title in your saved list.
+            </span>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-violet-950">Company</span>
+            <input
+              type="text"
+              value={company}
+              onChange={(event) => setCompany(event.target.value)}
+              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              placeholder="e.g. Acme Corp"
+              autoComplete="organization"
+            />
+            <span className="mt-1 block text-xs text-violet-800/70">
+              Helps group postings from the same employer.
+            </span>
+          </label>
+          <label className="block text-sm sm:col-span-2">
+            <span className="font-medium text-violet-950">Source URL</span>
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(event) => setSourceUrl(event.target.value)}
+              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              placeholder="https://careers.example.com/jobs/123"
+              inputMode="url"
+            />
+            <span className="mt-1 block text-xs text-violet-800/70">
+              Link back to the job posting when you review saved results.
+            </span>
+          </label>
+          <label className="block text-sm sm:col-span-2">
+            <span className="font-medium text-violet-950">Notes</span>
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={2}
+              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              placeholder="e.g. Referral from Alex · apply by Friday"
+            />
+            <span className="mt-1 block text-xs text-violet-800/70">
+              Short reminders for yourself—deadlines, referrals, or interview stage.
+            </span>
+          </label>
+        </div>
+      </fieldset>
 
       <label className="mt-4 block text-sm">
         <span className="font-medium text-violet-950">Resume text (required)</span>
