@@ -13,7 +13,7 @@ const placeholderCards = [
   },
   {
     title: "Recurring gaps",
-    body: "Future: spot skills missing across many postings. Available in the local CLI and Streamlit app today.",
+    body: "Hosted dashboard shows recurring missing skills from saved analyses. Full stats and exports remain richer in the local CLI and Streamlit app.",
   },
   {
     title: "Job tracker",

@@ -2,6 +2,7 @@
 
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
+import { RecurringGapStatsPanel } from "@/app/dashboard/recurring-gap-stats-panel";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   fetchRecentSavedAnalyses,
@@ -60,7 +61,7 @@ type SavedAnalysesPanelProps = {
   refreshKey?: number;
 };
 
-export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
+function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
   const sessionId = session?.id ?? null;
@@ -211,5 +212,15 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Saved list plus recurring gap stats; shares refreshKey after cloud saves. */
+export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
+  return (
+    <>
+      <RecurringGapStatsPanel refreshKey={refreshKey} />
+      <SavedAnalysesList refreshKey={refreshKey} />
+    </>
   );
 }
