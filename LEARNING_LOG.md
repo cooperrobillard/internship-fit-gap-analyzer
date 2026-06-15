@@ -2886,3 +2886,37 @@ Verification:
 
 Learning:
 This step reinforced that public-product readiness includes data control, not just feature display. Delete flows need confirmation, safe error handling, and careful state refresh so the UI remains trustworthy after user-owned data changes.
+
+## Version 15 Step 6 — Version 15 checkpoint and public-product progress update
+
+Added a Version 15 checkpoint documenting the hosted saved-analysis feature-parity foundation.
+
+What changed:
+- Added a Version 15 checkpoint document.
+- Summarized hosted recurring gap stats, richer saved-analysis detail view, job metadata polish, saved-analysis search/filter, and saved-analysis deletion.
+- Clarified the current hosted app capabilities after Version 15.
+- Reframed progress toward the public Job Fit & Skill-Gap Analyzer product.
+- Documented remaining gaps before the app can be considered production-ready.
+- Recommended Version 16 as a hosted comparison, export, and data-control foundation phase.
+
+Why this matters:
+Version 15 moved the hosted app beyond a basic prototype. The dashboard now supports more of the saved-analysis workflow that made the original local/Streamlit app useful, while still preserving the structured-results-first privacy model.
+
+What stayed the same:
+- No app code changed.
+- No backend behavior changed.
+- No database schema or RLS policy changed.
+- No secrets or private data were added.
+- No new dependencies were added.
+- The app is still described honestly as not production-ready yet.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+
+Learning:
+This step clarified that Version 15 was a meaningful hosted feature-parity milestone. The next phase should continue toward public-product readiness with comparison, export, and user data-control features.
