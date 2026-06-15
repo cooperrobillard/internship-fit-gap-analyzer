@@ -3072,3 +3072,43 @@ Verification:
 
 Learning:
 This step reinforced that the next technical feature is not always the safest next product step. Before storing more sensitive user data, it is important to review data minimization, consent, delete/export expectations, RLS, logging, abuse protection, and public claims.
+
+## Version 16 Step 5 — Add Version 16 checkpoint
+
+Added the Version 16 checkpoint for the hosted comparison, export, and data-control foundation.
+
+What changed:
+- Created a Version 16 checkpoint document.
+- Summarized hosted saved-analysis comparison.
+- Summarized hosted export/download support.
+- Summarized the privacy/data-control page or section.
+- Summarized the production-readiness review before resume profiles.
+- Updated the public product roadmap if needed.
+- Clarified that the hosted app is beyond a basic prototype but still not ready for broad public launch.
+- Recommended a careful Version 17 path focused on resume/input workflow polish before persistent resume profiles.
+
+Why this matters:
+Version 16 made saved analyses more useful, portable, and user-controlled. The checkpoint captures that progress and keeps the next phase disciplined, especially around the privacy risks of persistent resume profiles and raw resume storage.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual review confirmed the checkpoint does not claim production readiness or a completed security audit.
+
+Learning:
+This step reinforced the value of checkpointing after a major feature phase. Version 16 connected product usefulness with user control: comparison helps users interpret saved analyses, exports let them keep their data, privacy copy explains the model, and the readiness review protects the project before adding more sensitive resume-profile features.
