@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), root [`README.md`](../README.md).
 
 ---
 
@@ -60,9 +60,9 @@ Browser → Vercel (Next.js) → Clerk
 |------------|--------|---------|------------|----------|-------|
 | Single job analysis | Yes | Yes | Yes | P0 | Hosted via paste + `/api/analyze` |
 | Resume input (paste) | Yes | Yes | Yes | P0 | |
-| Resume input (upload) | Yes (Streamlit) | No | Should have | P1 | Needs upload UX + privacy review |
+| Resume input (upload) | Yes (Streamlit) | Partial | Should have | P1 | Hosted: transient `.txt` in browser only (Version 17); not persistent |
 | Job description input (paste) | Yes | Yes | Yes | P0 | |
-| Job description input (upload) | Yes (Streamlit) | No | Should have | P1 | Same as resume upload |
+| Job description input (upload) | Yes (Streamlit) | Partial | Should have | P1 | Hosted: transient `.txt` in browser only (Version 17); not persistent |
 | Job title / company metadata | Yes | Yes | Yes | P0 | On save form today |
 | Source URL / notes | Yes | Yes | Yes | P0 | On save form today |
 | Matched / missing skills display | Yes | Yes | Yes | P0 | Per-run only on hosted |
@@ -216,13 +216,19 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ### Version 17 — Resume/input workflow polish (then profiles)
 
-**Gate:** [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md) controls before storing raw resume text in the cloud.
+**Gate:** [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md) and [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md) — no persistent resume profiles until a separate design step answers data model, consent, delete/export, RLS, and privacy-copy questions.
 
-**Start with:** hosted paste/sample UX polish, transient upload planning, profile design doc—not immediate raw-text profile storage.
+**Complete (input workflow):**
 
-- **Resume profile** concept (create, label, select) — after gate
-- **Different resume per analysis** (profile or one-off paste)
-- **Upload** support with privacy planning (no silent raw-text storage)
+- Step 1 — hosted paste/save UX polish and honest prototype copy
+- Step 2 — transient plain `.txt` upload (browser-only; no file persistence)
+- Step 3 — fictional **Try sample inputs** / **Clear inputs** demo workflow
+- Step 4 — input workflow checkpoint and resume-profile guardrail (this doc)
+
+**Deferred until designed:** persistent **resume profiles**, raw resume/job text in cloud save, PDF/DOCX parsing.
+
+- **Resume profile** concept (create, label, select) — after guardrail + design doc
+- **Different resume per analysis** — today via one-off paste/upload/demo; profiles would formalize later
 
 ### Version 18 — Public readiness / security / privacy
 
@@ -248,13 +254,12 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 3 — Hosted sample/demo inputs** — **Complete**
+**Version 17 — Input workflow track** — **Complete** (Steps 1–4)
 
-- Fictional demo resume, job posting, and metadata via **Try sample inputs** in `analysis-form.tsx`
-- Constants in `web/src/lib/demo-inputs.ts`; optional **Clear inputs** action
-- User still runs analysis manually; save path unchanged (structured results only)
+- Paste/save UX polish, transient `.txt` upload, sample/demo inputs, and guardrail doc — see [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md)
+- **Guardrail:** do not implement persistent resume profiles until a separate design step answers profile data model, consent, delete/export, RLS, and privacy-copy questions
 
-**Version 17 Step 4 (next)** — Resume/profile design note before persistent profiles
+**Recommended next:** **Version 18 — public readiness / production hardening** (rate limits, RLS re-check, privacy copy, smoke-test discipline). Optional later: resume-profile **design document only** if profiles remain on the roadmap.
 
 **Out of scope until gated:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, major redesign.
 
