@@ -3,6 +3,7 @@
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecurringGapStatsPanel } from "@/app/dashboard/recurring-gap-stats-panel";
+import { SavedAnalysisComparisonPanel } from "@/app/dashboard/saved-analysis-comparison";
 import { SavedAnalysisDetailPanel } from "@/app/dashboard/saved-analysis-detail";
 import {
   filterSavedAnalyses,
@@ -175,7 +176,22 @@ function SavedAnalysesList({
   const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(
     null,
   );
+  const [compareFirstId, setCompareFirstId] = useState<string | null>(null);
+  const [compareSecondId, setCompareSecondId] = useState<string | null>(null);
   const completedFetchKeyRef = useRef<string | null>(null);
+
+  const allAnalyses =
+    loadResult?.status === "success" ? loadResult.analyses : [];
+
+  const visibleCompareFirstId =
+    compareFirstId && allAnalyses.some((analysis) => analysis.id === compareFirstId)
+      ? compareFirstId
+      : null;
+  const visibleCompareSecondId =
+    compareSecondId &&
+    allAnalyses.some((analysis) => analysis.id === compareSecondId)
+      ? compareSecondId
+      : null;
 
   const filteredAnalyses = useMemo(() => {
     const analyses = loadResult?.status === "success" ? loadResult.analyses : [];
@@ -204,6 +220,20 @@ function SavedAnalysesList({
     );
     completedFetchKeyRef.current = null;
     onAnalysisDeleted?.();
+  }
+
+  function handleCompareFirstChange(analysisId: string | null) {
+    setCompareFirstId(analysisId);
+    if (analysisId && analysisId === compareSecondId) {
+      setCompareSecondId(null);
+    }
+  }
+
+  function handleCompareSecondChange(analysisId: string | null) {
+    setCompareSecondId(analysisId);
+    if (analysisId && analysisId === compareFirstId) {
+      setCompareFirstId(null);
+    }
   }
 
   useEffect(() => {
@@ -240,6 +270,22 @@ function SavedAnalysesList({
             (analysis) => analysis.id === currentId,
           );
           return stillExists ? currentId : null;
+        });
+        setCompareFirstId((currentId) => {
+          if (!currentId) {
+            return null;
+          }
+          return result.analyses.some((analysis) => analysis.id === currentId)
+            ? currentId
+            : null;
+        });
+        setCompareSecondId((currentId) => {
+          if (!currentId) {
+            return null;
+          }
+          return result.analyses.some((analysis) => analysis.id === currentId)
+            ? currentId
+            : null;
         });
       }
 
@@ -410,6 +456,14 @@ function SavedAnalysesList({
           ))}
         </ul>
       )}
+
+      <SavedAnalysisComparisonPanel
+        analyses={allAnalyses}
+        firstAnalysisId={visibleCompareFirstId}
+        secondAnalysisId={visibleCompareSecondId}
+        onFirstAnalysisIdChange={handleCompareFirstChange}
+        onSecondAnalysisIdChange={handleCompareSecondChange}
+      />
 
       <SavedAnalysisDetailPanel
         analysisId={visibleSelectedAnalysisId}
