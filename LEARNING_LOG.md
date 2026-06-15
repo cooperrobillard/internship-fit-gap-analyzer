@@ -3034,3 +3034,41 @@ Verification:
 
 Learning:
 This step reinforced that public-product readiness is not only about features. A useful product also needs clear explanations of data handling, user controls, limitations, and what still requires security/privacy review before wider launch.
+
+## Version 16 Step 4 — Add production-readiness review before resume profiles
+
+Added a production-readiness review before beginning persistent resume profile work.
+
+What changed:
+- Created a production-readiness review document for the hosted app.
+- Audited the current hosted architecture, saved-data model, and user controls.
+- Identified the main gaps before broader public launch, including privacy/security review, rate limiting, RLS re-checks, data retention, logging/observability, and abuse/cost controls.
+- Explained why persistent resume profiles are more sensitive than the current structured saved-analysis model.
+- Recommended waiting before storing raw resume text or raw job-description text.
+- Proposed a safer Version 17 path that starts with input workflow polish and explicit profile design before persistent resume storage.
+
+Why this matters:
+Persistent resume profiles would introduce more sensitive data responsibility than the app currently has. This review helps prevent the project from rushing into raw resume storage before privacy, security, delete/export, and public-product expectations are clearer.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual review confirmed the production-readiness document does not claim production readiness or a completed security audit.
+
+Learning:
+This step reinforced that the next technical feature is not always the safest next product step. Before storing more sensitive user data, it is important to review data minimization, consent, delete/export expectations, RLS, logging, abuse protection, and public claims.
