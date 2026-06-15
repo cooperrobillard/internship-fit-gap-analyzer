@@ -85,6 +85,18 @@ export default function Home() {
           <HostedPrototypeNotice />
         </div>
 
+        <p className="mt-6 text-sm text-zinc-600">
+          <Link
+            href="/privacy"
+            className="font-medium text-sky-800 underline hover:text-sky-900"
+          >
+            Privacy &amp; data controls
+          </Link>
+          {" — "}
+          what the hosted prototype saves, what it does not save, and your current
+          controls.
+        </p>
+
         <section className="mt-10">
           <h3 className="text-xl font-semibold text-zinc-900">How it works</h3>
           <ol className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -138,8 +150,11 @@ export default function Home() {
 
       <footer className="mt-12 border-t border-zinc-200 bg-white py-6">
         <p className="mx-auto max-w-4xl px-6 text-center text-sm text-zinc-500">
-          Internship Fit &amp; Skill-Gap Analyzer — hosted prototype. Not
-          production-secure SaaS.
+          Job Fit &amp; Skill-Gap Analyzer — hosted prototype. Not production-ready
+          SaaS.{" "}
+          <Link href="/privacy" className="text-sky-700 underline hover:text-sky-800">
+            Privacy &amp; data controls
+          </Link>
         </p>
       </footer>
     </div>

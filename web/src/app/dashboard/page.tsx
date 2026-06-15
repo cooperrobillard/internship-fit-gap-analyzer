@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { DashboardInteractiveSection } from "@/components/dashboard-interactive-section";
 import { HostedPrototypeNotice } from "@/components/hosted-prototype-info";
 
@@ -43,6 +44,20 @@ export default async function DashboardPage() {
 
         <div className="mt-6">
           <HostedPrototypeNotice />
+        </div>
+
+        <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+          <p className="font-medium text-zinc-900">Privacy &amp; data controls</p>
+          <p className="mt-1 text-zinc-600">
+            Learn what this prototype saves, what it does not intentionally save, and
+            how to delete or export your structured saved analyses.
+          </p>
+          <Link
+            href="/privacy"
+            className="mt-2 inline-block font-medium text-sky-800 underline hover:text-sky-900"
+          >
+            Read privacy &amp; data controls
+          </Link>
         </div>
 
         <DashboardInteractiveSection />
