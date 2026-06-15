@@ -2920,3 +2920,40 @@ Verification:
 
 Learning:
 This step clarified that Version 15 was a meaningful hosted feature-parity milestone. The next phase should continue toward public-product readiness with comparison, export, and user data-control features.
+
+## Version 16 Step 1 — Add hosted saved-analysis comparison
+
+Added a hosted saved-analysis comparison workflow to the Next.js dashboard.
+
+What changed:
+- Added a way to select two saved analyses for comparison.
+- Compared missing skills between the selected analyses.
+- Displayed shared missing skills and skills unique to each selected analysis.
+- Added clear empty/no-selection states.
+- Preserved existing saved-analysis detail, recurring gap stats, search/filter, metadata display, and delete behavior.
+- Kept comparison based on structured saved analysis data rather than raw resume/job-description text.
+
+Why this matters:
+Comparison was one of the useful original local/Streamlit features. Bringing it into the hosted app helps users understand how different jobs overlap, which gaps repeat, and which skills are unique to specific opportunities.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed comparison worked and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced how structured saved results can support higher-level decision features without storing raw private resume or job-description text. Comparison turns saved analyses into a more useful job-search decision tool.
