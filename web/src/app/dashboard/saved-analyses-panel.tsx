@@ -152,7 +152,14 @@ type SavedAnalysesPanelProps = {
   refreshKey?: number;
 };
 
-function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
+type SavedAnalysesListProps = SavedAnalysesPanelProps & {
+  onAnalysisDeleted?: () => void;
+};
+
+function SavedAnalysesList({
+  refreshKey = 0,
+  onAnalysisDeleted,
+}: SavedAnalysesListProps) {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
   const sessionId = session?.id ?? null;
@@ -165,6 +172,9 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [listFilter, setListFilter] = useState<SavedAnalysisListFilter>("all");
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(
+    null,
+  );
   const completedFetchKeyRef = useRef<string | null>(null);
 
   const filteredAnalyses = useMemo(() => {
@@ -184,6 +194,16 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
     setSearchQuery("");
     setListFilter("all");
     setSelectedAnalysisId(null);
+    setDeleteSuccessMessage(null);
+  }
+
+  function handleAnalysisDeleted(deletedLabel: string) {
+    setSelectedAnalysisId(null);
+    setDeleteSuccessMessage(
+      `"${deletedLabel}" was deleted from your saved analyses.`,
+    );
+    completedFetchKeyRef.current = null;
+    onAnalysisDeleted?.();
   }
 
   useEffect(() => {
@@ -338,13 +358,29 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
       <SavedAnalysesSearchControls
         searchQuery={searchQuery}
         filter={listFilter}
-        onSearchQueryChange={setSearchQuery}
-        onFilterChange={setListFilter}
+        onSearchQueryChange={(value) => {
+          setSearchQuery(value);
+          setDeleteSuccessMessage(null);
+        }}
+        onFilterChange={(value) => {
+          setListFilter(value);
+          setDeleteSuccessMessage(null);
+        }}
         onClear={handleClearSearch}
         showClear={searchIsActive}
         totalCount={loadResult.analyses.length}
         visibleCount={filteredAnalyses.length}
       />
+
+      {deleteSuccessMessage ? (
+        <div
+          className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+          role="status"
+        >
+          <p className="font-medium">Analysis deleted</p>
+          <p className="mt-1">{deleteSuccessMessage}</p>
+        </div>
+      ) : null}
 
       {filteredAnalyses.length === 0 ? (
         <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-5 text-zinc-700">
@@ -378,6 +414,7 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
       <SavedAnalysisDetailPanel
         analysisId={visibleSelectedAnalysisId}
         refreshKey={refreshKey}
+        onDeleted={handleAnalysisDeleted}
       />
     </div>
   );
@@ -385,10 +422,20 @@ function SavedAnalysesList({ refreshKey = 0 }: SavedAnalysesPanelProps) {
 
 /** Saved list plus recurring gap stats; shares refreshKey after cloud saves. */
 export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const effectiveRefreshKey = refreshKey + reloadNonce;
+
+  function handleAnalysisDeleted() {
+    setReloadNonce((nonce) => nonce + 1);
+  }
+
   return (
     <>
-      <RecurringGapStatsPanel refreshKey={refreshKey} />
-      <SavedAnalysesList refreshKey={refreshKey} />
+      <RecurringGapStatsPanel refreshKey={effectiveRefreshKey} />
+      <SavedAnalysesList
+        refreshKey={effectiveRefreshKey}
+        onAnalysisDeleted={handleAnalysisDeleted}
+      />
     </>
   );
 }

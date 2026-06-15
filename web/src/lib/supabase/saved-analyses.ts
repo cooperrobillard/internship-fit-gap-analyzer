@@ -73,6 +73,12 @@ export type SavedAnalysisDetailResult =
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
+export type DeleteSavedAnalysisResult =
+  | { status: "success" }
+  | { status: "not_found" }
+  | { status: "not_configured" }
+  | { status: "error"; message: string };
+
 type JobAnalysisListRow = SavedCloudAnalysis & {
   matched_skills: SavedAnalysisSkill[] | null;
   skill_gaps: SavedAnalysisSkill[] | null;
@@ -248,6 +254,87 @@ export async function fetchSavedAnalysisDetail(
     return {
       status: "error",
       message: getSafeSavedAnalysisErrorMessage("read", null, {
+        reason: "network",
+      }),
+    };
+  }
+}
+
+/**
+ * Delete one saved job analysis owned by the signed-in user (RLS-scoped).
+ *
+ * Deletes the job_analyses row; matched_skills and skill_gaps cascade per
+ * schema.sql. Does not load or return raw resume or job body text.
+ */
+export async function deleteSavedAnalysis(
+  getAccessToken: AccessTokenGetter,
+  analysisId: string,
+): Promise<DeleteSavedAnalysisResult> {
+  if (!isSupabaseConfigured()) {
+    return { status: "not_configured" };
+  }
+
+  const trimmedId = analysisId.trim();
+  if (!trimmedId) {
+    return { status: "not_found" };
+  }
+
+  try {
+    const token = await getAccessToken();
+    if (!token) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("delete", null, {
+          reason: "session",
+        }),
+      };
+    }
+
+    const supabase = createClerkSupabaseClient(getAccessToken);
+
+    const { data: existingRow, error: lookupError } = await supabase
+      .from("job_analyses")
+      .select("id")
+      .eq("id", trimmedId)
+      .maybeSingle();
+
+    if (lookupError) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("delete", lookupError),
+      };
+    }
+
+    if (!existingRow) {
+      return { status: "not_found" };
+    }
+
+    const { error: deleteError } = await supabase
+      .from("job_analyses")
+      .delete()
+      .eq("id", trimmedId);
+
+    if (deleteError) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("delete", deleteError),
+      };
+    }
+
+    return { status: "success" };
+  } catch (error) {
+    if (isMissingSupabaseConfigError(error)) {
+      return {
+        status: "error",
+        message: getSafeSavedAnalysisErrorMessage("delete", null, {
+          reason: "config",
+        }),
+      };
+    }
+
+    return {
+      status: "error",
+      message: getSafeSavedAnalysisErrorMessage("delete", null, {
         reason: "network",
       }),
     };

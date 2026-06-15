@@ -3,6 +3,7 @@
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 import {
+  deleteSavedAnalysis,
   fetchSavedAnalysisDetail,
   formatOptionalMetadata,
   formatSavedAnalysisDate,
@@ -10,6 +11,7 @@ import {
   getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
   normalizeOptionalMetadata,
+  type SavedAnalysisDetail,
   type SavedAnalysisDetailResult,
   type SavedAnalysisSkill,
 } from "@/lib/supabase/saved-analyses";
@@ -54,20 +56,40 @@ function SkillList({
   );
 }
 
+type DeleteUiState =
+  | { kind: "idle" }
+  | { kind: "confirming" }
+  | { kind: "deleting" }
+  | { kind: "error"; message: string };
+
+function getSavedAnalysisDeleteLabel(analysis: SavedAnalysisDetail): string {
+  const title = getSavedAnalysisDisplayTitle(analysis);
+  const company = normalizeOptionalMetadata(analysis.company);
+  if (company) {
+    return `${title} · ${company}`;
+  }
+  return title;
+}
+
 type SavedAnalysisDetailPanelProps = {
   analysisId: string | null;
   refreshKey?: number;
+  onDeleted?: (deletedLabel: string) => void;
 };
 
 export function SavedAnalysisDetailPanel({
   analysisId,
   refreshKey = 0,
+  onDeleted,
 }: SavedAnalysisDetailPanelProps) {
   const { session } = useSession();
   const [loadResult, setLoadResult] = useState<SavedAnalysisDetailResult | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteUiState, setDeleteUiState] = useState<DeleteUiState>({
+    kind: "idle",
+  });
   const completedFetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -87,6 +109,7 @@ export function SavedAnalysisDetailPanel({
     async function runLoad() {
       setIsLoading(true);
       setLoadResult(null);
+      setDeleteUiState({ kind: "idle" });
 
       const result = await fetchSavedAnalysisDetail(
         () => activeSession.getToken(),
@@ -158,6 +181,36 @@ export function SavedAnalysisDetailPanel({
   const companyLabel = getSavedAnalysisCompanyLabel(analysis);
   const sourceUrl = formatSourceUrl(analysis.source_url);
   const notesText = normalizeOptionalMetadata(analysis.notes);
+  const deleteLabel = getSavedAnalysisDeleteLabel(analysis);
+  const isDeleting = deleteUiState.kind === "deleting";
+
+  async function handleConfirmDelete() {
+    if (!session || !analysisId || isDeleting) {
+      return;
+    }
+
+    setDeleteUiState({ kind: "deleting" });
+
+    const result = await deleteSavedAnalysis(() => session.getToken(), analysisId);
+
+    if (result.status === "success") {
+      onDeleted?.(deleteLabel);
+      return;
+    }
+
+    if (result.status === "not_found") {
+      onDeleted?.(deleteLabel);
+      return;
+    }
+
+    setDeleteUiState({
+      kind: "error",
+      message:
+        result.status === "error"
+          ? result.message
+          : "Could not delete this analysis right now. Please try again in a moment.",
+    });
+  }
 
   return (
     <div className={`${boxClass} border-sky-200 bg-sky-50/50 text-zinc-800`}>
@@ -246,6 +299,56 @@ export function SavedAnalysisDetailPanel({
           skills={analysis.missingSkills}
           emptyMessage="No missing skills stored for this analysis."
         />
+      </div>
+
+      <div className="mt-5 border-t border-sky-200 pt-4">
+        {deleteUiState.kind === "confirming" ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950">
+            <p className="font-medium">Delete this saved analysis?</p>
+            <p className="mt-1 text-sm">
+              <span className="font-medium">{deleteLabel}</span> will be removed from
+              your account, including its skill results and metadata. This cannot be
+              undone.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void handleConfirmDelete()}
+                disabled={isDeleting}
+                className="rounded-md bg-red-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting…" : "Yes, delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteUiState({ kind: "idle" })}
+                disabled={isDeleting}
+                className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setDeleteUiState({ kind: "confirming" })}
+            disabled={isDeleting}
+            className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Delete saved analysis
+          </button>
+        )}
+
+        {deleteUiState.kind === "error" ? (
+          <div
+            className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+            role="alert"
+          >
+            <p className="font-medium">Could not delete analysis</p>
+            <p className="mt-1">{deleteUiState.message}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-export type SupabaseOperation = "save" | "read";
+export type SupabaseOperation = "save" | "read" | "delete";
 
 export type SupabaseErrorLike = {
   message?: string;
@@ -75,16 +75,24 @@ export function getSafeSavedAnalysisErrorMessage(
   context: SafeSavedAnalysisErrorContext = {},
 ): string {
   if (context.reason === "config") {
+    if (operation === "delete") {
+      return "Could not delete this analysis because Supabase is not configured. Check your Supabase environment variables.";
+    }
     return operation === "save"
       ? "Cloud save is not available because Supabase is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY."
       : "Saved analyses cannot load because Supabase is not configured. Check your Supabase environment variables.";
   }
 
   if (context.reason === "session") {
-    return "Your sign-in session is not ready yet. Wait a moment and try again.";
+    return operation === "delete"
+      ? "Your sign-in session is not ready yet. Wait a moment and try again."
+      : "Your sign-in session is not ready yet. Wait a moment and try again.";
   }
 
   if (context.reason === "network") {
+    if (operation === "delete") {
+      return "Could not delete this analysis. Check your connection and try again.";
+    }
     return operation === "save"
       ? "Could not reach Supabase to save your analysis. Check your connection and try again."
       : "Could not load your saved analyses. Check your connection and try again.";
@@ -98,12 +106,18 @@ export function getSafeSavedAnalysisErrorMessage(
   const combined = normalizeSupabaseErrorMessage(error);
 
   if (isAuthOrRlsError(code, combined)) {
+    if (operation === "delete") {
+      return "Could not delete this analysis. Clerk sign-in or Supabase row permissions may be blocking the delete. Confirm you are signed in and RLS policies allow deletes for your user.";
+    }
     return operation === "save"
       ? "Could not save your analysis. Clerk sign-in or Supabase row permissions may be blocking the save. Confirm Clerk is linked to Supabase and RLS policies allow inserts for your user."
       : "Could not load your saved analyses. Clerk sign-in or Supabase row permissions may be blocking the read. Confirm Clerk is linked to Supabase and RLS policies are applied.";
   }
 
   if (isMissingTableError(combined)) {
+    if (operation === "delete") {
+      return "Could not delete this analysis because the database tables are missing. Run web/database/schema.sql in Supabase.";
+    }
     return operation === "save"
       ? "Could not save your analysis because the database tables are missing. Run web/database/schema.sql in Supabase."
       : "Could not load saved analyses because the job_analyses table was not found. Run web/database/schema.sql in Supabase.";
@@ -115,5 +129,7 @@ export function getSafeSavedAnalysisErrorMessage(
 
   return operation === "save"
     ? "Could not save your analysis right now. Please try again in a moment."
-    : "Could not load your saved analyses right now. Please try again in a moment.";
+    : operation === "delete"
+      ? "Could not delete this analysis right now. Please try again in a moment."
+      : "Could not load your saved analyses right now. Please try again in a moment.";
 }
