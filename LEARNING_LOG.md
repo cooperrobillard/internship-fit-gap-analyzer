@@ -3151,3 +3151,43 @@ Verification:
 
 Learning:
 This step reinforced that improving a product does not always require adding more data storage. The hosted input experience can become clearer and safer before introducing persistent resume profiles or raw resume storage.
+
+## Version 17 Step 2 — Add hosted transient .txt upload inputs
+
+Added transient `.txt` upload support for the hosted resume/job analysis form.
+
+What changed:
+- Added optional `.txt` upload support for resume text.
+- Added optional `.txt` upload support for job-description text.
+- Loaded uploaded text files into the existing analysis text areas.
+- Kept uploads client-side and transient rather than saving files or creating resume profiles.
+- Added friendly validation for unsupported, empty, or oversized files where practical.
+- Preserved existing paste input, analysis, save, saved-analysis detail, recurring gap stats, search/filter, comparison, export/download, metadata display, and delete behavior.
+
+Why this matters:
+This improves the hosted input workflow without taking on the privacy risks of persistent resume profiles or raw file storage. Users can now paste text or load plain text files while the app still saves only structured analysis results when they choose to save.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No persistent resume profiles were added.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed `.txt` upload populated the analysis text areas and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced a safer pattern for improving input convenience: browser-side transient file reading can improve UX without adding persistent storage, database schema changes, or long-term raw resume data responsibility.
