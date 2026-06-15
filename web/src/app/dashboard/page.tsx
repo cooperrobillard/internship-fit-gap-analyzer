@@ -32,14 +32,17 @@ export default async function DashboardPage() {
           Dashboard
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Compare resume to job posting
+          Job Fit &amp; Skill-Gap Analyzer
         </h1>
+        <p className="mt-2 text-lg text-zinc-700">
+          Compare one resume to one job posting
+        </p>
         <p className="mt-4 max-w-2xl text-zinc-600">
           {userId
-            ? "Paste sample-safe text below, run analysis, and optionally save structured results to your account."
-            : "Sign in to run analysis and save results."}{" "}
-          Cloud save stores skills and job metadata only—not full resume or job body
-          text.
+            ? "Paste text below, run a rule-based analysis, and optionally save structured results to your account."
+            : "Sign in to run analysis and save structured results."}{" "}
+          Analysis does not save until you choose Save—and cloud save stores skills and
+          job metadata only, not pasted resume or job body text.
         </p>
 
         <div className="mt-6">

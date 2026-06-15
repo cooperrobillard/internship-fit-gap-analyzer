@@ -1,7 +1,13 @@
 "use client";
 
 import { useAuth, useSession } from "@clerk/nextjs";
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import {
+  formatTextStats,
+  SAMPLE_JOB_TEXT,
+  SAMPLE_RESUME_TEXT,
+} from "@/app/dashboard/analysis-input-helpers";
 import { analyzeWithApi } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
@@ -85,12 +91,46 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     Boolean(lastInput) &&
     Boolean(result);
 
+  const resumeStats = formatTextStats(resumeText);
+  const jobStats = formatTextStats(jobText);
+  const canRunAnalysis =
+    resumeText.trim().length > 0 && jobText.trim().length > 0 && !isAnalyzing;
+
+  function handleFillSampleText() {
+    setResumeText(SAMPLE_RESUME_TEXT);
+    setJobText(SAMPLE_JOB_TEXT);
+    setValidationError(null);
+    setAnalysisError(null);
+  }
+
   async function handleAnalyze() {
     const trimmedResume = resumeText.trim();
     const trimmedJob = jobText.trim();
 
-    if (!trimmedResume || !trimmedJob) {
-      setValidationError("Resume text and job description text are required.");
+    if (!trimmedResume && !trimmedJob) {
+      setValidationError(
+        "Add resume text and a job description before running analysis.",
+      );
+      setAnalysisError(null);
+      setResult(null);
+      setLastInput(null);
+      setSaveUiState({ kind: "idle" });
+      return;
+    }
+
+    if (!trimmedResume) {
+      setValidationError("Resume text is required. Paste skills and experience to compare.");
+      setAnalysisError(null);
+      setResult(null);
+      setLastInput(null);
+      setSaveUiState({ kind: "idle" });
+      return;
+    }
+
+    if (!trimmedJob) {
+      setValidationError(
+        "Job description text is required. Paste the posting requirements to compare.",
+      );
       setAnalysisError(null);
       setResult(null);
       setLastInput(null);
@@ -178,21 +218,93 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
   return (
     <div className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}>
-      <p className="font-medium text-violet-950">Run analysis</p>
-      <p className="mt-2 text-violet-900/90">
-        Paste <strong>generic sample text</strong> for now—not a real private
-        resume or job posting. The rule-based Python analyzer returns matched and
-        missing skills. You can optionally save skills and metadata afterward.
+      <p className="text-xs font-medium uppercase tracking-wide text-violet-800">
+        Job Fit &amp; Skill-Gap Analyzer
       </p>
+      <h2 className="mt-1 text-lg font-semibold text-violet-950">
+        Compare one resume to one job description
+      </h2>
+      <p className="mt-2 text-violet-900/90">
+        Paste resume text and a job posting below. The hosted app sends them for a{" "}
+        <strong>one-time rule-based</strong> comparison (keyword taxonomy—not AI).{" "}
+        <strong>Running analysis does not save anything</strong> until you choose Save
+        later—and save stores <strong>structured skills and metadata only</strong>, not
+        the pasted text.
+      </p>
+      <p className="mt-2 text-sm text-violet-900/80">
+        For demos, use generic sample text—not a real private resume or posting.{" "}
+        <Link href="/privacy" className="font-medium text-violet-950 underline">
+          Privacy &amp; data controls
+        </Link>
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={handleFillSampleText}
+          disabled={isAnalyzing}
+          className="rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Fill sample demo text
+        </button>
+      </div>
+
+      <fieldset className="mt-5 rounded-lg border border-violet-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-violet-950">
+          Resume text (required for analysis)
+        </legend>
+        <p className="text-sm text-violet-900/80">
+          Paste skills, experience, and education from a resume. Used only for this
+          comparison run—it is <strong>not saved</strong> to your account when you
+          click Save (only matched/missing skills and optional labels are stored).
+        </p>
+        <label className="mt-3 block text-sm">
+          <textarea
+            value={resumeText}
+            onChange={(event) => setResumeText(event.target.value)}
+            rows={5}
+            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+            placeholder="e.g. Python, SQL, Git, data analysis, REST APIs, teamwork…"
+            aria-describedby="resume-text-stats"
+          />
+          <span id="resume-text-stats" className="mt-1 block text-xs text-violet-800/70">
+            {resumeStats}
+          </span>
+        </label>
+      </fieldset>
 
       <fieldset className="mt-4 rounded-lg border border-violet-200/80 bg-white/60 p-4">
         <legend className="px-1 text-sm font-medium text-violet-950">
-          Label this analysis (optional)
+          Job description text (required for analysis)
         </legend>
         <p className="text-sm text-violet-900/80">
-          These fields help you recognize saved analyses later. Only labels and
-          skill results are stored in the cloud—not resume or job description
-          text.
+          Paste the posting requirements or description. Like resume text, this is used
+          for analysis in memory and is <strong>not stored</strong> as raw job text when
+          you save structured results.
+        </p>
+        <label className="mt-3 block text-sm">
+          <textarea
+            value={jobText}
+            onChange={(event) => setJobText(event.target.value)}
+            rows={5}
+            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+            placeholder="e.g. Intern role requiring Python, SQL, FastAPI, and communication skills…"
+            aria-describedby="job-text-stats"
+          />
+          <span id="job-text-stats" className="mt-1 block text-xs text-violet-800/70">
+            {jobStats}
+          </span>
+        </label>
+      </fieldset>
+
+      <fieldset className="mt-4 rounded-lg border border-violet-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-violet-950">
+          Labels for saved results (optional)
+        </legend>
+        <p className="text-sm text-violet-900/80">
+          Optional metadata if you save after analysis. Helps you find this comparison
+          in your saved list—job title, company, URL, and notes only; not resume or job
+          body text.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
@@ -253,37 +365,19 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         </div>
       </fieldset>
 
-      <label className="mt-4 block text-sm">
-        <span className="font-medium text-violet-950">Resume text (required)</span>
-        <textarea
-          value={resumeText}
-          onChange={(event) => setResumeText(event.target.value)}
-          rows={5}
-          className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-          placeholder="e.g. Python SQL Git data analysis"
-        />
-      </label>
-
-      <label className="mt-4 block text-sm">
-        <span className="font-medium text-violet-950">
-          Job description text (required)
-        </span>
-        <textarea
-          value={jobText}
-          onChange={(event) => setJobText(event.target.value)}
-          rows={5}
-          className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
-          placeholder="e.g. Intern role requiring Python, SQL, and FastAPI experience"
-        />
-      </label>
-
       {validationError ? (
-        <p className="mt-3 text-sm text-red-800">{validationError}</p>
+        <div
+          className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          role="alert"
+        >
+          <p className="font-medium">Cannot run analysis yet</p>
+          <p className="mt-1">{validationError}</p>
+        </div>
       ) : null}
 
       {analysisError ? (
         <div
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
           role="alert"
         >
           <p className="font-medium">Analysis could not be completed</p>
@@ -294,20 +388,50 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       <button
         type="button"
         onClick={() => void handleAnalyze()}
-        disabled={isAnalyzing}
+        disabled={!canRunAnalysis}
         className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isAnalyzing ? "Running analysis…" : "Run analysis"}
+        {isAnalyzing ? "Running analysis…" : "Run analysis (does not save)"}
       </button>
+
+      {!canRunAnalysis && !isAnalyzing && !validationError ? (
+        <p className="mt-2 text-xs text-violet-800/80">
+          Add both resume and job description text to enable analysis.
+        </p>
+      ) : null}
+
+      {isAnalyzing ? (
+        <p className="mt-2 text-sm text-violet-900" role="status">
+          Comparing pasted text with the rule-based analyzer…
+        </p>
+      ) : null}
 
       {result ? (
         <div className="mt-6 rounded-lg border border-violet-200 bg-white p-4 text-zinc-800">
-          <p className="font-medium text-zinc-900">Analysis result</p>
+          <p className="font-medium text-zinc-900">Analysis complete</p>
           <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
           <p className="mt-3 text-sm text-zinc-700">
             Matched: <strong>{result.matchedSkillsCount}</strong> · Missing:{" "}
             <strong>{result.missingSkillsCount}</strong>
           </p>
+
+          <div className="mt-4 rounded-md border border-sky-100 bg-sky-50/80 px-3 py-3 text-sm text-sky-950">
+            <p className="font-medium">What you can do next</p>
+            <ul className="mt-2 list-inside list-disc space-y-1 text-sky-900/90">
+              <li>Review matched and missing skills below</li>
+              <li>
+                Optionally add job title, company, or notes above before saving
+              </li>
+              <li>
+                Click <strong>Save structured results</strong> to store skills and
+                metadata—or skip save and run another comparison
+              </li>
+              <li>
+                After saving, use the list below to search, compare, export, or delete
+              </li>
+            </ul>
+          </div>
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <SkillList
               title="Matched skills"
@@ -321,6 +445,14 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             />
           </div>
           <div className="mt-5 border-t border-violet-100 pt-4">
+            <p className="text-sm font-medium text-zinc-900">
+              Save structured results (optional)
+            </p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Stores matched/missing skills plus any labels you entered—not the resume
+              or job description you pasted. You can close this page without saving.
+            </p>
+
             {!configured ? (
               <p className="mt-2 text-xs text-zinc-500">
                 Supabase is not configured. Add env vars to{" "}
@@ -350,7 +482,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               disabled={!canAttemptSave || saveUiState.kind === "saving"}
               className="mt-3 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saveUiState.kind === "saving" ? "Saving…" : "Save analysis"}
+              {saveUiState.kind === "saving" ? "Saving…" : "Save structured results"}
             </button>
 
             {saveUiState.kind === "success" ? (
@@ -358,9 +490,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
                 role="status"
               >
-                <p className="font-medium">Analysis saved</p>
+                <p className="font-medium">Structured results saved</p>
                 <p className="mt-1">
-                  Your saved analyses list below should update shortly.
+                  Skills and metadata are in your account. Pasted resume and job text
+                  were not stored. Your saved analyses list below should update
+                  shortly—you can compare, export, or delete from there.
                 </p>
               </div>
             ) : null}
