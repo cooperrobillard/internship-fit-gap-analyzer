@@ -3273,3 +3273,44 @@ Verification:
 
 Learning:
 This step reinforced that a good product roadmap needs guardrails, not just features. Before adding persistent resume profiles, the project needs a clear decision about what data to store, what to avoid storing, how users consent, and how users can delete or export their data.
+
+## Version 17 Step 5 — Add persistent resume-profile design
+
+Added a persistent resume-profile design document before implementation.
+
+What changed:
+- Created a design document for future persistent resume profiles.
+- Defined the intended future user experience for saved resume profiles.
+- Compared structured-only, raw-text, and hybrid resume-profile data models.
+- Recommended avoiding raw resume text storage by default for the first implementation.
+- Documented consent, delete/export, RLS, and user-control expectations.
+- Clarified that one-time paste and transient `.txt` upload analysis should remain available.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+Resume profiles could make the product more convenient, but they increase privacy and data-responsibility risk. Designing the model before implementation helps keep the project safe, honest, and aligned with the structured-results-first approach.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the design does not implement resume profiles, store raw resume text, or claim production readiness.
+
+Learning:
+This step reinforced that sensitive features should be designed before they are implemented. Persistent resume profiles require careful choices around data minimization, consent, RLS, delete/export controls, and whether raw resume text should be stored at all.
