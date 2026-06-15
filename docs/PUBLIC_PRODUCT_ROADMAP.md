@@ -248,13 +248,13 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 2 — Hosted transient `.txt` upload** — **Complete**
+**Version 17 Step 3 — Hosted sample/demo inputs** — **Complete**
 
-- Optional plain `.txt` upload for resume and job description in `web/src/app/dashboard/analysis-form.tsx`
-- Client-side read into existing text areas; no file persistence, schema, or dependency changes
-- Privacy copy aligned on `/privacy`
+- Fictional demo resume, job posting, and metadata via **Try sample inputs** in `analysis-form.tsx`
+- Constants in `web/src/lib/demo-inputs.ts`; optional **Clear inputs** action
+- User still runs analysis manually; save path unchanged (structured results only)
 
-**Version 17 Step 3 (next)** — Resume/profile design note or further input polish before persistent profiles
+**Version 17 Step 4 (next)** — Resume/profile design note before persistent profiles
 
 **Out of scope until gated:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, major redesign.
 

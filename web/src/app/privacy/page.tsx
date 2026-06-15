@@ -127,9 +127,9 @@ export default function PrivacyPage() {
           <li className="flex gap-3">
             <span className="font-medium text-sky-800">1.</span>
             <span>
-              You paste or upload plain <code className="text-xs">.txt</code> resume and
-              job text in the dashboard (use generic sample text in this prototype when
-              possible).
+              You paste, upload plain <code className="text-xs">.txt</code>, or load
+              fictional sample inputs in the dashboard (use sample/demo text when
+              possible instead of real private resumes or postings).
             </span>
           </li>
           <li className="flex gap-3">

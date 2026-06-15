@@ -1,17 +1,16 @@
-/** Demo paste text for hosted analysis — generic, not real private resumes. */
-export const SAMPLE_RESUME_TEXT = `Skills: Python, SQL, Git, data analysis, REST APIs, teamwork.
-Experience: Class projects using pandas and FastAPI; collaborated in a 4-person team.
-Education: Computer Science student seeking an internship.`;
+/** Demo paste text for hosted analysis — re-exported from fictional demo inputs. */
+export {
+  DEMO_ANALYSIS_INPUTS,
+  type DemoAnalysisInputs,
+} from "@/lib/demo-inputs";
 
-export const SAMPLE_JOB_TEXT = `Software Engineering Intern
+import { DEMO_ANALYSIS_INPUTS } from "@/lib/demo-inputs";
 
-Requirements:
-- Python and SQL for data tasks
-- Git and collaborative development
-- FastAPI or similar web frameworks
-- Clear written communication
+/** @deprecated Prefer `DEMO_ANALYSIS_INPUTS.resumeText` */
+export const SAMPLE_RESUME_TEXT = DEMO_ANALYSIS_INPUTS.resumeText;
 
-Nice to have: cloud basics, pandas, internship or co-op experience.`;
+/** @deprecated Prefer `DEMO_ANALYSIS_INPUTS.jobText` */
+export const SAMPLE_JOB_TEXT = DEMO_ANALYSIS_INPUTS.jobText;
 
 export function countTextStats(text: string): { characters: number; words: number } {
   const trimmed = text.trim();

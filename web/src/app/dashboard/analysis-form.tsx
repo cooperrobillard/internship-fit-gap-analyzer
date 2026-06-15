@@ -6,9 +6,8 @@ import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   formatTextStats,
   readTextFile,
-  SAMPLE_JOB_TEXT,
-  SAMPLE_RESUME_TEXT,
 } from "@/app/dashboard/analysis-input-helpers";
+import { DEMO_ANALYSIS_INPUTS } from "@/lib/demo-inputs";
 import { analyzeWithApi } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
@@ -93,6 +92,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [lastInput, setLastInput] = useState<WebAnalysisInput | null>(null);
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
   const [saveUiState, setSaveUiState] = useState<SaveUiState>({ kind: "idle" });
+  const [sampleInputsLoaded, setSampleInputsLoaded] = useState(false);
 
   const canAttemptSave =
     configured &&
@@ -107,13 +107,44 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const canRunAnalysis =
     resumeText.trim().length > 0 && jobText.trim().length > 0 && !isAnalyzing;
 
-  function handleFillSampleText() {
-    setResumeText(SAMPLE_RESUME_TEXT);
-    setJobText(SAMPLE_JOB_TEXT);
+  function clearAnalysisOutput() {
+    setResult(null);
+    setLastInput(null);
+    setSaveUiState({ kind: "idle" });
+  }
+
+  function handleTrySampleInputs() {
+    setResumeText(DEMO_ANALYSIS_INPUTS.resumeText);
+    setJobText(DEMO_ANALYSIS_INPUTS.jobText);
+    setJobTitle(DEMO_ANALYSIS_INPUTS.jobTitle);
+    setCompany(DEMO_ANALYSIS_INPUTS.company);
+    setSourceUrl(DEMO_ANALYSIS_INPUTS.sourceUrl);
+    setNotes(DEMO_ANALYSIS_INPUTS.notes);
     setResumeFileFeedback(null);
     setJobFileFeedback(null);
+    resetFileInput(resumeFileInputRef.current);
+    resetFileInput(jobFileInputRef.current);
+    setSampleInputsLoaded(true);
     setValidationError(null);
     setAnalysisError(null);
+    clearAnalysisOutput();
+  }
+
+  function handleClearInputs() {
+    setResumeText("");
+    setJobText("");
+    setJobTitle("");
+    setCompany("");
+    setSourceUrl("");
+    setNotes("");
+    setResumeFileFeedback(null);
+    setJobFileFeedback(null);
+    resetFileInput(resumeFileInputRef.current);
+    resetFileInput(jobFileInputRef.current);
+    setSampleInputsLoaded(false);
+    setValidationError(null);
+    setAnalysisError(null);
+    clearAnalysisOutput();
   }
 
   function resetFileInput(input: HTMLInputElement | null) {
@@ -137,6 +168,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
     setResumeText(result.text);
     setResumeFileFeedback({ kind: "success" });
+    setSampleInputsLoaded(false);
     setValidationError(null);
     setAnalysisError(null);
   }
@@ -156,6 +188,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
     setJobText(result.text);
     setJobFileFeedback({ kind: "success" });
+    setSampleInputsLoaded(false);
     setValidationError(null);
     setAnalysisError(null);
   }
@@ -291,21 +324,47 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         profiles.
       </p>
       <p className="mt-2 text-sm text-violet-900/80">
-        For demos, use generic sample text—not a real private resume or posting.{" "}
+        New here? Use <strong>Try sample inputs</strong> for a fictional demo resume and
+        job posting—then replace with your own paste or <code className="text-xs">.txt</code>{" "}
+        upload when ready.{" "}
         <Link href="/privacy" className="font-medium text-violet-950 underline">
           Privacy &amp; data controls
         </Link>
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={handleFillSampleText}
-          disabled={isAnalyzing}
-          className="rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Fill sample demo text
-        </button>
+      <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/80 px-3 py-3 text-sky-950">
+        <p className="font-medium">Quick try without your own resume</p>
+        <p className="mt-1 text-sm text-sky-900/90">
+          Load fictional demo text for Alex Rivera and a Demo Robotics internship
+          posting. All fields are made up for exploration—not real people or employers.
+          Loading sample inputs does <strong>not</strong> run or save analysis; click{" "}
+          <strong>Run analysis</strong> when you are ready. Replace the text anytime
+          with paste or transient <code className="text-xs">.txt</code> upload.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleTrySampleInputs}
+            disabled={isAnalyzing}
+            className="rounded-md border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-950 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Try sample inputs
+          </button>
+          <button
+            type="button"
+            onClick={handleClearInputs}
+            disabled={isAnalyzing}
+            className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Clear inputs
+          </button>
+        </div>
+        {sampleInputsLoaded ? (
+          <p className="mt-2 text-xs text-emerald-800" role="status">
+            Fictional demo resume, job description, and labels loaded. Click Run analysis
+            when ready—nothing is saved until you choose Save after results appear.
+          </p>
+        ) : null}
       </div>
 
       <fieldset className="mt-5 rounded-lg border border-violet-200/80 bg-white/60 p-4">
@@ -355,7 +414,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         <label className="mt-3 block text-sm">
           <textarea
             value={resumeText}
-            onChange={(event) => setResumeText(event.target.value)}
+            onChange={(event) => {
+              setResumeText(event.target.value);
+              setSampleInputsLoaded(false);
+            }}
             rows={5}
             className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
             placeholder="e.g. Python, SQL, Git, data analysis, REST APIs, teamwork…"
@@ -413,7 +475,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         <label className="mt-3 block text-sm">
           <textarea
             value={jobText}
-            onChange={(event) => setJobText(event.target.value)}
+            onChange={(event) => {
+              setJobText(event.target.value);
+              setSampleInputsLoaded(false);
+            }}
             rows={5}
             className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
             placeholder="e.g. Intern role requiring Python, SQL, FastAPI, and communication skills…"
