@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), root [`README.md`](../README.md).
 
 ---
 
@@ -195,18 +195,22 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 8. Recommended implementation roadmap (Version 15+)
 
-### Version 15 — Hosted saved-analysis feature parity foundation
+### Version 15 — Hosted saved-analysis feature parity foundation ✅
 
-- Richer **saved analysis detail** view (skills for one row)
-- **Recurring gap stats** on dashboard (aggregate missing skills across user’s saves)
-- Job metadata display polish in list + detail
+**Complete** — see [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md).
 
-### Version 16 — Hosted saved-analysis management
-
+- Recurring **gap stats** on dashboard
+- **Saved analysis detail** view (skills for one row)
+- Job **metadata** display polish in list + detail
 - **Search / filter** saved analyses
+- **Delete** saved analyses (UI + RLS-scoped Supabase client)
+
+### Version 16 — Hosted comparison, export, and data-control foundation
+
 - **Compare** two saved analyses
-- **Delete** saved analyses (UI + API path via Supabase client)
-- **Export** user-owned summary if useful
+- **Export** user-owned summary data
+- **Privacy / data-control** page or planning
+- Production-readiness gap review before resume profiles
 
 ### Version 17 — Resume profiles and input flexibility
 
@@ -238,19 +242,20 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 15 Step 1 — Add hosted recurring gap stats to the dashboard**
+**Version 16 Step 1 — Add hosted saved-analysis comparison**
 
-**Why:** Recurring gaps are one of the strongest local features and central to the public product story (“what do I keep missing across postings?”). The hosted app already saves per-job missing skills in Supabase—aggregating them is the highest-leverage parity gap after basic save/list.
+**Why:** Local Streamlit users can compare two saved analyses side by side. Version 15 completed review, search, and delete; comparison is the next high-value parity gap before export and privacy work.
 
 **Suggested scope for Step 1:**
 
-1. Query user’s saved `skill_gaps` / `job_analyses` via existing Clerk Supabase client (RLS-scoped).
-2. Compute recurring missing skills (count + skill name; optional category).
-3. Dashboard panel: table or simple stats (top gaps, total postings analyzed).
-4. Empty state when user has no saves yet.
-5. Tests only if matching an existing web helper pattern; otherwise manual + smoke test.
+1. Select two saved analyses from the dashboard list (RLS-scoped data already loaded or fetched).
+2. Show matched/missing skill overlap in a simple side-by-side or summary view.
+3. Reuse existing metadata labels and skill rows—no raw resume/job text.
+4. Preserve search/filter, detail, delete, and recurring gap stats behavior.
 
-**Out of scope for Step 1:** compare view, delete, upload, resume profiles, redesign, semantic matching.
+**Out of scope for Step 1:** export, resume profiles, upload, redesign, semantic matching.
+
+See [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md) for Version 15 outcomes and full Version 16 plan.
 
 ---
 
