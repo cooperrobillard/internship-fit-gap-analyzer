@@ -2,9 +2,10 @@
 
 import { useAuth, useSession } from "@clerk/nextjs";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   formatTextStats,
+  readTextFile,
   SAMPLE_JOB_TEXT,
   SAMPLE_RESUME_TEXT,
 } from "@/app/dashboard/analysis-input-helpers";
@@ -62,6 +63,10 @@ type SaveUiState =
   | { kind: "success"; jobAnalysisId: string }
   | { kind: "error"; message: string };
 
+type FileUploadFeedback =
+  | { kind: "success" }
+  | { kind: "error"; message: string };
+
 type AnalysisFormProps = {
   onSaveSuccess?: () => void;
 };
@@ -76,6 +81,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [notes, setNotes] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [jobText, setJobText] = useState("");
+  const [resumeFileFeedback, setResumeFileFeedback] =
+    useState<FileUploadFeedback | null>(null);
+  const [jobFileFeedback, setJobFileFeedback] =
+    useState<FileUploadFeedback | null>(null);
+  const resumeFileInputRef = useRef<HTMLInputElement>(null);
+  const jobFileInputRef = useRef<HTMLInputElement>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -99,6 +110,52 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   function handleFillSampleText() {
     setResumeText(SAMPLE_RESUME_TEXT);
     setJobText(SAMPLE_JOB_TEXT);
+    setResumeFileFeedback(null);
+    setJobFileFeedback(null);
+    setValidationError(null);
+    setAnalysisError(null);
+  }
+
+  function resetFileInput(input: HTMLInputElement | null) {
+    if (input) {
+      input.value = "";
+    }
+  }
+
+  async function handleResumeFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    resetFileInput(resumeFileInputRef.current);
+    if (!file) {
+      return;
+    }
+
+    const result = await readTextFile(file);
+    if (!result.ok) {
+      setResumeFileFeedback({ kind: "error", message: result.message });
+      return;
+    }
+
+    setResumeText(result.text);
+    setResumeFileFeedback({ kind: "success" });
+    setValidationError(null);
+    setAnalysisError(null);
+  }
+
+  async function handleJobFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    resetFileInput(jobFileInputRef.current);
+    if (!file) {
+      return;
+    }
+
+    const result = await readTextFile(file);
+    if (!result.ok) {
+      setJobFileFeedback({ kind: "error", message: result.message });
+      return;
+    }
+
+    setJobText(result.text);
+    setJobFileFeedback({ kind: "success" });
     setValidationError(null);
     setAnalysisError(null);
   }
@@ -225,11 +282,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         Compare one resume to one job description
       </h2>
       <p className="mt-2 text-violet-900/90">
-        Paste resume text and a job posting below. The hosted app sends them for a{" "}
-        <strong>one-time rule-based</strong> comparison (keyword taxonomy—not AI).{" "}
-        <strong>Running analysis does not save anything</strong> until you choose Save
-        later—and save stores <strong>structured skills and metadata only</strong>, not
-        the pasted text.
+        Paste or upload plain <code className="text-xs">.txt</code> resume and job text
+        below. The hosted app sends them for a <strong>one-time rule-based</strong>{" "}
+        comparison (keyword taxonomy—not AI). <strong>Running analysis does not save
+        anything</strong> until you choose Save later—and save stores{" "}
+        <strong>structured skills and metadata only</strong>, not the resume or job body
+        text. Uploaded files are read in your browser only—not stored as files or
+        profiles.
       </p>
       <p className="mt-2 text-sm text-violet-900/80">
         For demos, use generic sample text—not a real private resume or posting.{" "}
@@ -254,10 +313,45 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           Resume text (required for analysis)
         </legend>
         <p className="text-sm text-violet-900/80">
-          Paste skills, experience, and education from a resume. Used only for this
-          comparison run—it is <strong>not saved</strong> to your account when you
-          click Save (only matched/missing skills and optional labels are stored).
+          Paste or upload a plain <code className="text-xs">.txt</code> file with skills,
+          experience, and education. Used only for this comparison run—it is{" "}
+          <strong>not saved</strong> to your account when you click Save (only
+          matched/missing skills and optional labels are stored). The file itself is not
+          kept as a resume profile.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <label
+            className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
+              isAnalyzing
+                ? "cursor-not-allowed opacity-50"
+                : "cursor-pointer hover:bg-violet-100"
+            }`}
+          >
+            Upload resume .txt
+            <input
+              ref={resumeFileInputRef}
+              type="file"
+              accept=".txt,text/plain"
+              className="sr-only"
+              disabled={isAnalyzing}
+              onChange={(event) => void handleResumeFileUpload(event)}
+            />
+          </label>
+          <span className="text-xs text-violet-800/70">
+            Convenience only—read in your browser, not uploaded to cloud storage.
+          </span>
+        </div>
+        {resumeFileFeedback?.kind === "success" ? (
+          <p className="mt-2 text-xs text-emerald-800" role="status">
+            Loaded resume text from file. The file is not saved as a file or resume
+            profile.
+          </p>
+        ) : null}
+        {resumeFileFeedback?.kind === "error" ? (
+          <p className="mt-2 text-xs text-red-800" role="alert">
+            {resumeFileFeedback.message}
+          </p>
+        ) : null}
         <label className="mt-3 block text-sm">
           <textarea
             value={resumeText}
@@ -278,10 +372,44 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           Job description text (required for analysis)
         </legend>
         <p className="text-sm text-violet-900/80">
-          Paste the posting requirements or description. Like resume text, this is used
-          for analysis in memory and is <strong>not stored</strong> as raw job text when
-          you save structured results.
+          Paste or upload a plain <code className="text-xs">.txt</code> file with posting
+          requirements or description. Like resume text, this is used for analysis in
+          memory and is <strong>not stored</strong> as raw job text when you save
+          structured results. The file itself is not kept as a saved job posting.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <label
+            className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
+              isAnalyzing
+                ? "cursor-not-allowed opacity-50"
+                : "cursor-pointer hover:bg-violet-100"
+            }`}
+          >
+            Upload job .txt
+            <input
+              ref={jobFileInputRef}
+              type="file"
+              accept=".txt,text/plain"
+              className="sr-only"
+              disabled={isAnalyzing}
+              onChange={(event) => void handleJobFileUpload(event)}
+            />
+          </label>
+          <span className="text-xs text-violet-800/70">
+            Convenience only—read in your browser, not uploaded to cloud storage.
+          </span>
+        </div>
+        {jobFileFeedback?.kind === "success" ? (
+          <p className="mt-2 text-xs text-emerald-800" role="status">
+            Loaded job description text from file. The file is not saved as a file or raw
+            job posting.
+          </p>
+        ) : null}
+        {jobFileFeedback?.kind === "error" ? (
+          <p className="mt-2 text-xs text-red-800" role="alert">
+            {jobFileFeedback.message}
+          </p>
+        ) : null}
         <label className="mt-3 block text-sm">
           <textarea
             value={jobText}
@@ -402,7 +530,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
       {isAnalyzing ? (
         <p className="mt-2 text-sm text-violet-900" role="status">
-          Comparing pasted text with the rule-based analyzer…
+          Comparing resume and job text with the rule-based analyzer…
         </p>
       ) : null}
 

@@ -39,10 +39,11 @@ export default async function DashboardPage() {
         </p>
         <p className="mt-4 max-w-2xl text-zinc-600">
           {userId
-            ? "Paste text below, run a rule-based analysis, and optionally save structured results to your account."
+            ? "Paste or upload plain .txt text below, run a rule-based analysis, and optionally save structured results to your account."
             : "Sign in to run analysis and save structured results."}{" "}
           Analysis does not save until you choose Save—and cloud save stores skills and
-          job metadata only, not pasted resume or job body text.
+          job metadata only, not resume or job body text. Uploaded .txt files are read in
+          your browser only.
         </p>
 
         <div className="mt-6">

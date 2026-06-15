@@ -29,3 +29,72 @@ export function formatTextStats(text: string): string {
   }
   return `${words.toLocaleString()} word${words === 1 ? "" : "s"} · ${characters.toLocaleString()} characters`;
 }
+
+/** Max size for transient .txt uploads (about 500 KB). */
+export const MAX_TEXT_FILE_BYTES = 512 * 1024;
+
+export type TextFileReadResult =
+  | { ok: true; text: string }
+  | { ok: false; message: string };
+
+function isPlainTextFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".txt")) {
+    return true;
+  }
+  const type = file.type.toLowerCase();
+  return type === "text/plain" || type === "";
+}
+
+export function validateTextFile(file: File): TextFileReadResult | null {
+  if (!isPlainTextFile(file)) {
+    return {
+      ok: false,
+      message:
+        "Only plain .txt files are supported. Paste the text instead, or save your document as .txt and try again.",
+    };
+  }
+
+  if (file.size === 0) {
+    return {
+      ok: false,
+      message:
+        "That file is empty. Choose a .txt file with content, or paste the text instead.",
+    };
+  }
+
+  if (file.size > MAX_TEXT_FILE_BYTES) {
+    const limitKb = Math.round(MAX_TEXT_FILE_BYTES / 1024);
+    return {
+      ok: false,
+      message: `That file is too large (limit about ${limitKb} KB). Paste a shorter excerpt or split the text.`,
+    };
+  }
+
+  return null;
+}
+
+export async function readTextFile(file: File): Promise<TextFileReadResult> {
+  const validationError = validateTextFile(file);
+  if (validationError) {
+    return validationError;
+  }
+
+  try {
+    const text = await file.text();
+    if (!text.trim()) {
+      return {
+        ok: false,
+        message:
+          "That file has no readable text. Choose a non-empty .txt file or paste the content instead.",
+      };
+    }
+    return { ok: true, text };
+  } catch {
+    return {
+      ok: false,
+      message:
+        "Could not read that file. Try a UTF-8 .txt file or paste the text instead.",
+    };
+  }
+}

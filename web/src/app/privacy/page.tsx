@@ -88,7 +88,10 @@ export default function PrivacyPage() {
             <span className="text-amber-600" aria-hidden="true">
               •
             </span>
-            <span>Raw uploaded resume text (upload is not offered on the hosted app today)</span>
+            <span>
+              Uploaded resume files (plain .txt is read in your browser for convenience
+              only—not stored as a file or profile)
+            </span>
           </li>
           <li className="flex gap-2">
             <span className="text-amber-600" aria-hidden="true">
@@ -100,16 +103,21 @@ export default function PrivacyPage() {
             <span className="text-amber-600" aria-hidden="true">
               •
             </span>
-            <span>Raw uploaded job-description text</span>
+            <span>
+              Uploaded job-description files (plain .txt is read in your browser for
+              convenience only—not stored as a file)
+            </span>
           </li>
         </ul>
         <p className="mt-4 text-sm text-zinc-600">
           Analysis still requires resume and job text in the browser for a one-time
-          comparison. That text is sent through the hosted app to run the rule-based
+          comparison (paste or optional plain <code className="text-xs">.txt</code>{" "}
+          upload). That text is sent through the hosted app to run the rule-based
           analyzer, but the <strong>save path stores structured output and labels</strong>,
-          not the full pasted bodies. We cannot guarantee that no platform logging exists
-          anywhere in the stack—only that the product&apos;s saved-data design does not
-          intentionally store raw resume or job-description text.
+          not the full resume or job bodies. Uploaded files are not kept on the server as
+          files. We cannot guarantee that no platform logging exists anywhere in the
+          stack—only that the product&apos;s saved-data design does not intentionally
+          store raw resume or job-description text.
         </p>
       </section>
 
@@ -119,8 +127,9 @@ export default function PrivacyPage() {
           <li className="flex gap-3">
             <span className="font-medium text-sky-800">1.</span>
             <span>
-              You paste resume text and a job description in the dashboard (use generic
-              sample text in this prototype when possible).
+              You paste or upload plain <code className="text-xs">.txt</code> resume and
+              job text in the dashboard (use generic sample text in this prototype when
+              possible).
             </span>
           </li>
           <li className="flex gap-3">

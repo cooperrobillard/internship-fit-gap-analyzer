@@ -248,18 +248,15 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 1 — Hosted resume/job input UX polish**
+**Version 17 Step 2 — Hosted transient `.txt` upload** — **Complete**
 
-**Why:** Version 16 completed comparison, export, privacy copy, and a production-readiness review that recommends **not** storing persistent resume profiles or raw resume/job text yet. Version 17 should improve how users paste or upload input for analysis—without expanding the saved-data model—while drafting profile/consent design for later.
+- Optional plain `.txt` upload for resume and job description in `web/src/app/dashboard/analysis-form.tsx`
+- Client-side read into existing text areas; no file persistence, schema, or dependency changes
+- Privacy copy aligned on `/privacy`
 
-**Suggested scope for Step 1:**
+**Version 17 Step 3 (next)** — Resume/profile design note or further input polish before persistent profiles
 
-1. Audit current dashboard analysis form (paste flows, labels, sample/demo copy).
-2. Improve clarity: analyze-only vs. save structured results; link to `/privacy`.
-3. Optional: plan transient `.txt` upload (analyze in memory, do not save raw text by default).
-4. Short design note for future `resume_profiles` (fields, consent, RLS, delete)—no schema change yet.
-
-**Out of scope for Step 1:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, redesign.
+**Out of scope until gated:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, major redesign.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
