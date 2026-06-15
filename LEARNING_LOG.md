@@ -2957,3 +2957,42 @@ Verification:
 
 Learning:
 This step reinforced how structured saved results can support higher-level decision features without storing raw private resume or job-description text. Comparison turns saved analyses into a more useful job-search decision tool.
+
+## Version 16 Step 2 — Add hosted saved-analysis export/download
+
+Added hosted export/download options for structured saved-analysis data in the Next.js dashboard.
+
+What changed:
+- Added download support for structured saved-analysis data.
+- Added export helpers for saved-analysis metadata, matched skills, missing skills, and summary counts.
+- Added CSV and/or Markdown exports where practical.
+- Added export options for individual saved analyses.
+- Added export options for all saved analyses, recurring gap stats, and/or comparison results where practical.
+- Preserved existing saved-analysis detail, recurring gap stats, search/filter, comparison, metadata display, and delete behavior.
+- Kept exports based on structured saved analysis data rather than raw resume/job-description text.
+
+Why this matters:
+Export/download support gives users more control over their saved work. It makes the hosted app feel more like a real job-search workspace because users can take their structured results outside the app, review them, or use them in their own notes.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing recurring gap stats, saved detail view, search/filter, comparison, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed export/download behavior worked and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced the difference between storing/exporting structured analysis results and storing/exporting sensitive raw input text. Export features improve user control while preserving the app’s current privacy-first data model.
