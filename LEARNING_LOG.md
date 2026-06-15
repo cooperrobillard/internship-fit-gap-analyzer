@@ -3314,3 +3314,46 @@ Verification:
 
 Learning:
 This step reinforced that sensitive features should be designed before they are implemented. Persistent resume profiles require careful choices around data minimization, consent, RLS, delete/export controls, and whether raw resume text should be stored at all.
+
+## Version 17 Step 6 — Add resume-profile schema/RLS plan
+
+Added a structured resume-profile schema and RLS planning document before implementation.
+
+What changed:
+- Created a schema/RLS plan for future persistent resume profiles.
+- Proposed a structured-skills-first `resume_profiles` data model.
+- Recommended avoiding raw resume text by default.
+- Documented user ownership expectations using the existing Clerk/Supabase account model.
+- Outlined RLS policy intent for select, insert, update, and delete operations.
+- Described future helper/API shapes and expected UI behavior without implementing them.
+- Added delete/export and testing expectations for future resume-profile work.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+Resume profiles require database and access-control design before code implementation. Planning the schema and RLS policies first reduces the risk of storing sensitive resume data too broadly or creating user-isolation mistakes.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No migrations were added.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the plan does not implement resume profiles, create migrations, store raw resume text, or claim production readiness.
+
+Learning:
+This step reinforced that database features should begin with ownership, RLS, delete/export, and privacy decisions before code. A structured-skills-first profile model keeps the project aligned with data minimization while still moving toward more convenient user workflows.
