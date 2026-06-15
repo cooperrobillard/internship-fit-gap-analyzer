@@ -2848,3 +2848,41 @@ Verification:
 
 Learning:
 This step reinforced that feature parity is not only about adding new analysis logic. Organization features like search and filtering make saved results usable once the app becomes a real ongoing job-search tool.
+
+## Version 15 Step 5 — Add hosted saved-analysis delete flow
+
+Added a user-owned delete flow for hosted saved analyses.
+
+What changed:
+- Added a delete action for saved analyses in the hosted dashboard.
+- Added confirmation behavior to reduce accidental deletion.
+- Added safe success/error feedback for delete attempts.
+- Refreshed saved-analysis list state after successful deletion.
+- Preserved or refreshed recurring gap stats after deletion.
+- Handled selected detail state safely when the selected analysis is deleted.
+- Kept deletion within the existing Clerk/Supabase/RLS user ownership model.
+
+Why this matters:
+A serious public app needs user data controls. Since users can save structured analysis results and metadata, they also need a clear way to remove analyses they no longer want.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed unless explicitly noted.
+- No raw resume/job text was added to storage.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing search/filter, detail view, metadata display, and recurring gap stats behavior were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed delete confirmation, cancel, successful delete refresh, and existing saved-analysis behavior worked.
+
+Learning:
+This step reinforced that public-product readiness includes data control, not just feature display. Delete flows need confirmation, safe error handling, and careful state refresh so the UI remains trustworthy after user-owned data changes.
