@@ -3231,3 +3231,45 @@ Verification:
 
 Learning:
 This step reinforced that sample data is a useful product and testing tool when it is clearly fictional, privacy-safe, and separated from user-owned saved data. Demo inputs make the product easier to understand without increasing sensitive data responsibility.
+
+## Version 17 Step 4 — Add input workflow checkpoint and resume-profile guardrail
+
+Added a Version 17 input workflow checkpoint and resume-profile design guardrail.
+
+What changed:
+- Created a checkpoint document for Version 17 input workflow progress.
+- Summarized hosted resume/job input UX polish.
+- Summarized transient `.txt` resume/job upload support.
+- Summarized fictional sample/demo input improvements.
+- Documented the current transient input model.
+- Clarified that persistent resume profiles and raw resume/job text storage remain intentionally out of scope.
+- Added design questions that must be answered before implementing persistent resume profiles.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+Version 17 improves input convenience, but resume profiles introduce more sensitive data responsibility. This guardrail helps keep the project from moving into raw resume storage before the data model, consent, delete/export controls, RLS, privacy copy, and testing expectations are clear.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No persistent resume profiles were added.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the guardrail does not claim production readiness or a completed security audit.
+
+Learning:
+This step reinforced that a good product roadmap needs guardrails, not just features. Before adding persistent resume profiles, the project needs a clear decision about what data to store, what to avoid storing, how users consent, and how users can delete or export their data.
