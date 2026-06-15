@@ -3191,3 +3191,43 @@ Verification:
 
 Learning:
 This step reinforced a safer pattern for improving input convenience: browser-side transient file reading can improve UX without adding persistent storage, database schema changes, or long-term raw resume data responsibility.
+
+## Version 17 Step 3 — Improve hosted sample/demo input workflow
+
+Improved the hosted dashboard sample/demo input experience.
+
+What changed:
+- Added or improved a sample/demo action for the hosted analysis form.
+- Added fictional demo resume and job-description input content.
+- Populated the existing resume and job-description text areas with safe demo text.
+- Populated demo metadata where practical.
+- Clarified that sample inputs are fictional and that loading them does not save anything by itself.
+- Preserved existing paste input, transient `.txt` upload, analysis, save, saved-analysis detail, recurring gap stats, search/filter, comparison, export/download, metadata display, and delete behavior.
+
+Why this matters:
+New users should be able to understand the product quickly without pasting their own real resume or job description first. A safe demo flow makes the hosted app easier to test, explain, and share while preserving the privacy-first direction of Version 17.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No persistent resume profiles were added.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed sample/demo inputs populated the analysis form and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced that sample data is a useful product and testing tool when it is clearly fictional, privacy-safe, and separated from user-owned saved data. Demo inputs make the product easier to understand without increasing sensitive data responsibility.
