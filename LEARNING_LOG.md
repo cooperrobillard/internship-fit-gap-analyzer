@@ -3357,3 +3357,45 @@ Verification:
 
 Learning:
 This step reinforced that database features should begin with ownership, RLS, delete/export, and privacy decisions before code. A structured-skills-first profile model keeps the project aligned with data minimization while still moving toward more convenient user workflows.
+
+## Version 17 Step 7 — Add resume-profile schema/RLS draft
+
+Added a docs-only structured resume-profile schema and RLS draft.
+
+What changed:
+- Created a reviewable schema/RLS draft for future persistent resume profiles.
+- Drafted a structured-skills-first `resume_profiles` table concept.
+- Omitted raw resume text from the first draft by default.
+- Documented RLS ownership policy intent for selecting, inserting, updating, and deleting user-owned resume profiles.
+- Added review notes and TODOs for matching the existing Clerk/Supabase user-id pattern before any real migration is applied.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+This step moves resume-profile work closer to implementation without touching the database yet. A docs-only SQL draft makes the data model and RLS policy intent reviewable before adding migrations, helper code, or UI.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No migrations were added.
+- No SQL was applied to Supabase.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the draft does not apply SQL, create migrations, store raw resume text, or claim production readiness.
+
+Learning:
+This step reinforced the value of drafting schema and RLS logic before implementation. For user-owned resume profiles, access-control rules and data-minimization decisions should be reviewed before any database changes are made.
