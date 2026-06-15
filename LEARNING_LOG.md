@@ -2996,3 +2996,41 @@ Verification:
 
 Learning:
 This step reinforced the difference between storing/exporting structured analysis results and storing/exporting sensitive raw input text. Export features improve user control while preserving the app’s current privacy-first data model.
+
+## Version 16 Step 3 — Add privacy and data-control page
+
+Added a privacy/data-control explanation to the hosted Next.js app.
+
+What changed:
+- Added a user-facing privacy/data-control page or section.
+- Explained what the app currently saves as structured saved-analysis data.
+- Explained that the current saved-analysis model does not intentionally persist raw resume text or raw job-description text.
+- Described current user controls, including deleting saved analyses, exporting structured saved data, and choosing not to save an analysis.
+- Added honest caveats about what still needs review before broader public launch.
+- Preserved existing saved-analysis detail, recurring gap stats, search/filter, comparison, export/download, metadata display, and delete behavior.
+
+Why this matters:
+The app asks users to analyze resume and job-description content, so trust and clarity are important. This step makes the product more honest and user-friendly by explaining the current privacy model and the controls users already have over saved structured results.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing recurring gap stats, saved detail view, search/filter, comparison, export/download, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed the privacy/data-control copy was visible and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced that public-product readiness is not only about features. A useful product also needs clear explanations of data handling, user controls, limitations, and what still requires security/privacy review before wider launch.
