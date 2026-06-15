@@ -2,12 +2,20 @@
 
 import { useMemo } from "react";
 import {
+  ExportDownloadButton,
+  ExportDownloadGroup,
+} from "@/app/dashboard/export-download-button";
+import {
+  downloadComparisonCsv,
+  downloadComparisonMarkdown,
+} from "@/lib/saved-analysis-exports";
+import { compareSavedAnalyses } from "@/lib/saved-analysis-comparison";
+import {
   getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
   type SavedAnalysisSkill,
   type SavedCloudAnalysisListItem,
 } from "@/lib/supabase/saved-analyses";
-import { compareSavedAnalyses } from "@/lib/saved-analysis-comparison";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
 
@@ -168,6 +176,29 @@ export function SavedAnalysisComparisonPanel({
             Comparing <span className="font-medium">{firstLabel}</span> with{" "}
             <span className="font-medium">{secondLabel}</span>.
           </p>
+
+          <ExportDownloadGroup description="Shared and unique skill groups for this comparison pair.">
+            <ExportDownloadButton
+              label="Comparison (Markdown)"
+              onClick={() =>
+                downloadComparisonMarkdown({
+                  firstLabel,
+                  secondLabel,
+                  comparison,
+                })
+              }
+            />
+            <ExportDownloadButton
+              label="Comparison (CSV)"
+              onClick={() =>
+                downloadComparisonCsv({
+                  firstLabel,
+                  secondLabel,
+                  comparison,
+                })
+              }
+            />
+          </ExportDownloadGroup>
 
           <div>
             <h3 className="font-medium text-violet-950">Missing skills</h3>

@@ -3,6 +3,14 @@
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 import {
+  ExportDownloadButton,
+  ExportDownloadGroup,
+} from "@/app/dashboard/export-download-button";
+import {
+  downloadSavedAnalysisCsv,
+  downloadSavedAnalysisMarkdown,
+} from "@/lib/saved-analysis-exports";
+import {
   deleteSavedAnalysis,
   fetchSavedAnalysisDetail,
   formatOptionalMetadata,
@@ -299,6 +307,19 @@ export function SavedAnalysisDetailPanel({
           skills={analysis.missingSkills}
           emptyMessage="No missing skills stored for this analysis."
         />
+      </div>
+
+      <div className="mt-5 border-t border-sky-200 pt-4">
+        <ExportDownloadGroup description="Metadata and skill rows only—not resume or job description text.">
+          <ExportDownloadButton
+            label="Markdown"
+            onClick={() => downloadSavedAnalysisMarkdown(analysis)}
+          />
+          <ExportDownloadButton
+            label="CSV"
+            onClick={() => downloadSavedAnalysisCsv(analysis)}
+          />
+        </ExportDownloadGroup>
       </div>
 
       <div className="mt-5 border-t border-sky-200 pt-4">

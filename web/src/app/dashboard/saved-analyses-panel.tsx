@@ -3,8 +3,14 @@
 import { useSession } from "@clerk/nextjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecurringGapStatsPanel } from "@/app/dashboard/recurring-gap-stats-panel";
+import { RecurringGapExportActions } from "@/app/dashboard/recurring-gap-export-actions";
 import { SavedAnalysisComparisonPanel } from "@/app/dashboard/saved-analysis-comparison";
 import { SavedAnalysisDetailPanel } from "@/app/dashboard/saved-analysis-detail";
+import {
+  ExportDownloadButton,
+  ExportDownloadGroup,
+} from "@/app/dashboard/export-download-button";
+import { downloadAllSavedAnalysesCsv } from "@/lib/saved-analysis-exports";
 import {
   filterSavedAnalyses,
   hasActiveSavedAnalysisSearch,
@@ -418,6 +424,13 @@ function SavedAnalysesList({
         visibleCount={filteredAnalyses.length}
       />
 
+      <ExportDownloadGroup description="One CSV row per saved analysis with metadata and joined skill lists.">
+        <ExportDownloadButton
+          label="All saved analyses (CSV)"
+          onClick={() => downloadAllSavedAnalysesCsv(allAnalyses)}
+        />
+      </ExportDownloadGroup>
+
       {deleteSuccessMessage ? (
         <div
           className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
@@ -486,6 +499,9 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   return (
     <>
       <RecurringGapStatsPanel refreshKey={effectiveRefreshKey} />
+      <div className="mt-3">
+        <RecurringGapExportActions />
+      </div>
       <SavedAnalysesList
         refreshKey={effectiveRefreshKey}
         onAnalysisDeleted={handleAnalysisDeleted}
