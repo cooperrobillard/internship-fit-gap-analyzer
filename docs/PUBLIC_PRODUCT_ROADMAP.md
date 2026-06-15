@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md), root [`README.md`](../README.md).
 
 ---
 
@@ -77,7 +77,7 @@ Browser → Vercel (Next.js) → Clerk
 | Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
 | Clerk auth | N/A | Yes | Yes | P0 | |
 | RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
-| Persistent resume profiles | No | No | Later | P2 | Design + schema/RLS plan: [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md); v1 = structured skills only, omit raw text column |
+| Persistent resume profiles | No | No | Later | P2 | Docs-only SQL draft: [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md) — **not applied**; v1 structured skills, no raw text |
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
 | Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
@@ -167,9 +167,10 @@ Schema may include sensitive columns (e.g. `job_text`) for future use—they are
 
 - **Desired:** Named resume profiles users reuse, with ability to pick a **different resume per analysis**
 - **Design:** [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md) — product/consent/UX plan (Step 5)
-- **Schema/RLS plan:** [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) — structured `resume_profiles` table + policies (Step 6)
-- **First implementation should:** store **structured skills + profile metadata**; **omit `raw_resume_text` from first migration**; keep one-time paste/upload
-- **Requires:** reviewed SQL migration on staging, typed helpers, UI, privacy copy update, and RLS re-verification before production profile writes
+- **Schema/RLS plan:** [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) — structured table + policies (Step 6)
+- **SQL draft (not applied):** [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md) + [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) (Step 7)
+- **First implementation should:** store **structured skills + profile metadata**; **omit `raw_resume_text`**; keep one-time paste/upload
+- **Not implemented yet:** migration, helpers, or UI — review draft before any Supabase apply
 
 ### User rights (target)
 
@@ -229,10 +230,11 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - Step 4 — input workflow checkpoint and resume-profile guardrail
 - Step 5 — persistent resume-profile **design document** ([`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md))
 - Step 6 — structured resume-profile **schema/RLS plan** ([`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md))
+- Step 7 — docs-only **schema/RLS SQL draft** ([`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md)) — **not applied to Supabase**
 
-**Deferred until migration + helpers + UI:** wired resume profiles in the hosted app. **First schema version:** structured skills only; **omit raw resume text column.**
+**Not implemented:** resume profiles in app code, migrations, helpers, or UI.
 
-- **Resume profile** implementation — Step 7+ (SQL migration review, then helpers, then UI)
+- **Resume profile** implementation — Step 8+ (review draft → migration → helpers → UI)
 
 ### Version 18 — Public readiness / security / privacy
 
@@ -258,13 +260,13 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 6 — Resume-profile schema/RLS plan** — **Complete**
+**Version 17 Step 7 — Docs-only schema/RLS SQL draft** — **Complete**
 
-- [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) — `resume_profiles` v1 fields, RLS policy intent, helper/UI sequence; **omit `raw_resume_text` in first migration**
+- [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md) + [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) — draft only, **not applied**; structured skills; no `raw_resume_text`
 
-**Recommended next:** **Version 17 Step 7 — reviewed SQL draft and controlled Supabase migration** (staging first), then typed helpers (Step 8). Parallel: **Version 18** production hardening.
+**Recommended next:** **Version 17 Step 8** — review SQL draft against live Supabase / legacy schema sketch, then **Step 9** actual migration (staging first) only after checklist. Parallel: **Version 18** production hardening.
 
-**Out of scope until gated:** raw resume text column, PDF/DOCX parsing, semantic matching, major redesign.
+**Out of scope until gated:** applied migration without review, raw resume text column, PDF/DOCX parsing, semantic matching.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
