@@ -3112,3 +3112,42 @@ Verification:
 
 Learning:
 This step reinforced the value of checkpointing after a major feature phase. Version 16 connected product usefulness with user control: comparison helps users interpret saved analyses, exports let them keep their data, privacy copy explains the model, and the readiness review protects the project before adding more sensitive resume-profile features.
+
+## Version 17 Step 1 — Polish hosted resume/job input UX
+
+Polished the hosted dashboard input experience for analyzing a resume against a job description.
+
+What changed:
+- Improved the resume/job input area in the hosted Next.js dashboard.
+- Clarified what users should paste into the resume and job-description fields.
+- Reinforced that the current saved-analysis model focuses on structured results and metadata rather than raw resume/job-description text.
+- Improved the distinction between running an analysis and saving structured results.
+- Improved input helper text, validation, loading states, or next-step guidance where practical.
+- Preserved existing saved-analysis detail, recurring gap stats, search/filter, comparison, export/download, metadata display, and delete behavior.
+
+Why this matters:
+Version 17 begins with a safer input-workflow polish step before persistent resume profiles. This improves the core user experience while avoiding premature raw resume storage or account-level resume profiles.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No persistent resume profiles were added.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Local dashboard review confirmed the polished input workflow worked and existing saved-analysis behavior still worked.
+
+Learning:
+This step reinforced that improving a product does not always require adding more data storage. The hosted input experience can become clearer and safer before introducing persistent resume profiles or raw resume storage.
