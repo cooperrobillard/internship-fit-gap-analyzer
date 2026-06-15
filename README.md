@@ -11,7 +11,7 @@ This is a **portfolio and learning project**—not production SaaS, not semantic
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
 | **Hosted prototype** | Demoable — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS |
 
-The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted prototype** is a separate dashboard path for sign-in, cloud save/review/search/delete, recurring gap stats, and browser analysis—it is still prototype-stage, not production-hardened. See [`docs/VERSION_15_CHECKPOINT.md`](docs/VERSION_15_CHECKPOINT.md).
+The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted prototype** is a separate dashboard path for sign-in, cloud save/review/search/compare/export/delete, recurring gap stats, privacy copy, and browser analysis—it is still prototype-stage, not production-hardened. See [`docs/VERSION_16_CHECKPOINT.md`](docs/VERSION_16_CHECKPOINT.md).
 
 ## Architecture (hosted prototype)
 
@@ -47,7 +47,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - Protected dashboard with analysis form
 - Hosted analysis via `/api/analyze` → Render FastAPI
 - Supabase save/read/delete of analyses with per-user RLS
-- Recurring gap stats, saved-analysis detail, search/filter, metadata labels
+- Recurring gap stats, saved-analysis detail, search/filter, compare, export/download, privacy page (`/privacy`), metadata labels
 - Hosted smoke-test checklist ([`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md))
 
 **Not built yet (or limited)**
@@ -55,7 +55,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - Semantic or AI matching
 - PDF/DOCX parsing in the web app
 - Full application tracking, billing, or production security review
-- Hosted compare, export, and privacy page (planned for Version 16)
+- Persistent resume profiles or raw resume/job text in cloud save (see [`docs/VERSION_16_PRODUCTION_READINESS_REVIEW.md`](docs/VERSION_16_PRODUCTION_READINESS_REVIEW.md))
 
 ## Prototype limitations
 
@@ -222,7 +222,8 @@ Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_repor
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Demo-ready vs. not production-ready |
 | [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
-| [`docs/PUBLIC_PRODUCT_ROADMAP.md`](docs/PUBLIC_PRODUCT_ROADMAP.md) | Public app vision, parity audit, Version 16+ plan |
+| [`docs/PUBLIC_PRODUCT_ROADMAP.md`](docs/PUBLIC_PRODUCT_ROADMAP.md) | Public app vision, parity audit, Version 17+ plan |
+| [`docs/VERSION_16_CHECKPOINT.md`](docs/VERSION_16_CHECKPOINT.md) | Version 16 comparison, export, privacy, readiness review (complete) |
 | [`docs/VERSION_15_CHECKPOINT.md`](docs/VERSION_15_CHECKPOINT.md) | Version 15 hosted saved-analysis parity (complete) |
 | [`docs/VERCEL_FRONTEND_DEPLOYMENT.md`](docs/VERCEL_FRONTEND_DEPLOYMENT.md) | Vercel setup |
 | [`docs/RENDER_BACKEND_DEPLOYMENT.md`](docs/RENDER_BACKEND_DEPLOYMENT.md) | Render setup |

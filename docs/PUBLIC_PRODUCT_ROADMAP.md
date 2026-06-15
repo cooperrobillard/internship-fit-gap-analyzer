@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), root [`README.md`](../README.md).
 
 ---
 
@@ -205,18 +205,22 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - **Search / filter** saved analyses
 - **Delete** saved analyses (UI + RLS-scoped Supabase client)
 
-### Version 16 — Hosted comparison, export, and data-control foundation
+### Version 16 — Hosted comparison, export, and data-control foundation ✅
+
+**Complete** — see [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
 - **Compare** two saved analyses
-- **Export** user-owned summary data
+- **Export** user-owned structured data (Markdown/CSV)
 - **Privacy / data-control** page (`web/src/app/privacy/page.tsx`, route `/privacy`)
-- Production-readiness review before resume profiles — see [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md)
+- Production-readiness review before resume profiles
 
-### Version 17 — Resume profiles and input flexibility
+### Version 17 — Resume/input workflow polish (then profiles)
 
-**Gate:** Complete [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md) controls before storing raw resume text in the cloud.
+**Gate:** [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md) controls before storing raw resume text in the cloud.
 
-- **Resume profile** concept (create, label, select)
+**Start with:** hosted paste/sample UX polish, transient upload planning, profile design doc—not immediate raw-text profile storage.
+
+- **Resume profile** concept (create, label, select) — after gate
 - **Different resume per analysis** (profile or one-off paste)
 - **Upload** support with privacy planning (no silent raw-text storage)
 
@@ -244,20 +248,20 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 16 Step 1 — Add hosted saved-analysis comparison**
+**Version 17 Step 1 — Hosted resume/job input UX polish**
 
-**Why:** Local Streamlit users can compare two saved analyses side by side. Version 15 completed review, search, and delete; comparison is the next high-value parity gap before export and privacy work.
+**Why:** Version 16 completed comparison, export, privacy copy, and a production-readiness review that recommends **not** storing persistent resume profiles or raw resume/job text yet. Version 17 should improve how users paste or upload input for analysis—without expanding the saved-data model—while drafting profile/consent design for later.
 
 **Suggested scope for Step 1:**
 
-1. Select two saved analyses from the dashboard list (RLS-scoped data already loaded or fetched).
-2. Show matched/missing skill overlap in a simple side-by-side or summary view.
-3. Reuse existing metadata labels and skill rows—no raw resume/job text.
-4. Preserve search/filter, detail, delete, and recurring gap stats behavior.
+1. Audit current dashboard analysis form (paste flows, labels, sample/demo copy).
+2. Improve clarity: analyze-only vs. save structured results; link to `/privacy`.
+3. Optional: plan transient `.txt` upload (analyze in memory, do not save raw text by default).
+4. Short design note for future `resume_profiles` (fields, consent, RLS, delete)—no schema change yet.
 
-**Out of scope for Step 1:** export, resume profiles, upload, redesign, semantic matching.
+**Out of scope for Step 1:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, redesign.
 
-See [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md) for Version 15 outcomes and full Version 16 plan.
+See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
 ---
 
