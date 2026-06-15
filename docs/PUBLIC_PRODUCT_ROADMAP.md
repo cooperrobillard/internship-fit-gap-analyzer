@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), root [`README.md`](../README.md).
 
 ---
 
@@ -77,7 +77,7 @@ Browser → Vercel (Next.js) → Clerk
 | Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
 | Clerk auth | N/A | Yes | Yes | P0 | |
 | RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
-| Persistent resume profiles | No | No | Later | P2 | Schema has `resume_profiles`; not wired |
+| Persistent resume profiles | No | No | Later | P2 | Design: [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md); first impl = structured skills only, no raw text by default |
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
 | Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
@@ -166,7 +166,9 @@ Schema may include sensitive columns (e.g. `job_text`) for future use—they are
 ### Future: resume profiles
 
 - **Desired:** Named resume profiles users reuse, with ability to pick a **different resume per analysis**
-- **Requires:** UX, schema wiring (`resume_profiles`), and privacy review before storing resume content in the cloud
+- **Design:** [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md) — pre-implementation plan complete (Step 5)
+- **First implementation should:** store **structured skills + profile metadata**; **avoid raw resume text by default**; keep one-time paste/upload
+- **Requires:** schema/RLS plan, UX/consent, privacy copy update, and RLS re-verification before cloud writes
 
 ### User rights (target)
 
@@ -223,11 +225,12 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - Step 1 — hosted paste/save UX polish and honest prototype copy
 - Step 2 — transient plain `.txt` upload (browser-only; no file persistence)
 - Step 3 — fictional **Try sample inputs** / **Clear inputs** demo workflow
-- Step 4 — input workflow checkpoint and resume-profile guardrail (this doc)
+- Step 4 — input workflow checkpoint and resume-profile guardrail
+- Step 5 — persistent resume-profile **design document** ([`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md))
 
-**Deferred until designed:** persistent **resume profiles**, raw resume/job text in cloud save, PDF/DOCX parsing.
+**Deferred until schema/RLS plan + implementation:** wired resume profiles in the hosted app. **First implementation:** structured skills only; **no raw resume text by default.**
 
-- **Resume profile** concept (create, label, select) — after guardrail + design doc
+- **Resume profile** concept (create, label, select) — after Step 6 schema/RLS plan
 - **Different resume per analysis** — today via one-off paste/upload/demo; profiles would formalize later
 
 ### Version 18 — Public readiness / security / privacy
@@ -254,14 +257,13 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 — Input workflow track** — **Complete** (Steps 1–4)
+**Version 17 Step 5 — Persistent resume-profile design** — **Complete**
 
-- Paste/save UX polish, transient `.txt` upload, sample/demo inputs, and guardrail doc — see [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md)
-- **Guardrail:** do not implement persistent resume profiles until a separate design step answers profile data model, consent, delete/export, RLS, and privacy-copy questions
+- [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md) — structured-skills-first model; raw resume text avoided by default; consent/RLS/delete/export requirements
 
-**Recommended next:** **Version 18 — public readiness / production hardening** (rate limits, RLS re-check, privacy copy, smoke-test discipline). Optional later: resume-profile **design document only** if profiles remain on the roadmap.
+**Recommended next:** **Version 17 Step 6 — resume-profile schema and RLS plan (documentation only)** before any dashboard or migration work. Parallel track: **Version 18** production hardening remains important.
 
-**Out of scope until gated:** persistent cloud resume storage, PDF/DOCX parsing, semantic matching, major redesign.
+**Out of scope until gated:** raw resume text by default, PDF/DOCX parsing, semantic matching, major redesign.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
