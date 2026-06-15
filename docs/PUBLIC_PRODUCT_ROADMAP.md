@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), root [`README.md`](../README.md).
 
 ---
 
@@ -209,10 +209,12 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - **Compare** two saved analyses
 - **Export** user-owned summary data
-- **Privacy / data-control** page or planning
-- Production-readiness gap review before resume profiles
+- **Privacy / data-control** page (`web/src/app/privacy/page.tsx`, route `/privacy`)
+- Production-readiness review before resume profiles — see [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md)
 
 ### Version 17 — Resume profiles and input flexibility
+
+**Gate:** Complete [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md) controls before storing raw resume text in the cloud.
 
 - **Resume profile** concept (create, label, select)
 - **Different resume per analysis** (profile or one-off paste)
