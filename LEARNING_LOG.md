@@ -3484,3 +3484,46 @@ Verification:
 
 Learning:
 This step reinforced that RLS drafts should be aligned with existing working user-ownership patterns before implementation. Reusing the saved-analysis pattern helps keep future resume profiles consistent with the app’s current account-bound data model.
+
+## Version 17 Step 10 — Add resume-profile pre-migration review
+
+Added a final pre-migration review for the structured resume-profile schema/RLS work.
+
+What changed:
+- Created a pre-migration review document for future resume profiles.
+- Reviewed the resume-profile design, schema/RLS plan, SQL draft, and saved-analysis RLS pattern review.
+- Defined what should be included in the first actual resume-profile migration.
+- Defined what should remain out of scope for the first migration.
+- Confirmed that raw resume text should remain omitted from the first migration scope.
+- Added a migration readiness checklist and post-migration RLS verification expectations.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+This review is the final safety check before touching the database. It helps ensure the migration scope is small, structured-skills-first, user-owned, and aligned with the existing saved-analysis RLS pattern.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No migrations were added.
+- No SQL was applied to Supabase.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the review does not create migrations, apply SQL, implement resume profiles, store raw resume text, or claim production readiness.
+
+Learning:
+This step reinforced that database work should have a final scope and access-control review before migration. The safest first resume-profile step is small, user-owned, structured-skills-first, and backed by an explicit RLS verification plan.
