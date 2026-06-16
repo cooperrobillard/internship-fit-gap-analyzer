@@ -5,7 +5,9 @@
 **Product:** Job Fit & Skill-Gap Analyzer (hosted prototype)  
 **Repository:** internship-fit-gap-analyzer
 
-Related: [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md).
+Related: [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md).
+
+**Aligned with:** [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md) (Version 17 Step 8) — updated in Version 17 Step 9.
 
 ---
 
@@ -27,6 +29,41 @@ The SQL is for **documentation and review only**. Do not run it on production Su
 | **`clerk_user_id` ownership** | Matches `job_analyses` and existing RLS in `web/database/schema.sql` (not a generic `user_id` alias) |
 
 Each skill entry is a JSON object: `{ "skill": "Python", "category": "programming" }` in `extracted_skills` and `user_added_skills` arrays.
+
+---
+
+## Updates from saved-analysis RLS review (Step 8 → Step 9)
+
+This draft was updated after [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md) to mirror hosted **saved analyses** as closely as possible.
+
+### Confirmed in repository (applied to this draft)
+
+| Finding | Applied change |
+|---------|----------------|
+| **Ownership column** | **`clerk_user_id` text NOT NULL** — not generic `user_id` |
+| **Value on insert** | Same as `saveCloudAnalysis`: Clerk `userId` from `useAuth()` / JWT **`sub`** |
+| **RLS predicate** | **`clerk_user_id = (select auth.jwt()->>'sub')`** — matches `job_analyses` in `web/database/schema.sql` |
+| **Policy role** | **`TO authenticated`** on all four policies (was missing in Step 7 SQL) |
+| **Policy names** | `resume_profiles_select_own`, `_insert_own`, `_update_own`, `_delete_own` — same style as `job_analyses_*_own` |
+| **Client access** | `createClerkSupabaseClient(() => session.getToken())`; publishable key only |
+| **Read isolation** | App may rely on RLS without `.eq("clerk_user_id", …)` on SELECT (current saved-analysis pattern) |
+| **Future helpers** | Should accept `(supabase, clerkUserId, …)` like `saveCloudAnalysis` / `saved-analyses.ts` |
+
+### Not confirmed from repository alone (still TODO before migration)
+
+| Item | Why it remains open |
+|------|---------------------|
+| **Production Supabase policies** | Deployed project may differ from `web/database/schema.sql` |
+| **Clerk JWT → `authenticated` role** | Must verify with a real signed-in token on target project |
+| **`sub` claim = `useAuth().userId`** | Confirm Clerk third-party auth template in Supabase dashboard |
+| **Two-user isolation on production** | Manual smoke test only — no automated RLS test in repo |
+| **Legacy `resume_profiles` table** | If old `label` + `resume_text` shape exists, needs migration plan before `CREATE TABLE` |
+
+### How the SQL draft mirrors saved analyses
+
+- Same ownership column and JWT predicate as `job_analyses_select_own` / `resume_profiles_*_own` in `web/database/schema.sql`.
+- Resume profiles are a **top-level owned table** (like `job_analyses` at the row level) — no parent FK on INSERT policies for v1.
+- **`raw_resume_text` remains omitted** — structured skills only.
 
 ---
 
@@ -86,42 +123,50 @@ If raw text is ever added:
 
 RLS is **enabled** on `public.resume_profiles`.
 
-All policies use the same ownership test as existing hosted tables in `web/database/schema.sql`:
+All policies mirror **`job_analyses`** and legacy **`resume_profiles`** policies in `web/database/schema.sql` (see [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md)):
 
 ```sql
-clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+-- Ownership expression (repo-confirmed; verify on deployed Supabase before apply):
+clerk_user_id = (select auth.jwt()->>'sub')
 ```
 
-| Operation | Rule |
-|-----------|------|
-| **SELECT** | User sees only rows where `clerk_user_id` matches their JWT `sub` |
-| **INSERT** | User may insert only rows with their own `clerk_user_id` |
-| **UPDATE** | User may update only their own rows; `WITH CHECK` prevents reassigning ownership |
-| **DELETE** | User may delete only their own rows |
+Each policy is **`TO authenticated`**.
 
-**Client rules:** Clerk-authenticated Supabase client only; **no service-role key in browser code**.
+| Operation | Policy name | Rule |
+|-----------|-------------|------|
+| **SELECT** | `resume_profiles_select_own` | Own rows only |
+| **INSERT** | `resume_profiles_insert_own` | `WITH CHECK` own `clerk_user_id` |
+| **UPDATE** | `resume_profiles_update_own` | `USING` + `WITH CHECK` own rows |
+| **DELETE** | `resume_profiles_delete_own` | Own rows only |
 
-**Verification:** Two test users — User B must not read/update/delete User A’s profiles.
+**Client rules:** `createClerkSupabaseClient(() => session.getToken())` only; **no service-role key in browser code**.
+
+**Verification:** Repeat [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md) §8 pattern with profile CRUD — User B must not read/update/delete User A’s profiles.
 
 ---
 
 ## SQL draft notes
 
-### Confirmed from repository (review still required on deploy)
+### Repo-confirmed (Step 8)
 
-- Ownership column: **`clerk_user_id`** (document briefs sometimes say `user_id`; hosted tables use `clerk_user_id`).
-- JWT predicate: **`(SELECT auth.jwt() ->> 'sub')`** — matches `job_analyses` policies in `web/database/schema.sql` and `web/database/README.md`.
+- Ownership: **`clerk_user_id`** — hosted tables do not use generic `user_id`.
+- Predicate: **`clerk_user_id = (select auth.jwt()->>'sub')`** — same spelling as `web/database/schema.sql`.
+- Policies: **`TO authenticated`** on SELECT, INSERT, UPDATE, DELETE.
 
-### TODOs before apply
+### TODOs before apply (specific)
 
-| Item | Action |
-|------|--------|
-| **Clerk JWT on Supabase** | Confirm third-party auth / JWT template so `sub` is available to RLS |
-| **`set_updated_at()`** | Reuse existing function if already deployed; uncomment create block in SQL if missing |
-| **Legacy `resume_profiles`** | If old table exists, plan ALTER or replace — do not blindly `CREATE TABLE` |
-| **Unique profile names** | Decide whether to enable commented unique index |
-| **Skill JSON shape** | Optional future `CHECK` for object keys; v1 relies on app validation |
-| **`job_analyses` FK** | Commented future columns in SQL; separate migration when linking analyses to profiles |
+| # | Action |
+|---|--------|
+| 1 | **Confirm exact predicate on deployed Supabase** — open SQL editor / policies for `job_analyses`; if production differs from repo, use **that** expression for `resume_profiles` instead of assuming this draft |
+| 2 | **Verify Clerk JWT** — `sub` available to RLS; matches `useAuth().userId` on insert |
+| 3 | **Two-user manual test** — User A creates profile; User B cannot SELECT/UPDATE/DELETE it ([`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md) §8 pattern) |
+| 4 | **No service-role key in browser** — only `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in client |
+| 5 | **Profile helpers** — when implemented, mirror `saveCloudAnalysis(supabase, clerkUserId, …)` and `fetchRecentSavedAnalyses(getAccessToken)` patterns |
+| 6 | **Cross-user isolation** — confirm profile rows cannot be read/updated/deleted across users |
+| 7 | **`set_updated_at()`** — reuse if deployed; uncomment create block in SQL if missing |
+| 8 | **Legacy `resume_profiles`** — if old table exists (`label`, `resume_text`), plan ALTER/replace — do not blind `CREATE TABLE` |
+| 9 | **Privacy copy** — update `/privacy` before profile save UI |
+| 10 | **Staging first** — apply migration on dev/staging Supabase before production |
 
 ### Header in SQL file
 
@@ -149,14 +194,28 @@ The `.sql` file is labeled **DRAFT ONLY — NOT APPLIED — NOT A PRODUCTION MIG
 
 | Step | Work |
 |------|------|
-| **Step 8** | Review this SQL draft against live Supabase / `web/database/schema.sql` deltas |
-| **Step 9** | Create **actual migration** only after checklist sign-off (staging → production) |
-| **Step 10** | Add typed Supabase helpers (`list/create/update/delete/export`) |
-| **Step 11** | Add profile management UI (create, edit, delete, export) |
-| **Step 12** | Add profile selector to analysis form (one-time vs profile) |
-| **Step 13** | Export/delete/profile smoke tests + Version 17 profile checkpoint |
+| **Step 8** | Saved-analysis RLS pattern review — **complete** ([`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md)) |
+| **Step 9** | Align resume-profile SQL draft with saved-analysis pattern — **complete** (this document) |
+| **Step 10** | **Final pre-migration review** — confirm production Supabase `job_analyses` policies match repo; sign off checklist |
+| **Step 11** | Create **actual migration** (staging → production) only after Step 10 |
+| **Step 12** | Typed Supabase helpers (`list/create/update/delete/export`) |
+| **Step 13** | Profile management UI |
+| **Step 14** | Profile selector in analysis form |
+| **Step 15** | Export/delete/profile smoke tests + checkpoint |
 
-**Do not** skip Step 8–9 and jump to UI. **Do not** claim production readiness or a completed security audit when applying this draft.
+**Recommended next:** **Step 10 — final pre-migration review** (conservative). Do not apply SQL until production predicate is confirmed. **Do not** jump to UI before helpers (Step 12+).
+
+---
+
+## Recommended next step
+
+**Version 17 Step 10 — final pre-migration review for resume-profile schema/RLS**
+
+- Compare this draft to **live** Supabase policies for `job_analyses` (not only `web/database/schema.sql`).
+- Complete the manual checklist above, including two-user isolation.
+- Only then author a real migration file (Step 11).
+
+Resume profiles remain **not implemented** in app code.
 
 ---
 
@@ -176,4 +235,4 @@ The `.sql` file is labeled **DRAFT ONLY — NOT APPLIED — NOT A PRODUCTION MIG
 
 ## Document maintenance
 
-Update when the SQL draft is revised, applied as a migration, or superseded. Cross-link [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) for product/sequence context.
+Update when the SQL draft is revised, applied as a migration, or superseded. Cross-link [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) and [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md).

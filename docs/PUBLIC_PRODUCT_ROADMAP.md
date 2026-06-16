@@ -232,10 +232,11 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - Step 6 — structured resume-profile **schema/RLS plan** ([`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md))
 - Step 7 — docs-only **schema/RLS SQL draft** ([`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md)) — **not applied**
 - Step 8 — **saved-analysis RLS pattern review** ([`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md))
+- Step 9 — **resume-profile SQL draft aligned** with saved-analysis `clerk_user_id` + RLS ([`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md)) — **not applied**
 
 **Not implemented:** migration, helpers, or UI.
 
-- **Resume profile** implementation — Step 9+ (align draft → migration → helpers → UI)
+- **Resume profile** implementation — Step 10+ (pre-migration review → migration → helpers → UI)
 
 ### Version 18 — Public readiness / security / privacy
 
@@ -261,13 +262,13 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 8 — Saved-analysis RLS pattern review** — **Complete**
+**Version 17 Step 9 — Resume-profile draft aligned with saved-analysis RLS** — **Complete**
 
-- [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md) — documents `clerk_user_id`, JWT `sub` predicate, helper patterns, manual two-user smoke test
+- [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md) + [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) updated: `clerk_user_id`, `(select auth.jwt()->>'sub')`, `TO authenticated`; **still not applied**
 
-**Recommended next:** **Version 17 Step 9** — update resume-profile SQL draft to match confirmed pattern (`TO authenticated`, cross-links). Then **Step 10** actual migration (staging) after checklist — still no UI until helpers.
+**Recommended next:** **Version 17 Step 10 — final pre-migration review** (confirm production Supabase `job_analyses` policies match draft). Then Step 11 actual migration (staging). Resume profiles **not implemented** in code.
 
-**Out of scope until gated:** applied migration without review, raw resume text, profile UI without RLS sign-off.
+**Out of scope until gated:** applied migration without production predicate check, raw resume text, profile UI without RLS sign-off.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
