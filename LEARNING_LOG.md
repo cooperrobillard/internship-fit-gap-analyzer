@@ -3399,3 +3399,46 @@ Verification:
 
 Learning:
 This step reinforced the value of drafting schema and RLS logic before implementation. For user-owned resume profiles, access-control rules and data-minimization decisions should be reviewed before any database changes are made.
+
+## Version 17 Step 8 — Review saved-analysis RLS pattern
+
+Reviewed and documented the current saved-analysis Supabase/RLS user-ownership pattern before turning resume-profile planning into implementation.
+
+What changed:
+- Created a saved-analysis RLS pattern review document.
+- Inspected the current saved-analysis data flow, user ownership field, helper patterns, and RLS documentation/evidence.
+- Documented how saved analyses currently connect Clerk users to Supabase rows where visible in the repo.
+- Identified the current RLS predicate if it could be confirmed, or clearly noted what still requires Supabase dashboard/project confirmation.
+- Documented which helper patterns future resume-profile work should imitate.
+- Captured implications for the resume-profile schema/RLS draft.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+Future resume-profile rows should use the same proven user-ownership model as saved analyses. Reviewing the existing pattern first reduces the risk of inventing a conflicting RLS policy or misaligning Clerk user ids with Supabase rows.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No migrations were added.
+- No SQL was applied to Supabase.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the review does not implement resume profiles, create migrations, change RLS, or claim production readiness.
+
+Learning:
+This step reinforced that access-control details should be copied from proven project patterns, not guessed. Before adding user-owned resume profiles, the project needs a confirmed Clerk/Supabase ownership predicate and repeatable two-user RLS verification.
