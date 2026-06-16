@@ -3442,3 +3442,45 @@ Verification:
 
 Learning:
 This step reinforced that access-control details should be copied from proven project patterns, not guessed. Before adding user-owned resume profiles, the project needs a confirmed Clerk/Supabase ownership predicate and repeatable two-user RLS verification.
+
+## Version 17 Step 9 — Align resume-profile RLS draft with saved analyses
+
+Updated the docs-only resume-profile schema/RLS draft to match the current saved-analysis user-ownership pattern as closely as possible.
+
+What changed:
+- Updated the resume-profile schema/RLS draft using the saved-analysis RLS pattern review.
+- Clarified which saved-analysis ownership/RLS details were confirmed and which still require confirmation.
+- Adjusted the docs-only SQL draft comments, policy intent, and TODOs to better align with the existing saved-analysis pattern.
+- Preserved the structured-skills-first resume-profile model.
+- Kept raw resume text omitted from the first resume-profile draft.
+- Updated the public product roadmap if needed.
+
+Why this matters:
+Future resume profiles should use the same proven user-ownership approach as saved analyses. Aligning the draft before creating a real migration reduces the chance of introducing inconsistent access-control behavior.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No database schema or RLS policy changed.
+- No migrations were added.
+- No SQL was applied to Supabase.
+- No persistent resume profiles were added in code.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual document review confirmed the draft remains docs-only, does not apply SQL, does not create migrations, and does not store raw resume text.
+
+Learning:
+This step reinforced that RLS drafts should be aligned with existing working user-ownership patterns before implementation. Reusing the saved-analysis pattern helps keep future resume profiles consistent with the app’s current account-bound data model.
