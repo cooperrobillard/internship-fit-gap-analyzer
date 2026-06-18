@@ -1,6 +1,6 @@
 # AGENTS.md
 
-## Project Identity
+## Project identity
 
 Repository name: `internship-fit-gap-analyzer`
 
@@ -22,43 +22,26 @@ This is becoming a real hosted public product, not just a local prototype. Treat
 
 ---
 
-## Current Stack
+## Current stack
 
-### Frontend
+Frontend:
 
 * Next.js 16 app router in `web/`
 * Hosted on Vercel
 * Clerk authentication
-* Dashboard includes:
+* Dashboard includes analysis input, saved analyses, saved-analysis detail, comparison, export/download, delete, search/filter, recurring gap stats, and privacy/data-control UI
+* Resume-profile foundation may exist depending on current branch state; inspect the repo before assuming
 
-  * analysis input
-  * saved analyses
-  * saved-analysis detail
-  * comparison
-  * export/download
-  * delete
-  * search/filter
-  * recurring gap stats
-  * privacy/data-control UI
-* Resume-profile foundation may exist depending on the current branch state. Inspect the repo before assuming.
-
-### Backend
+Backend:
 
 * FastAPI service in `api/`
 * Hosted on Render
 * Health endpoint:
+  `https://internship-fit-gap-analyzer.onrender.com/health`
+* Expected health response:
+  `{"status":"ok"}`
 
-```text
-https://internship-fit-gap-analyzer.onrender.com/health
-```
-
-Expected health response:
-
-```json
-{"status":"ok"}
-```
-
-### Database
+Database:
 
 * Supabase Postgres
 * Row Level Security enabled
@@ -66,7 +49,7 @@ Expected health response:
 * Browser/client code must use only the Supabase publishable/browser-safe key
 * Supabase service-role keys must never be used in browser/client code
 
-### Analysis Flow
+Analysis flow:
 
 ```text
 Browser / Next.js dashboard
@@ -78,7 +61,7 @@ Browser / Next.js dashboard
 
 ---
 
-## Directory Map
+## Directory map
 
 Important project areas:
 
@@ -101,7 +84,7 @@ Always inspect the current repo structure before editing. Do not assume a path e
 
 ---
 
-## Product Status Rules
+## Product status rules
 
 The app has a working hosted foundation, but agents must not overclaim production maturity.
 
@@ -109,16 +92,16 @@ Do not claim the app is fully production-ready or security-audited unless a spec
 
 Current product direction:
 
-* rule-based matching first
-* structured saved results and metadata
-* structured-skills-first resume profiles
-* no AI/semantic matching yet
-* no PDF/DOCX parsing yet
-* no application tracking yet
+* Rule-based matching first
+* Structured saved results and metadata
+* Structured-skills-first resume profiles
+* No AI/semantic matching yet
+* No PDF/DOCX parsing yet
+* No application tracking yet
 
 ---
 
-## Core Privacy and Data Rules
+## Core privacy and data rules
 
 These are hard project rules unless a future human-approved privacy/security review explicitly changes them:
 
@@ -137,38 +120,38 @@ These are hard project rules unless a future human-approved privacy/security rev
 
 ---
 
-## Supabase and RLS Rules
+## Supabase and RLS rules
 
 Supabase is production-sensitive.
 
 Agents may:
 
-* inspect existing migration files
-* draft new migration files
-* draft RLS verification SQL
-* draft manual SQL checklists
-* add browser-safe helper code that respects RLS and `clerk_user_id`
-* add tests/mocks for helper behavior
+* Inspect existing migration files.
+* Draft new migration files.
+* Draft RLS verification SQL.
+* Draft manual SQL checklists.
+* Add browser-safe helper code that respects RLS and `clerk_user_id`.
+* Add tests/mocks for helper behavior.
 
 Agents must stop and ask the human before:
 
-* running production SQL
-* applying migrations
-* changing RLS policies
-* disabling RLS
-* dropping tables
-* truncating tables
-* deleting production data
-* editing Supabase dashboard settings
-* using Supabase service-role credentials
-* changing Clerk/Supabase auth assumptions
+* Running production SQL.
+* Applying migrations.
+* Changing RLS policies.
+* Disabling RLS.
+* Dropping tables.
+* Truncating tables.
+* Deleting production data.
+* Editing Supabase dashboard settings.
+* Using Supabase service-role credentials.
+* Changing Clerk/Supabase auth assumptions.
 
 Never:
 
-* disable or bypass RLS
-* use service-role keys in browser/client code
-* commit service-role keys or database credentials
-* add destructive SQL without an explicit human-approved task
+* Disable or bypass RLS.
+* Use service-role keys in browser/client code.
+* Commit service-role keys or database credentials.
+* Add destructive SQL without an explicit human-approved task.
 
 Expected ownership pattern for user-owned tables:
 
@@ -185,7 +168,7 @@ clerk_user_id
 
 ---
 
-## Forbidden Files and Areas Unless Explicitly Requested
+## Forbidden files and areas unless explicitly requested
 
 Do not edit these unless the task explicitly says to:
 
@@ -216,27 +199,27 @@ Package/dependency changes require explicit justification and should be avoided 
 
 ---
 
-## Allowed Behavior for Normal Coding Tasks
+## Allowed behavior for normal coding tasks
 
 For normal bounded coding tasks, agents may:
 
-* create a small branch
-* inspect relevant files
-* implement the requested change only
-* add focused tests if an existing test framework supports them
-* update documentation if behavior changes
-* update `LEARNING_LOG.md` when requested by the task
-* run standard checks
-* run privacy checks
-* produce a clear final report
+* Create a small branch.
+* Inspect relevant files.
+* Implement the requested change only.
+* Add focused tests if an existing test framework supports them.
+* Update documentation if behavior changes.
+* Update `LEARNING_LOG.md` when requested by the task.
+* Run standard checks.
+* Run privacy checks.
+* Produce a clear final report.
 
 Keep changes small and reviewable.
 
-Do not perform broad redesigns unless the task explicitly asks for UI redesign or visual polish.
+Do not perform broad redesigns unless the task explicitly asks for UI redesign/polish.
 
 ---
 
-## Standard Test Commands
+## Standard test commands
 
 Run these from the repo root unless the task says otherwise:
 
@@ -261,11 +244,9 @@ cd ..
 
 Do not add a test framework or dependency unless explicitly requested or clearly justified.
 
-Do not claim a check passed unless it was actually run and passed.
-
 ---
 
-## Standard Privacy Checks
+## Standard privacy checks
 
 Run these before committing:
 
@@ -296,7 +277,7 @@ Docs may mention that raw resume text is intentionally not stored, but code must
 
 ---
 
-## Git Workflow Rules
+## Git workflow rules
 
 Use small branches.
 
@@ -344,11 +325,11 @@ git push origin main
 git branch --delete <branch-name>
 ```
 
-Agents working in cloud/PR mode should open a PR instead of pushing or merging directly to `main`.
+Agents working in cloud/PR mode should open a PR instead of pushing/merging to `main`.
 
 ---
 
-## Manual Verification Expectations
+## Manual verification expectations
 
 For UI changes, include manual verification steps for:
 
@@ -365,7 +346,7 @@ For UI changes, include manual verification steps for:
 * export/download
 * privacy/data-control page or section
 * any changed feature area
-* no secrets, tokens, stack traces, or private raw text visible
+* no secrets/tokens/stack traces/private raw text visible
 
 For backend changes, include:
 
@@ -385,7 +366,7 @@ For Supabase/RLS changes, include:
 
 ---
 
-## Stop Conditions
+## Stop conditions
 
 Stop and ask the human before continuing if any of these happen:
 
@@ -407,20 +388,20 @@ Stop and ask the human before continuing if any of these happen:
 
 ---
 
-## Output Summary Requirements
+## Output summary requirements
 
 At the end of each task, report:
 
-* branch name
-* files changed
-* summary of changes
-* tests/checks run
-* privacy checks run
-* manual verification still needed
-* any skipped checks and why
-* any blockers
-* suggested commit message or PR title
-* whether the task changed behavior, docs only, tests only, or infrastructure
+* Branch name
+* Files changed
+* Summary of changes
+* Tests/checks run
+* Privacy checks run
+* Manual verification still needed
+* Any skipped checks and why
+* Any blockers
+* Suggested commit message or PR title
+* Whether the task changed behavior, docs only, tests only, or infrastructure
 
 Do not claim checks passed unless they were actually run.
 
@@ -428,7 +409,7 @@ Do not claim hosted behavior was verified unless it was actually manually checke
 
 ---
 
-## Deployment Boundaries
+## Deployment boundaries
 
 Agents may prepare deployment instructions, but humans must approve or execute:
 
@@ -445,7 +426,7 @@ Do not run production deploy commands unless the task explicitly authorizes it.
 
 ---
 
-## Documentation and Learning-Log Conventions
+## Documentation and learning-log conventions
 
 Update docs when behavior, architecture, privacy model, or deployment assumptions change.
 
@@ -457,21 +438,21 @@ Keep documentation accurate. Do not overclaim.
 
 ---
 
-## UI Rules
+## UI rules
 
 For UI tasks:
 
-* keep changes focused
-* preserve existing analysis flow unless the task explicitly changes it
-* do not broad redesign during sensitive infrastructure/database/helper tasks
-* use clear empty/loading/error states
-* use friendly errors; do not show raw stack traces or database internals
-* include privacy copy when handling resumes/jobs/profile data
-* maintain existing transient paste/upload behavior unless explicitly changed
+* Keep changes focused.
+* Preserve existing analysis flow unless the task explicitly changes it.
+* Do not broad redesign during sensitive infrastructure/database/helper tasks.
+* Use clear empty/loading/error states.
+* Use friendly errors; do not show raw stack traces or database internals.
+* Include privacy copy when handling resumes/jobs/profile data.
+* Maintain existing transient paste/upload behavior unless explicitly changed.
 
 ---
 
-## Resume-Profile Rules
+## Resume-profile rules
 
 Resume profiles are structured-skills-first.
 
@@ -497,7 +478,7 @@ Resume-profile analysis integration must be explicit and user-visible. Do not si
 
 ---
 
-## Dependency Rules
+## Dependency rules
 
 Avoid new dependencies.
 
@@ -512,23 +493,6 @@ If a dependency seems necessary:
 
 ---
 
-## Agent Tool Strategy
-
-Recommended operating model:
-
-```text
-Primary: Codex Web/Cloud or GitHub Copilot cloud agent for bounded branch/PR tasks.
-Secondary: Claude Code or Codex CLI locally for rescue/debug/build failure work.
-Daily driver / supervised editing: Cursor.
-Human-only: secrets, production SQL, Supabase dashboard actions, RLS changes, env vars, DNS, billing, deploy approvals, destructive operations, and privacy/security decisions.
-```
-
-Agents may prepare changes. Humans approve irreversible actions.
-
-Production remains human-controlled.
-
----
-
-## Final Instruction
+## Final instruction
 
 When in doubt, choose the safer smaller change and ask for human review.
