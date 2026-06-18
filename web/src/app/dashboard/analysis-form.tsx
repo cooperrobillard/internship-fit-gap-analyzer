@@ -2,7 +2,14 @@
 
 import { useAuth, useSession } from "@clerk/nextjs";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import {
   formatTextStats,
   readTextFile,
@@ -33,7 +40,49 @@ const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
   imported: "Imported profile",
 };
 
-function ResumeProfileSkillPreview({ title, skills }: { title: string; skills: string[] }) {
+type ResumeInputMode = "pasted" | "saved_profile";
+
+function formatProfileSkills(skills: string[]): string {
+  return skills
+    .map((skill) => skill.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+export function buildResumeProfileAnalysisText(profile: ResumeProfile): string {
+  const sections = [
+    `Saved structured resume profile: ${profile.profileName.trim()}`,
+  ];
+
+  const description = profile.profileDescription.trim();
+  if (description) {
+    sections.push(`Profile notes: ${description}`);
+  }
+
+  const extractedSkills = formatProfileSkills(profile.extractedSkills);
+  if (extractedSkills) {
+    sections.push(`Extracted skills: ${extractedSkills}`);
+  }
+
+  const userAddedSkills = formatProfileSkills(profile.userAddedSkills);
+  if (userAddedSkills) {
+    sections.push(`User-added skills: ${userAddedSkills}`);
+  }
+
+  sections.push(
+    "Source: saved structured resume profile. This is not raw resume text or a full parsed resume.",
+  );
+
+  return sections.join("\n");
+}
+
+function ResumeProfileSkillPreview({
+  title,
+  skills,
+}: {
+  title: string;
+  skills: string[];
+}) {
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-violet-800/80">
@@ -51,13 +100,25 @@ function ResumeProfileSkillPreview({ title, skills }: { title: string; skills: s
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-violet-800/70">No skills saved in this section.</p>
+        <p className="mt-2 text-xs text-violet-800/70">
+          No skills saved in this section.
+        </p>
       )}
     </div>
   );
 }
 
-function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
+function ResumeProfileAnalysisGuardrail({
+  disabled,
+  inputMode,
+  onInputModeChange,
+  onSelectedProfileChange,
+}: {
+  disabled: boolean;
+  inputMode: ResumeInputMode;
+  onInputModeChange: (mode: ResumeInputMode) => void;
+  onSelectedProfileChange: (profile: ResumeProfile | null) => void;
+}) {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
   const { userId } = useAuth();
@@ -65,11 +126,18 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const selectedProfile =
-    profiles.find((profile) => profile.id === selectedProfileId) ?? null;
+  const canUseProfiles =
+    configured && isLoaded && Boolean(session) && Boolean(userId);
+  const selectedProfile = canUseProfiles
+    ? (profiles.find((profile) => profile.id === selectedProfileId) ?? null)
+    : null;
 
   useEffect(() => {
-    if (!configured || !isLoaded || !session || !userId) {
+    onSelectedProfileChange(selectedProfile);
+  }, [onSelectedProfileChange, selectedProfile]);
+
+  useEffect(() => {
+    if (!canUseProfiles) {
       return;
     }
 
@@ -89,7 +157,9 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
       if (result.status === "success") {
         setProfiles(result.profiles);
         setSelectedProfileId((currentId) =>
-          result.profiles.some((profile) => profile.id === currentId) ? currentId : "",
+          result.profiles.some((profile) => profile.id === currentId)
+            ? currentId
+            : "",
         );
       } else {
         setProfiles([]);
@@ -105,28 +175,76 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [configured, isLoaded, session, userId]);
+  }, [canUseProfiles, session, userId]);
 
   return (
     <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50/70 p-4 text-sm text-violet-950">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-medium">Saved resume profiles</p>
+          <p className="font-medium">Resume input source</p>
           <p className="mt-1 text-violet-900/85">
-            Saved resume profiles store structured skills and notes, not raw resume text.
-            Profile-based analysis is being prepared, but this analysis still uses the
-            pasted or uploaded resume input below.
+            Choose whether this run uses pasted/uploaded transient resume text
+            or a saved structured profile. Saved profile analysis uses
+            structured skills and notes from your saved profile, not raw resume
+            text.
           </p>
         </div>
-        <Link href="#resume-profiles" className="text-xs font-medium text-violet-950 underline">
+        <Link
+          href="#resume-profiles"
+          className="text-xs font-medium text-violet-950 underline"
+        >
           Manage profiles
         </Link>
       </div>
 
+      <div
+        className="mt-4 grid gap-2 sm:grid-cols-2"
+        role="radiogroup"
+        aria-label="Resume input source"
+      >
+        <label className="flex gap-2 rounded-md border border-violet-200 bg-white px-3 py-2 text-sm text-violet-950">
+          <input
+            type="radio"
+            name="resume-input-mode"
+            value="pasted"
+            checked={inputMode === "pasted"}
+            disabled={disabled}
+            onChange={() => onInputModeChange("pasted")}
+          />
+          <span>
+            <span className="block font-medium">
+              Use pasted/uploaded resume input
+            </span>
+            <span className="block text-xs text-violet-800/75">
+              Default. Uses the text box below for this run.
+            </span>
+          </span>
+        </label>
+        <label className="flex gap-2 rounded-md border border-violet-200 bg-white px-3 py-2 text-sm text-violet-950">
+          <input
+            type="radio"
+            name="resume-input-mode"
+            value="saved_profile"
+            checked={inputMode === "saved_profile"}
+            disabled={disabled || !canUseProfiles}
+            onChange={() => onInputModeChange("saved_profile")}
+          />
+          <span>
+            <span className="block font-medium">
+              Use saved structured resume profile
+            </span>
+            <span className="block text-xs text-violet-800/75">
+              Converts profile name, notes, and saved skills only at analysis
+              time.
+            </span>
+          </span>
+        </label>
+      </div>
+
       {!configured ? (
         <p className="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700">
-          Resume profiles are unavailable in this environment, so use pasted or uploaded
-          resume text for this analysis.
+          Resume profiles are unavailable in this environment, so use pasted or
+          uploaded resume text for this analysis.
         </p>
       ) : null}
 
@@ -138,12 +256,12 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
 
       {configured && isLoaded && (!session || !userId) ? (
         <p className="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700">
-          Sign in to preview saved resume profiles. You can still use the pasted or
+          Sign in to use saved resume profiles. You can still use the pasted or
           uploaded resume input below.
         </p>
       ) : null}
 
-      {configured && session && userId ? (
+      {canUseProfiles ? (
         <>
           {isLoading ? (
             <p className="mt-3 text-xs text-violet-800" role="status">
@@ -156,22 +274,25 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
               className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
               role="alert"
             >
-              Could not load resume profiles right now. Use pasted or uploaded resume
-              text below and try profiles again later.
+              Could not load resume profiles right now. Use pasted or uploaded
+              resume text below and try profiles again later.
             </p>
           ) : null}
 
           {!isLoading && !loadError && profiles.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-violet-200 bg-white px-3 py-2 text-xs text-violet-800">
-              No saved resume profiles yet. Create one in the Resume profiles section;
-              this analysis still needs pasted or uploaded resume text.
+              No saved resume profiles yet. Create one in the Resume profiles
+              section, or use pasted/uploaded resume text for this analysis.
             </p>
           ) : null}
 
           {profiles.length > 0 ? (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-violet-950" htmlFor="resume-profile-preview-select">
-                Preview a saved profile (does not fill or run analysis)
+              <label
+                className="block text-sm font-medium text-violet-950"
+                htmlFor="resume-profile-preview-select"
+              >
+                Saved profile for this analysis
               </label>
               <select
                 id="resume-profile-preview-select"
@@ -188,10 +309,23 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
                 ))}
               </select>
               <p className="mt-1 text-xs text-violet-800/70">
-                Selecting a profile only shows a read-only preview. It does not overwrite
-                the resume text box or change the analysis request.
+                Selecting a profile keeps the preview visible and does not
+                overwrite the resume text box. It only affects analysis when the
+                saved-profile mode is selected.
               </p>
             </div>
+          ) : null}
+
+          {inputMode === "saved_profile" &&
+          profiles.length > 0 &&
+          !selectedProfile ? (
+            <p
+              className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+              role="alert"
+            >
+              Choose a saved structured resume profile before running
+              profile-based analysis.
+            </p>
           ) : null}
 
           {selectedProfile ? (
@@ -226,7 +360,6 @@ function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
     </div>
   );
 }
-
 
 function SkillList({
   title,
@@ -287,6 +420,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [sourceUrl, setSourceUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [resumeText, setResumeText] = useState("");
+  const [resumeInputMode, setResumeInputMode] =
+    useState<ResumeInputMode>("pasted");
+  const [selectedResumeProfile, setSelectedResumeProfile] =
+    useState<ResumeProfile | null>(null);
   const [jobText, setJobText] = useState("");
   const [resumeFileFeedback, setResumeFileFeedback] =
     useState<FileUploadFeedback | null>(null);
@@ -313,7 +450,18 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const resumeStats = formatTextStats(resumeText);
   const jobStats = formatTextStats(jobText);
   const canRunAnalysis =
-    resumeText.trim().length > 0 && jobText.trim().length > 0 && !isAnalyzing;
+    jobText.trim().length > 0 &&
+    (resumeInputMode === "saved_profile"
+      ? Boolean(selectedResumeProfile)
+      : resumeText.trim().length > 0) &&
+    !isAnalyzing;
+
+  const handleSelectedResumeProfileChange = useCallback(
+    (profile: ResumeProfile | null) => {
+      setSelectedResumeProfile(profile);
+    },
+    [],
+  );
 
   function clearAnalysisOutput() {
     setResult(null);
@@ -332,6 +480,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setJobFileFeedback(null);
     resetFileInput(resumeFileInputRef.current);
     resetFileInput(jobFileInputRef.current);
+    setResumeInputMode("pasted");
     setSampleInputsLoaded(true);
     setValidationError(null);
     setAnalysisError(null);
@@ -340,6 +489,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
   function handleClearInputs() {
     setResumeText("");
+    setResumeInputMode("pasted");
     setJobText("");
     setJobTitle("");
     setCompany("");
@@ -375,6 +525,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     }
 
     setResumeText(result.text);
+    setResumeInputMode("pasted");
     setResumeFileFeedback({ kind: "success" });
     setSampleInputsLoaded(false);
     setValidationError(null);
@@ -404,10 +555,17 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   async function handleAnalyze() {
     const trimmedResume = resumeText.trim();
     const trimmedJob = jobText.trim();
+    const profileResumeText = selectedResumeProfile
+      ? buildResumeProfileAnalysisText(selectedResumeProfile).trim()
+      : "";
+    const analysisResumeText =
+      resumeInputMode === "saved_profile" ? profileResumeText : trimmedResume;
 
-    if (!trimmedResume && !trimmedJob) {
+    if (!analysisResumeText && !trimmedJob) {
       setValidationError(
-        "Add resume text and a job description before running analysis.",
+        resumeInputMode === "saved_profile"
+          ? "Choose a saved structured resume profile and add a job description before running analysis."
+          : "Add resume text and a job description before running analysis.",
       );
       setAnalysisError(null);
       setResult(null);
@@ -416,8 +574,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       return;
     }
 
-    if (!trimmedResume) {
-      setValidationError("Resume text is required. Paste skills and experience to compare.");
+    if (!analysisResumeText) {
+      setValidationError(
+        resumeInputMode === "saved_profile"
+          ? "Choose a saved structured resume profile before running analysis."
+          : "Resume text is required. Paste skills and experience to compare.",
+      );
       setAnalysisError(null);
       setResult(null);
       setLastInput(null);
@@ -444,7 +606,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setLastInput(null);
 
     const analysisInput: WebAnalysisInput = {
-      resumeText: trimmedResume,
+      resumeText: analysisResumeText,
       jobText: trimmedJob,
       jobTitle: jobTitle.trim() || undefined,
       company: company.trim() || undefined,
@@ -515,7 +677,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   }
 
   return (
-    <div className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}>
+    <div
+      className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-violet-800">
         Job Fit &amp; Skill-Gap Analyzer
       </p>
@@ -523,18 +687,19 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         Compare one resume to one job description
       </h2>
       <p className="mt-2 text-violet-900/90">
-        Paste or upload plain <code className="text-xs">.txt</code> resume and job text
-        below. The hosted app sends them for a <strong>one-time rule-based</strong>{" "}
-        comparison (keyword taxonomy—not AI). <strong>Running analysis does not save
-        anything</strong> until you choose Save later—and save stores{" "}
-        <strong>structured skills and metadata only</strong>, not the resume or job body
-        text. Uploaded files are read in your browser only—not stored as files or
-        profiles.
+        Paste or upload plain <code className="text-xs">.txt</code> resume and
+        job text below. The hosted app sends them for a{" "}
+        <strong>one-time rule-based</strong> comparison (keyword taxonomy—not
+        AI). <strong>Running analysis does not save anything</strong> until you
+        choose Save later—and save stores{" "}
+        <strong>structured skills and metadata only</strong>, not the resume or
+        job body text. Uploaded files are read in your browser only—not stored
+        as files or profiles.
       </p>
       <p className="mt-2 text-sm text-violet-900/80">
-        New here? Use <strong>Try sample inputs</strong> for a fictional demo resume and
-        job posting—then replace with your own paste or <code className="text-xs">.txt</code>{" "}
-        upload when ready.{" "}
+        New here? Use <strong>Try sample inputs</strong> for a fictional demo
+        resume and job posting—then replace with your own paste or{" "}
+        <code className="text-xs">.txt</code> upload when ready.{" "}
         <Link href="/privacy" className="font-medium text-violet-950 underline">
           Privacy &amp; data controls
         </Link>
@@ -543,11 +708,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/80 px-3 py-3 text-sky-950">
         <p className="font-medium">Quick try without your own resume</p>
         <p className="mt-1 text-sm text-sky-900/90">
-          Load fictional demo text for Alex Rivera and a Demo Robotics internship
-          posting. All fields are made up for exploration—not real people or employers.
-          Loading sample inputs does <strong>not</strong> run or save analysis; click{" "}
-          <strong>Run analysis</strong> when you are ready. Replace the text anytime
-          with paste or transient <code className="text-xs">.txt</code> upload.
+          Load fictional demo text for Alex Rivera and a Demo Robotics
+          internship posting. All fields are made up for exploration—not real
+          people or employers. Loading sample inputs does <strong>not</strong>{" "}
+          run or save analysis; click <strong>Run analysis</strong> when you are
+          ready. Replace the text anytime with paste or transient{" "}
+          <code className="text-xs">.txt</code> upload.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button
@@ -569,8 +735,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         </div>
         {sampleInputsLoaded ? (
           <p className="mt-2 text-xs text-emerald-800" role="status">
-            Fictional demo resume, job description, and labels loaded. Click Run analysis
-            when ready—nothing is saved until you choose Save after results appear.
+            Fictional demo resume, job description, and labels loaded. Click Run
+            analysis when ready—nothing is saved until you choose Save after
+            results appear.
           </p>
         ) : null}
       </div>
@@ -580,13 +747,23 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           Resume text (required for analysis)
         </legend>
         <p className="text-sm text-violet-900/80">
-          Paste or upload a plain <code className="text-xs">.txt</code> file with skills,
-          experience, and education. Used only for this comparison run—it is{" "}
-          <strong>not saved</strong> to your account when you click Save (only
-          matched/missing skills and optional labels are stored). The file itself is not
-          kept as a resume profile.
+          Paste or upload a plain <code className="text-xs">.txt</code> file
+          with skills, experience, and education. Used only for this comparison
+          run—it is <strong>not saved</strong> to your account when you click
+          Save (only matched/missing skills and optional labels are stored). The
+          file itself is not kept as a resume profile.
         </p>
-        <ResumeProfileAnalysisGuardrail disabled={isAnalyzing} />
+        <ResumeProfileAnalysisGuardrail
+          disabled={isAnalyzing}
+          inputMode={resumeInputMode}
+          onInputModeChange={(mode) => {
+            setResumeInputMode(mode);
+            setValidationError(null);
+            setAnalysisError(null);
+            clearAnalysisOutput();
+          }}
+          onSelectedProfileChange={handleSelectedResumeProfileChange}
+        />
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
             className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
@@ -606,13 +783,14 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             />
           </label>
           <span className="text-xs text-violet-800/70">
-            Convenience only—read in your browser, not uploaded to cloud storage.
+            Convenience only—read in your browser, not uploaded to cloud
+            storage.
           </span>
         </div>
         {resumeFileFeedback?.kind === "success" ? (
           <p className="mt-2 text-xs text-emerald-800" role="status">
-            Loaded resume text from file. The file is not saved as a file or resume
-            profile.
+            Loaded resume text from file. The file is not saved as a file or
+            resume profile.
           </p>
         ) : null}
         {resumeFileFeedback?.kind === "error" ? (
@@ -625,6 +803,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             value={resumeText}
             onChange={(event) => {
               setResumeText(event.target.value);
+              setResumeInputMode("pasted");
               setSampleInputsLoaded(false);
             }}
             rows={5}
@@ -632,7 +811,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             placeholder="e.g. Python, SQL, Git, data analysis, REST APIs, teamwork…"
             aria-describedby="resume-text-stats"
           />
-          <span id="resume-text-stats" className="mt-1 block text-xs text-violet-800/70">
+          <span
+            id="resume-text-stats"
+            className="mt-1 block text-xs text-violet-800/70"
+          >
             {resumeStats}
           </span>
         </label>
@@ -643,10 +825,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           Job description text (required for analysis)
         </legend>
         <p className="text-sm text-violet-900/80">
-          Paste or upload a plain <code className="text-xs">.txt</code> file with posting
-          requirements or description. Like resume text, this is used for analysis in
-          memory and is <strong>not stored</strong> as raw job text when you save
-          structured results. The file itself is not kept as a saved job posting.
+          Paste or upload a plain <code className="text-xs">.txt</code> file
+          with posting requirements or description. Like resume text, this is
+          used for analysis in memory and is <strong>not stored</strong> as raw
+          job text when you save structured results. The file itself is not kept
+          as a saved job posting.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
@@ -667,13 +850,14 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             />
           </label>
           <span className="text-xs text-violet-800/70">
-            Convenience only—read in your browser, not uploaded to cloud storage.
+            Convenience only—read in your browser, not uploaded to cloud
+            storage.
           </span>
         </div>
         {jobFileFeedback?.kind === "success" ? (
           <p className="mt-2 text-xs text-emerald-800" role="status">
-            Loaded job description text from file. The file is not saved as a file or raw
-            job posting.
+            Loaded job description text from file. The file is not saved as a
+            file or raw job posting.
           </p>
         ) : null}
         {jobFileFeedback?.kind === "error" ? (
@@ -693,7 +877,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             placeholder="e.g. Intern role requiring Python, SQL, FastAPI, and communication skills…"
             aria-describedby="job-text-stats"
           />
-          <span id="job-text-stats" className="mt-1 block text-xs text-violet-800/70">
+          <span
+            id="job-text-stats"
+            className="mt-1 block text-xs text-violet-800/70"
+          >
             {jobStats}
           </span>
         </label>
@@ -704,9 +891,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           Labels for saved results (optional)
         </legend>
         <p className="text-sm text-violet-900/80">
-          Optional metadata if you save after analysis. Helps you find this comparison
-          in your saved list—job title, company, URL, and notes only; not resume or job
-          body text.
+          Optional metadata if you save after analysis. Helps you find this
+          comparison in your saved list—job title, company, URL, and notes only;
+          not resume or job body text.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
@@ -761,7 +948,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               placeholder="e.g. Referral from Alex · apply by Friday"
             />
             <span className="mt-1 block text-xs text-violet-800/70">
-              Short reminders for yourself—deadlines, referrals, or interview stage.
+              Short reminders for yourself—deadlines, referrals, or interview
+              stage.
             </span>
           </label>
         </div>
@@ -798,13 +986,17 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
       {!canRunAnalysis && !isAnalyzing && !validationError ? (
         <p className="mt-2 text-xs text-violet-800/80">
-          Add both resume and job description text to enable analysis.
+          {resumeInputMode === "saved_profile"
+            ? "Choose a saved structured resume profile and add job description text to enable analysis."
+            : "Add both resume and job description text to enable analysis."}
         </p>
       ) : null}
 
       {isAnalyzing ? (
         <p className="mt-2 text-sm text-violet-900" role="status">
-          Comparing resume and job text with the rule-based analyzer…
+          {resumeInputMode === "saved_profile"
+            ? "Comparing saved structured profile skills and job text with the rule-based analyzer…"
+            : "Comparing resume and job text with the rule-based analyzer…"}
         </p>
       ) : null}
 
@@ -825,11 +1017,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 Optionally add job title, company, or notes above before saving
               </li>
               <li>
-                Click <strong>Save structured results</strong> to store skills and
-                metadata—or skip save and run another comparison
+                Click <strong>Save structured results</strong> to store skills
+                and metadata—or skip save and run another comparison
               </li>
               <li>
-                After saving, use the list below to search, compare, export, or delete
+                After saving, use the list below to search, compare, export, or
+                delete
               </li>
             </ul>
           </div>
@@ -851,8 +1044,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               Save structured results (optional)
             </p>
             <p className="mt-1 text-xs text-zinc-600">
-              Stores matched/missing skills plus any labels you entered—not the resume
-              or job description you pasted. You can close this page without saving.
+              Stores matched/missing skills plus any labels you entered—not the
+              resume or job description you pasted. You can close this page
+              without saving.
             </p>
 
             {!configured ? (
@@ -863,7 +1057,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             ) : null}
 
             {!isLoaded ? (
-              <p className="mt-2 text-xs text-zinc-500">Loading Clerk session…</p>
+              <p className="mt-2 text-xs text-zinc-500">
+                Loading Clerk session…
+              </p>
             ) : null}
 
             {isLoaded && !userId ? (
@@ -884,7 +1080,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               disabled={!canAttemptSave || saveUiState.kind === "saving"}
               className="mt-3 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saveUiState.kind === "saving" ? "Saving…" : "Save structured results"}
+              {saveUiState.kind === "saving"
+                ? "Saving…"
+                : "Save structured results"}
             </button>
 
             {saveUiState.kind === "success" ? (
@@ -894,9 +1092,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               >
                 <p className="font-medium">Structured results saved</p>
                 <p className="mt-1">
-                  Skills and metadata are in your account. Pasted resume and job text
-                  were not stored. Your saved analyses list below should update
-                  shortly—you can compare, export, or delete from there.
+                  Skills and metadata are in your account. Pasted resume and job
+                  text were not stored. Your saved analyses list below should
+                  update shortly—you can compare, export, or delete from there.
                 </p>
               </div>
             ) : null}
