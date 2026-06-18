@@ -3609,3 +3609,11 @@ This step reinforced the difference between authoring a migration and applying i
 - Added privacy-facing copy clarifying that profiles store structured skills and notes, not raw resume text.
 - Preserved the existing analysis input flow; saved resume profiles are not used in analysis yet.
 - Manually tested create/edit/delete behavior and confirmed test profiles were removed afterward.
+
+## Dev 18 — Durable agent workflow docs
+
+- Created a repo-root `AGENTS.md` to give coding agents durable project instructions.
+- Added an agent operating runbook covering safe task startup, planning, checks, privacy checks, Supabase/RLS boundaries, UI steps, hardening steps, and deployment boundaries.
+- Added reusable task templates for normal coding, docs-only, Supabase/RLS-sensitive, UI polish, production hardening, and deployment/domain work.
+- Added tool-specific prompts for Codex Web/Cloud, Codex CLI, Claude Code, GitHub Copilot coding agent, and Cursor/background agents.
+- Preserved the project’s small-branch, privacy-safe workflow while allowing bounded agent autonomy for repetitive implementation tasks.
