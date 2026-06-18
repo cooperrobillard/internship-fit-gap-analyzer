@@ -3570,3 +3570,15 @@ Verification:
 
 Learning:
 This step reinforced the difference between authoring a migration and applying it. Writing the migration as a reviewed artifact first gives us one more safety checkpoint before changing the hosted database.
+
+## Dev 18 — Structured resume-profile migration verification
+
+- Verified the hosted Supabase `resume_profiles` table is now in the structured-skills-first shape.
+- Confirmed the legacy `resume_text` and `label` columns are no longer present.
+- Confirmed `profile_name`, `profile_description`, `extracted_skills`, `user_added_skills`, `source_type`, `created_at`, and `updated_at` are present.
+- Confirmed `extracted_skills` and `user_added_skills` use `jsonb`.
+- Verified indexes for user-owned resume-profile lookup.
+- Verified RLS policies still use Clerk `auth.jwt()` ownership.
+- Ran a rollback-only simulated two-user RLS test and confirmed the table remained empty afterward.
+- Smoke tested the hosted app after the database verification.
+- Kept this step documentation/database-verification only; helper functions and UI remain future work.
