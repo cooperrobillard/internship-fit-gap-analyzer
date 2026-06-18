@@ -3600,3 +3600,12 @@ This step reinforced the difference between authoring a migration and applying i
 - Confirmed helper logic remains structured-skills-first and does not reintroduce `resume_text`.
 - Kept tests/manual coverage isolated from hosted Supabase writes.
 - Preserved the separation between helper code and future profile-management UI.
+
+## Dev 18 Step 4 — Resume-profile management UI foundation
+
+- Added a basic authenticated UI foundation for managing structured resume profiles.
+- Connected the UI to the typed Supabase helper functions for listing, creating, updating, and deleting profiles.
+- Kept resume profiles structured-skills-first and did not add raw resume text storage.
+- Added privacy-facing copy clarifying that profiles store structured skills and notes, not raw resume text.
+- Preserved the existing analysis input flow; saved resume profiles are not used in analysis yet.
+- Manually tested create/edit/delete behavior and confirmed test profiles were removed afterward.
