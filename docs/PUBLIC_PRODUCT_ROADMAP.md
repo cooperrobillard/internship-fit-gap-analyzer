@@ -77,7 +77,7 @@ Browser → Vercel (Next.js) → Clerk
 | Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
 | Clerk auth | N/A | Yes | Yes | P0 | |
 | RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
-| Persistent resume profiles | No | No | Later | P2 | Pre-migration review: [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md); confirm live RLS predicate before apply |
+| Persistent resume profiles | No | Schema only | Later | P2 | Dev 18: structured table verified — [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md); helpers/UI not implemented |
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
 | Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
@@ -234,8 +234,10 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - Step 8 — **saved-analysis RLS pattern review** ([`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md))
 - Step 9 — **resume-profile SQL draft aligned** with saved-analysis `clerk_user_id` + RLS ([`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md)) — **not applied**
 - Step 10 — **pre-migration review** ([`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md)) — design ready; **confirm live Supabase RLS predicate before apply**
+- Step 11 — **migration file** ([`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql))
+- **Dev 18 — migration apply + verification** ([`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md)) — hosted structured schema and RLS confirmed; table empty; helpers/UI not implemented
 
-**Not implemented:** migration apply, helpers, or UI.
+**Not implemented:** helpers or UI.
 
 ### Version 18 — Public readiness / security / privacy
 
@@ -267,11 +269,15 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 **Version 17 Step 11 — Structured resume-profile migration file** — **Complete**
 
-- [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) — ALTER migration for legacy empty `resume_profiles` (not applied)
+- [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) — ALTER migration for legacy empty `resume_profiles`
 
-**Recommended next:** **Version 17 Step 12 — apply migration on staging** (Supabase SQL editor), then two-user RLS verification. Resume profiles **not implemented** in app code.
+**Dev 18 — Apply migration + verify RLS** — **Complete**
 
-**Out of scope until gated:** production migration without predicate check, raw resume text, profile UI without RLS + privacy copy.
+- [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified; `resume_profiles` row count 0; helpers/UI not implemented
+
+**Recommended next:** Typed Supabase helpers for structured resume profiles, then tests, then profile-management UI.
+
+**Out of scope until gated:** raw resume text, profile UI without helpers + privacy copy.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
