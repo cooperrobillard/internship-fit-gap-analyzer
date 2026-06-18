@@ -275,7 +275,11 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified; `resume_profiles` row count 0; helpers/UI not implemented
 
-**Recommended next:** Typed Supabase helpers for structured resume profiles, then tests, then profile-management UI.
+**Recommended next:** Tests for resume-profile helpers (when a web test runner exists), then profile-management UI.
+
+**Dev 18 Step 2 — Typed resume-profile helpers** — **Complete**
+
+- [`web/src/lib/supabase/resume-profiles.ts`](../web/src/lib/supabase/resume-profiles.ts) — list/create/update/delete; structured skills only; no UI yet
 
 **Out of scope until gated:** raw resume text, profile UI without helpers + privacy copy.
 

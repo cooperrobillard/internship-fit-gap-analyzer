@@ -165,8 +165,8 @@ Ran after migration verification to confirm existing flows were unaffected. Use 
 
 ## Remaining work
 
-- Add typed **Supabase helper functions** for structured resume profiles (list, create, update, delete, export).
-- Add **tests** for helper behavior.
+- ~~Add typed **Supabase helper functions** for structured resume profiles~~ — **Dev 18 Step 2:** [`web/src/lib/supabase/resume-profiles.ts`](../web/src/lib/supabase/resume-profiles.ts)
+- Add **tests** for helper behavior (no web test framework yet; pure normalize/map exports are test-ready).
 - Add **profile-management UI** later (after helpers and privacy copy are ready).
 - Update privacy / data-control copy before user-facing profile save.
 
