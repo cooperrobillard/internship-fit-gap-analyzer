@@ -18,8 +18,11 @@ export type ResumeProfileSourceType = (typeof RESUME_PROFILE_SOURCE_TYPES)[numbe
 
 const DEFAULT_SOURCE_TYPE: ResumeProfileSourceType = "manual";
 
-const RESUME_PROFILE_FIELDS =
+/** Safe select list — structured fields only; no resume_text or raw body text. */
+export const RESUME_PROFILE_QUERY_FIELDS =
   "id, clerk_user_id, profile_name, profile_description, extracted_skills, user_added_skills, source_type, created_at, updated_at";
+
+const RESUME_PROFILE_FIELDS = RESUME_PROFILE_QUERY_FIELDS;
 
 /** Supabase row shape (snake_case). Not exposed to UI callers. */
 export type ResumeProfileRow = {
@@ -158,13 +161,18 @@ function normalizeProfileName(value: string): string {
   return value.trim();
 }
 
-function validateProfileName(name: string): string | null {
-  const trimmed = normalizeProfileName(name);
-  if (!trimmed) {
-    return "Profile name cannot be empty.";
+export type ValidateResumeProfileNameResult =
+  | { ok: true; profileName: string }
+  | { ok: false; error: string };
+
+/** Trim and validate a profile name before create/update. */
+export function validateResumeProfileName(name: string): ValidateResumeProfileNameResult {
+  const profileName = normalizeProfileName(name);
+  if (!profileName) {
+    return { ok: false, error: "Profile name cannot be empty." };
   }
 
-  return null;
+  return { ok: true, profileName };
 }
 
 /**
@@ -229,19 +237,28 @@ export function mapResumeProfileRow(row: ResumeProfileRow): ResumeProfile {
   };
 }
 
-function buildCreateRow(
-  userId: string,
+export type BuildResumeProfileInsertRowResult =
+  | { ok: true; row: Record<string, unknown> }
+  | { ok: false; error: string };
+
+/**
+ * Build the Supabase insert row for createResumeProfile.
+ * clerk_user_id always comes from clerkUserId, never from input.
+ */
+export function buildResumeProfileInsertRow(
+  clerkUserId: string,
   input: CreateResumeProfileInput,
-): { row: Record<string, unknown> } | { error: string } {
-  const nameError = validateProfileName(input.profileName);
-  if (nameError) {
-    return { error: nameError };
+): BuildResumeProfileInsertRowResult {
+  const nameResult = validateResumeProfileName(input.profileName);
+  if (!nameResult.ok) {
+    return { ok: false, error: nameResult.error };
   }
 
   return {
+    ok: true,
     row: {
-      clerk_user_id: userId,
-      profile_name: normalizeProfileName(input.profileName),
+      clerk_user_id: clerkUserId,
+      profile_name: nameResult.profileName,
       profile_description: normalizeOptionalDescription(input.profileDescription),
       extracted_skills: normalizeSkillStrings(input.extractedSkills ?? []),
       user_added_skills: normalizeSkillStrings(input.userAddedSkills ?? []),
@@ -250,18 +267,23 @@ function buildCreateRow(
   };
 }
 
-function buildUpdatePatch(
+export type BuildResumeProfileUpdatePatchResult =
+  | { ok: true; patch: Record<string, unknown> }
+  | { ok: false; error: string };
+
+/** Build the Supabase update patch for updateResumeProfile. */
+export function buildResumeProfileUpdatePatch(
   input: UpdateResumeProfileInput,
-): { patch: Record<string, unknown> } | { error: string } {
+): BuildResumeProfileUpdatePatchResult {
   const patch: Record<string, unknown> = {};
 
   if (input.profileName !== undefined) {
-    const nameError = validateProfileName(input.profileName);
-    if (nameError) {
-      return { error: nameError };
+    const nameResult = validateResumeProfileName(input.profileName);
+    if (!nameResult.ok) {
+      return { ok: false, error: nameResult.error };
     }
 
-    patch.profile_name = normalizeProfileName(input.profileName);
+    patch.profile_name = nameResult.profileName;
   }
 
   if (input.profileDescription !== undefined) {
@@ -281,11 +303,14 @@ function buildUpdatePatch(
   }
 
   if (Object.keys(patch).length === 0) {
-    return { error: "No resume profile fields were provided to update." };
+    return { ok: false, error: "No resume profile fields were provided to update." };
   }
 
-  return { patch };
+  return { ok: true, patch };
 }
+
+/** Alias for normalizeSkillStrings — skill list normalization at the app boundary. */
+export const normalizeSkillList = normalizeSkillStrings;
 
 /**
  * List structured resume profiles for the signed-in Clerk user (newest first).
@@ -347,8 +372,8 @@ export async function createResumeProfile(
     return { status: "error", message: userResult.message };
   }
 
-  const rowResult = buildCreateRow(userResult.userId, input);
-  if ("error" in rowResult) {
+  const rowResult = buildResumeProfileInsertRow(userResult.userId, input);
+  if (!rowResult.ok) {
     return { status: "error", message: rowResult.error };
   }
 
@@ -405,8 +430,8 @@ export async function updateResumeProfile(
     return { status: "error", message: idResult.message };
   }
 
-  const patchResult = buildUpdatePatch(input);
-  if ("error" in patchResult) {
+  const patchResult = buildResumeProfileUpdatePatch(input);
+  if (!patchResult.ok) {
     return { status: "error", message: patchResult.error };
   }
 

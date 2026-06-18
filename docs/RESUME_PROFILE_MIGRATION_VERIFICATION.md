@@ -166,8 +166,71 @@ Ran after migration verification to confirm existing flows were unaffected. Use 
 ## Remaining work
 
 - ~~Add typed **Supabase helper functions** for structured resume profiles~~ — **Dev 18 Step 2:** [`web/src/lib/supabase/resume-profiles.ts`](../web/src/lib/supabase/resume-profiles.ts)
-- Add **tests** for helper behavior (no web test framework yet; pure normalize/map exports are test-ready).
+- ~~Add **tests** for helper behavior~~ — **Dev 18 Step 3:** manual coverage checklist below (no web test runner in `web/package.json`)
 - Add **profile-management UI** later (after helpers and privacy copy are ready).
+
+---
+
+## Helper test coverage (Dev 18 Step 3)
+
+The web app has **no Vitest/Jest test script** in `web/package.json`, so Step 3 adds **exported pure utilities** plus this manual checklist instead of automated tests. Verify with `cd web && npm run lint && npm run build` after helper changes.
+
+**Module:** [`web/src/lib/supabase/resume-profiles.ts`](../web/src/lib/supabase/resume-profiles.ts)
+
+**Exported pure utilities (test-ready):**
+
+| Export | Purpose |
+|--------|---------|
+| `normalizeSkillStrings` / `normalizeSkillList` | Skill list normalization |
+| `validateResumeProfileName` | Trim + reject empty names |
+| `mapResumeProfileRow` | snake_case row → camelCase `ResumeProfile` |
+| `parseResumeProfileSourceType` | Safe source_type parsing |
+| `buildResumeProfileInsertRow` | Insert payload; `clerk_user_id` from param |
+| `buildResumeProfileUpdatePatch` | Update patch builder |
+| `RESUME_PROFILE_QUERY_FIELDS` | Select list — no `resume_text` |
+
+### Manual checklist
+
+**1. Skill normalization** (`normalizeSkillStrings`)
+
+- [ ] `["  Python  ", "SQL"]` → `["Python", "SQL"]`
+- [ ] `["", "   ", "Git"]` → `["Git"]`
+- [ ] `["python", "Python", "PYTHON"]` → `["python"]` (first casing kept)
+- [ ] `[{ skill: " React " }, "react"]` → `["React"]`
+- [ ] `null`, non-array, or mixed invalid values → `[]`
+
+**2. Row mapping** (`mapResumeProfileRow`)
+
+- [ ] Maps `clerk_user_id` → `clerkUserId`, `profile_name` → `profileName`, etc.
+- [ ] Invalid `extracted_skills` / `user_added_skills` jsonb → `[]`
+- [ ] Returns `ResumeProfile` only — no snake_case row exposed to callers
+
+**3. Input validation**
+
+- [ ] `createResumeProfile` with empty `clerkUserId` → error (session message)
+- [ ] `buildResumeProfileInsertRow` / create with `profileName: "   "` → `"Profile name cannot be empty."`
+- [ ] `updateResumeProfile` with empty `profileId` → error
+- [ ] `buildResumeProfileUpdatePatch({ profileName: "" })` → empty-name error
+- [ ] `updateResumeProfile` / `deleteResumeProfile` with empty `clerkUserId` → error
+
+**4. Query scoping** (inspect helper source or use a local mock)
+
+- [ ] `listResumeProfiles` → `.from("resume_profiles").eq("clerk_user_id", userId).order("created_at", { ascending: false })`
+- [ ] `createResumeProfile` → insert row `clerk_user_id` equals passed Clerk user id (not from input)
+- [ ] `updateResumeProfile` → `.eq("id", profileId).eq("clerk_user_id", userId)`
+- [ ] `deleteResumeProfile` → lookup and delete both filter `id` + `clerk_user_id`
+
+**5. Privacy regression**
+
+- [ ] `RESUME_PROFILE_QUERY_FIELDS` does not include `resume_text`
+- [ ] `CreateResumeProfileInput` / `UpdateResumeProfileInput` / `ResumeProfile` have no raw resume text fields
+- [ ] Helpers accept browser `SupabaseClient` only — no service-role key usage in module
+
+### Left for future automated / integration tests
+
+- Real Supabase RLS two-user isolation via helpers (after web test runner added)
+- End-to-end create/list/update/delete against staging with Clerk session
+- UI flows and dashboard wiring
 - Update privacy / data-control copy before user-facing profile save.
 
 This verification does **not** claim full production readiness or a completed security audit.
