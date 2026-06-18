@@ -3592,3 +3592,11 @@ This step reinforced the difference between authoring a migration and applying i
 - Ensured update/delete helpers filter by both `id` and `clerk_user_id` to align with RLS and avoid cross-user writes.
 - Normalized skill arrays before writing them to Supabase jsonb fields.
 - Kept this step helper-only; profile-management UI remains future work.
+
+## Dev 18 Step 3 — Resume-profile helper coverage
+
+- Added focused coverage for the structured resume-profile helper layer before building profile UI.
+- Verified helper behavior around skill normalization, row mapping, input validation, and user-owned query scoping.
+- Confirmed helper logic remains structured-skills-first and does not reintroduce `resume_text`.
+- Kept tests/manual coverage isolated from hosted Supabase writes.
+- Preserved the separation between helper code and future profile-management UI.
