@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnalysisForm } from "@/app/dashboard/analysis-form";
+import { ResumeProfilesPanel } from "@/app/dashboard/resume-profiles-panel";
 import { SavedAnalysesPanel } from "@/app/dashboard/saved-analyses-panel";
 import { SupabaseStatus } from "@/app/dashboard/supabase-status";
 import { TestSaveAction } from "@/app/dashboard/test-save-action";
@@ -21,6 +22,7 @@ export function DashboardInteractiveSection() {
       <SupabaseStatus />
       <TestSaveAction onSaveSuccess={onSaveSuccess} />
       <SavedAnalysesPanel refreshKey={refreshKey} />
+      <ResumeProfilesPanel />
     </>
   );
 }

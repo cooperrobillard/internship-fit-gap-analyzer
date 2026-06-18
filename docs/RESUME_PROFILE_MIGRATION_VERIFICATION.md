@@ -169,6 +169,8 @@ Ran after migration verification to confirm existing flows were unaffected. Use 
 - ~~Add **tests** for helper behavior~~ — **Dev 18 Step 3:** manual coverage checklist below (no web test runner in `web/package.json`)
 - Add **profile-management UI** later (after helpers and privacy copy are ready).
 
+**Dev 18 Step 4:** Basic management UI added — [`resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx). Profiles are **not** connected to analysis yet.
+
 ---
 
 ## Helper test coverage (Dev 18 Step 3)

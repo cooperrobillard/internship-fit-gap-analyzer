@@ -10,7 +10,7 @@ const placeholderCards = [
   },
   {
     title: "Resume profiles",
-    body: "Future: manage resume versions for comparisons. Not available yet.",
+    body: "Structured skill lists are available in the dashboard above. Picking a profile for analysis is not wired yet.",
   },
   {
     title: "Recurring gaps",

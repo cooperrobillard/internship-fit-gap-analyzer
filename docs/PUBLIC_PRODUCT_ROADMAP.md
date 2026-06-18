@@ -77,7 +77,7 @@ Browser → Vercel (Next.js) → Clerk
 | Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
 | Clerk auth | N/A | Yes | Yes | P0 | |
 | RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
-| Persistent resume profiles | No | Schema only | Later | P2 | Dev 18: structured table verified — [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md); helpers/UI not implemented |
+| Persistent resume profiles | Partial (UI) | Schema + helpers | Later | P2 | Dev 18 Step 4: dashboard CRUD — not wired to analysis yet |
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
 | Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
@@ -275,7 +275,7 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified; `resume_profiles` row count 0; helpers/UI not implemented
 
-**Recommended next:** Profile-management UI (after privacy copy), or add a web test runner and automate the helper checklist.
+**Recommended next:** Connect resume profiles to the analysis form (profile selector), or update privacy copy for profile save.
 
 **Dev 18 Step 2 — Typed resume-profile helpers** — **Complete**
 
@@ -284,6 +284,10 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 **Dev 18 Step 3 — Helper test coverage** — **Complete (manual checklist)**
 
 - [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) § Helper test coverage — no web test runner; pure exports + manual checklist
+
+**Dev 18 Step 4 — Resume-profile management UI foundation** — **Complete**
+
+- [`web/src/app/dashboard/resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx) — list/create/edit/delete structured profiles on dashboard; **not connected to analysis flow yet**
 
 **Out of scope until gated:** raw resume text, profile UI without helpers + privacy copy.
 
