@@ -3582,3 +3582,13 @@ This step reinforced the difference between authoring a migration and applying i
 - Ran a rollback-only simulated two-user RLS test and confirmed the table remained empty afterward.
 - Smoke tested the hosted app after the database verification.
 - Kept this step documentation/database-verification only; helper functions and UI remain future work.
+
+## Dev 18 Step 2 — Structured resume-profile Supabase helpers
+
+- Added typed frontend Supabase helpers for the structured `resume_profiles` table.
+- Added helper functions to list, create, update, and delete user-owned resume profiles.
+- Kept helper inputs structured-skills-first and did not add raw resume text storage.
+- Required Clerk `clerkUserId` in helper calls so rows are intentionally scoped to the authenticated user.
+- Ensured update/delete helpers filter by both `id` and `clerk_user_id` to align with RLS and avoid cross-user writes.
+- Normalized skill arrays before writing them to Supabase jsonb fields.
+- Kept this step helper-only; profile-management UI remains future work.
