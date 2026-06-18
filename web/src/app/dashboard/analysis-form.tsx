@@ -2,7 +2,7 @@
 
 import { useAuth, useSession } from "@clerk/nextjs";
 import Link from "next/link";
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   formatTextStats,
   readTextFile,
@@ -16,9 +16,217 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { saveCloudAnalysis } from "@/lib/supabase/save-analysis";
+import {
+  listResumeProfiles,
+  type ResumeProfile,
+  type ResumeProfileSourceType,
+} from "@/lib/supabase/resume-profiles";
 import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors";
 
 const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
+
+const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
+  manual: "Manual entry",
+  pasted: "Pasted text",
+  txt_upload: "Plain .txt upload",
+  demo: "Demo profile",
+  imported: "Imported profile",
+};
+
+function ResumeProfileSkillPreview({ title, skills }: { title: string; skills: string[] }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-violet-800/80">
+        {title}
+      </p>
+      {skills.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {skills.map((skill) => (
+            <span
+              key={`${title}-${skill}`}
+              className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-950"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-violet-800/70">No skills saved in this section.</p>
+      )}
+    </div>
+  );
+}
+
+function ResumeProfileAnalysisGuardrail({ disabled }: { disabled: boolean }) {
+  const configured = isSupabaseConfigured();
+  const { isLoaded, session } = useSession();
+  const { userId } = useAuth();
+  const [profiles, setProfiles] = useState<ResumeProfile[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const selectedProfile =
+    profiles.find((profile) => profile.id === selectedProfileId) ?? null;
+
+  useEffect(() => {
+    if (!configured || !isLoaded || !session || !userId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function runLoad() {
+      setIsLoading(true);
+      setLoadError(null);
+
+      const supabase = createClerkSupabaseClient(() => session!.getToken());
+      const result = await listResumeProfiles(supabase, userId!);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (result.status === "success") {
+        setProfiles(result.profiles);
+        setSelectedProfileId((currentId) =>
+          result.profiles.some((profile) => profile.id === currentId) ? currentId : "",
+        );
+      } else {
+        setProfiles([]);
+        setSelectedProfileId("");
+        setLoadError(result.message);
+      }
+
+      setIsLoading(false);
+    }
+
+    void runLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [configured, isLoaded, session, userId]);
+
+  return (
+    <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50/70 p-4 text-sm text-violet-950">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-medium">Saved resume profiles</p>
+          <p className="mt-1 text-violet-900/85">
+            Saved resume profiles store structured skills and notes, not raw resume text.
+            Profile-based analysis is being prepared, but this analysis still uses the
+            pasted or uploaded resume input below.
+          </p>
+        </div>
+        <Link href="#resume-profiles" className="text-xs font-medium text-violet-950 underline">
+          Manage profiles
+        </Link>
+      </div>
+
+      {!configured ? (
+        <p className="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700">
+          Resume profiles are unavailable in this environment, so use pasted or uploaded
+          resume text for this analysis.
+        </p>
+      ) : null}
+
+      {configured && !isLoaded ? (
+        <p className="mt-3 text-xs text-violet-800" role="status">
+          Checking your sign-in session…
+        </p>
+      ) : null}
+
+      {configured && isLoaded && (!session || !userId) ? (
+        <p className="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700">
+          Sign in to preview saved resume profiles. You can still use the pasted or
+          uploaded resume input below.
+        </p>
+      ) : null}
+
+      {configured && session && userId ? (
+        <>
+          {isLoading ? (
+            <p className="mt-3 text-xs text-violet-800" role="status">
+              Loading saved resume profiles…
+            </p>
+          ) : null}
+
+          {loadError ? (
+            <p
+              className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
+              role="alert"
+            >
+              Could not load resume profiles right now. Use pasted or uploaded resume
+              text below and try profiles again later.
+            </p>
+          ) : null}
+
+          {!isLoading && !loadError && profiles.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-violet-200 bg-white px-3 py-2 text-xs text-violet-800">
+              No saved resume profiles yet. Create one in the Resume profiles section;
+              this analysis still needs pasted or uploaded resume text.
+            </p>
+          ) : null}
+
+          {profiles.length > 0 ? (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-violet-950" htmlFor="resume-profile-preview-select">
+                Preview a saved profile (does not fill or run analysis)
+              </label>
+              <select
+                id="resume-profile-preview-select"
+                value={selectedProfileId}
+                onChange={(event) => setSelectedProfileId(event.target.value)}
+                disabled={disabled}
+                className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Choose a saved profile…</option>
+                {profiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.profileName}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-violet-800/70">
+                Selecting a profile only shows a read-only preview. It does not overwrite
+                the resume text box or change the analysis request.
+              </p>
+            </div>
+          ) : null}
+
+          {selectedProfile ? (
+            <div className="mt-4 rounded-lg border border-violet-200 bg-white p-4 text-violet-950">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-medium">{selectedProfile.profileName}</p>
+                  {selectedProfile.profileDescription ? (
+                    <p className="mt-1 text-sm text-violet-900/80">
+                      {selectedProfile.profileDescription}
+                    </p>
+                  ) : null}
+                </div>
+                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-900">
+                  {SOURCE_TYPE_LABELS[selectedProfile.sourceType]}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <ResumeProfileSkillPreview
+                  title="Extracted skills"
+                  skills={selectedProfile.extractedSkills}
+                />
+                <ResumeProfileSkillPreview
+                  title="User-added skills"
+                  skills={selectedProfile.userAddedSkills}
+                />
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 
 function SkillList({
   title,
@@ -378,6 +586,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           matched/missing skills and optional labels are stored). The file itself is not
           kept as a resume profile.
         </p>
+        <ResumeProfileAnalysisGuardrail disabled={isAnalyzing} />
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
             className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
