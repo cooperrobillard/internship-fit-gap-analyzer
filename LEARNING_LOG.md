@@ -3527,3 +3527,46 @@ Verification:
 
 Learning:
 This step reinforced that database work should have a final scope and access-control review before migration. The safest first resume-profile step is small, user-owned, structured-skills-first, and backed by an explicit RLS verification plan.
+
+## Version 17 Step 11 — Add structured resume-profile migration
+
+Created the actual structured resume-profile migration file for future Supabase application.
+
+What changed:
+- Added a migration SQL file for converting the existing empty legacy `resume_profiles` table into the structured-skills-first shape.
+- Designed the migration as an `ALTER TABLE` migration because the live `resume_profiles` table already exists.
+- Preserved the Clerk ownership model through `clerk_user_id`.
+- Used the confirmed RLS predicate: `clerk_user_id = (select auth.jwt() ->> 'sub'::text)`.
+- Added structured profile fields such as `profile_name`, `profile_description`, `extracted_skills`, `user_added_skills`, and `source_type`.
+- Removed or omitted raw resume text from the structured first implementation.
+- Included select/insert/update/delete ownership policies for user-owned profile rows.
+- Updated docs if needed to note that the migration exists but has not yet been applied.
+
+Why this matters:
+This step moves resume-profile work from planning into a reviewable migration file while still avoiding app implementation and raw resume storage. The migration is scoped to structured skills and metadata, which keeps the project aligned with the privacy-first design direction.
+
+What stayed the same:
+- No analyzer logic changed.
+- No FastAPI behavior changed.
+- No Clerk auth behavior changed.
+- No SQL was applied to Supabase in this step.
+- No persistent resume-profile UI was added.
+- No Supabase helper code was added.
+- No uploaded files were persisted.
+- No raw resume/job text was added to storage through app code.
+- No raw resume/job text was exported.
+- No service-role key was used in browser code.
+- No new dependencies were added.
+- Existing hosted input UX, transient `.txt` upload, sample/demo inputs, comparison, export/download, privacy/data-control copy, recurring gap stats, saved detail view, search/filter, metadata display, and delete flow were preserved.
+
+Verification:
+- `python3 tests/test_api_service.py` passed.
+- `python3 run_tests.py` passed.
+- `python3 -m py_compile api/main.py run_tests.py streamlit_app.py` passed.
+- `npm run lint` passed in `web/`.
+- `npm run build` passed in `web/`.
+- Privacy checks confirmed no tracked env/private/generated files.
+- Manual SQL review confirmed the migration is scoped to the existing empty legacy `resume_profiles` table and does not include raw resume text storage.
+
+Learning:
+This step reinforced the difference between authoring a migration and applying it. Writing the migration as a reviewed artifact first gives us one more safety checkpoint before changing the hosted database.
