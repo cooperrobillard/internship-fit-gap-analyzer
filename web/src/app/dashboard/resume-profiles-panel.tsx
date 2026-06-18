@@ -457,7 +457,7 @@ export function ResumeProfilesPanel() {
     deleteUiState.kind === "deleting" || deleteUiState.kind === "confirming";
 
   return (
-    <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
+    <div id="resume-profiles" className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
       <p className="font-medium text-zinc-900">Resume profiles</p>
       <p className="mt-2 text-zinc-600">
         Save named skill lists for reuse later. Resume profiles store structured skills
