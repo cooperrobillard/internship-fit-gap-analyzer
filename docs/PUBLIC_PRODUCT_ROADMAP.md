@@ -265,7 +265,11 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md) — design/SQL draft ready to **author** migration; **not ready to apply** until live Supabase `job_analyses` RLS predicate is confirmed
 
-**Recommended next:** **Version 17 Step 11 — confirm Supabase staging/production RLS predicate** (dashboard). **Then Step 12** — create migration file and apply on **staging** only. Resume profiles **not implemented** in app code.
+**Version 17 Step 11 — Structured resume-profile migration file** — **Complete**
+
+- [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) — ALTER migration for legacy empty `resume_profiles` (not applied)
+
+**Recommended next:** **Version 17 Step 12 — apply migration on staging** (Supabase SQL editor), then two-user RLS verification. Resume profiles **not implemented** in app code.
 
 **Out of scope until gated:** production migration without predicate check, raw resume text, profile UI without RLS + privacy copy.
 

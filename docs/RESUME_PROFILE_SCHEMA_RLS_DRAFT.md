@@ -1,6 +1,8 @@
 # Resume Profile Schema/RLS Draft
 
-**Status:** Draft only · **Not applied to Supabase** · **Not a production migration** · Needs review before implementation
+**Status:** Draft only · **Migration file authored (not applied)** · Needs staging apply + RLS verification before implementation
+
+**Apply migration (when ready):** [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) — ALTER path for existing legacy `resume_profiles`; supersedes this draft for manual apply.
 
 **Product:** Job Fit & Skill-Gap Analyzer (hosted prototype)  
 **Repository:** internship-fit-gap-analyzer
@@ -71,7 +73,8 @@ This draft was updated after [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANAL
 
 | File | Purpose |
 |------|---------|
-| [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) | Reviewable SQL (table, indexes, trigger, RLS) |
+| [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) | Reviewable SQL draft (CREATE TABLE shape; reference only) |
+| [`../web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) | **Actual migration** (ALTER; not applied) |
 | This document | Context, review checklist, implementation sequence |
 
 ---

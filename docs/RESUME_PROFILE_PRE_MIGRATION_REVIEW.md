@@ -1,6 +1,8 @@
 # Resume Profile Pre-Migration Review
 
-**Status:** Final review before actual migration · **No database changes made** · **No SQL applied** · **No resume-profile app code implemented**
+**Status:** Pre-migration review complete · **Migration file authored (Step 11)** · **Not applied to Supabase** · **No resume-profile app code implemented**
+
+**Migration file (not applied):** [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql)
 
 **Product:** Job Fit & Skill-Gap Analyzer (hosted prototype)  
 **Repository:** internship-fit-gap-analyzer  
@@ -14,19 +16,19 @@ Related: [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIG
 
 **Documentation and schema design:** Ready to **author** a structured `resume_profiles` migration from the aligned SQL draft.
 
-**Applying a migration to a live Supabase project:** **Not ready yet** until the **exact production (or staging) RLS predicate** and Clerk JWT behavior are confirmed against a running project—not only against `web/database/schema.sql` in the repo.
+**Applying a migration to a live Supabase project:** **Ready for staging apply** after reviewing the migration file. **Production apply** only after staging two-user RLS verification passes.
 
 | Area | Verdict |
 |------|---------|
 | Product/design guardrails | Ready |
 | Structured-skills-first data model | Ready |
 | SQL draft aligned with saved analyses (repo) | Ready |
-| Production Supabase policy match | **Not confirmed** |
+| Production Supabase policy match | **Confirmed** (June 2026 live inspection) |
 | Two-user RLS on new table | Required immediately after migration |
 | Profile UI / helpers | Out of scope until post-migration verification |
 | Privacy copy for profiles | Not ready — must update before user-facing profile save |
 
-**Bottom line:** Complete a short **Supabase dashboard confirmation** of existing `job_analyses` policies, then proceed with **Step 12 — actual migration on staging first**. Do not skip production predicate verification.
+**Bottom line:** Live Supabase inspection (June 2026) confirmed `resume_profiles` exists empty with legacy `label`/`resume_text`, RLS enabled, and the ownership predicate `clerk_user_id = (select auth.jwt() ->> 'sub'::text)` on existing policies. The **ALTER migration file** is ready for manual staging apply; do not apply to production until staging two-user RLS verification passes.
 
 This review is not a formal security audit and does not claim production readiness.
 
@@ -111,7 +113,7 @@ The first **actual** migration (when approved) should include **only**:
 |----------|------------|
 | SELECT/INSERT/UPDATE/DELETE intent clear? | **Yes** — draft policies are complete for a standalone owned table |
 | Mirrors saved analyses? | **Yes in repo** — same predicate and `TO authenticated` |
-| Exact predicate confirmed? | **Repo yes; production no** |
+| Exact predicate confirmed? | **Yes** — hosted Supabase matches repo |
 | Two-user test required after migration? | **Yes — mandatory** before helpers/UI |
 | TODOs in SQL draft? | **Yes** — production predicate copy-if-different; legacy table check |
 
@@ -123,13 +125,13 @@ clerk_user_id = (select auth.jwt()->>'sub')
 
 Policies: `TO authenticated`; names `resume_profiles_*_own`.
 
-### Not confirmed (blocker for production apply)
+### Confirmed on hosted Supabase (June 2026)
 
-- Deployed Supabase `job_analyses` policies may differ from `web/database/schema.sql`
-- Clerk JWT template → `authenticated` role on target project
-- Whether staging and production share the same auth configuration
+```sql
+clerk_user_id = (select auth.jwt() ->> 'sub'::text)
+```
 
-**Action before migration file ships:** Open Supabase SQL editor → inspect `job_analyses` policy definitions → copy exact predicate into migration if it differs from draft.
+Policies: `TO authenticated`; names `resume_profiles_*_own` on existing legacy table. Migration file recreates the same predicate.
 
 ---
 
@@ -148,20 +150,21 @@ Profile **schema** migration alone does not expose profiles to users (no UI). Pr
 
 ---
 
-## Implementation readiness — Step 11 decision
+## Implementation readiness — Step 11 status
 
-| Option | When |
-|--------|------|
-| **Step 11 — Confirm Supabase production/staging RLS predicate** | **Recommended next** — short verification gate (dashboard + two test users on **existing** saved analyses) |
-| **Step 12 — Create actual structured resume-profile migration** | After Step 11 sign-off; **staging first** |
-| Step 11 = migration immediately | **Not recommended** — production predicate unverified in repo docs |
+| Step | Status |
+|------|--------|
+| **Step 11 — Create structured resume-profile migration file** | **Complete** — [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) (ALTER path; not applied) |
+| **Step 12 — Apply migration on staging** | **Next** — manual SQL editor apply; then two-user RLS test |
+| **Step 13+** | Typed helpers, then UI, then privacy copy before user-facing profile save |
 
 Conservative sequence:
 
-1. **Step 11:** Confirm live `job_analyses` predicate matches draft (or update draft).
-2. **Step 12:** Add real migration file; apply to **staging** Supabase.
-3. **Step 13:** Two-user RLS test on `resume_profiles` (SQL editor or future helper).
-4. **Step 14+:** Typed helpers, then UI, then privacy copy before user-facing profile save.
+1. ~~Confirm live predicate~~ — confirmed on hosted Supabase (`auth.jwt() ->> 'sub'`).
+2. ~~Author migration file~~ — done (Step 11).
+3. **Step 12:** Apply to **staging** Supabase only; run post-migration verification below.
+4. **Step 13:** Two-user RLS test on `resume_profiles`.
+5. **Step 14+:** Typed helpers, then UI, then privacy copy before user-facing profile save.
 
 ---
 
@@ -193,12 +196,13 @@ Document results in a short post-migration note or checkpoint when migration lan
 Use before authoring/applying the real migration file:
 
 - [ ] **Exact ownership field confirmed:** `clerk_user_id` text (Clerk `userId` / JWT `sub`)
-- [ ] **Exact RLS predicate confirmed on target Supabase** (from live `job_analyses` policies, not repo alone)
-- [ ] **SQL draft reviewed:** [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql)
+- [x] **Exact RLS predicate confirmed on target Supabase** (`clerk_user_id = (select auth.jwt() ->> 'sub'::text)` on `resume_profiles` and `job_analyses`)
+- [x] **SQL draft reviewed:** [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql)
+- [x] **Migration file authored:** [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql)
 - [ ] **Raw resume text omitted** from migration scope
 - [ ] **No destructive SQL** (no `DROP` of user tables without plan)
 - [ ] **Rollback understood:** new table can be dropped in staging if empty; production needs care
-- [ ] **Legacy `resume_profiles` inspected** — CREATE vs ALTER path chosen
+- [x] **Legacy `resume_profiles` inspected** — empty table; **ALTER** path in migration file
 - [ ] **`set_updated_at()` exists** or migration includes idempotent function create
 - [ ] **Two-user RLS test plan ready** (extend smoke test §8 for profiles)
 - [ ] **No service-role key in browser** (unchanged policy)
@@ -206,21 +210,17 @@ Use before authoring/applying the real migration file:
 - [ ] **Export/delete behavior planned** per design doc (helpers/UI later)
 - [ ] **Staging apply before production**
 
-**Current checklist status (Step 10):** Design items largely complete; **production predicate** and **legacy table inspection** items remain open.
+**Current checklist status (Step 11):** Migration file authored; **staging apply** and **two-user RLS test** remain open.
 
 ---
 
 ## Final recommendation
 
-**Version 17 planning is sufficient to write a migration file**, but **do not apply it** until Step 11 completes live Supabase verification.
+**Version 17 Step 11 is complete:** migration file exists at `web/database/migrations/20260617_structured_resume_profiles.sql`. **Do not apply** until reviewed.
 
 **Recommended next step:**
 
-**Version 17 Step 11 — Confirm Supabase staging/production RLS predicate** (dashboard review + document the exact `job_analyses` policy text; re-run two-user saved-analysis isolation if not done recently).
-
-**Then:**
-
-**Version 17 Step 12 — Create actual structured resume-profile migration** (migration file only; apply to staging; run post-migration verification above).
+**Version 17 Step 12 — Apply migration on staging** (Supabase SQL editor; run post-migration verification and two-user RLS test below).
 
 Do **not** ship profile UI or helpers in the same step as the migration. Do **not** claim production readiness or a completed security audit.
 
@@ -228,4 +228,4 @@ Do **not** ship profile UI or helpers in the same step as the migration. Do **no
 
 ## Document maintenance
 
-Update when Step 11 predicate confirmation completes, when migration is applied, or when scope changes. Supersedes informal “ready to migrate?” questions with this explicit gate.
+Update when migration is applied (staging/production), when scope changes, or after post-migration verification. Step 11 migration file: `web/database/migrations/20260617_structured_resume_profiles.sql`.
