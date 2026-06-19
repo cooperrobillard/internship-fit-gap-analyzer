@@ -29,8 +29,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          max_turns: 5
-          claude_args: '--disallowed-tools Write,Edit,NotebookEdit'
+          claude_args: |
+            --max-turns 5
+            --disallowedTools "Write,Edit,NotebookEdit"
           prompt: |
             You are the automated code reviewer for the Job Fit & Skill-Gap Analyzer repo (internship-fit-gap-analyzer).
 
