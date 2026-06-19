@@ -1,0 +1,48 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+      checks: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Allow Claude to read CI results and check status on PRs
+          additional_permissions: |
+            actions: read
+            checks: read
+
+          # --allowedTools adds only the extra safe Bash inspection and project-check commands this
+          # repo needs. The action supplies its own file-editing, committing, pushing, comment
+          # management, and GitHub operations — those do not need to be listed here.
+          # --disallowedTools blocks the most dangerous Bash patterns as belt-and-suspenders
+          # on top of CLAUDE.md behavioral guardrails.
+          claude_args: |
+            --max-turns 10
+            --allowedTools "Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(grep*),Bash(find*),Bash(python3 tests/test_api_service.py*),Bash(python3 run_tests.py*),Bash(python3 -m py_compile api/main.py run_tests.py streamlit_app.py*),Bash(cd web && npm run lint*),Bash(cd web && npm run build*),Bash(npm run lint*),Bash(npm run build*)"
+            --disallowedTools "Bash(git push --force*),Bash(git push -f*),Bash(git reset --hard*),Bash(git clean*),Bash(git add .),Bash(git add -A),Bash(gh pr merge*),Bash(npm install*),Bash(npm update*),Bash(pip install*),Bash(rm*),Bash(curl*),Bash(wget*)"
