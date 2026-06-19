@@ -3617,3 +3617,11 @@ This step reinforced the difference between authoring a migration and applying i
 - Added reusable task templates for normal coding, docs-only, Supabase/RLS-sensitive, UI polish, production hardening, and deployment/domain work.
 - Added tool-specific prompts for Codex Web/Cloud, Codex CLI, Claude Code, GitHub Copilot coding agent, and Cursor/background agents.
 - Preserved the project’s small-branch, privacy-safe workflow while allowing bounded agent autonomy for repetitive implementation tasks.
+
+## Dev 18 Step 7 — Resume-profile checkpoint
+
+- Documented the completed structured resume-profile foundation in `docs/RESUME_PROFILE_CHECKPOINT.md`.
+- Summarized the database/RLS foundation, typed helpers, dashboard management UI, saved-profile selector guardrail, and controlled profile-to-analysis handoff.
+- Reconfirmed the privacy model: structured skills and notes only for profiles, no raw resume/job text stored by default, transient `.txt` uploads, no service-role key in browser code, and no RLS bypass.
+- Captured current limitations and non-goals, including no full resume parsing, no PDF/DOCX parsing, no AI extraction, no semantic matching, no application tracking, and no production-readiness certification.
+- Marked the Dev 18 resume-profile foundation/checkpoint complete in the public roadmap and identified Dev 19 production hardening as the next phase.

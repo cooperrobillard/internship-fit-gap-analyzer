@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md), [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md), [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md), root [`README.md`](../README.md).
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md), [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md), [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md), root [`README.md`](../README.md).
 
 ---
 
@@ -275,7 +275,11 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified; `resume_profiles` row count 0; helpers/UI not implemented
 
-**Recommended next:** Connect resume profiles to the analysis form (profile selector), or update privacy copy for profile save.
+**Dev 18 Step 7 — Resume-profile checkpoint** — **Complete**
+
+- [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md) — structured database/RLS foundation, helpers, management UI, selector guardrail, controlled analysis handoff, privacy model, and limitations documented before Dev 19
+
+**Recommended next:** Dev 19 production hardening: RLS/auth re-checks, user-safe errors/logging, input limits, abuse/rate-limit review, and privacy/data-control review.
 
 **Dev 18 Step 2 — Typed resume-profile helpers** — **Complete**
 
@@ -287,9 +291,9 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 **Dev 18 Step 4 — Resume-profile management UI foundation** — **Complete**
 
-- [`web/src/app/dashboard/resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx) — list/create/edit/delete structured profiles on dashboard; **not connected to analysis flow yet**
+- [`web/src/app/dashboard/resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx) — list/create/edit/delete structured profiles on dashboard
 
-**Out of scope until gated:** raw resume text, profile UI without helpers + privacy copy.
+**Out of scope until gated:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, and production-readiness claims without Dev 19 hardening.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
