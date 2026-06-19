@@ -8,15 +8,15 @@ Public product name: **Job Fit & Skill-Gap Analyzer**
 
 This project is a hosted web app that helps users compare resumes against job descriptions and review:
 
-- matched skills
-- missing skills
-- recurring gaps
-- saved analyses
-- saved-analysis detail views
-- comparison between saved analyses
-- export/download options
-- job metadata such as title, company, notes, and source URL
-- structured resume-profile groundwork
+* matched skills
+* missing skills
+* recurring gaps
+* saved analyses
+* saved-analysis detail views
+* comparison between saved analyses
+* export/download options
+* job metadata such as title, company, notes, and source URL
+* structured resume-profile groundwork
 
 This is becoming a real hosted public product, not just a local prototype. Treat privacy, user data, and production database boundaries carefully.
 
@@ -26,28 +26,28 @@ This is becoming a real hosted public product, not just a local prototype. Treat
 
 Frontend:
 
-- Next.js 16 app router in `web/`
-- Hosted on Vercel
-- Clerk authentication
-- Dashboard includes analysis input, saved analyses, saved-analysis detail, comparison, export/download, delete, search/filter, recurring gap stats, and privacy/data-control UI
-- Resume-profile foundation may exist depending on current branch state; inspect the repo before assuming
+* Next.js 16 app router in `web/`
+* Hosted on Vercel
+* Clerk authentication
+* Dashboard includes analysis input, saved analyses, saved-analysis detail, comparison, export/download, delete, search/filter, recurring gap stats, and privacy/data-control UI
+* Resume-profile foundation may exist depending on current branch state; inspect the repo before assuming
 
 Backend:
 
-- FastAPI service in `api/`
-- Hosted on Render
-- Health endpoint:
+* FastAPI service in `api/`
+* Hosted on Render
+* Health endpoint:
   `https://internship-fit-gap-analyzer.onrender.com/health`
-- Expected health response:
+* Expected health response:
   `{"status":"ok"}`
 
 Database:
 
-- Supabase Postgres
-- Row Level Security enabled
-- Clerk user ownership through `clerk_user_id`
-- Browser/client code must use only the Supabase publishable/browser-safe key
-- Supabase service-role keys must never be used in browser/client code
+* Supabase Postgres
+* Row Level Security enabled
+* Clerk user ownership through `clerk_user_id`
+* Browser/client code must use only the Supabase publishable/browser-safe key
+* Supabase service-role keys must never be used in browser/client code
 
 Analysis flow:
 
