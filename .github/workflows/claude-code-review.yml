@@ -3,26 +3,19 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
       id-token: write
 
     steps:
@@ -36,9 +29,41 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          max_turns: 5
+          claude_args: '--disallowed-tools Write,Edit,NotebookEdit'
+          prompt: |
+            You are the automated code reviewer for the Job Fit & Skill-Gap Analyzer repo (internship-fit-gap-analyzer).
 
+            IMPORTANT: This is automated review mode. Do NOT edit, commit, or push any files.
+
+            Before reviewing, read:
+            - CLAUDE.md
+            - AGENTS.md
+            - docs/AGENT_OPERATING_RUNBOOK.md
+
+            Then review this pull request:
+            - PR title and description
+            - The full diff and all changed files
+            - Existing review comments and unresolved threads
+            - Current check status
+
+            Focus your review on these areas:
+            1. Regressions in existing features
+            2. Scope violations — changes outside the PR's stated goal
+            3. Raw resume or job-description text being persisted (flag any resume_text, raw_resume, rawResume, or equivalent additions)
+            4. Supabase service-role key usage in browser or client code
+            5. Auth or RLS weakening (bypassing RLS, disabling RLS, changing ownership patterns)
+            6. Secrets or environment variable exposure
+            7. Raw error or stack trace exposure in the UI
+            8. TypeScript or nullability issues
+            9. Input validation errors
+            10. Accidental dependency changes (package.json, package-lock.json, requirements.txt not in PR scope)
+            11. Accidental migration changes (web/database/migrations/ not in PR scope)
+            12. Accidental API-contract changes
+            13. Inaccurate test or verification claims in the PR description
+
+            Posting format:
+            - Post concrete merge-blocking findings as inline comments prefixed with BLOCKER:
+            - Post a concise top-level summary comment
+            - When there are no blocking findings, end the summary with exactly: No blocking findings from the automated Claude review.
+            - Do not invent failures. Do not claim hosted behavior was verified unless it was actually checked.
