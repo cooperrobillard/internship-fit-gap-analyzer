@@ -267,6 +267,13 @@ export function ResumeProfilesPanel() {
     setReloadNonce((nonce) => nonce + 1);
   }, []);
 
+  function handleLoadRetry() {
+    if (isLoading) {
+      return;
+    }
+    reloadList();
+  }
+
   useEffect(() => {
     if (!configured || !isLoaded || !session || !userId) {
       return;
@@ -429,8 +436,7 @@ export function ResumeProfilesPanel() {
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
         <p className="font-medium text-zinc-900">Resume profiles</p>
         <p className="mt-2">
-          Supabase is not configured, so resume profiles cannot load. Add env vars to{" "}
-          <code className="text-xs">web/.env.local</code>.
+          Resume profiles are temporarily unavailable. You can still run analysis with pasted or uploaded text.
         </p>
       </div>
     );
@@ -439,7 +445,7 @@ export function ResumeProfilesPanel() {
   if (!isLoaded) {
     return (
       <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
-        <p className="font-medium">Loading resume profiles…</p>
+        <p className="font-medium" role="status">Loading resume profiles…</p>
       </div>
     );
   }
@@ -466,7 +472,7 @@ export function ResumeProfilesPanel() {
       </p>
 
       {isLoading ? (
-        <p className="mt-4 text-sm text-sky-800">Loading your resume profiles…</p>
+        <p className="mt-4 text-sm text-sky-800" role="status">Loading your resume profiles…</p>
       ) : null}
 
       {loadError ? (
@@ -478,8 +484,9 @@ export function ResumeProfilesPanel() {
           <p className="mt-1">{loadError}</p>
           <button
             type="button"
-            onClick={reloadList}
-            className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100"
+            onClick={handleLoadRetry}
+            disabled={isLoading}
+            className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Try again
           </button>

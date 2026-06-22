@@ -28,9 +28,21 @@ type RouteErrorBody = {
   message?: unknown;
 };
 
+export type AnalysisErrorCategory =
+  | "validation"
+  | "authentication"
+  | "timeout"
+  | "unavailable"
+  | "generic";
+
 export type ApiAnalysisClientResult =
   | { status: "success"; result: WebAnalysisResult }
-  | { status: "error"; message: string };
+  | {
+      status: "error";
+      message: string;
+      category: AnalysisErrorCategory;
+      retryable: boolean;
+    };
 
 function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
   return {
@@ -42,82 +54,131 @@ function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
   };
 }
 
-function formatValidationDetail(detail: unknown): string | null {
-  if (typeof detail === "string" && detail.trim()) {
-    return detail;
-  }
+const VALIDATION_FIELD_LABELS: Record<string, string> = {
+  resumeText: "Resume text",
+  jobText: "Job description text",
+  body: "The request",
+};
 
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => {
-        if (typeof item === "object" && item !== null && "msg" in item) {
-          const msg = (item as { msg?: unknown }).msg;
-          return typeof msg === "string" ? msg : null;
-        }
-        return null;
-      })
-      .filter((msg): msg is string => Boolean(msg));
-
-    if (messages.length > 0) {
-      return messages.join(" ");
-    }
-  }
-
-  return null;
-}
-
-function messageFromErrorBody(body: RouteErrorBody | null): string | null {
-  if (!body) {
+function sanitizeValidationMessage(message: string): string | null {
+  const trimmed = message.trim();
+  if (!trimmed) {
     return null;
   }
 
-  const fromDetail = formatValidationDetail(body.detail);
-  if (fromDetail) {
-    return fromDetail;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("traceback") ||
+    lower.includes("stack trace") ||
+    lower.includes("environment variable") ||
+    lower.includes("service_role") ||
+    lower.includes("supabase_service") ||
+    lower.includes("sk_live") ||
+    lower.includes("private key")
+  ) {
+    return null;
   }
 
-  if (typeof body.message === "string" && body.message.trim()) {
-    return body.message;
+  return trimmed.replace(/[.。]+$/, "");
+}
+
+function validationMessageFromBody(body: RouteErrorBody | null): string | null {
+  const errors = (body as { errors?: unknown } | null)?.errors;
+  if (!Array.isArray(errors)) {
+    return null;
   }
 
-  return null;
+  const messages: string[] = [];
+  for (const item of errors) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const field = (item as { field?: unknown }).field;
+    const message = (item as { message?: unknown }).message;
+    if (
+      typeof field !== "string" ||
+      !(field in VALIDATION_FIELD_LABELS) ||
+      typeof message !== "string"
+    ) {
+      continue;
+    }
+
+    const safeMessage = sanitizeValidationMessage(message);
+    if (!safeMessage) {
+      continue;
+    }
+
+    messages.push(`${VALIDATION_FIELD_LABELS[field]} ${safeMessage.charAt(0).toLowerCase()}${safeMessage.slice(1)}.`);
+  }
+
+  return messages.length > 0 ? messages.join(" ") : null;
 }
 
 function messageForHttpStatus(status: number): string {
   if (status === 401 || status === 403) {
-    return "Sign in to run analysis.";
+    return "Your session may have expired. Refresh the page or sign in again.";
   }
 
   if (status === 422) {
-    return "Resume text and job description text are required.";
+    return "The request could not be read. Check the inputs and try again.";
   }
 
-  if (status === 500) {
-    return "The analysis service is not configured correctly. Check deployment environment variables.";
-  }
-
-  if (status === 502) {
-    return "The backend returned an unexpected response.";
-  }
-
-  if (status === 503) {
-    return "The hosted analysis service is temporarily unavailable.";
+  if (status === 500 || status === 502 || status === 503) {
+    return "This feature is temporarily unavailable. Please try again shortly.";
   }
 
   if (status === 504) {
-    return "The analysis service is not responding yet. Please try again in a moment.";
+    return "The analysis service is taking longer than expected. Please try again shortly.";
   }
 
-  return "The analysis service returned an error. Please try again.";
+  return "We could not complete that action right now. Please try again.";
 }
 
-async function parseRouteErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as RouteErrorBody;
-    return messageFromErrorBody(body) ?? messageForHttpStatus(response.status);
-  } catch {
-    return messageForHttpStatus(response.status);
+function categoryForHttpStatus(status: number): AnalysisErrorCategory {
+  if (status === 401 || status === 403) {
+    return "authentication";
   }
+  if (status === 422) {
+    return "validation";
+  }
+  if (status === 504) {
+    return "timeout";
+  }
+  if (status === 500 || status === 502 || status === 503) {
+    return "unavailable";
+  }
+  return "generic";
+}
+
+function isRetryableCategory(category: AnalysisErrorCategory): boolean {
+  return category !== "validation";
+}
+
+async function parseRouteError(response: Response): Promise<{
+  message: string;
+  category: AnalysisErrorCategory;
+  retryable: boolean;
+}> {
+  const category = categoryForHttpStatus(response.status);
+  let body: RouteErrorBody | null = null;
+
+  try {
+    body = (await response.json()) as RouteErrorBody;
+  } catch {
+    body = null;
+  }
+
+  const message =
+    response.status === 422
+      ? validationMessageFromBody(body) ?? messageForHttpStatus(response.status)
+      : messageForHttpStatus(response.status);
+
+  return {
+    message,
+    category,
+    retryable: isRetryableCategory(category),
+  };
 }
 
 /**
@@ -142,9 +203,10 @@ export async function analyzeWithApi(
     });
 
     if (!response.ok) {
+      const error = await parseRouteError(response);
       return {
         status: "error",
-        message: await parseRouteErrorMessage(response),
+        ...error,
       };
     }
 
@@ -156,8 +218,9 @@ export async function analyzeWithApi(
   } catch {
     return {
       status: "error",
-      message:
-        "The hosted analysis service is temporarily unavailable. Please try again in a moment.",
+      message: "Check your connection and try again.",
+      category: "unavailable",
+      retryable: true,
     };
   }
 }
