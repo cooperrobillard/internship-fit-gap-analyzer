@@ -147,16 +147,6 @@ export default function Home() {
           </p>
         </section>
       </main>
-
-      <footer className="mt-12 border-t border-zinc-200 bg-white py-6">
-        <p className="mx-auto max-w-4xl px-6 text-center text-sm text-zinc-500">
-          Job Fit &amp; Skill-Gap Analyzer — hosted prototype. Not production-ready
-          SaaS.{" "}
-          <Link href="/privacy" className="text-sky-700 underline hover:text-sky-800">
-            Privacy &amp; data controls
-          </Link>
-        </p>
-      </footer>
     </div>
   );
 }

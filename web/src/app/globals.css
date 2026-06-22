@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --color-canvas: #fbf8f1;
+  --color-canvas-subtle: #f5efe4;
+  --color-surface: #fffdf8;
+  --color-surface-muted: #f3eadc;
+  --color-text: #17130d;
+  --color-text-muted: #665f55;
+  --color-border: #e5d9c8;
+  --color-divider: #d8cab8;
+  --color-primary: #075985;
+  --color-primary-hover: #0c4a6e;
+  --color-primary-soft: #e0f2fe;
+  --color-primary-ring: #7dd3fc;
+  --color-accent-warm: #d97706;
+  --color-success: #047857;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+  --color-focus: #f59e0b;
+  --shadow-soft: 0 18px 45px rgba(23, 19, 13, 0.08);
+  --background: var(--color-canvas);
+  --foreground: var(--color-text);
 }
 
 @theme inline {
@@ -12,7 +30,85 @@
   --font-mono: var(--font-geist-mono);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-canvas);
+  color: var(--color-text);
+  text-rendering: optimizeLegibility;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background:
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.16), transparent 32rem),
+    linear-gradient(180deg, var(--color-canvas), #f8f3ea 48rem, var(--color-canvas));
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-wrap: anywhere;
+}
+
+::selection {
+  background: #fde68a;
+  color: var(--color-text);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.app-shell-container {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 50;
+  transform: translateY(-150%);
+  border: 2px solid var(--color-focus);
+  border-radius: 999px;
+  background: var(--color-text);
+  color: var(--color-surface);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  .app-shell-container {
+    width: min(100% - 3rem, 72rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell-container {
+    width: min(100% - 4rem, 72rem);
+  }
 }
