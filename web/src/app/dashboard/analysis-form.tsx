@@ -193,7 +193,7 @@ function ResumeProfileAnalysisGuardrail({
           </p>
         </div>
         <Link
-          href="#resume-profiles"
+          href="/dashboard/profiles"
           className="text-xs font-medium text-sky-950 underline"
         >
           Manage profiles

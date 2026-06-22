@@ -3706,3 +3706,13 @@ This step reinforced the difference between authoring a migration and applying i
 - Modernized the hosted smoke-test checklist for current UI labels, full checks, cross-route visual QA, responsive review, accessibility checkpoints, screenshot evidence, launch-copy review, and final decision rubric.
 - Created the Dev 20 launch-readiness record with status intentionally pending human production verification.
 - Confirmed no analysis, API, auth, middleware, schema, RLS, database, dependency, environment, export, rate-limit, or persistence behavior changed.
+
+## 2026-06-22 — Dev 21 Step 3A routed dashboard workspace foundation
+
+- Analyze, Saved, and Profiles became separate dashboard routes.
+- Added shared responsive dashboard navigation for desktop sidebar and mobile top navigation.
+- Removed the old anchor-based all-in-one workspace and deleted the all-in-one client wrapper.
+- Updated the deep profile link from the analysis form to the routed Profiles workspace.
+- Kept transient raw resume and job inputs unpersisted across routes.
+- Deferred detailed component redesign to later Dev 21 work.
+- Made no API, auth, database, schema, RLS, dependency, export, or persistence changes.
