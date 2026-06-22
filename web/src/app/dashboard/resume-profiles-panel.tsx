@@ -1,7 +1,13 @@
 "use client";
 
 import { useAuth, useSession } from "@clerk/nextjs";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
@@ -31,6 +37,18 @@ const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
 };
 
 const DEFAULT_SOURCE_TYPE: ResumeProfileSourceType = "manual";
+
+function ResumeProfilesSectionShell({ children }: { children: ReactNode }) {
+  return (
+    <section
+      id="resume-profiles"
+      className="scroll-mt-24"
+      aria-labelledby="resume-profiles-heading"
+    >
+      {children}
+    </section>
+  );
+}
 
 type ProfileFormState = {
   profileName: string;
@@ -433,29 +451,42 @@ export function ResumeProfilesPanel() {
 
   if (!configured) {
     return (
-      <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Resume profiles</p>
-        <p className="mt-2">
-          Resume profiles are temporarily unavailable. You can still run analysis with pasted or uploaded text.
-        </p>
-      </div>
+      <ResumeProfilesSectionShell>
+        <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
+          <h2 id="resume-profiles-heading" className="font-medium text-zinc-900">
+            Resume profiles
+          </h2>
+          <p className="mt-2">
+            Resume profiles are temporarily unavailable. You can still run
+            analysis with pasted/uploaded text.
+          </p>
+        </div>
+      </ResumeProfilesSectionShell>
     );
   }
 
   if (!isLoaded) {
     return (
-      <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
-        <p className="font-medium" role="status">Loading resume profiles…</p>
-      </div>
+      <ResumeProfilesSectionShell>
+        <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
+          <h2 id="resume-profiles-heading" className="font-medium" role="status">
+            Loading resume profiles…
+          </h2>
+        </div>
+      </ResumeProfilesSectionShell>
     );
   }
 
   if (!userId || !session) {
     return (
-      <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Resume profiles</p>
-        <p className="mt-2">Sign in to manage structured resume profiles.</p>
-      </div>
+      <ResumeProfilesSectionShell>
+        <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
+          <h2 id="resume-profiles-heading" className="font-medium text-zinc-900">
+            Resume profiles
+          </h2>
+          <p className="mt-2">Sign in to manage structured resume profiles.</p>
+        </div>
+      </ResumeProfilesSectionShell>
     );
   }
 
@@ -463,13 +494,24 @@ export function ResumeProfilesPanel() {
     deleteUiState.kind === "deleting" || deleteUiState.kind === "confirming";
 
   return (
-    <div id="resume-profiles" className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-      <p className="font-medium text-zinc-900">Resume profiles</p>
-      <p className="mt-2 text-zinc-600">
-        Save named skill lists for reuse later. Resume profiles store structured skills
-        and notes, not raw resume text. They are not connected to job analysis yet—use
-        paste or .txt upload above for one-time analysis.
-      </p>
+    <ResumeProfilesSectionShell>
+      <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+          Resume profiles
+        </p>
+        <h2
+          id="resume-profiles-heading"
+          className="mt-1 text-xl font-semibold text-zinc-950"
+        >
+          Resume profiles
+        </h2>
+        <p className="mt-2 text-zinc-600">
+          Save named structured skill profiles with optional notes instead of raw
+          resume body text. Select a saved profile in the Analyze section to
+          create temporary structured analysis input for that run; this is not
+          full resume parsing, raw resume storage, or AI extraction. Create, edit,
+          and delete reusable profiles here.
+        </p>
 
       {isLoading ? (
         <p className="mt-4 text-sm text-sky-800" role="status">Loading your resume profiles…</p>
@@ -536,8 +578,8 @@ export function ResumeProfilesPanel() {
         <div className="mt-5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-zinc-700">
           <p className="font-medium text-zinc-900">No resume profiles yet</p>
           <p className="mt-2 text-sm text-zinc-600">
-            Create a profile above to save a structured skill list. Analysis above still
-            uses pasted or uploaded text for each run.
+            Create a profile above to save a structured skill list. You can then
+            select it as the resume source in the Analyze section for a future run.
           </p>
         </div>
       ) : null}
@@ -695,6 +737,7 @@ export function ResumeProfilesPanel() {
           <p className="mt-1">{deleteUiState.message}</p>
         </div>
       ) : null}
-    </div>
+      </div>
+    </ResumeProfilesSectionShell>
   );
 }

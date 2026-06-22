@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
   type ChangeEvent,
-  type ReactNode,
 } from "react";
 import {
   formatTextStats,
@@ -753,19 +752,25 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   }
 
   return (
-    <div
-      className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}
+    <section
+      id="analyze"
+      className={`${boxClass} scroll-mt-24 border-violet-200 bg-violet-50 text-violet-950`}
       aria-busy={isAnalyzing}
+      aria-labelledby="analyze-heading"
     >
       <p className="text-xs font-medium uppercase tracking-wide text-violet-800">
-        Job Fit &amp; Skill-Gap Analyzer
+        Analyze
       </p>
-      <h2 className="mt-1 text-lg font-semibold text-violet-950">
-        Compare one resume to one job description
+      <h2
+        id="analyze-heading"
+        className="mt-1 text-lg font-semibold text-violet-950"
+      >
+        Analyze a job
       </h2>
       <p className="mt-2 text-violet-900/90">
         Paste or upload plain <code className="text-xs">.txt</code> resume and
-        job text below. The hosted app sends them for a{" "}
+        job text below, or select a saved structured resume profile. The hosted
+        app sends the selected inputs for a{" "}
         <strong>one-time rule-based</strong> comparison (keyword taxonomy—not
         AI). <strong>Running analysis does not save anything</strong> until you
         choose Save later—and save stores{" "}
@@ -1233,26 +1238,6 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-/** Shares a refresh key between prototype save and the saved-analyses panel. */
-export function DashboardAnalysisWithRefresh({
-  children,
-}: {
-  children: (props: {
-    refreshKey: number;
-    onSaveSuccess: () => void;
-  }) => ReactNode;
-}) {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const onSaveSuccess = () => setRefreshKey((key) => key + 1);
-
-  return (
-    <>
-      <AnalysisForm onSaveSuccess={onSaveSuccess} />
-      {children({ refreshKey, onSaveSuccess })}
-    </>
+    </section>
   );
 }
