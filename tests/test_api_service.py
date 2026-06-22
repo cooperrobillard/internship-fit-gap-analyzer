@@ -1,8 +1,11 @@
 # Tests for the local FastAPI analysis service prototype in api/.
 import importlib
 import os
+import logging
 import sys
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 repo_root = Path(__file__).resolve().parent.parent
 if str(repo_root) not in sys.path:
@@ -12,12 +15,48 @@ from fastapi.testclient import TestClient
 
 import api.main as api_main_module
 from api.main import app, get_allowed_origins, parse_allowed_origins
+from api.models import MAX_ANALYSIS_TEXT_LENGTH
 
 client = TestClient(app)
 
 SAMPLE_RESUME = "Python, Git, SQL, and technical documentation experience."
 SAMPLE_JOB = "Intern role requiring Python, SQL, pandas, and machine learning."
 TEST_SHARED_SECRET = "test-analysis-api-shared-secret"
+
+
+PRIVATE_RESUME_MARKER = "PRIVATE_RESUME_MARKER_DO_NOT_ECHO"
+PRIVATE_JOB_MARKER = "PRIVATE_JOB_MARKER_DO_NOT_ECHO"
+SENSITIVE_ERROR_MARKERS = [
+    PRIVATE_RESUME_MARKER,
+    PRIVATE_JOB_MARKER,
+    "input",
+    "Traceback",
+    ".py",
+    "/workspace/",
+    "token",
+    "secret",
+    TEST_SHARED_SECRET,
+]
+
+
+def _assert_safe_error_response(response, expected_status: int = 422) -> dict:
+    assert response.status_code == expected_status
+    payload = response.json()
+    assert isinstance(payload["detail"], str)
+    response_text = response.text
+    for marker in SENSITIVE_ERROR_MARKERS:
+        assert marker not in response_text
+    return payload
+
+
+def _assert_validation_error(response, field: str | None = None) -> dict:
+    payload = _assert_safe_error_response(response, 422)
+    assert payload["detail"] == "Invalid request data."
+    assert isinstance(payload.get("errors"), list)
+    assert payload["errors"]
+    if field is not None:
+        assert any(error.get("field") == field for error in payload["errors"])
+    return payload
 
 
 def _analyze_payload() -> dict[str, str]:
@@ -43,7 +82,8 @@ def test_analyze_rejects_blank_resume_text():
         },
     )
 
-    assert response.status_code == 422
+    payload = _assert_validation_error(response, "resumeText")
+    assert payload["errors"][0]["message"] == "Must not be blank."
 
 
 def test_analyze_rejects_blank_job_text():
@@ -55,7 +95,160 @@ def test_analyze_rejects_blank_job_text():
         },
     )
 
-    assert response.status_code == 422
+    payload = _assert_validation_error(response, "jobText")
+    assert payload["errors"][0]["message"] == "Must not be blank."
+
+
+def test_analyze_rejects_missing_body():
+    response = client.post("/analyze")
+
+    payload = _assert_validation_error(response, "body")
+    assert payload["errors"][0]["message"] == "Request body is required."
+
+
+def test_analyze_rejects_missing_resume_text():
+    response = client.post("/analyze", json={"jobText": SAMPLE_JOB})
+
+    payload = _assert_validation_error(response, "resumeText")
+    assert payload["errors"][0]["message"] == "This field is required."
+
+
+def test_analyze_rejects_missing_job_text():
+    response = client.post("/analyze", json={"resumeText": SAMPLE_RESUME})
+
+    payload = _assert_validation_error(response, "jobText")
+    assert payload["errors"][0]["message"] == "This field is required."
+
+
+def test_analyze_rejects_wrong_resume_text_type():
+    response = client.post(
+        "/analyze",
+        json={"resumeText": 123, "jobText": SAMPLE_JOB},
+    )
+
+    payload = _assert_validation_error(response, "resumeText")
+    assert payload["errors"][0]["message"] == "Must be text."
+
+
+def test_analyze_rejects_wrong_job_text_type():
+    response = client.post(
+        "/analyze",
+        json={"resumeText": SAMPLE_RESUME, "jobText": ["not", "text"]},
+    )
+
+    payload = _assert_validation_error(response, "jobText")
+    assert payload["errors"][0]["message"] == "Must be text."
+
+
+def test_analyze_rejects_whitespace_only_resume_text():
+    response = client.post(
+        "/analyze",
+        json={"resumeText": "\n\t   ", "jobText": SAMPLE_JOB},
+    )
+
+    payload = _assert_validation_error(response, "resumeText")
+    assert payload["errors"][0]["message"] == "Must not be blank."
+
+
+def test_analyze_rejects_whitespace_only_job_text():
+    response = client.post(
+        "/analyze",
+        json={"resumeText": SAMPLE_RESUME, "jobText": "\n  \t"},
+    )
+
+    payload = _assert_validation_error(response, "jobText")
+    assert payload["errors"][0]["message"] == "Must not be blank."
+
+
+def test_analyze_rejects_malformed_json_safely():
+    response = client.post(
+        "/analyze",
+        content=b'{"resumeText": "unterminated",',
+        headers={"Content-Type": "application/json"},
+    )
+
+    payload = _assert_validation_error(response, "body")
+    assert payload["errors"][0]["message"] == "Malformed JSON."
+
+
+def test_analyze_rejects_resume_text_over_explicit_limit():
+    response = client.post(
+        "/analyze",
+        json={
+            "resumeText": "a" * (MAX_ANALYSIS_TEXT_LENGTH + 1),
+            "jobText": SAMPLE_JOB,
+        },
+    )
+
+    payload = _assert_validation_error(response, "resumeText")
+    assert payload["errors"][0]["message"] == "Must be 100,000 characters or fewer."
+
+
+def test_analyze_rejects_job_text_over_explicit_limit():
+    response = client.post(
+        "/analyze",
+        json={
+            "resumeText": SAMPLE_RESUME,
+            "jobText": "a" * (MAX_ANALYSIS_TEXT_LENGTH + 1),
+        },
+    )
+
+    payload = _assert_validation_error(response, "jobText")
+    assert payload["errors"][0]["message"] == "Must be 100,000 characters or fewer."
+
+
+def test_validation_response_does_not_echo_private_marker_strings():
+    response = client.post(
+        "/analyze",
+        json={
+            "resumeText": PRIVATE_RESUME_MARKER,
+            "jobText": "   ",
+            "notes": f"{PRIVATE_JOB_MARKER} token secret /workspace/private.py",
+        },
+    )
+
+    _assert_validation_error(response)
+
+
+def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
+    private_exception_message = (
+        f"boom {PRIVATE_RESUME_MARKER} {PRIVATE_JOB_MARKER} token secret /workspace/private.py"
+    )
+    log_stream = StringIO()
+    handler = logging.StreamHandler(log_stream)
+    api_logger = logging.getLogger("api.main")
+    original_level = api_logger.level
+    api_logger.addHandler(handler)
+    api_logger.setLevel(logging.ERROR)
+    safe_client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        with patch(
+            "api.main.analyze_request",
+            side_effect=RuntimeError(private_exception_message),
+        ):
+            response = safe_client.post(
+                "/analyze",
+                json={
+                    "resumeText": PRIVATE_RESUME_MARKER,
+                    "jobText": PRIVATE_JOB_MARKER,
+                },
+            )
+    finally:
+        api_logger.removeHandler(handler)
+        api_logger.setLevel(original_level)
+
+    payload = _assert_safe_error_response(response, 500)
+    assert payload == {
+        "detail": "The analysis could not be completed. Please try again."
+    }
+    log_output = log_stream.getvalue()
+    assert "RuntimeError" in log_output
+    assert private_exception_message not in log_output
+    assert PRIVATE_RESUME_MARKER not in log_output
+    assert PRIVATE_JOB_MARKER not in log_output
+    assert "token" not in log_output
+    assert "secret" not in log_output
 
 
 def test_analyze_matched_and_missing_skills_are_disjoint():
@@ -359,6 +552,18 @@ if __name__ == "__main__":
     test_health_returns_ok()
     test_analyze_rejects_blank_resume_text()
     test_analyze_rejects_blank_job_text()
+    test_analyze_rejects_missing_body()
+    test_analyze_rejects_missing_resume_text()
+    test_analyze_rejects_missing_job_text()
+    test_analyze_rejects_wrong_resume_text_type()
+    test_analyze_rejects_wrong_job_text_type()
+    test_analyze_rejects_whitespace_only_resume_text()
+    test_analyze_rejects_whitespace_only_job_text()
+    test_analyze_rejects_malformed_json_safely()
+    test_analyze_rejects_resume_text_over_explicit_limit()
+    test_analyze_rejects_job_text_over_explicit_limit()
+    test_validation_response_does_not_echo_private_marker_strings()
+    test_analyze_unexpected_exception_returns_generic_500_and_safe_logs()
     test_analyze_matched_and_missing_skills_are_disjoint()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_response_excludes_raw_resume_and_job_text()

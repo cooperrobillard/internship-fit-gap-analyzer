@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel, Field, field_validator
 
+MAX_ANALYSIS_TEXT_LENGTH = 100_000
+
 
 class SkillItem(BaseModel):
     skill: str
@@ -16,8 +18,8 @@ class AnalyzeMetadata(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    resumeText: str
-    jobText: str
+    resumeText: str = Field(strict=True, max_length=MAX_ANALYSIS_TEXT_LENGTH)
+    jobText: str = Field(strict=True, max_length=MAX_ANALYSIS_TEXT_LENGTH)
     jobTitle: str | None = None
     company: str | None = None
     sourceUrl: str | None = None
