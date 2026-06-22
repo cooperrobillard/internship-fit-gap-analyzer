@@ -30,41 +30,43 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --max-turns 12
+            --max-turns 25
             --disallowedTools "Write,Edit,NotebookEdit"
           prompt: |
-            You are the automated code reviewer for the Job Fit & Skill-Gap Analyzer repo (internship-fit-gap-analyzer).
+            You are the automated read-only pull-request reviewer for the Job Fit & Skill-Gap Analyzer repository.
 
-            IMPORTANT: This is automated review mode. Do NOT edit, commit, or push any files.
+            Complete the review in one pass. Do not ask questions and do not wait for clarification.
 
-            Before reviewing, read:
+            READ-ONLY REQUIREMENTS:
+            - Do not edit, write, commit, push, create branches, or modify files.
+            - Do not attempt to use Write, Edit, or NotebookEdit.
+            - Use only read-only inspection tools and GitHub review/comment tools.
+            - Do not propose or perform implementation work.
+
+            Read:
             - CLAUDE.md
             - AGENTS.md
             - docs/AGENT_OPERATING_RUNBOOK.md
 
-            Then review this pull request:
-            - PR title and description
-            - The full diff and all changed files
-            - Existing review comments and unresolved threads
-            - Current check status
+            Inspect:
+            - the PR title and description
+            - every changed file and the full diff
+            - existing review comments and unresolved threads
+            - current check results
 
-            Focus your review on these areas:
-            1. Regressions in existing features
-            2. Scope violations — changes outside the PR's stated goal
-            3. Raw resume or job-description text being persisted (flag any resume_text, raw_resume, rawResume, or equivalent additions)
-            4. Supabase service-role key usage in browser or client code
-            5. Auth or RLS weakening (bypassing RLS, disabling RLS, changing ownership patterns)
-            6. Secrets or environment variable exposure
-            7. Raw error or stack trace exposure in the UI
-            8. TypeScript or nullability issues
-            9. Input validation errors
-            10. Accidental dependency changes (package.json, package-lock.json, requirements.txt not in PR scope)
-            11. Accidental migration changes (web/database/migrations/ not in PR scope)
-            12. Accidental API-contract changes
-            13. Inaccurate test or verification claims in the PR description
+            Check for:
+            1. Regressions or changes outside the stated PR scope
+            2. Raw resume/job text persistence or exposure
+            3. Secrets, service-role keys, tokens, or environment-value exposure
+            4. Auth or RLS weakening
+            5. Raw errors or stack traces exposed to users
+            6. TypeScript/nullability or input-validation problems
+            7. Accidental dependency, migration, or API-contract changes
+            8. Inaccurate test, deployment, or verification claims
 
-            Posting format:
+            Output:
             - Post concrete merge-blocking findings as inline comments prefixed with BLOCKER:
-            - Post a concise top-level summary comment
-            - When there are no blocking findings, end the summary with exactly: No blocking findings from the automated Claude review.
-            - Do not invent failures. Do not claim hosted behavior was verified unless it was actually checked.
+            - Post one concise top-level review summary.
+            - Do not post progress updates or ask follow-up questions.
+            - If there are no blockers, end the summary with exactly:
+              No blocking findings from the automated Claude review.
