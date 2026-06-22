@@ -3626,12 +3626,11 @@ This step reinforced the difference between authoring a migration and applying i
 - Captured current limitations and non-goals, including no full resume parsing, no PDF/DOCX parsing, no AI extraction, no semantic matching, no application tracking, and no production-readiness certification.
 - Marked the Dev 18 resume-profile foundation/checkpoint complete in the public roadmap and identified Dev 19 production hardening as the next phase.
 
-## Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification
+## Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification checklist
 
-- Recorded the human-completed production policy inspection for saved-analysis and structured resume-profile ownership tables.
-- Documented two-user saved-analysis isolation checks in both directions.
-- Documented two-user structured resume-profile isolation checks in both directions.
-- Documented export isolation so each account's export contained only its own structured data.
-- Documented own-row create/read/update/delete verification where applicable and cleanup of synthetic verification records.
-- Preserved limitations: this was a manual production re-verification, not a penetration test, comprehensive security audit, or automated RLS regression suite.
+- Created a pending human verification checklist template at `docs/DEV19_RLS_AUTH_REVERIFICATION.md` for Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification.
+- The checklist covers: production RLS policy inspection for five tables, policy-coverage and ownership-predicate checks, two-user saved-analysis isolation scenarios, resume-profile isolation, export isolation, own-row CRUD, and cleanup.
+- All result fields (`[PASS/FAIL]`, `[NUMBER]`, `[DATE AND TIME]`, `[ADD ONLY REAL OBSERVATIONS]`) are intentionally left unfilled for a future human to complete with real production observations.
+- Expanded the RLS/user-isolation section of `docs/HOSTED_PROTOTYPE_SMOKE_TEST.md` with the same checklist items for smoke-test use.
+- Dev 19 Step 3 remains pending human execution; the roadmap item is unchecked.
 - Made no schema, migration, RLS policy, application-code, provider-setting, dependency, workflow, or deployment changes.

@@ -1,7 +1,9 @@
-# Dev 19 Step 3 — Clerk/Supabase RLS and Two-User Ownership Re-Verification
+# Dev 19 Step 3 — Clerk/Supabase RLS and Two-User Ownership Re-Verification Checklist
 
-**Verification date:** `[DATE AND TIME]`  
-**Verification type:** Manual production re-verification  
+**Verification date:** `[DATE AND TIME]`
+
+**Status:** Pending human execution — this is a verification checklist template, not a completed record.
+
 **Scope:** Clerk-authenticated Supabase RLS ownership for saved analyses, saved-analysis child rows, structured resume profiles, user-owned exports, and hosted two-user browser isolation.
 
 Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md), [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md).
@@ -10,19 +12,21 @@ Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`P
 
 ## 1. Purpose and scope
 
-This checkpoint records the completed human production verification for **Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification**.
+This checklist prepares a future human to execute and record **Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification**. It is not a completed verification record.
 
-The verification focused on whether authenticated users can access their own production rows while remaining isolated from another authenticated user's saved analyses, resume profiles, comparison options, and exported structured data.
+The verification should confirm whether authenticated users can access their own production rows while remaining isolated from another authenticated user's saved analyses, resume profiles, comparison options, and exported structured data.
 
-This was a documentation-only checkpoint. No application code, backend code, frontend code, tests, workflow files, dependency files, database schema, migrations, RLS policies, Clerk configuration, Supabase dashboard configuration, Vercel settings, Render settings, or deployment settings were changed as part of this record.
+When a human completes this checklist, they should fill in the `[PASS/FAIL]`, `[NUMBER]`, `[DATE AND TIME]`, and `[ADD ONLY REAL OBSERVATIONS]` fields with real results, then update the roadmap item and learning log accordingly.
+
+This is a documentation-only file. No application code, backend code, frontend code, tests, workflow files, dependency files, database schema, migrations, RLS policies, Clerk configuration, Supabase dashboard configuration, Vercel settings, Render settings, or deployment settings were changed as part of preparing this checklist.
 
 ---
 
 ## 2. Important limitations
 
-This checkpoint is:
+This checklist is:
 
-- a manual production re-verification;
+- not yet executed — pending human execution;
 - not a formal penetration test;
 - not a comprehensive security audit;
 - not an automated RLS regression suite;
@@ -30,15 +34,15 @@ This checkpoint is:
 
 Future schema, RLS, auth, helper, export, comparison, or data-control changes still require their own focused verification.
 
-This document intentionally does not include real Clerk user IDs, email addresses, JWTs, access tokens, API keys, Supabase project secrets, private resume text, private job text, or raw production row IDs.
+This document intentionally does not include real Clerk user IDs, email addresses, JWTs, access tokens, API keys, Supabase project secrets, private resume text, private job text, or raw production row IDs. Use synthetic test data only when executing this checklist.
 
 ---
 
 ## 3. Production policy inspection
 
-### Tables inspected
+### Tables to inspect
 
-The human verification inspected the production RLS posture for these tables:
+Inspect the production RLS posture for these tables:
 
 - `resume_profiles`
 - `analysis_runs`
@@ -65,7 +69,7 @@ The human verification inspected the production RLS posture for these tables:
 | Ownership predicate uses Clerk JWT `sub` | `[PASS/FAIL]` |
 | Parent/child ownership mismatches | `[NUMBER]` |
 
-The expected ownership pattern remains Clerk-user ownership through the JWT subject claim, using the project-standard predicate shape:
+The expected ownership pattern is Clerk-user ownership through the JWT subject claim, using the project-standard predicate shape:
 
 ```sql
 clerk_user_id = (select auth.jwt() ->> 'sub'::text)
@@ -82,9 +86,9 @@ The structured resume-profile check is limited to confirming the supplied produc
 
 ---
 
-## 4. Two-user hosted browser scenarios performed
+## 4. Two-user hosted browser scenarios (to be performed)
 
-The human verification used two distinct authenticated test accounts and synthetic test data only.
+Use two distinct authenticated Clerk test accounts and synthetic test data only. Do not use real private resumes, job descriptions, user identifiers, tokens, or secrets.
 
 | Scenario | Result |
 |---|---:|
@@ -103,23 +107,23 @@ The human verification used two distinct authenticated test accounts and synthet
 
 ### Saved-analysis isolation
 
-The human test covered own-row saved-analysis create/read behavior for both users and cross-user saved-analysis visibility checks in both directions.
+Cover own-row saved-analysis create/read behavior for both users and cross-user saved-analysis visibility checks in both directions.
 
 ### Resume-profile isolation
 
-The human test covered own-row structured resume-profile create/edit/read behavior for both users and cross-user resume-profile visibility checks in both directions.
+Cover own-row structured resume-profile create/edit/read behavior for both users and cross-user resume-profile visibility checks in both directions.
 
 ### Search and comparison-option isolation
 
-The two-user isolation review included checking that each authenticated user's saved-analysis surfaces remained scoped to that user's own records. This includes user-owned saved-analysis selection surfaces such as search/filter results and comparison options.
+Check that each authenticated user's saved-analysis surfaces remain scoped to that user's own records. This includes user-owned saved-analysis selection surfaces such as search/filter results and comparison options.
 
 ### Export isolation
 
-The export check verified the supplied result that each user's export contained only that user's own data.
+Verify that each user's export contains only that user's own data.
 
 ### Own-row CRUD and cleanup
 
-The hosted test verified own-row create/read/update/delete behavior where applicable and confirmed the supplied cleanup result for synthetic verification records.
+Verify own-row create/read/update/delete behavior where applicable and confirm cleanup of synthetic verification records after the test.
 
 ---
 
@@ -131,6 +135,6 @@ The hosted test verified own-row create/read/update/delete behavior where applic
 
 ## 6. Conclusion
 
-**Pass/fail conclusion:** This checkpoint records the supplied human production verification results exactly as provided above. It does not add independent claims beyond those supplied results.
+**Pass/fail conclusion:** `[PASS/FAIL — fill in after executing the checklist above]`
 
-The documented verification supports continuing to **Dev 19 Step 4 — abuse/rate-limit review and bounded implementation**, while preserving the requirement that future RLS, schema, auth, export, comparison, or data-control changes receive their own review.
+Once all fields in sections 3 and 4 are filled with real results, update the roadmap item `[ ]` to `[x]` and add a learning log entry recording the actual findings. Do not mark Dev 19 Step 4 as the active next step until this checklist has been completed and recorded.
