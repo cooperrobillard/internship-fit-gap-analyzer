@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run backend tests
+        run: |
+          python3 tests/test_api_service.py
+          python3 run_tests.py
+          python3 -m py_compile api/main.py api/models.py tests/test_api_service.py run_tests.py streamlit_app.py
+
+  frontend-lint:
+    name: frontend-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Run frontend lint
+        working-directory: web
+        run: npm run lint
+
+  privacy:
+    name: privacy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for prohibited tracked files
+        run: |
+          set -euo pipefail
+
+          prohibited_paths=(
+            "web/.env.local"
+            ".env"
+            ".env.local"
+            "data/outputs/analysis_results.db"
+            "data/resume/resume.txt"
+          )
+
+          found=0
+
+          for path in "${prohibited_paths[@]}"; do
+            if git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+              echo "::error file=$path::Prohibited tracked path found: $path"
+              found=1
+            fi
+          done
+
+          while IFS= read -r path; do
+            echo "::error file=$path::Prohibited tracked path found under data/jobs/: $path"
+            found=1
+          done < <(git ls-files 'data/jobs/*')
+
+          while IFS= read -r path; do
+            echo "::error file=$path::Prohibited tracked .DS_Store file found: $path"
+            found=1
+          done < <(git ls-files | awk '/(^|\/)\.DS_Store$/')
+
+          if [ "$found" -ne 0 ]; then
+            exit 1
+          fi
