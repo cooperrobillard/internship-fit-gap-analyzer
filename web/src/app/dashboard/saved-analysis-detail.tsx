@@ -24,7 +24,8 @@ import {
   type SavedAnalysisSkill,
 } from "@/lib/supabase/saved-analyses";
 
-const boxClass = "mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm";
+const boxClass =
+  "mt-4 rounded-lg border border-zinc-200 bg-white/70 p-4 text-sm";
 
 function SkillList({
   title,
@@ -91,9 +92,8 @@ export function SavedAnalysisDetailPanel({
   onDeleted,
 }: SavedAnalysisDetailPanelProps) {
   const { session } = useSession();
-  const [loadResult, setLoadResult] = useState<SavedAnalysisDetailResult | null>(
-    null,
-  );
+  const [loadResult, setLoadResult] =
+    useState<SavedAnalysisDetailResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteUiState, setDeleteUiState] = useState<DeleteUiState>({
     kind: "idle",
@@ -153,7 +153,12 @@ export function SavedAnalysisDetailPanel({
 
   if (isLoading || loadResult === null) {
     return (
-      <div className={`${boxClass} text-zinc-600`}>
+      <div
+        className={`${boxClass} text-zinc-600`}
+        role="status"
+        aria-live="polite"
+        aria-busy={isLoading}
+      >
         <p className="font-medium text-zinc-900">Loading analysis detail…</p>
       </div>
     );
@@ -161,11 +166,13 @@ export function SavedAnalysisDetailPanel({
 
   if (loadResult.status === "not_found") {
     return (
-      <div className={`${boxClass} border-amber-200 bg-amber-50 text-amber-950`}>
+      <div
+        className={`${boxClass} border-amber-200 bg-amber-50 text-amber-950`}
+      >
         <p className="font-medium">Analysis not found</p>
         <p className="mt-2">
-          This saved analysis is no longer available. Select another row from the
-          list.
+          This saved analysis is no longer available. Select another row from
+          the list.
         </p>
       </div>
     );
@@ -173,7 +180,10 @@ export function SavedAnalysisDetailPanel({
 
   if (loadResult.status === "error") {
     return (
-      <div className={`${boxClass} border-red-200 bg-red-50 text-red-950`} role="alert">
+      <div
+        className={`${boxClass} border-red-200 bg-red-50 text-red-950`}
+        role="alert"
+      >
         <p className="font-medium">Could not load analysis detail</p>
         <p className="mt-1">{loadResult.message}</p>
       </div>
@@ -199,7 +209,10 @@ export function SavedAnalysisDetailPanel({
 
     setDeleteUiState({ kind: "deleting" });
 
-    const result = await deleteSavedAnalysis(() => session.getToken(), analysisId);
+    const result = await deleteSavedAnalysis(
+      () => session.getToken(),
+      analysisId,
+    );
 
     if (result.status === "success") {
       onDeleted?.(deleteLabel);
@@ -221,7 +234,10 @@ export function SavedAnalysisDetailPanel({
   }
 
   return (
-    <div className={`${boxClass} border-sky-200 bg-sky-50/50 text-zinc-800`}>
+    <div
+      className={`${boxClass} border-sky-200 bg-sky-50/40 text-zinc-800`}
+      aria-busy={isDeleting}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-sky-800">
         Selected analysis
       </p>
@@ -247,7 +263,9 @@ export function SavedAnalysisDetailPanel({
           <dt className="text-zinc-500">Company</dt>
           <dd
             className={`font-medium ${
-              analysis.company?.trim() ? "text-zinc-900" : "text-zinc-500 italic"
+              analysis.company?.trim()
+                ? "text-zinc-900"
+                : "text-zinc-500 italic"
             }`}
           >
             {companyLabel}
@@ -268,7 +286,10 @@ export function SavedAnalysisDetailPanel({
               </a>
             ) : null}
             {sourceUrl.kind === "text" ? (
-              <span className="break-all text-zinc-700" title={analysis.source_url ?? undefined}>
+              <span
+                className="break-all text-zinc-700"
+                title={analysis.source_url ?? undefined}
+              >
                 {sourceUrl.label}
               </span>
             ) : null}
@@ -281,19 +302,21 @@ export function SavedAnalysisDetailPanel({
           <dt className="text-zinc-500">Notes</dt>
           <dd className="min-w-0 text-zinc-900">
             {notesText ? (
-              <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-white/80 px-3 py-2 text-zinc-800">
+              <p className="whitespace-pre-wrap break-words rounded-md bg-white/80 px-3 py-2 text-zinc-800">
                 {notesText}
               </p>
             ) : (
-              <span className="text-zinc-500">{formatOptionalMetadata(analysis.notes)}</span>
+              <span className="text-zinc-500">
+                {formatOptionalMetadata(analysis.notes)}
+              </span>
             )}
           </dd>
         </div>
       </dl>
 
       <p className="mt-4 text-sm text-zinc-700">
-        Matched: <strong>{analysis.matched_skills_count}</strong> · Missing:{" "}
-        <strong>{analysis.missing_skills_count}</strong>
+        Matched skills: <strong>{analysis.matched_skills_count}</strong> ·
+        Missing skills: <strong>{analysis.missing_skills_count}</strong>
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -324,19 +347,22 @@ export function SavedAnalysisDetailPanel({
 
       <div className="mt-5 border-t border-sky-200 pt-4">
         {deleteUiState.kind === "confirming" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950">
+          <div
+            className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950"
+            aria-busy={isDeleting}
+          >
             <p className="font-medium">Delete this saved analysis?</p>
             <p className="mt-1 text-sm">
-              <span className="font-medium">{deleteLabel}</span> will be removed from
-              your account, including its skill results and metadata. This cannot be
-              undone.
+              <span className="font-medium">{deleteLabel}</span> will be removed
+              from your account, including its skill results and metadata. This
+              cannot be undone.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void handleConfirmDelete()}
                 disabled={isDeleting}
-                className="rounded-md bg-red-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-10 rounded-md bg-red-800 px-3 py-2 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeleting ? "Deleting…" : "Yes, delete"}
               </button>
@@ -344,7 +370,7 @@ export function SavedAnalysisDetailPanel({
                 type="button"
                 onClick={() => setDeleteUiState({ kind: "idle" })}
                 disabled={isDeleting}
-                className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -355,7 +381,7 @@ export function SavedAnalysisDetailPanel({
             type="button"
             onClick={() => setDeleteUiState({ kind: "confirming" })}
             disabled={isDeleting}
-            className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Delete saved analysis
           </button>

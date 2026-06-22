@@ -50,27 +50,29 @@ function SavedAnalysesSearchControls({
   visibleCount: number;
 }) {
   return (
-    <div className="mt-4 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+    <div className="mt-4 space-y-3 rounded-lg border border-zinc-200 bg-white/70 p-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <label className="min-w-[12rem] flex-1 text-sm">
-          <span className="font-medium text-zinc-900">Search saved analyses</span>
+          <span className="break-words font-medium text-zinc-900">
+            Search saved analyses
+          </span>
           <input
             type="search"
             value={searchQuery}
             onChange={(event) => onSearchQueryChange(event.target.value)}
             placeholder="Job title, company, skills, notes…"
-            className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
             autoComplete="off"
           />
         </label>
         <label className="text-sm">
-          <span className="font-medium text-zinc-900">Filter</span>
+          <span className="break-words font-medium text-zinc-900">Filter</span>
           <select
             value={filter}
             onChange={(event) =>
               onFilterChange(event.target.value as SavedAnalysisListFilter)
             }
-            className="mt-1 block w-full min-w-[11rem] rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 block min-h-10 w-full min-w-0 rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 sm:min-w-[11rem]"
           >
             {SAVED_ANALYSIS_FILTER_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -82,8 +84,8 @@ function SavedAnalysesSearchControls({
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-600">
         <p>
-          Searching job title, company, source URL, notes, and skill names. Recurring
-          gap stats still use all saved analyses.
+          Searching job title, company, source URL, notes, and skill names.
+          Recurring gap stats still use all saved analyses.
         </p>
         <p className="shrink-0">
           Showing {visibleCount} of {totalCount}
@@ -93,7 +95,7 @@ function SavedAnalysesSearchControls({
         <button
           type="button"
           onClick={onClear}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-100"
+          className="min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
         >
           Clear search and filter
         </button>
@@ -121,14 +123,14 @@ function AnalysisRow({
         type="button"
         onClick={() => onSelect(analysis.id)}
         aria-pressed={isSelected}
-        className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
+        className={`min-h-11 w-full rounded-lg border px-4 py-3 text-left transition-colors ${
           isSelected
-            ? "border-sky-400 bg-sky-50 ring-1 ring-sky-300"
-            : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-white"
+            ? "border-sky-500 bg-sky-50 ring-2 ring-sky-200"
+            : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
         }`}
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-medium text-zinc-900">{title}</p>
+          <p className="break-words font-medium text-zinc-900">{title}</p>
           <p className="shrink-0 text-xs text-zinc-500">
             {formatSavedAnalysisDate(analysis.created_at)}
           </p>
@@ -141,7 +143,10 @@ function AnalysisRow({
           {companyLabel}
         </p>
         {notesPreview ? (
-          <p className="mt-1 truncate text-xs text-zinc-500" title={notesPreview}>
+          <p
+            className="mt-1 whitespace-pre-wrap break-words text-xs text-zinc-500"
+            title={notesPreview}
+          >
             {notesPreview}
           </p>
         ) : null}
@@ -171,7 +176,9 @@ function SavedAnalysesList({
   const { isLoaded, session } = useSession();
   const sessionId = session?.id ?? null;
 
-  const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null);
+  const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(
@@ -179,9 +186,9 @@ function SavedAnalysesList({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [listFilter, setListFilter] = useState<SavedAnalysisListFilter>("all");
-  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(
-    null,
-  );
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<
+    string | null
+  >(null);
   const [compareFirstId, setCompareFirstId] = useState<string | null>(null);
   const [compareSecondId, setCompareSecondId] = useState<string | null>(null);
   const completedFetchKeyRef = useRef<string | null>(null);
@@ -190,7 +197,8 @@ function SavedAnalysesList({
     loadResult?.status === "success" ? loadResult.analyses : [];
 
   const visibleCompareFirstId =
-    compareFirstId && allAnalyses.some((analysis) => analysis.id === compareFirstId)
+    compareFirstId &&
+    allAnalyses.some((analysis) => analysis.id === compareFirstId)
       ? compareFirstId
       : null;
   const visibleCompareSecondId =
@@ -200,7 +208,8 @@ function SavedAnalysesList({
       : null;
 
   const filteredAnalyses = useMemo(() => {
-    const analyses = loadResult?.status === "success" ? loadResult.analyses : [];
+    const analyses =
+      loadResult?.status === "success" ? loadResult.analyses : [];
     return filterSavedAnalyses(analyses, searchQuery, listFilter);
   }, [loadResult, searchQuery, listFilter]);
 
@@ -313,10 +322,12 @@ function SavedAnalysesList({
   if (!configured) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Your saved analyses</p>
+        <p className="break-words font-medium text-zinc-900">
+          Your saved analyses
+        </p>
         <p className="mt-2">
-          Supabase is not configured, so saved analyses cannot load. Add env vars to{" "}
-          <code className="text-xs">web/.env.local</code> (see{" "}
+          Supabase is not configured, so saved analyses cannot load. Add env
+          vars to <code className="text-xs">web/.env.local</code> (see{" "}
           <code className="text-xs">web/.env.example</code>).
         </p>
       </div>
@@ -325,7 +336,12 @@ function SavedAnalysesList({
 
   if (!isLoaded) {
     return (
-      <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
+      <div
+        className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}
+        role="status"
+        aria-live="polite"
+        aria-busy={isLoading}
+      >
         <p className="font-medium">Loading your saved analyses…</p>
       </div>
     );
@@ -334,7 +350,9 @@ function SavedAnalysesList({
   if (!sessionId) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Your saved analyses</p>
+        <p className="break-words font-medium text-zinc-900">
+          Your saved analyses
+        </p>
         <p className="mt-2">Sign in to see analyses you have saved.</p>
       </div>
     );
@@ -342,11 +360,16 @@ function SavedAnalysesList({
 
   if (isLoading || loadResult === null) {
     return (
-      <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
+      <div
+        className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}
+        role="status"
+        aria-live="polite"
+        aria-busy={isLoading}
+      >
         <p className="font-medium">Loading your saved analyses…</p>
         <p className="mt-2 text-sm text-sky-800/90">
-          Showing job title, company, skill counts, and dates—not full resume or job
-          text.
+          Showing job title, company, skill counts, and dates—not full resume or
+          job text.
         </p>
       </div>
     );
@@ -356,7 +379,9 @@ function SavedAnalysesList({
     return (
       <div className={`${boxClass} border-zinc-200 bg-zinc-50 text-zinc-700`}>
         <p className="font-medium">Supabase is not configured</p>
-        <p className="mt-2">Saved analyses cannot load without Supabase env vars.</p>
+        <p className="mt-2">
+          Saved analyses cannot load without Supabase env vars.
+        </p>
       </div>
     );
   }
@@ -389,7 +414,9 @@ function SavedAnalysesList({
   if (loadResult.analyses.length === 0) {
     return (
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-        <p className="font-medium text-zinc-900">Your saved analyses</p>
+        <p className="break-words font-medium text-zinc-900">
+          Your saved analyses
+        </p>
         <p className="mt-2">
           Nothing saved yet. Run an analysis in the Analyze section and click{" "}
           <strong>Save analysis</strong> after results appear to add structured
@@ -401,10 +428,12 @@ function SavedAnalysesList({
 
   return (
     <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-      <p className="font-medium text-zinc-900">Your saved analyses</p>
+      <p className="break-words font-medium text-zinc-900">
+        Your saved analyses
+      </p>
       <p className="mt-2 text-zinc-600">
-        Select a row to view full metadata and skill lists ({loadResult.analyses.length}{" "}
-        most recent, newest first).
+        Select a row to view full metadata and skill lists (
+        {loadResult.analyses.length} most recent, newest first).
       </p>
 
       <SavedAnalysesSearchControls
@@ -435,6 +464,7 @@ function SavedAnalysesList({
         <div
           className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
           role="status"
+          aria-live="polite"
         >
           <p className="font-medium">Analysis deleted</p>
           <p className="mt-1">{deleteSuccessMessage}</p>
@@ -443,9 +473,12 @@ function SavedAnalysesList({
 
       {filteredAnalyses.length === 0 ? (
         <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-5 text-zinc-700">
-          <p className="font-medium text-zinc-900">No saved analyses match this search.</p>
+          <p className="break-words font-medium text-zinc-900">
+            No saved analyses match this search.
+          </p>
           <p className="mt-2 text-sm text-zinc-600">
-            Try a different keyword or filter, or clear the search to see everything.
+            Try a different keyword or filter, or clear the search to see
+            everything.
           </p>
           {searchIsActive ? (
             <button
@@ -488,7 +521,9 @@ function SavedAnalysesList({
 }
 
 /** Saved list plus recurring gap stats; shares refreshKey after real analysis saves. */
-export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
+export function SavedAnalysesPanel({
+  refreshKey = 0,
+}: SavedAnalysesPanelProps) {
   const [reloadNonce, setReloadNonce] = useState(0);
   const effectiveRefreshKey = refreshKey + reloadNonce;
 
@@ -513,8 +548,9 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
           Saved analyses and insights
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
-          Revisit structured analysis results, review recurring gaps, compare two
-          saved roles, export results, and delete entries you no longer need.
+          Revisit structured analysis results, review recurring gaps, compare
+          two saved roles, export results, and delete entries you no longer
+          need.
         </p>
 
         <RecurringGapStatsPanel refreshKey={effectiveRefreshKey} />

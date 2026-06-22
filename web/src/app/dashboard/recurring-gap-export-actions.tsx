@@ -53,7 +53,11 @@ export function RecurringGapExportActions() {
   return (
     <ExportDownloadGroup
       title="Download recurring gaps"
-      description="Exports skill names and counts from your saved analyses. Structured data only."
+      description={
+        isDownloading
+          ? "Preparing recurring-gap CSV…"
+          : "Exports skill names and counts from your saved analyses. Structured data only."
+      }
     >
       <ExportDownloadButton
         label={isDownloading ? "Preparing CSV…" : "Recurring gaps (CSV)"}
@@ -61,7 +65,13 @@ export function RecurringGapExportActions() {
         disabled={isDownloading}
       />
       {statusMessage ? (
-        <p className="w-full text-xs text-zinc-600">{statusMessage}</p>
+        <p
+          className="w-full text-xs text-zinc-600"
+          role="status"
+          aria-live="polite"
+        >
+          {statusMessage}
+        </p>
       ) : null}
     </ExportDownloadGroup>
   );

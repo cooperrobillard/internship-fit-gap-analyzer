@@ -3684,3 +3684,16 @@ This step reinforced the difference between authoring a migration and applying i
 - Deleted unused prototype components for the hosted prototype notice, Supabase status panel, and test-save action after removing their dashboard references.
 - Confirmed this step did not change API, auth, schema, RLS, dependency, provider, rate-limit, export-format, or persistence behavior.
 - Left detailed field-level, button, table, tag, comparison, and status polish for Dev 20 Step 1D.
+
+## 2026-06-22 — Dev 20 Step 1D dashboard component polish
+
+- Applied a cohesive component-level visual treatment across the dashboard using the existing warm surfaces, neutral borders, sky primary actions, restrained success/warning/error colors, and typography-first hierarchy.
+- Improved touch targets, disabled styling, and visible focus-compatible control sizing for dashboard buttons, upload labels, search/filter controls, comparison selectors, export buttons, and profile CRUD actions.
+- Refined the analysis form source selector, sample-input callout, form helper copy, run-analysis hierarchy, result summary, matched/missing skill groups, and optional structured-save states without changing validation or analysis logic.
+- Polished saved-analysis search/list/detail presentation for responsive wrapping, stronger selected rows, readable metadata, local overflow for long URLs, export grouping, and clearer destructive delete confirmation.
+- Improved saved-analysis comparison selectors, mobile stacking, textual comparison summaries, grouped shared/unique results, and export-control consistency without changing comparison calculations.
+- Improved recurring-gap loading/error/empty states, table caption/header semantics, local table overflow, and frequency readability while preserving top-12 and frequency formatting behavior.
+- Standardized recurring-gap export status messaging and disabled preparing state while preserving export contents.
+- Polished structured resume-profile create, edit, view, and delete interfaces with clearer grouping, helper text, status semantics, and mobile-friendly action sizing while preserving CRUD behavior.
+- Preserved all API, auth, schema, RLS, dependency, export-content, rate-limit, input persistence, and raw-text storage contracts.
+- Final visual QA and launch checkpoint remain deferred to Dev 20 Step 1E.
