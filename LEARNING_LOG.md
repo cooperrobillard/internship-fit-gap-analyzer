@@ -3659,3 +3659,15 @@ This step reinforced the difference between authoring a migration and applying i
 - Improved responsive navigation with larger touch targets, active-route styling, and `aria-current` for primary routes without adding a hamburger menu or new dependencies.
 - Deliberately left landing-page hero/content redesign, dashboard workflow polish, component-library work, and broader page layout migrations for later Dev 20 PRs.
 - Confirmed this step did not change API, database, auth configuration, dependencies, environment variables, schema/RLS, or data-persistence behavior.
+
+## 2026-06-22 — Dev 20 Step 1B landing-page redesign
+
+- Reworked the public landing page around a product-focused hero and auth-aware CTA hierarchy for signed-out visitors and signed-in users.
+- Added a static illustrative analysis preview that uses fictional job metadata and skill tags to show matched skills, missing skills, structured output, and planning guidance without running an analysis or displaying user data.
+- Added current-feature proof for structured résumé profiles, saved analysis history, detail/search/filter flows, comparison, recurring gap patterns, exports/downloads, account-owned saved records, and individual delete controls.
+- Positioned the analyzer as transparent rule-based matching using a skill taxonomy and aliases, not semantic AI, hiring judgment, fit guarantee, résumé rewriting, or a score.
+- Added concise privacy reassurance that pasted/uploaded resume and job text is processed for the request, optional saves contain structured results and metadata, structured profiles contain skills and profile metadata rather than raw résumé body text, and platform/service logging cannot be guaranteed absent.
+- Used semantic sections, one page-level `h1`, descriptive headings, accessible link names, textual matched/missing labels, wrapping skill tags, and responsive grids designed to reflow at narrow mobile widths without horizontal scrolling.
+- Reduced the old local-app emphasis to a small subordinate note in the final CTA so the hosted product remains the main story.
+- Confirmed no analysis, API, auth, database, RLS, dependency, rate-limit, environment, schema, or persistence behavior changed.
+- Left dashboard hierarchy, component-level mobile/accessibility work, and broader authenticated UI polish for later Dev 20 steps.
