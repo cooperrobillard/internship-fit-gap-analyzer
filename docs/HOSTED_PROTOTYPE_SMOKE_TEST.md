@@ -108,12 +108,40 @@ Still signed in as User A:
 
 ## 8. RLS / user isolation check
 
+Use **synthetic test data only**. Do not paste real private resumes, job descriptions, user identifiers, tokens, or secrets into the hosted app while performing this check.
+
+### Saved analyses
+
 - [ ] As **User A**, confirm at least one saved analysis is visible
+- [ ] User A can create and read their own saved analysis
+- [ ] User A search/filter results show only User A saved analyses
+- [ ] User A comparison options include only User A saved analyses
 - [ ] **Sign out**
 - [ ] **Sign in as User B** (different Clerk account)
-- [ ] User B does **not** see User A’s saved analysis
+- [ ] User B does **not** see User A’s saved analysis in the saved list
+- [ ] User B does **not** see User A’s saved analysis in search/filter results
+- [ ] User B does **not** see User A’s saved analysis in comparison options
 - [ ] User B runs analysis + **Save this prototype analysis** (or **Test cloud save**)
 - [ ] User B sees only their own saved row(s)
+- [ ] User B can edit/delete only their own saved-analysis records where those controls are available
+
+### Resume profiles
+
+- [ ] User B can create, edit, read, and delete their own structured resume profile
+- [ ] User B does **not** see User A’s structured resume profile
+- [ ] **Sign out**
+- [ ] **Sign in as User A**
+- [ ] User A does **not** see User B’s saved analysis
+- [ ] User A does **not** see User B’s structured resume profile
+- [ ] User A can create, edit, read, and delete their own structured resume profile
+
+### Export and cleanup
+
+- [ ] User A export contains only User A’s structured saved-analysis/profile data
+- [ ] User B export contains only User B’s structured saved-analysis/profile data
+- [ ] Own-row delete works for both accounts
+- [ ] Synthetic verification records are cleaned up after the test
+- [ ] No raw private text, secrets, tokens, SQL errors, or stack traces appear in the UI during the isolation check
 
 ---
 

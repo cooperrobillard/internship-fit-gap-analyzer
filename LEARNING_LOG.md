@@ -3625,3 +3625,12 @@ This step reinforced the difference between authoring a migration and applying i
 - Reconfirmed the privacy model: structured skills and notes only for profiles, no raw resume/job text stored by default, transient `.txt` uploads, no service-role key in browser code, and no RLS bypass.
 - Captured current limitations and non-goals, including no full resume parsing, no PDF/DOCX parsing, no AI extraction, no semantic matching, no application tracking, and no production-readiness certification.
 - Marked the Dev 18 resume-profile foundation/checkpoint complete in the public roadmap and identified Dev 19 production hardening as the next phase.
+
+## Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification checklist
+
+- Created a pending human verification checklist template at `docs/DEV19_RLS_AUTH_REVERIFICATION.md` for Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification.
+- The checklist covers: production RLS policy inspection for five tables, policy-coverage and ownership-predicate checks, two-user saved-analysis isolation scenarios, resume-profile isolation, export isolation, own-row CRUD, and cleanup.
+- All result fields (`[PASS/FAIL]`, `[NUMBER]`, `[DATE AND TIME]`, `[ADD ONLY REAL OBSERVATIONS]`) are intentionally left unfilled for a future human to complete with real production observations.
+- Expanded the RLS/user-isolation section of `docs/HOSTED_PROTOTYPE_SMOKE_TEST.md` with the same checklist items for smoke-test use.
+- Dev 19 Step 3 remains pending human execution; the roadmap item is unchecked.
+- Made no schema, migration, RLS policy, application-code, provider-setting, dependency, workflow, or deployment changes.
