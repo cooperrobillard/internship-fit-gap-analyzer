@@ -4,7 +4,7 @@ Short end-to-end checklist to run **before demos** or **after deployments**. Con
 
 Use **generic sample text only** — never real private resumes or job postings.
 
-Related: [`VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md`](VERSION_13_HOSTED_DEPLOYMENT_CHECKPOINT.md), [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), [`web/README.md`](../web/README.md).
+Related: [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), [`web/README.md`](../web/README.md).
 
 ---
 
@@ -58,6 +58,7 @@ curl -s https://internship-fit-gap-analyzer.onrender.com/health
 Open your Vercel production URL (e.g. `https://YOUR_VERCEL_APP.vercel.app`).
 
 - [ ] Landing page loads without 404
+- [ ] Privacy page loads without 404
 - [ ] Hosted prototype / privacy notice is visible or easy to find (landing or dashboard)
 
 ---
@@ -66,7 +67,8 @@ Open your Vercel production URL (e.g. `https://YOUR_VERCEL_APP.vercel.app`).
 
 - [ ] **Sign in** as User A (test account)
 - [ ] `/dashboard` loads while signed in
-- [ ] Optional: sign out and sign in again if auth state seems stale
+- [ ] Sign out succeeds without leaking data from the prior session
+- [ ] Sign back in as User A (test account)
 
 ---
 
@@ -91,6 +93,8 @@ We are looking for an intern with Python, SQL, FastAPI, and cloud deployment exp
 - [ ] No skill appears in both matched and missing lists
 - [ ] No raw stack trace, secret, or scary technical dump in the UI
 - [ ] If Render was sleeping, a calm retry message may appear first — retry once after ~30s
+- [ ] Transient `.txt` upload analysis works with synthetic text and does not create a saved file/profile automatically
+- [ ] Saved structured-profile analysis works when an explicitly selected profile is used as the resume-side input
 
 ---
 
@@ -101,14 +105,19 @@ Still signed in as User A:
 - [ ] Click **Save this prototype analysis**
 - [ ] Success message appears (no raw error codes)
 - [ ] Saved analyses list refreshes and shows the new row (metadata/counts only)
+- [ ] Saved-analysis detail view opens and shows structured fields only
+- [ ] Search/filter finds the synthetic row for User A
+- [ ] Comparison can use User A saved rows only
+- [ ] Saved-analysis export/download works where currently supported
+- [ ] Delete removes the synthetic saved analysis after confirmation
 - [ ] Reload `/dashboard`
-- [ ] Saved analysis still appears for User A
+- [ ] Remaining saved analyses still belong to User A only
 
 ---
 
 ## 8. RLS / user isolation check
 
-Use **synthetic test data only**. Do not paste real private resumes, job descriptions, user identifiers, tokens, or secrets into the hosted app while performing this check.
+Use **synthetic test data only**. Do not paste real private resumes, job descriptions, user identifiers, tokens, row IDs, or secrets into the hosted app while performing this check.
 
 ### Saved analyses
 
@@ -137,8 +146,8 @@ Use **synthetic test data only**. Do not paste real private resumes, job descrip
 
 ### Export and cleanup
 
-- [ ] User A export contains only User A’s structured saved-analysis/profile data
-- [ ] User B export contains only User B’s structured saved-analysis/profile data
+- [ ] User A export contains only User A’s structured saved-analysis data and derived reports
+- [ ] User B export contains only User B’s structured saved-analysis data and derived reports
 - [ ] Own-row delete works for both accounts
 - [ ] Synthetic verification records are cleaned up after the test
 - [ ] No raw private text, secrets, tokens, SQL errors, or stack traces appear in the UI during the isolation check
@@ -158,7 +167,7 @@ If you can trigger them safely (or recall from recent deploys):
 
 ## 10. Abuse-controls spot checks
 
-Use synthetic data only. Do not run repeated load or stress testing. The Vercel WAF rate-limit check remains pending until a human configures and verifies the provider rule documented in [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md).
+Use synthetic data only. Do not run repeated load or stress testing. The active Vercel WAF rate-limit rule and verification record are documented in [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md).
 
 - [ ] Authenticated access remains required for `/api/analyze`
 - [ ] A normal analysis with generic sample text succeeds
@@ -186,6 +195,9 @@ All of the following:
 - Save + reload shows the row for the same user
 - User B cannot see User A’s saved analyses
 - UI errors (if any) stay user-friendly
+- Structured save/read/search/compare/export/delete works with synthetic data
+- Resume-profile create/edit/delete and saved-profile analysis handoff work
+- Two-user RLS isolation, safe `413`, safe `429` cooldown behavior, and no raw/private/technical leakage have been checked for the current release
 
 ### Block demo — fix before showing others
 

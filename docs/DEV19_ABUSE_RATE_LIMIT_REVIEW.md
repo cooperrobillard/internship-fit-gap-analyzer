@@ -1,38 +1,21 @@
 # Dev 19 Step 4 — Abuse and Rate-Limit Review
 
-**Status:** Prepared for human activation. The Vercel Firewall/WAF rule described here is **not configured by this PR** and production verification is pending.
+**Status:** Complete — production activation and verification passed.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md).
+**Verification date:** June 22, 2026 at 12:41 PM ET
+
+Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
 
 ## Scope
 
-This review records the current abuse posture for the hosted analysis flow and the bounded application behavior added for safe client/proxy handling. It does not configure provider settings, change infrastructure, add dependencies, add secrets, or implement a distributed quota system.
+This record documents the bounded public-beta abuse posture for the hosted analysis flow. It records application behavior plus the human-activated Vercel WAF/rate-limit rule. It does not add provider settings, infrastructure, dependencies, secrets, account quotas, bot prevention, or a distributed abuse-prevention system.
 
-## Existing controls
+## Active production rule
 
-- **Clerk authentication on the Next.js analysis route.** Browser analysis calls go to the protected Next.js `/api/analyze` route before the Render backend is contacted.
-- **Server-side Render shared secret.** The Next.js route forwards the configured shared secret to Render server-side only; browser code does not receive it.
-- **Backend field limits.** The FastAPI/Pydantic request model limits `resumeText` and `jobText` to 100,000 characters each.
-- **Safe validation and error handling.** Backend validation is sanitized before returning to the browser, and proxy/backend failures use stable public messages rather than raw stack traces or provider internals.
-- **Backend timeout.** The Next.js proxy keeps the existing 25-second backend timeout so slow backend calls do not hang indefinitely.
-- **Render platform DDoS protection.** Render provides platform-level network protection for the hosted FastAPI service, separate from application-specific abuse controls.
-- **No raw-input persistence.** Running analysis does not save raw resume text or raw job-description text; saved analyses store structured skills and metadata only.
-
-## Main exposure
-
-- Repeated authenticated calls to `/api/analyze` can repeatedly invoke the comparatively expensive analysis path.
-- Oversized requests can consume proxy/application resources before backend field validation runs, especially when request bodies are larger than the accepted backend fields.
-- Automated account creation or distributed sources can still generate abuse patterns that per-IP fixed-window rules may not fully stop.
-- Direct Supabase save/profile abuse is a separate concern from the analysis route and should be reviewed independently with RLS, quotas, and product requirements in mind.
-- IP-based limiting can cause shared-IP false positives for campuses, offices, households, VPNs, or mobile networks.
-
-## Chosen bounded protection
-
-### Planned human-configured Vercel rule
+The human verified the following Vercel WAF/rate-limit rule is active:
 
 ```text
-Vercel path: /api/analyze
-Method: POST
+Path: POST /api/analyze
 Strategy: Fixed Window
 Window: 60 seconds
 Limit: 20 requests
@@ -40,69 +23,37 @@ Counting key: IP
 Action: 429
 ```
 
-This PR does **not** configure that rule. Vercel Firewall settings are human-controlled, and provider activation plus production verification remain pending after merge/deploy.
+| Check | Result |
+|---|---:|
+| Vercel WAF rate-limit rule active | PASS |
+| Rule applies to `POST /api/analyze` | PASS |
+| Fixed window, 20 requests per 60 seconds, counted by IP | PASS |
 
-### Application behavior prepared by this PR
-
-- The Next.js proxy has a named request-body ceiling of 1,000,000 UTF-8 bytes for `/api/analyze`.
-- The route still authenticates with Clerk before reading or parsing the request body.
-- A valid numeric `Content-Length` header that clearly exceeds the ceiling is rejected with safe `413 Payload Too Large` JSON.
-- The route also measures the received UTF-8 body before JSON parsing or forwarding and rejects oversized bodies with the same safe `413` response.
-- Oversized requests are not forwarded to Render.
-- Malformed JSON continues to return a safe `400` response.
-- Backend `422` validation passthrough, timeout behavior, shared-secret forwarding, and successful response shape are preserved.
-- The browser client treats `429` before trusting or rendering any response body, uses stable public copy, and preserves inputs.
-- The dashboard adds a local cooldown after `429` using the `Retry-After` header only when it is a valid integer clamped to 1–600 seconds; otherwise it defaults to about 60 seconds.
-
-The request-body ceiling is a proxy-level application safeguard, not a network-edge body-size guarantee. Very large requests may still be rejected or handled by platform infrastructure before application code executes.
-
-## Non-goals and limitations
-
-- No new provider, dependency, secret, environment variable, Redis, Upstash, database-backed limiter, in-memory limiter, module-global counter, or external SDK was added.
-- No in-memory limiter was added because serverless process memory is not a reliable global counter across instances, regions, or cold starts.
-- The planned Vercel rule is not bot prevention, account-level quotas, a formal security audit, or comprehensive abuse prevention.
-- The implementation does not use `x-forwarded-for` for application limiting and does not log IP addresses, Clerk user IDs, request bodies, resume text, or job-description text.
-- This review does not change Supabase schema, RLS policies, Clerk configuration, Render configuration, workflows, dependencies, or deployment settings.
-
-## Human activation checklist
-
-All production results are pending until a human configures the provider rule and verifies the deployed app.
-
-### Configure Vercel Firewall/WAF rule
-
-1. Open the Vercel dashboard for the production project.
-2. Go to the project Firewall or WAF settings.
-3. Add a rate-limit rule with:
-   - Path: `/api/analyze`
-   - Method: `POST`
-   - Strategy: `Fixed Window`
-   - Window: `60 seconds`
-   - Limit: `20 requests`
-   - Counting key: `IP`
-   - Action: `429`
-4. Save/apply the rule according to the Vercel dashboard flow.
-5. Confirm the rule is active for the production deployment target.
-
-### Production verification checklist
-
-Use synthetic resume and job text only. Do not run repeated load or stress testing.
+## Application controls and verified behavior
 
 | Check | Result |
 |---|---:|
-| Vercel rule is configured with the exact planned settings above | Pending human verification |
-| `/api/analyze` still requires authenticated access | Pending human verification |
-| A normal authenticated analysis succeeds | Pending human verification |
-| An oversized proxy request returns safe `413` behavior | Pending human verification |
-| A controlled burst receives `429` after WAF activation | Pending human verification |
-| The UI does not display the provider/WAF response body directly | Pending human verification |
-| Resume input remains preserved after `429` | Pending human verification |
-| Job input remains preserved after `429` | Pending human verification |
-| Selected structured resume profile remains preserved after `429` | Pending human verification |
-| Optional metadata remains preserved after `429` | Pending human verification |
-| Local cooldown prevents immediate repeated submission | Pending human verification |
-| Normal analysis resumes after the window expires | Pending human verification |
-| No tokens, secrets, raw input, IP address, stack trace, or infrastructure details appear in the UI | Pending human verification |
+| Normal authenticated analysis succeeds | PASS |
+| Oversized proxy request returns safe `413` | PASS |
+| Controlled burst returns `429` | PASS |
+| Provider response body is not rendered directly | PASS |
+| Inputs remain preserved after `429` | PASS |
+| Local cooldown works | PASS |
+| Normal analysis resumes after cooldown | PASS |
+| No tokens, IP addresses, raw input, stack traces, or provider internals appeared | PASS |
 
-## Follow-up considerations
+The current application posture includes Clerk authentication on the Next.js analysis route, server-side forwarding to Render with a server-only shared secret, backend character limits, a proxy request-body ceiling, sanitized validation/error responses, frontend retry/cooldown handling, and no application save-path persistence of raw resume or job-description text.
 
-Future public-launch hardening may need account-level quotas, bot controls, abuse monitoring, signup protections, and direct Supabase write-volume review. Those are intentionally outside this bounded Step 4 implementation.
+## Limitations and non-goals
+
+- This is basic public-beta abuse protection, not comprehensive DDoS or abuse prevention.
+- The active limiter is IP-based; it is not an account quota system and may have shared-IP false positives.
+- It is not bot prevention and does not stop distributed abuse from many IPs or accounts.
+- It does not regulate direct Supabase usage beyond existing RLS and application behavior.
+- It is not a formal security audit, penetration test, or legal/privacy compliance sign-off.
+- The request-size control is an application/proxy safeguard; platform infrastructure may handle very large requests before application code runs.
+- No Supabase schema, RLS policies, Clerk configuration, Render configuration, workflows, dependencies, environment variables, or deployment code were changed by this documentation checkpoint.
+
+## Conclusion
+
+Dev 19 Step 4 passed for its bounded scope. The hosted analysis route now has verified basic IP-based WAF rate limiting, safe oversized-request handling, safe `429` behavior, input preservation, local cooldown recovery, and no observed private or technical leakage during the human production check.

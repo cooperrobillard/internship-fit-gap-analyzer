@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`VERSION_15_CHECKPOINT.md`](VERSION_15_CHECKPOINT.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md), [`VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md`](VERSION_17_INPUT_WORKFLOW_GUARDRAIL.md), [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md), [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md), [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md), [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md), [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md), root [`README.md`](../README.md).
+Related: [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md), root [`README.md`](../README.md).
 
 ---
 
@@ -32,17 +32,18 @@ Related: [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`P
 | **SQLite** | Full saved-analysis history, skill rows, metadata (no raw resume/job body text in DB) |
 | **Analyzer** | Rule-based taxonomy + aliases in `src/` |
 
-### Hosted web app (prototype)
+### Hosted web app (limited public-beta / portfolio prototype)
 
 | Piece | Status |
 |-------|--------|
 | **Frontend** | Next.js on Vercel (`web/`) |
 | **Auth** | Clerk sign-in/sign-up, protected `/dashboard` |
-| **Analysis** | Browser → `/api/analyze` → Render FastAPI (`api/`) with optional shared-secret validation |
+| **Analysis** | Browser → `/api/analyze` → Render FastAPI (`api/`) with server-only shared-secret forwarding |
 | **Cloud DB** | Supabase/Postgres, RLS per Clerk user |
 | **Save** | Structured matched/missing skills + metadata (title, company, URL, notes)—**no raw resume/job text** |
-| **Read** | Recent saved list (metadata + counts); no detail drill-down, search, compare, delete, or export in UI yet |
-| **Ops** | Hosted smoke-test checklist, improved analysis/save/read error handling |
+| **Resume profiles** | Structured profile create/edit/delete and explicit saved-profile analysis handoff |
+| **Read/manage** | Saved-analysis detail, search/filter, compare, export/download, delete, recurring gap stats |
+| **Ops/hardening** | Safe API validation/errors, frontend retry/cooldown, proxy request-size handling, Dev 19 two-user RLS verification, active Vercel rate limiting |
 
 ### Architecture (hosted)
 
@@ -66,24 +67,24 @@ Browser → Vercel (Next.js) → Clerk
 | Job title / company metadata | Yes | Yes | Yes | P0 | On save form today |
 | Source URL / notes | Yes | Yes | Yes | P0 | On save form today |
 | Matched / missing skills display | Yes | Yes | Yes | P0 | Per-run only on hosted |
-| Saved analysis history | Yes | Partial | Yes | P0 | Hosted: list of recent rows only |
-| Saved analysis detail view | Yes | No | Yes | P0 | Hosted list does not open skill rows |
-| Saved analysis search / filter | Yes | No | Should have | P1 | Streamlit search tab |
-| Recurring gap stats | Yes | No | Yes | P0 | CLI pandas + Streamlit; **key product gap on hosted** |
-| Saved analysis comparison | Yes | No | Should have | P1 | Two-way compare in Streamlit |
-| Deletion | Yes | No | Yes | P0 | RLS allows; no hosted UI yet |
-| Export / download | Yes | No | Should have | P1 | CSV/MD locally; hosted TBD |
+| Saved analysis history | Yes | Yes | Yes | P0 | Hosted list/detail/search/delete are implemented |
+| Saved analysis detail view | Yes | Yes | Yes | P0 | Shows structured metadata and skill rows |
+| Saved analysis search / filter | Yes | Yes | Should have | P1 | Hosted search/filter implemented |
+| Recurring gap stats | Yes | Yes | Yes | P0 | Hosted derived recurring-gap stats implemented |
+| Saved analysis comparison | Yes | Yes | Should have | P1 | Hosted comparison implemented |
+| Deletion | Yes | Yes | Yes | P0 | Hosted individual saved-analysis delete implemented |
+| Export / download | Yes | Yes | Should have | P1 | Hosted structured exports/downloads implemented where supported |
 | SQLite local persistence | Yes | N/A | N/A | — | Stays local tool |
 | Supabase hosted persistence | N/A | Yes | Yes | P0 | Prototype save path live |
 | Clerk auth | N/A | Yes | Yes | P0 | |
 | RLS / user ownership | N/A | Yes | Yes | P0 | Manually verified; needs ongoing checks |
-| Persistent resume profiles | Partial (UI) | Schema + helpers | Later | P2 | Dev 18 Step 4: dashboard CRUD — not wired to analysis yet |
+| Persistent resume profiles | Partial (UI) | Yes | Later | P2 | Structured profile CRUD and explicit analysis handoff implemented; not raw resume storage |
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
-| Public privacy / data controls | Partial | Partial | Yes | P0 | Notices only; need policy + delete/export |
+| Public privacy / data controls | Partial | Yes | Yes | P0 | Privacy/data-control copy reconciled; account-wide controls remain open |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
 | Custom domain | No | No | Later | P2 | Vercel default URL today |
 | Semantic / AI matching | No | No | Later | P3 | Explicitly out of v1 scope |
-| Rate limiting / abuse protection | No | Partial | Yes | P0 | Shared secret on API only; need more |
+| Rate limiting / abuse protection | No | Basic | Yes | P0 | Active Vercel IP-based limit plus safe 413/429 handling; not comprehensive abuse prevention |
 | Error monitoring / logging | Minimal | Minimal | Yes | P1 | Calm UI errors; no full observability |
 
 **Legend:** P0 = blocks public launch · P1 = strong post-launch or fast follow · P2+ = later
@@ -94,16 +95,16 @@ Browser → Vercel (Next.js) → Clerk
 
 ### Must have before public launch
 
-- [ ] Hosted **recurring gap stats** across saved analyses (core value prop)
-- [ ] Hosted **saved analysis detail** (view matched/missing skills for a saved row)
-- [ ] Hosted **delete** own analyses (and cascade skill rows)
-- [ ] **Privacy policy** + in-app data explanation (what is stored, what is not)
-- [ ] **Auth + RLS** re-verified with multiple test users — Dev 19 Step 3 pending human execution; checklist at [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md)
-- [ ] **Safe data model** unchanged: structured skills + metadata; no raw resume/job text by default
-- [ ] **Abuse basics**: API rate limiting or equivalent; review shared-secret model
-- [ ] **Hosted smoke test** passes on production after each deploy
-- [ ] **Error handling** remains user-safe (no secrets, tokens, or stack traces in UI)
-- [ ] **Internship-only copy** removed or broadened to “any job” in public surfaces
+- [x] Hosted **recurring gap stats** across saved analyses (core value prop)
+- [x] Hosted **saved analysis detail** (view matched/missing skills for a saved row)
+- [x] Hosted **delete** own analyses (and cascade skill rows where implemented)
+- [x] In-app privacy/data explanation for current behavior; **not** a formal legal privacy policy
+- [x] **Auth + RLS** re-verified with multiple test users — Dev 19 Step 3 passed; see [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md)
+- [x] **Safe data model** unchanged: structured skills + metadata; no raw resume/job text by default
+- [x] **Abuse basics**: active Vercel IP-based rate limiting, safe `413`, safe `429`, and shared-secret forwarding verified; see [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md)
+- [x] **Hosted smoke test** passed for the Dev 19 checkpoint using supplied human verification facts
+- [x] **Error handling** remains user-safe (no secrets, tokens, or stack traces in UI)
+- [ ] Final UI, landing-page, dashboard hierarchy, accessibility, and mobile launch pass
 
 ### Should have soon after launch
 
@@ -144,7 +145,7 @@ Use before calling the app “public”:
 | **Backup** | Supabase backup/PITR awareness; no single-point “hope” |
 | **Launch** | Domain, support contact, honest “rule-based prototype → public v1” messaging |
 
-**Current honest status:** Demoable hosted prototype—not production-ready for strangers’ sensitive data.
+**Current honest status:** Demoable hosted prototype with Dev 19 hardening complete for a limited public-beta/portfolio scope; still not mature production SaaS for highly sensitive data.
 
 ---
 
@@ -163,20 +164,12 @@ Use before calling the app “public”:
 
 Schema may include sensitive columns (e.g. `job_text`) for future use—they are **not** populated by the current app.
 
-### Future: resume profiles
+### Structured resume profiles
 
-- **Desired:** Named resume profiles users reuse, with ability to pick a **different resume per analysis**
-- **Design:** [`PERSISTENT_RESUME_PROFILE_DESIGN.md`](PERSISTENT_RESUME_PROFILE_DESIGN.md) — product/consent/UX plan (Step 5)
-- **Schema/RLS plan:** [`RESUME_PROFILE_SCHEMA_RLS_PLAN.md`](RESUME_PROFILE_SCHEMA_RLS_PLAN.md) — structured table + policies (Step 6)
-- **SQL draft (not applied):** [`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md) + [`sql/resume_profiles_schema_rls_draft.sql`](sql/resume_profiles_schema_rls_draft.sql) (Step 7)
-- **RLS pattern review:** [`SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md`](SAVED_ANALYSIS_RLS_PATTERN_REVIEW.md) — saved analyses use `clerk_user_id` + `auth.jwt()->>'sub'` (Step 8); profile schema should mirror this
-- **First implementation should:** structured skills only; **omit `raw_resume_text`**; match saved-analysis ownership/RLS
-
-### User rights (target)
-
-- **Delete** saved analyses (and children) from the dashboard
-- **Export** structured history they own
-- **Clear copy** before any future “store full resume in cloud” feature
+- **Current:** Structured resume-profile management is implemented for profile name, optional description/notes, extracted skills, user-added skills, source type, and timestamps.
+- **Analysis handoff:** Users can explicitly select a saved profile; the app constructs temporary structured analysis input from profile fields and skill lists.
+- **Privacy boundary:** Profiles do not store raw resume body text, transient `.txt` uploads are not automatically saved as profiles, and this is not full resume parsing.
+- **Checkpoint:** [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md) records the structured-profile foundation, and [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) records the current data-control posture.
 
 ---
 
@@ -235,31 +228,29 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - Step 9 — **resume-profile SQL draft aligned** with saved-analysis `clerk_user_id` + RLS ([`RESUME_PROFILE_SCHEMA_RLS_DRAFT.md`](RESUME_PROFILE_SCHEMA_RLS_DRAFT.md)) — **not applied**
 - Step 10 — **pre-migration review** ([`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md)) — design ready; **confirm live Supabase RLS predicate before apply**
 - Step 11 — **migration file** ([`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql))
-- **Dev 18 — migration apply + verification** ([`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md)) — hosted structured schema and RLS confirmed; table empty; helpers/UI not implemented
+- **Dev 18 — migration apply + verification** ([`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md)) — hosted structured schema and RLS confirmed at that checkpoint; later Dev 18 work added helpers/UI
 
 **Not implemented:** helpers or UI.
 
 ### Dev 19 — Production hardening
 
-- Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification — **pending human execution**; checklist template at [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md).
-- Dev 19 Step 4 (abuse/rate-limit review and bounded implementation) is not yet the active next step — Step 3 must be completed and recorded first.
-- Continue to avoid production-ready or security-audited claims until a separate, explicit review supports them.
+- Step 1 — API validation, safe errors, safe logging — **Complete**
+- Step 2 — frontend error/loading/retry hardening — **Complete**
+- Step 3 — RLS/two-user ownership verification — **Complete**; supplied human production verification passed on June 22, 2026
+- Step 4 — abuse/rate-limit implementation and production activation — **Complete**; supplied human production verification passed on June 22, 2026
+- Step 5 — privacy/data-control/readiness checkpoint — **Complete**; see [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md)
 
-### Version 18 — Public readiness / security / privacy
+Dev 19 supports a limited public-beta/portfolio readiness verdict after one final UI and launch pass. It does **not** certify the entire product as mature production SaaS, formally security audited, penetration tested, or legally/privacy compliant.
 
-- Privacy page and data controls copy
-- Delete/export completeness
-- Rate limiting / abuse protection review
-- RLS and auth security pass
-- Input validation and size limits
+### Dev 20 — Final UI and launch pass
 
-### Version 19 — Final UI redesign
+- Landing-page polish
+- Dashboard hierarchy
+- Accessibility pass
+- Mobile launch pass
+- Final pre-launch smoke test
 
-- Design system: vibrant, summery, non-generic
-- Landing + dashboard layout pass
-- Accessible components, mobile sanity
-
-### Version 20 — Domain and public launch
+### Future — Domain and broader public launch
 
 - Custom domain on Vercel
 - Launch checklist + portfolio writeup
@@ -279,13 +270,13 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 **Dev 18 — Apply migration + verify RLS** — **Complete**
 
-- [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified; `resume_profiles` row count 0; helpers/UI not implemented
+- [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified at that checkpoint; later Dev 18 steps added helpers/UI
 
 **Dev 18 Step 7 — Resume-profile checkpoint** — **Complete**
 
 - [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md) — structured database/RLS foundation, helpers, management UI, selector guardrail, controlled analysis handoff, privacy model, and limitations documented before Dev 19
 
-**Recommended next:** Dev 19 production hardening: RLS/auth re-checks, user-safe errors/logging, input limits, abuse/rate-limit review, and privacy/data-control review.
+**Recommended next:** Dev 20 Step 1 — final UI, landing-page, dashboard-hierarchy, accessibility, and mobile launch pass.
 
 **Dev 18 Step 2 — Typed resume-profile helpers** — **Complete**
 
@@ -299,7 +290,7 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 - [`web/src/app/dashboard/resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx) — list/create/edit/delete structured profiles on dashboard
 
-**Out of scope until gated:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, and production-readiness claims without Dev 19 hardening.
+**Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, account-wide export/delete, automated retention, and mature SaaS/security-certification claims.
 
 See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
@@ -307,4 +298,4 @@ See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PROD
 
 ## Document maintenance
 
-Update this file when hosted parity changes or public v1 scope shifts. Do not mark production-ready until section 5 checklist is honestly complete.
+Update this file when hosted parity changes or public v1 scope shifts. Do not mark the product mature production SaaS or security-certified without a separate explicit review.
