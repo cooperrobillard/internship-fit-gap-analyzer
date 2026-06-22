@@ -156,7 +156,24 @@ If you can trigger them safely (or recall from recent deploys):
 
 ---
 
-## 10. Pass / fail criteria
+## 10. Abuse-controls spot checks
+
+Use synthetic data only. Do not run repeated load or stress testing. The Vercel WAF rate-limit check remains pending until a human configures and verifies the provider rule documented in [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md).
+
+- [ ] Authenticated access remains required for `/api/analyze`
+- [ ] A normal analysis with generic sample text succeeds
+- [ ] An oversized proxy request produces safe `413 Payload Too Large` behavior with public copy only
+- [ ] After WAF activation, a controlled burst produces `429` without displaying the WAF/provider response body directly
+- [ ] Resume input remains preserved after `429`
+- [ ] Job description input remains preserved after `429`
+- [ ] Selected structured resume profile and optional metadata remain preserved after `429`
+- [ ] The local cooldown prevents immediate repeated submission and does not automatically rerun analysis
+- [ ] Normal analysis resumes after the rate-limit window expires
+- [ ] No tokens, secrets, raw input, IP address, stack trace, provider response body, or infrastructure details appear in the UI
+
+---
+
+## 11. Pass / fail criteria
 
 ### Pass (OK to demo)
 

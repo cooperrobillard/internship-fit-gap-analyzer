@@ -33,6 +33,7 @@ export type AnalysisErrorCategory =
   | "authentication"
   | "timeout"
   | "unavailable"
+  | "rate_limited"
   | "generic";
 
 export type ApiAnalysisClientResult =
@@ -42,6 +43,7 @@ export type ApiAnalysisClientResult =
       message: string;
       category: AnalysisErrorCategory;
       retryable: boolean;
+      retryAfterSeconds?: number;
     };
 
 function toWebAnalysisResult(payload: ApiAnalyzeResponse): WebAnalysisResult {
@@ -120,8 +122,16 @@ function messageForHttpStatus(status: number): string {
     return "Your session may have expired. Refresh the page or sign in again.";
   }
 
+  if (status === 413) {
+    return "The analysis request is too large. Shorten the resume or job description and try again.";
+  }
+
   if (status === 422) {
     return "The request could not be read. Check the inputs and try again.";
+  }
+
+  if (status === 429) {
+    return "You have run several analyses in a short period. Wait about a minute and try again.";
   }
 
   if (status === 500 || status === 502 || status === 503) {
@@ -139,8 +149,11 @@ function categoryForHttpStatus(status: number): AnalysisErrorCategory {
   if (status === 401 || status === 403) {
     return "authentication";
   }
-  if (status === 422) {
+  if (status === 413 || status === 422) {
     return "validation";
+  }
+  if (status === 429) {
+    return "rate_limited";
   }
   if (status === 504) {
     return "timeout";
@@ -151,16 +164,40 @@ function categoryForHttpStatus(status: number): AnalysisErrorCategory {
   return "generic";
 }
 
+function retryAfterSecondsFromHeader(value: string | null): number {
+  if (value === null || !/^[0-9]+$/.test(value.trim())) {
+    return 60;
+  }
+
+  const seconds = Number(value.trim());
+  if (!Number.isSafeInteger(seconds)) {
+    return 60;
+  }
+
+  return Math.min(600, Math.max(1, seconds));
+}
+
 function isRetryableCategory(category: AnalysisErrorCategory): boolean {
-  return category !== "validation";
+  return category !== "validation" && category !== "rate_limited";
 }
 
 async function parseRouteError(response: Response): Promise<{
   message: string;
   category: AnalysisErrorCategory;
   retryable: boolean;
+  retryAfterSeconds?: number;
 }> {
   const category = categoryForHttpStatus(response.status);
+
+  if (response.status === 429) {
+    return {
+      message: messageForHttpStatus(response.status),
+      category,
+      retryable: false,
+      retryAfterSeconds: retryAfterSecondsFromHeader(response.headers.get("retry-after")),
+    };
+  }
+
   let body: RouteErrorBody | null = null;
 
   try {
