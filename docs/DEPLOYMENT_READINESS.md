@@ -4,9 +4,12 @@ Practical checklist for evaluating whether this project is ready to move from a 
 
 For current capabilities, see the [README](../README.md). For version history, see [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md).
 
+> **Current status notice — historical checklist:** This document was written as a pre-hosting readiness checklist. The hosted architecture now exists: Next.js on Vercel, FastAPI on Render, Clerk authentication, and Supabase user-owned structured records with RLS. Keep this file as historical context for why the hosted architecture was needed. For the current readiness source, use [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
+
+
 ---
 
-## 1. Current local architecture summary
+## 1. Historical local architecture summary
 
 ```text
 User (single machine)
@@ -24,9 +27,9 @@ User (single machine)
 
 - **Analysis logic** lives in `src/` and is shared by CLI, Streamlit, and FastAPI.
 - **Persistence** is optional, file-based SQLite on the local filesystem (CLI/Streamlit).
-- **Local FastAPI prototype** — `api/main.py` wraps the rule-based analyzer; wired to the Next.js dashboard during local development only. Still needs deployment, API authentication, hosting, and production CORS/security decisions before going live.
-- **No hosted service layer** — no production API deployment, no auth middleware on the API, no cloud DB from the API.
-- **No multi-tenant boundary** — one user, one machine, one DB path (local tools); Supabase cloud writes are prototype-only.
+- **Historical note:** At the time this checklist was written, FastAPI and Next.js were local/prototype surfaces. The hosted app now uses Vercel, Render, Clerk, and Supabase.
+- **Current hosted boundary:** Dashboard access uses Clerk, analysis is proxied through Vercel to Render with a server-only shared secret, and Supabase stores user-owned structured rows with RLS.
+- **Remaining caution:** The local tools are still single-user/local, and the hosted app is still a limited public-beta/portfolio prototype rather than mature production SaaS.
 
 ---
 
@@ -48,15 +51,15 @@ User (single machine)
 
 ---
 
-## 3. What is not deployment-ready yet
+## 3. Historical gaps before hosting
 
 | Gap | Why it blocks hosting as-is |
 |-----|----------------------------|
 | Streamlit on localhost | Not a production app server or branded product UI |
 | Local SQLite file | No cloud persistence, backups, or per-user isolation |
-| No authentication | Anyone with URL access would share one implicit “user” |
-| No HTTPS / secrets management | No deployment config or environment separation |
-| No rate limiting or abuse controls | Paste/upload endpoints would be unprotected |
+| No authentication | Addressed for the hosted dashboard with Clerk route protection |
+| No HTTPS / secrets management | Hosted provider configuration now exists outside this repo; do not commit secrets |
+| No rate limiting or abuse controls | Basic Vercel IP-based rate limiting and safe `413`/`429` handling are verified for `/api/analyze` |
 | No observability policy | No defined logging, retention, or PII scrubbing for hosted mode |
 | No restore/import | Backup download exists; import is not implemented |
 | Rule-based matching only | Product expectations for “AI job fit” would be misleading |
@@ -78,7 +81,7 @@ Decide and document **before** any public or multi-user launch:
 | Backup files | User downloads SQLite file | Treat backups as sensitive; no public hosting of dumps |
 | Sample vs. real data in repos | Samples only in Git | CI and docs must never use real resumes |
 
-**Blocker:** Hosting without answering these risks exposing internship-search PII.
+**Historical blocker:** Hosting without answering these risks exposing internship-search PII. The current Dev 19 checkpoint records bounded answers for the hosted prototype, while account-wide export/delete, automated retention, formal audit, and legal/privacy policy work remain open.
 
 ---
 

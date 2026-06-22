@@ -5,15 +5,21 @@ export function HostedPrototypeNotice() {
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-relaxed text-amber-950">
       <p className="font-medium text-amber-950">Hosted prototype</p>
       <p className="mt-2 text-amber-900/90">
-        This deployment is a <strong>portfolio prototype</strong>, not production-secure
-        SaaS. The analyzer is <strong>rule-based</strong> (keyword taxonomy, not AI).
-        The hosted FastAPI backend on Render is connected for dashboard analysis.
+        This deployment is a <strong>portfolio prototype</strong>, not mature
+        production SaaS. The analyzer is <strong>rule-based</strong> (keyword
+        taxonomy, not AI), and dashboard analysis requires Clerk authentication
+        at the application route.
       </p>
       <p className="mt-2 text-amber-900/90">
-        Please avoid pasting <strong>sensitive resume or job text</strong> here for
-        now. The analysis API does not intentionally store raw pasted text, but the
-        backend does not yet have production API authentication — treat this as an
-        early demo environment.
+        Vercel forwards analysis requests to the Render backend with a
+        server-only shared secret, and basic input-size, safe-error, and abuse
+        controls are in place. That does <strong>not</strong> equal a formal
+        security audit, penetration test, or absolute security guarantee.
+      </p>
+      <p className="mt-2 text-amber-900/90">
+        Please still avoid unusually sensitive resume or job text. The product
+        save path stores structured results and metadata rather than raw pasted
+        text, but platform/service logging cannot be guaranteed absent.
       </p>
     </div>
   );
@@ -24,7 +30,7 @@ const deploymentRows = [
   { layer: "Analysis API", platform: "Render (FastAPI)" },
   { layer: "Database", platform: "Supabase (Postgres)" },
   { layer: "Authentication", platform: "Clerk" },
-  { layer: "Status", platform: "Hosted prototype" },
+  { layer: "Status", platform: "Limited public-beta / portfolio prototype" },
 ] as const;
 
 export function DeploymentStatusSection() {

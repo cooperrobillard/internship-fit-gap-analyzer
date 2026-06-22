@@ -3634,3 +3634,18 @@ This step reinforced the difference between authoring a migration and applying i
 - Expanded the RLS/user-isolation section of `docs/HOSTED_PROTOTYPE_SMOKE_TEST.md` with the same checklist items for smoke-test use.
 - Dev 19 Step 3 remains pending human execution; the roadmap item is unchecked.
 - Made no schema, migration, RLS policy, application-code, provider-setting, dependency, workflow, or deployment changes.
+
+## 2026-06-22 — Dev 19 Step 5 privacy and readiness checkpoint
+
+### What changed
+- Reconciled public privacy and product copy with the implemented hosted behavior.
+- Recorded a saved-data inventory for transient resume/job inputs, structured saved analyses, structured resume profiles, exports, auth/session data, and local-only SQLite data.
+- Clarified that structured resume profiles store names, optional notes/description, extracted skills, user-added skills, source type, and timestamps—not raw resume body text.
+- Clarified that pasted or uploaded resume/job text remains transient in the product save path, while Vercel/Render process it for the analysis request and platform/service logging cannot be guaranteed absent.
+- Documented current user controls: analyze without saving, individual saved-analysis delete, structured profile create/edit/delete, supported saved-analysis/derived exports, and clearing browser inputs.
+- Documented missing account-wide controls: no one-click account-wide export, no delete-all, no automated retention, no restore/undo, no profile export control, and no automatic Clerk-account-to-Supabase cleanup claim.
+- Recorded completed Dev 19 RLS/two-user verification and abuse/rate-limit verification from the human-supplied production facts.
+- Set the readiness verdict to limited public-beta/portfolio readiness for the next final UI and launch pass, while preserving limitations: not mature production SaaS, not formally security audited, not penetration tested, and not a legal/privacy compliance sign-off.
+
+### What did not change
+- No schema, auth, provider, dependency, workflow, environment, API behavior, analysis logic, database helper, RLS policy, or deployment changes were made.
