@@ -43,6 +43,6 @@ jobs:
           # --disallowedTools blocks the most dangerous Bash patterns as belt-and-suspenders
           # on top of CLAUDE.md behavioral guardrails.
           claude_args: |
-            --max-turns 10
-            --allowedTools "Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(grep*),Bash(find*),Bash(python3 tests/test_api_service.py*),Bash(python3 run_tests.py*),Bash(python3 -m py_compile api/main.py run_tests.py streamlit_app.py*),Bash(cd web && npm run lint*),Bash(cd web && npm run build*),Bash(npm run lint*),Bash(npm run build*)"
+            --max-turns 25
+            --allowedTools "Bash(git status*),Bash(git diff --check),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(grep*),Bash(find*),Bash(python3 tests/test_api_service.py*),Bash(python3 run_tests.py*),Bash(python3 -m py_compile api/main.py api/models.py tests/test_api_service.py run_tests.py streamlit_app.py*),Bash(cd web && npm run lint*),Bash(cd web && npm run build*),Bash(npm run lint*),Bash(npm run build*)"
             --disallowedTools "Bash(git push --force*),Bash(git push -f*),Bash(git reset --hard*),Bash(git clean*),Bash(git add .),Bash(git add -A),Bash(gh pr merge*),Bash(npm install*),Bash(npm update*),Bash(pip install*),Bash(rm*),Bash(curl*),Bash(wget*)"
