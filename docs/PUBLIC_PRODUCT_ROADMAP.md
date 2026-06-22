@@ -98,7 +98,7 @@ Browser → Vercel (Next.js) → Clerk
 - [ ] Hosted **saved analysis detail** (view matched/missing skills for a saved row)
 - [ ] Hosted **delete** own analyses (and cascade skill rows)
 - [ ] **Privacy policy** + in-app data explanation (what is stored, what is not)
-- [ ] **Auth + RLS** re-verified with multiple test users
+- [x] **Auth + RLS** re-verified with multiple test users — Dev 19 Step 3 complete; see [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md)
 - [ ] **Safe data model** unchanged: structured skills + metadata; no raw resume/job text by default
 - [ ] **Abuse basics**: API rate limiting or equivalent; review shared-secret model
 - [ ] **Hosted smoke test** passes on production after each deploy
@@ -238,6 +238,12 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 - **Dev 18 — migration apply + verification** ([`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md)) — hosted structured schema and RLS confirmed; table empty; helpers/UI not implemented
 
 **Not implemented:** helpers or UI.
+
+### Dev 19 — Production hardening
+
+- Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification — **Complete**; see [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md).
+- Next step: **Dev 19 Step 4 — abuse/rate-limit review and bounded implementation**.
+- Continue to avoid production-ready or security-audited claims until a separate, explicit review supports them.
 
 ### Version 18 — Public readiness / security / privacy
 

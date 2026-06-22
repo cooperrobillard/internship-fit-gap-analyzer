@@ -3625,3 +3625,13 @@ This step reinforced the difference between authoring a migration and applying i
 - Reconfirmed the privacy model: structured skills and notes only for profiles, no raw resume/job text stored by default, transient `.txt` uploads, no service-role key in browser code, and no RLS bypass.
 - Captured current limitations and non-goals, including no full resume parsing, no PDF/DOCX parsing, no AI extraction, no semantic matching, no application tracking, and no production-readiness certification.
 - Marked the Dev 18 resume-profile foundation/checkpoint complete in the public roadmap and identified Dev 19 production hardening as the next phase.
+
+## Dev 19 Step 3 — Clerk/Supabase RLS and two-user ownership re-verification
+
+- Recorded the human-completed production policy inspection for saved-analysis and structured resume-profile ownership tables.
+- Documented two-user saved-analysis isolation checks in both directions.
+- Documented two-user structured resume-profile isolation checks in both directions.
+- Documented export isolation so each account's export contained only its own structured data.
+- Documented own-row create/read/update/delete verification where applicable and cleanup of synthetic verification records.
+- Preserved limitations: this was a manual production re-verification, not a penetration test, comprehensive security audit, or automated RLS regression suite.
+- Made no schema, migration, RLS policy, application-code, provider-setting, dependency, workflow, or deployment changes.
