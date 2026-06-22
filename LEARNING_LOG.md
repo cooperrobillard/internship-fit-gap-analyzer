@@ -3697,3 +3697,12 @@ This step reinforced the difference between authoring a migration and applying i
 - Polished structured resume-profile create, edit, view, and delete interfaces with clearer grouping, helper text, status semantics, and mobile-friendly action sizing while preserving CRUD behavior.
 - Preserved all API, auth, schema, RLS, dependency, export-content, rate-limit, input persistence, and raw-text storage contracts.
 - Final visual QA and launch checkpoint remain deferred to Dev 20 Step 1E.
+
+## 2026-06-22 — Dev 20 Step 1E limited-public-beta release candidate
+
+- Redesigned the privacy page into the Dev 20 design system with plain-language data handling, section navigation, controls, limitations, provider context, and limited-public-beta positioning.
+- Polished sign-in and sign-up routes with product context, privacy links, home links, and existing Clerk components unchanged.
+- Reconciled the root README and web README with the current hosted product, Dev 19 evidence, Dev 20 release-candidate status, and pending production verification.
+- Modernized the hosted smoke-test checklist for current UI labels, full checks, cross-route visual QA, responsive review, accessibility checkpoints, screenshot evidence, launch-copy review, and final decision rubric.
+- Created the Dev 20 launch-readiness record with status intentionally pending human production verification.
+- Confirmed no analysis, API, auth, middleware, schema, RLS, database, dependency, environment, export, rate-limit, or persistence behavior changed.

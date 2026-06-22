@@ -1,46 +1,46 @@
-# Hosted Prototype Smoke Test
+# Hosted Smoke Test — Limited Public Beta Candidate
 
-Short end-to-end checklist to run **before demos** or **after deployments**. Confirms the Vercel + Render + Clerk + Supabase prototype still works.
+Run this checklist before merging a release candidate and again after production deployment. Use generic sample text only; never use private resumes, private job descriptions, user identifiers, tokens, row IDs, or secrets.
 
-Use **generic sample text only** — never real private resumes or job postings.
+Related: [`DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md), [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`web/README.md`](../web/README.md).
 
-Related: [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`VERCEL_FRONTEND_DEPLOYMENT.md`](VERCEL_FRONTEND_DEPLOYMENT.md), [`RENDER_BACKEND_DEPLOYMENT.md`](RENDER_BACKEND_DEPLOYMENT.md), [`web/README.md`](../web/README.md).
-
----
+The final limited-public-beta status cannot be selected until production verification is complete.
 
 ## 1. Pre-flight repo checks
-
-Run from the repository root:
 
 ```bash
 git branch --show-current
 git status
 git pull origin main
-git ls-files | grep -E '(\.env$|\.env\.local$|web/\.env\.local$|data/outputs/|\.db$)' || true
+git ls-files web/.env.local
+git ls-files .env
+git ls-files .env.local
+git ls-files data/outputs/analysis_results.db
+git ls-files data/resume/resume.txt
+git ls-files data/jobs
+git ls-files | grep DS_Store || true
+git status --short | grep ".env" || true
 ```
 
-- [ ] On branch `main` (or your agreed deploy branch)
-- [ ] Working tree clean (no uncommitted changes you did not intend to ship)
-- [ ] Latest `origin/main` pulled
-- [ ] No `.env`, `.env.local`, `web/.env.local`, generated outputs, or `.db` files tracked
-
----
+- [ ] On `main` or the agreed release branch.
+- [ ] Working tree contains only intended release-candidate changes.
+- [ ] No environment files, private data files, generated database files, or `.DS_Store` files are tracked.
 
 ## 2. Automated local checks
 
 ```bash
 python3 tests/test_api_service.py
 python3 run_tests.py
-python3 -m py_compile api/main.py run_tests.py streamlit_app.py
-cd web && npm run lint && npm run build && cd ..
+python3 -m py_compile api/main.py api/models.py tests/test_api_service.py run_tests.py streamlit_app.py
+cd web && npm ci && npm run lint && npm run build && cd ..
+git diff --check
 ```
 
-- [ ] API service tests pass
-- [ ] Full `run_tests.py` suite passes (`All tests passed.`)
-- [ ] Python compile succeeds
-- [ ] `npm run lint` and `npm run build` succeed
-
----
+- [ ] API service tests pass.
+- [ ] Full Python test suite passes.
+- [ ] Python compile succeeds.
+- [ ] Web install, lint, and build succeed.
+- [ ] Diff whitespace check succeeds.
 
 ## 3. Hosted backend check
 
@@ -48,175 +48,189 @@ cd web && npm run lint && npm run build && cd ..
 curl -s https://internship-fit-gap-analyzer.onrender.com/health
 ```
 
-- [ ] Response includes `{"status":"ok"}`
-- [ ] No prolonged hang (if cold start, wait ~30s and retry once)
+- [ ] Response includes `{"status":"ok"}`.
+- [ ] If Render is waking from sleep, wait about 30 seconds and retry once.
 
----
+## 4. Cross-route visual QA
 
-## 4. Hosted frontend check
+Review both Vercel preview and production after merge for:
 
-Open your Vercel production URL (e.g. `https://YOUR_VERCEL_APP.vercel.app`).
+| Route | Signed out | Signed in |
+|---|---|---|
+| `/` | Landing page, sign-in/sign-up CTAs, privacy link | Auth-aware dashboard/privacy CTAs |
+| `/privacy` | Public privacy/data-control content | Same public content, dashboard CTA works |
+| `/sign-in` | Product context plus Clerk form | Redirect/Clerk behavior remains expected |
+| `/sign-up` | Product context plus Clerk form | Redirect/Clerk behavior remains expected |
+| `/dashboard` | Requires sign-in | Workspace loads |
 
-- [ ] Landing page loads without 404
-- [ ] Privacy page loads without 404
-- [ ] Hosted prototype / privacy notice is visible or easy to find (landing or dashboard)
+Check each route for:
 
----
+- [ ] Header and footer visible and coherent.
+- [ ] Route metadata/title is accurate.
+- [ ] Active navigation is accurate where present.
+- [ ] No duplicate page shell or nested main layout issue is visible.
+- [ ] No horizontal page scrolling.
+- [ ] Launch copy says limited public beta/release candidate where appropriate.
+- [ ] No stale prototype scaffolding or developer/test language.
 
-## 5. Clerk auth check
+## 5. Responsive review
 
-- [ ] **Sign in** as User A (test account)
-- [ ] `/dashboard` loads while signed in
-- [ ] Sign out succeeds without leaking data from the prior session
-- [ ] Sign back in as User A (test account)
+Manually review at:
 
----
+- [ ] 320 px
+- [ ] 375 px
+- [ ] 390 px
+- [ ] 768 px
+- [ ] 1024 px
+- [ ] 1280 px and wider
 
-## 6. Hosted analysis check
+Confirm Clerk forms, dashboard tables, exports, comparison selectors, saved lists, profile controls, privacy sections, header, and footer remain usable. Tables may use local overflow; the full page should not horizontally scroll.
 
-On `/dashboard`, use safe sample text only:
+## 6. Accessibility checkpoint
 
-**Resume text (example):**
+Manual checks are required; Lighthouse accessibility can support but must not replace keyboard and layout review.
+
+- [ ] Skip link works.
+- [ ] Focus is visible on links, buttons, fields, Clerk controls, and dashboard controls.
+- [ ] Keyboard-only critical workflow: sign in, open dashboard, run analysis, save structured results, open detail, search/filter, compare, export, delete, and manage profiles where test data allows.
+- [ ] Logical heading hierarchy on landing, privacy, sign-in, sign-up, and dashboard.
+- [ ] Form labels and helper text are present for app-owned fields.
+- [ ] Loading, status, and error messages are announced or placed near triggering controls.
+- [ ] Local table overflow only; no page-wide horizontal overflow.
+- [ ] 200% zoom remains readable.
+- [ ] 400% reflow spot-check does not hide critical content.
+- [ ] Do not claim formal WCAG certification.
+
+## 7. Hosted analysis workflow
+
+On `/dashboard`, use safe sample text only.
+
+Resume text:
 
 ```text
 Python SQL Git data analysis
 ```
 
-**Job description text (example):**
+Job description text:
 
 ```text
 We are looking for an intern with Python, SQL, FastAPI, and cloud deployment experience.
 ```
 
-- [ ] Click **Analyze pasted text**
-- [ ] Matched and missing skills render (counts and lists)
-- [ ] No skill appears in both matched and missing lists
-- [ ] No raw stack trace, secret, or scary technical dump in the UI
-- [ ] If Render was sleeping, a calm retry message may appear first — retry once after ~30s
-- [ ] Transient `.txt` upload analysis works with synthetic text and does not create a saved file/profile automatically
-- [ ] Saved structured-profile analysis works when an explicitly selected profile is used as the resume-side input
+- [ ] Click **Try sample inputs** and confirm synthetic inputs load.
+- [ ] Click **Run analysis (does not save)**.
+- [ ] Matched and missing skills render with counts and lists.
+- [ ] No skill appears in both matched and missing lists.
+- [ ] No raw stack trace, secret, token, SQL error, or provider body appears in the UI.
+- [ ] If Render was asleep, a calm retry message appears; retry once after the service wakes.
+- [ ] Transient `.txt` upload analysis works with synthetic text and does not automatically create a saved file or profile.
+- [ ] Saved structured-profile analysis works when an explicitly selected profile is used as the resume-side input.
 
----
+## 8. Supabase save/read and dashboard workflows
 
-## 7. Supabase save/read check
+Signed in as User A with synthetic data:
 
-Still signed in as User A:
+- [ ] Click **Save structured results**.
+- [ ] Success message appears without raw error codes.
+- [ ] Saved list refreshes and shows metadata/counts only.
+- [ ] Detail view opens and shows structured fields only.
+- [ ] Search/filter finds the synthetic row.
+- [ ] Comparison can use User A saved rows only.
+- [ ] Recurring-gap statistics update where enough saved rows exist.
+- [ ] Export/download works where currently supported.
+- [ ] Individual delete removes the synthetic saved analysis after confirmation.
+- [ ] Reload `/dashboard`; remaining data still belongs to User A only.
 
-- [ ] Click **Save this prototype analysis**
-- [ ] Success message appears (no raw error codes)
-- [ ] Saved analyses list refreshes and shows the new row (metadata/counts only)
-- [ ] Saved-analysis detail view opens and shows structured fields only
-- [ ] Search/filter finds the synthetic row for User A
-- [ ] Comparison can use User A saved rows only
-- [ ] Saved-analysis export/download works where currently supported
-- [ ] Delete removes the synthetic saved analysis after confirmation
-- [ ] Reload `/dashboard`
-- [ ] Remaining saved analyses still belong to User A only
+## 9. RLS / two-user isolation check
 
----
-
-## 8. RLS / user isolation check
-
-Use **synthetic test data only**. Do not paste real private resumes, job descriptions, user identifiers, tokens, row IDs, or secrets into the hosted app while performing this check.
+Use synthetic data only.
 
 ### Saved analyses
 
-- [ ] As **User A**, confirm at least one saved analysis is visible
-- [ ] User A can create and read their own saved analysis
-- [ ] User A search/filter results show only User A saved analyses
-- [ ] User A comparison options include only User A saved analyses
-- [ ] **Sign out**
-- [ ] **Sign in as User B** (different Clerk account)
-- [ ] User B does **not** see User A’s saved analysis in the saved list
-- [ ] User B does **not** see User A’s saved analysis in search/filter results
-- [ ] User B does **not** see User A’s saved analysis in comparison options
-- [ ] User B runs analysis + **Save this prototype analysis** (or **Test cloud save**)
-- [ ] User B sees only their own saved row(s)
-- [ ] User B can edit/delete only their own saved-analysis records where those controls are available
+- [ ] User A can create and read their own saved analysis.
+- [ ] User A search/filter and comparison options show only User A rows.
+- [ ] Sign out.
+- [ ] Sign in as User B.
+- [ ] User B does not see User A rows in list, search/filter, detail options, comparison options, exports, or recurring-gap views.
+- [ ] User B runs analysis and clicks **Save structured results**.
+- [ ] User B sees only their own row(s) and can delete only their own rows where controls are available.
 
 ### Resume profiles
 
-- [ ] User B can create, edit, read, and delete their own structured resume profile
-- [ ] User B does **not** see User A’s structured resume profile
-- [ ] **Sign out**
-- [ ] **Sign in as User A**
-- [ ] User A does **not** see User B’s saved analysis
-- [ ] User A does **not** see User B’s structured resume profile
-- [ ] User A can create, edit, read, and delete their own structured resume profile
+- [ ] User B can create, edit, read, select, and delete their own structured profile.
+- [ ] User B does not see User A structured profiles.
+- [ ] Sign back in as User A.
+- [ ] User A does not see User B saved analyses or structured profiles.
+- [ ] Synthetic verification rows/profiles are cleaned up.
 
-### Export and cleanup
+## 10. Failure-state and abuse-control spot checks
 
-- [ ] User A export contains only User A’s structured saved-analysis data and derived reports
-- [ ] User B export contains only User B’s structured saved-analysis data and derived reports
-- [ ] Own-row delete works for both accounts
-- [ ] Synthetic verification records are cleaned up after the test
-- [ ] No raw private text, secrets, tokens, SQL errors, or stack traces appear in the UI during the isolation check
+Do not run load or stress testing.
 
----
+- [ ] Empty saved list shows a calm empty state.
+- [ ] Save/read errors show short safe copy.
+- [ ] Analysis errors show calm copy with no stack traces.
+- [ ] No pasted resume/job body text appears in saved list rows.
+- [ ] Authenticated access remains required for `/api/analyze`.
+- [ ] Oversized proxy request produces safe `413 Payload Too Large` behavior with public copy only.
+- [ ] Controlled rate-limit verification produces safe `429` handling without displaying WAF/provider response bodies directly.
+- [ ] Resume input, job input, selected structured profile, and optional metadata remain preserved after `429`.
+- [ ] Local cooldown prevents immediate repeated submission and does not automatically rerun analysis.
+- [ ] Normal analysis resumes after the rate-limit window expires.
 
-## 9. Failure-state spot checks
+## 11. Launch-copy review
 
-If you can trigger them safely (or recall from recent deploys):
+Check public copy on `/`, `/privacy`, `/sign-in`, `/sign-up`, `/dashboard`, `README.md`, and `web/README.md` for:
 
-- [ ] Empty saved list shows a calm “no analyses yet” message
-- [ ] Save/read errors show short, safe copy (no tokens, secrets, or Postgres internals)
-- [ ] Analysis errors show calm messages (no stack traces)
-- [ ] No pasted resume/job text appears in saved list rows (metadata only)
+- [ ] Public name consistency: **Job Fit & Skill-Gap Analyzer**.
+- [ ] Limited-public-beta positioning.
+- [ ] Rule-based/not-AI accuracy.
+- [ ] No hiring, employment, ranking, or fit guarantees.
+- [ ] No absolute privacy/security claims.
+- [ ] Current feature accuracy: saved analyses, profiles, detail, search/filter, comparison, recurring gaps, exports, individual deletion, safe loading/error/rate-limit handling.
+- [ ] Current limitation accuracy: no account-wide export, no delete-all, no automated retention, no restore, no profile export, no automatic account-deletion cleanup guarantee, no formal audit/legal review.
+- [ ] No stale developer/test language.
 
----
+## 12. Screenshot evidence
 
-## 10. Abuse-controls spot checks
+Do not commit binary screenshots unless a human requests them. Capture and attach to the release record or PR/release notes.
 
-Use synthetic data only. Do not run repeated load or stress testing. The active Vercel WAF rate-limit rule and verification record are documented in [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md).
+Recommended preview filenames:
 
-- [ ] Authenticated access remains required for `/api/analyze`
-- [ ] A normal analysis with generic sample text succeeds
-- [ ] An oversized proxy request produces safe `413 Payload Too Large` behavior with public copy only
-- [ ] After WAF activation, a controlled burst produces `429` without displaying the WAF/provider response body directly
-- [ ] Resume input remains preserved after `429`
-- [ ] Job description input remains preserved after `429`
-- [ ] Selected structured resume profile and optional metadata remain preserved after `429`
-- [ ] The local cooldown prevents immediate repeated submission and does not automatically rerun analysis
-- [ ] Normal analysis resumes after the rate-limit window expires
-- [ ] No tokens, secrets, raw input, IP address, stack trace, provider response body, or infrastructure details appear in the UI
+- `preview-landing-1280.png`
+- `preview-privacy-1280.png`
+- `preview-sign-in-390.png`
+- `preview-sign-up-390.png`
+- `preview-dashboard-signed-in-1280.png`
+- `preview-dashboard-analysis-result-1280.png`
+- `preview-dashboard-saved-detail-1280.png`
+- `preview-dashboard-comparison-768.png`
+- `preview-dashboard-profiles-390.png`
 
----
+Recommended production filenames after merge:
 
-## 11. Pass / fail criteria
+- `prod-landing-1280.png`
+- `prod-privacy-1280.png`
+- `prod-sign-in-390.png`
+- `prod-sign-up-390.png`
+- `prod-dashboard-signed-in-1280.png`
+- `prod-dashboard-analysis-result-1280.png`
+- `prod-dashboard-saved-detail-1280.png`
+- `prod-dashboard-comparison-768.png`
+- `prod-dashboard-profiles-390.png`
 
-### Pass (OK to demo)
+## 13. Final decision rubric
 
-All of the following:
+The final status cannot be selected until production verification is complete.
 
-- Local automated checks (section 2) pass
-- Render `/health` returns `ok`
-- Vercel landing + dashboard load for a signed-in user
-- Analysis returns matched/missing skills with safe sample text
-- Save + reload shows the row for the same user
-- User B cannot see User A’s saved analyses
-- UI errors (if any) stay user-friendly
-- Structured save/read/search/compare/export/delete works with synthetic data
-- Resume-profile create/edit/delete and saved-profile analysis handoff work
-- Two-user RLS isolation, safe `413`, safe `429` cooldown behavior, and no raw/private/technical leakage have been checked for the current release
+### READY FOR LIMITED PUBLIC BETA
 
-### Block demo — fix before showing others
+All automated checks, preview visual/accessibility checks, production smoke tests, RLS/isolation checks, privacy checks, screenshot evidence, and launch-copy review pass with no blocking findings.
 
-Any of the following:
+### READY WITH ACCEPTED NON-BLOCKING LIMITATIONS
 
-- `run_tests.py` or `npm run build` fails on `main`
-- Render `/health` fails after one cold-start retry
-- Vercel returns 404 or dashboard is unreachable when signed in
-- Analysis consistently fails with config/503 errors (check `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET`)
-- Save or list fails for a signed-in user with correct Supabase + Clerk setup
-- **Cross-user data visible** (RLS failure)
-- Secrets, tokens, stack traces, or private pasted text visible in the UI
+All critical safety, privacy, auth, data-isolation, and workflow checks pass, and remaining issues are documented as accepted limited-beta constraints that do not mislead users or risk data exposure.
 
----
+### NOT READY — BLOCKED
 
-## Quick reference
-
-| Service | URL |
-|---------|-----|
-| Render health | `https://internship-fit-gap-analyzer.onrender.com/health` |
-| Vercel app | Your project URL from the Vercel dashboard |
-| Dashboard | `https://YOUR_VERCEL_APP.vercel.app/dashboard` |
+Any critical workflow failure, cross-user data exposure, secret/token/private text leak, broken auth boundary, unsafe error display, inaccurate launch/privacy claim, or unresolved production deploy failure blocks launch.
