@@ -155,7 +155,7 @@ function AnalysisRow({
 }
 
 type SavedAnalysesPanelProps = {
-  /** Increment to reload the list (e.g. after test cloud save). */
+  /** Increment to reload the list after successful real analysis saves. */
   refreshKey?: number;
 };
 
@@ -391,9 +391,9 @@ function SavedAnalysesList({
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
         <p className="font-medium text-zinc-900">Your saved analyses</p>
         <p className="mt-2">
-          Nothing saved yet. Run an analysis above and click{" "}
-          <strong>Save analysis</strong>, or use <strong>Test Supabase save</strong>{" "}
-          to verify cloud storage.
+          Nothing saved yet. Run an analysis in the Analyze section and click{" "}
+          <strong>Save analysis</strong> after results appear to add structured
+          results to this workspace.
         </p>
       </div>
     );
@@ -487,7 +487,7 @@ function SavedAnalysesList({
   );
 }
 
-/** Saved list plus recurring gap stats; shares refreshKey after cloud saves. */
+/** Saved list plus recurring gap stats; shares refreshKey after real analysis saves. */
 export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) {
   const [reloadNonce, setReloadNonce] = useState(0);
   const effectiveRefreshKey = refreshKey + reloadNonce;
@@ -497,15 +497,35 @@ export function SavedAnalysesPanel({ refreshKey = 0 }: SavedAnalysesPanelProps) 
   }
 
   return (
-    <>
-      <RecurringGapStatsPanel refreshKey={effectiveRefreshKey} />
-      <div className="mt-3">
-        <RecurringGapExportActions />
+    <section
+      id="saved-analyses"
+      className="scroll-mt-24"
+      aria-labelledby="saved-analyses-heading"
+    >
+      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+          Saved analyses
+        </p>
+        <h2
+          id="saved-analyses-heading"
+          className="mt-1 text-xl font-semibold text-zinc-950"
+        >
+          Saved analyses and insights
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
+          Revisit structured analysis results, review recurring gaps, compare two
+          saved roles, export results, and delete entries you no longer need.
+        </p>
+
+        <RecurringGapStatsPanel refreshKey={effectiveRefreshKey} />
+        <div className="mt-3">
+          <RecurringGapExportActions />
+        </div>
+        <SavedAnalysesList
+          refreshKey={effectiveRefreshKey}
+          onAnalysisDeleted={handleAnalysisDeleted}
+        />
       </div>
-      <SavedAnalysesList
-        refreshKey={effectiveRefreshKey}
-        onAnalysisDeleted={handleAnalysisDeleted}
-      />
-    </>
+    </section>
   );
 }

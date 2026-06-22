@@ -1,92 +1,61 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { DashboardInteractiveSection } from "@/components/dashboard-interactive-section";
-import { HostedPrototypeNotice } from "@/components/hosted-prototype-info";
-
-const placeholderCards = [
-  {
-    title: "Saved analyses",
-    body: "Select a saved row to open metadata and matched/missing skill lists in the detail panel below the list.",
-  },
-  {
-    title: "Resume profiles",
-    body: "Structured skill lists are available in the dashboard above. Picking a profile for analysis is not wired yet.",
-  },
-  {
-    title: "Recurring gaps",
-    body: "Hosted dashboard shows recurring missing skills from saved analyses. Full stats and exports remain richer in the local CLI and Streamlit app.",
-  },
-  {
-    title: "Job tracker",
-    body: "Future: lightweight tracker for postings and application status.",
-  },
-];
 
 export default async function DashboardPage() {
   const { userId } = await auth();
 
   return (
-    <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <p className="mb-3 inline-block rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-          Dashboard
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Job Fit &amp; Skill-Gap Analyzer
-        </h1>
-        <p className="mt-2 text-lg text-zinc-700">
-          Compare one resume to one job posting
-        </p>
-        <p className="mt-4 max-w-2xl text-zinc-600">
-          {userId
-            ? "Paste or upload plain .txt text below—or use Try sample inputs for a fictional demo—then run a rule-based analysis and optionally save structured results to your account."
-            : "Sign in to run analysis and save structured results."}{" "}
-          Analysis does not save until you choose Save—and cloud save stores skills and
-          job metadata only, not resume or job body text. Uploaded .txt files are read in
-          your browser only.
-        </p>
-
-        <div className="mt-6">
-          <HostedPrototypeNotice />
-        </div>
-
-        <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
-          <p className="font-medium text-zinc-900">Privacy &amp; data controls</p>
-          <p className="mt-1 text-zinc-600">
-            Learn what this prototype saves, what it does not intentionally save, and
-            how to delete or export your structured saved analyses.
+    <main className="app-shell-container flex-1 py-10 sm:py-12">
+      <div className="space-y-8">
+        <header className="max-w-4xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-800">
+            Dashboard
           </p>
-          <Link
-            href="/privacy"
-            className="mt-2 inline-block font-medium text-sky-800 underline hover:text-sky-900"
-          >
-            Read privacy &amp; data controls
-          </Link>
-        </div>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+            Your job-fit workspace
+          </h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700 sm:text-lg">
+            {userId
+              ? "Analyze a role, save structured results when they matter, and manage reusable skill profiles for future comparisons."
+              : "Sign in to analyze roles, save structured results, and manage reusable skill profiles."}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-600">
+            <Link
+              href="/privacy"
+              className="font-medium text-sky-800 underline underline-offset-4 hover:text-sky-900"
+            >
+              Privacy &amp; data controls
+            </Link>
+            <span>
+              Rule-based matching; optional saves store structured results and
+              metadata rather than raw resume or job body text.
+            </span>
+          </div>
+        </header>
+
+        <aside
+          className="rounded-2xl border border-amber-200/80 bg-amber-50/70 px-4 py-3 text-sm leading-6 text-amber-950 sm:px-5"
+          aria-label="Dashboard trust and privacy notes"
+        >
+          <ul className="grid gap-2 md:grid-cols-3">
+            <li>
+              <strong>Rule-based, not AI:</strong> comparisons use a keyword
+              taxonomy.
+            </li>
+            <li>
+              <strong>You choose saves:</strong> running analysis does not
+              automatically save results.
+            </li>
+            <li>
+              <strong>Structured history:</strong> saved analyses keep skills
+              and metadata; full details are on the privacy page.
+            </li>
+          </ul>
+        </aside>
 
         <DashboardInteractiveSection />
-      </section>
-
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold text-zinc-900">Coming later</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          Placeholder areas for future dashboard features. Analysis and cloud save
-          work today.
-        </p>
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-          {placeholderCards.map((card) => (
-            <li
-              key={card.title}
-              className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-5"
-            >
-              <h3 className="font-medium text-zinc-900">{card.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-                {card.body}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      </div>
     </main>
   );
 }

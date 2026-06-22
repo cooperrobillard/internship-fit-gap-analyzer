@@ -3671,3 +3671,16 @@ This step reinforced the difference between authoring a migration and applying i
 - Reduced the old local-app emphasis to a small subordinate note in the final CTA so the hosted product remains the main story.
 - Confirmed no analysis, API, auth, database, RLS, dependency, rate-limit, environment, schema, or persistence behavior changed.
 - Left dashboard hierarchy, component-level mobile/accessibility work, and broader authenticated UI polish for later Dev 20 steps.
+
+## 2026-06-22 — Dev 20 Step 1C dashboard workspace hierarchy
+
+- Restructured the dashboard around the real user journey: Analyze, Saved analyses, and Resume profiles.
+- Added responsive in-page workspace navigation that uses native anchors so every workflow stays mounted and partially entered form, result, comparison, and profile state is preserved instead of behaving like custom tabs.
+- Removed Supabase connectivity diagnostics from the public dashboard because they were developer-only database-health scaffolding, not a user workflow.
+- Removed the fixed sample-row test-save action while preserving the real structured analysis save path.
+- Removed stale placeholder sections and job-tracker copy so the dashboard no longer advertises out-of-scope or already-shipped work as “coming later.”
+- Corrected profile-to-analysis copy to explain that saved structured profiles can be selected in Analyze and become temporary structured analysis input, without raw resume storage, full parsing, or AI extraction.
+- Preserved the successful analysis-save refresh behavior by keeping `onSaveSuccess` in the client workspace and incrementing the saved-analysis refresh key after real saves.
+- Deleted unused prototype components for the hosted prototype notice, Supabase status panel, and test-save action after removing their dashboard references.
+- Confirmed this step did not change API, auth, schema, RLS, dependency, provider, rate-limit, export-format, or persistence behavior.
+- Left detailed field-level, button, table, tag, comparison, and status polish for Dev 20 Step 1D.
