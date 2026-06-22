@@ -31,6 +31,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
             --max-turns 25
+            --allowedTools "Read,Glob,Grep,Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(git rev-parse*)"
             --disallowedTools "Write,Edit,NotebookEdit"
           prompt: |
             You are the automated read-only pull-request reviewer for the Job Fit & Skill-Gap Analyzer repository.
@@ -43,6 +44,16 @@ jobs:
             - Use only read-only inspection tools and GitHub review/comment tools.
             - Do not propose or perform implementation work.
 
+            INSPECTION EFFICIENCY:
+            - Use Read, Glob, and Grep for repository inspection.
+            - Use only the explicitly allowed read-only Git commands.
+            - Do not run tests, builds, package managers, network commands, or deployment commands.
+            - Do not inspect, wait for, or poll CI check results.
+            - Do not retry a tool call after a permission denial.
+            - If a requested inspection is unavailable, continue using the available read-only tools.
+            - Inspect each required document and changed file once unless a concrete finding requires one follow-up inspection.
+            - Complete the review within the configured turn limit.
+
             Read:
             - CLAUDE.md
             - AGENTS.md
@@ -52,7 +63,6 @@ jobs:
             - the PR title and description
             - every changed file and the full diff
             - existing review comments and unresolved threads
-            - current check results
 
             Check for:
             1. Regressions or changes outside the stated PR scope
@@ -63,6 +73,8 @@ jobs:
             6. TypeScript/nullability or input-validation problems
             7. Accidental dependency, migration, or API-contract changes
             8. Inaccurate test, deployment, or verification claims
+
+            Apply checklist items only when relevant to the changed files. For workflow-only pull requests, focus on workflow correctness, permissions, command safety, secret handling, scope compliance, and verification claims. Do not inspect unrelated application areas after confirming they are unchanged.
 
             Output:
             - Post concrete merge-blocking findings as inline comments prefixed with BLOCKER:
