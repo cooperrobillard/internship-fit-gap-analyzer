@@ -3649,3 +3649,13 @@ This step reinforced the difference between authoring a migration and applying i
 
 ### What did not change
 - No schema, auth, provider, dependency, workflow, environment, API behavior, analysis logic, database helper, RLS policy, or deployment changes were made.
+
+## 2026-06-22 — Dev 20 Step 1A global UI foundation and application shell
+
+- Corrected the root metadata to use the public product name, **Job Fit & Skill-Gap Analyzer**, with a current rule-based description for resume/job skill comparison, skill-gap review, and structured saved results.
+- Added a shared application header and footer so public and authenticated routes use one accessible shell with the product name, rule-based positioning, and consistent privacy access.
+- Established a restrained global design-token foundation for canvas, surfaces, text, borders, primary actions, warm accent, success, warning, danger, and focus states while preserving existing Tailwind utility usage.
+- Added a keyboard-accessible skip link, stronger focus-visible styling, safer overflow behavior, text-selection styling, font rendering defaults, and reduced-motion safeguards.
+- Improved responsive navigation with larger touch targets, active-route styling, and `aria-current` for primary routes without adding a hamburger menu or new dependencies.
+- Deliberately left landing-page hero/content redesign, dashboard workflow polish, component-library work, and broader page layout migrations for later Dev 20 PRs.
+- Confirmed this step did not change API, database, auth configuration, dependencies, environment variables, schema/RLS, or data-persistence behavior.
