@@ -96,7 +96,7 @@ function getSafeResumeProfileErrorMessage(
   }
 
   if (context.reason === "config") {
-    return "Resume profiles are not available because Supabase is not configured. Check your Supabase environment variables.";
+    return "Resume profiles are temporarily unavailable. Please try again shortly.";
   }
 
   if (context.reason === "network") {

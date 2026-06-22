@@ -15,7 +15,10 @@ import {
   readTextFile,
 } from "@/app/dashboard/analysis-input-helpers";
 import { DEMO_ANALYSIS_INPUTS } from "@/lib/demo-inputs";
-import { analyzeWithApi } from "@/lib/analysis/api-analysis-client";
+import {
+  analyzeWithApi,
+  type AnalysisErrorCategory,
+} from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
 import {
@@ -126,6 +129,7 @@ function ResumeProfileAnalysisGuardrail({
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const canUseProfiles =
     configured && isLoaded && Boolean(session) && Boolean(userId);
   const selectedProfile = canUseProfiles
@@ -175,7 +179,7 @@ function ResumeProfileAnalysisGuardrail({
     return () => {
       cancelled = true;
     };
-  }, [canUseProfiles, session, userId]);
+  }, [canUseProfiles, session, userId, retryNonce]);
 
   return (
     <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50/70 p-4 text-sm text-violet-950">
@@ -270,13 +274,23 @@ function ResumeProfileAnalysisGuardrail({
           ) : null}
 
           {loadError ? (
-            <p
+            <div
               className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
               role="alert"
             >
-              Could not load resume profiles right now. Use pasted or uploaded
-              resume text below and try profiles again later.
-            </p>
+              <p>
+                Could not load resume profiles right now. Use pasted or uploaded
+                resume text below, or try loading profiles again.
+              </p>
+              <button
+                type="button"
+                onClick={() => setRetryNonce((nonce) => nonce + 1)}
+                disabled={isLoading}
+                className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Try loading profiles again
+              </button>
+            </div>
           ) : null}
 
           {!isLoading && !loadError && profiles.length === 0 ? (
@@ -432,7 +446,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const resumeFileInputRef = useRef<HTMLInputElement>(null);
   const jobFileInputRef = useRef<HTMLInputElement>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<{
+    message: string;
+    category: AnalysisErrorCategory;
+    retryable: boolean;
+  } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lastInput, setLastInput] = useState<WebAnalysisInput | null>(null);
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
@@ -459,14 +477,24 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const handleSelectedResumeProfileChange = useCallback(
     (profile: ResumeProfile | null) => {
       setSelectedResumeProfile(profile);
+      if (analysisError) {
+        setAnalysisError(null);
+      }
     },
-    [],
+    [analysisError],
   );
 
   function clearAnalysisOutput() {
     setResult(null);
     setLastInput(null);
     setSaveUiState({ kind: "idle" });
+  }
+
+
+  function clearStaleAnalysisError() {
+    if (analysisError) {
+      setAnalysisError(null);
+    }
   }
 
   function handleTrySampleInputs() {
@@ -553,6 +581,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   }
 
   async function handleAnalyze() {
+    if (isAnalyzing) {
+      return;
+    }
     const trimmedResume = resumeText.trim();
     const trimmedJob = jobText.trim();
     const profileResumeText = selectedResumeProfile
@@ -618,7 +649,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setIsAnalyzing(false);
 
     if (apiResult.status === "error") {
-      setAnalysisError(apiResult.message);
+      setAnalysisError({
+        message: apiResult.message,
+        category: apiResult.category,
+        retryable: apiResult.retryable,
+      });
       return;
     }
 
@@ -679,6 +714,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   return (
     <div
       className={`${boxClass} border-violet-200 bg-violet-50 text-violet-950`}
+      aria-busy={isAnalyzing}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-violet-800">
         Job Fit &amp; Skill-Gap Analyzer
@@ -804,6 +840,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             onChange={(event) => {
               setResumeText(event.target.value);
               setResumeInputMode("pasted");
+              clearStaleAnalysisError();
               setSampleInputsLoaded(false);
             }}
             rows={5}
@@ -870,6 +907,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             value={jobText}
             onChange={(event) => {
               setJobText(event.target.value);
+              clearStaleAnalysisError();
               setSampleInputsLoaded(false);
             }}
             rows={5}
@@ -901,7 +939,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <input
               type="text"
               value={jobTitle}
-              onChange={(event) => setJobTitle(event.target.value)}
+              onChange={(event) => {
+                setJobTitle(event.target.value);
+                clearStaleAnalysisError();
+              }}
               className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Software Engineering Intern"
               autoComplete="organization-title"
@@ -915,7 +956,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <input
               type="text"
               value={company}
-              onChange={(event) => setCompany(event.target.value)}
+              onChange={(event) => {
+                setCompany(event.target.value);
+                clearStaleAnalysisError();
+              }}
               className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Acme Corp"
               autoComplete="organization"
@@ -929,7 +973,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <input
               type="url"
               value={sourceUrl}
-              onChange={(event) => setSourceUrl(event.target.value)}
+              onChange={(event) => {
+                setSourceUrl(event.target.value);
+                clearStaleAnalysisError();
+              }}
               className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
               placeholder="https://careers.example.com/jobs/123"
               inputMode="url"
@@ -942,7 +989,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <span className="font-medium text-violet-950">Notes</span>
             <textarea
               value={notes}
-              onChange={(event) => setNotes(event.target.value)}
+              onChange={(event) => {
+                setNotes(event.target.value);
+                clearStaleAnalysisError();
+              }}
               rows={2}
               className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Referral from Alex · apply by Friday"
@@ -970,8 +1020,22 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
           role="alert"
         >
-          <p className="font-medium">Analysis could not be completed</p>
-          <p className="mt-1">{analysisError}</p>
+          <p className="font-medium">
+            {analysisError.category === "validation"
+              ? "Check the analysis inputs"
+              : "Analysis could not be completed"}
+          </p>
+          <p className="mt-1">{analysisError.message}</p>
+          {analysisError.retryable ? (
+            <button
+              type="button"
+              onClick={() => void handleAnalyze()}
+              disabled={isAnalyzing}
+              className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Try analysis again
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -1051,14 +1115,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
             {!configured ? (
               <p className="mt-2 text-xs text-zinc-500">
-                Supabase is not configured. Add env vars to{" "}
-                <code className="text-xs">web/.env.local</code> before saving.
+                Saving is temporarily unavailable. You can still review results and try saving again later.
               </p>
             ) : null}
 
             {!isLoaded ? (
               <p className="mt-2 text-xs text-zinc-500">
-                Loading Clerk session…
+                Checking your sign-in session…
               </p>
             ) : null}
 
@@ -1082,7 +1145,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             >
               {saveUiState.kind === "saving"
                 ? "Saving…"
-                : "Save structured results"}
+                : saveUiState.kind === "error"
+                  ? "Try saving again"
+                  : "Save structured results"}
             </button>
 
             {saveUiState.kind === "success" ? (
@@ -1106,6 +1171,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               >
                 <p className="font-medium">Could not save analysis</p>
                 <p className="mt-1">{saveUiState.message}</p>
+                <p className="mt-2 text-xs">
+                  Your analysis results and labels are still here. Use Try saving
+                  again when ready.
+                </p>
               </div>
             ) : null}
           </div>

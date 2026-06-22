@@ -24,15 +24,15 @@ function resolveBackendBaseUrl(): string | null {
 
 function safeBackendErrorMessage(status: number): string {
   if (status === 401 || status === 403) {
-    return "The analysis service is not configured correctly. Check deployment environment variables.";
+    return "This feature is temporarily unavailable. Please try again shortly.";
   }
   if (status === 422) {
     return "Resume text and job description text are required.";
   }
   if (status >= 500) {
-    return "The hosted analysis service is temporarily unavailable.";
+    return "This feature is temporarily unavailable. Please try again shortly.";
   }
-  return "The analysis service returned an error. Please try again.";
+  return "We could not complete that action right now. Please try again.";
 }
 
 function clientStatusForBackendError(status: number): number {
@@ -55,13 +55,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return jsonError("Invalid JSON body.", 400);
+    return jsonError("The request could not be read. Check the inputs and try again.", 400);
   }
 
   const baseUrl = resolveBackendBaseUrl();
   if (!baseUrl) {
     return jsonError(
-      "The analysis service is not configured correctly. Check deployment environment variables.",
+      "This feature is temporarily unavailable. Please try again shortly.",
       500,
     );
   }
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     try {
       payload = responseText ? JSON.parse(responseText) : null;
     } catch {
-      return jsonError("The backend returned an unexpected response.", 502);
+      return jsonError("This feature is temporarily unavailable. Please try again shortly.", 502);
     }
 
     if (response.ok) {
@@ -108,13 +108,13 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       return jsonError(
-        "The analysis service is not responding yet. The hosted backend may still be waking up — please try again in a moment.",
+        "The analysis service is taking longer than expected. Please try again shortly.",
         504,
       );
     }
 
     return jsonError(
-      "The hosted analysis service is temporarily unavailable.",
+      "This feature is temporarily unavailable. Please try again shortly.",
       503,
     );
   } finally {

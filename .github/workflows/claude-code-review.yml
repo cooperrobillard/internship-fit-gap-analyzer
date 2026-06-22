@@ -30,11 +30,14 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --max-turns 25
-            --allowedTools "Read,Glob,Grep,Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(git rev-parse*)"
+            --max-turns 50
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git status*),Bash(git diff*),Bash(git log*),Bash(git branch --show-current*),Bash(git ls-files*),Bash(git show*),Bash(git rev-parse*)"
             --disallowedTools "Write,Edit,NotebookEdit"
           prompt: |
             You are the automated read-only pull-request reviewer for the Job Fit & Skill-Gap Analyzer repository.
+
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
             Complete the review in one pass. Do not ask questions and do not wait for clarification.
 
@@ -43,16 +46,19 @@ jobs:
             - Do not attempt to use Write, Edit, or NotebookEdit.
             - Use only read-only inspection tools and GitHub review/comment tools.
             - Do not propose or perform implementation work.
+            - Never modify files, commits, branches, or repository contents.
 
             INSPECTION EFFICIENCY:
             - Use Read, Glob, and Grep for repository inspection.
+            - Use `gh pr view` to inspect the PR title, description, and comments.
+            - Use `gh pr diff` to inspect the complete PR diff.
             - Use only the explicitly allowed read-only Git commands.
-            - Do not run tests, builds, package managers, network commands, or deployment commands.
+            - Do not run tests, builds, package managers, or deployment commands.
             - Do not inspect, wait for, or poll CI check results.
             - Do not retry a tool call after a permission denial.
             - If a requested inspection is unavailable, continue using the available read-only tools.
             - Inspect each required document and changed file once unless a concrete finding requires one follow-up inspection.
-            - Complete the review within the configured turn limit.
+            - Finish the review using available information before reaching the turn limit.
 
             Read:
             - CLAUDE.md
@@ -60,9 +66,10 @@ jobs:
             - docs/AGENT_OPERATING_RUNBOOK.md
 
             Inspect:
-            - the PR title and description
+            - the PR title and description via `gh pr view`
+            - the complete PR diff via `gh pr diff`
             - every changed file and the full diff
-            - existing review comments and unresolved threads
+            - existing review comments and unresolved threads via `gh pr view`
 
             Check for:
             1. Regressions or changes outside the stated PR scope
@@ -77,8 +84,8 @@ jobs:
             Apply checklist items only when relevant to the changed files. For workflow-only pull requests, focus on workflow correctness, permissions, command safety, secret handling, scope compliance, and verification claims. Do not inspect unrelated application areas after confirming they are unchanged.
 
             Output:
-            - Post concrete merge-blocking findings as inline comments prefixed with BLOCKER:
-            - Post one concise top-level review summary.
+            - Post concrete merge-blocking findings as inline comments prefixed with BLOCKER: using `mcp__github_inline_comment__create_inline_comment`.
+            - Post one concise top-level review summary using `gh pr comment`.
             - Do not post progress updates or ask follow-up questions.
             - If there are no blockers, end the summary with exactly:
               No blocking findings from the automated Claude review.

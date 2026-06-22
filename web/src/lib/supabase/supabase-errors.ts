@@ -75,18 +75,11 @@ export function getSafeSavedAnalysisErrorMessage(
   context: SafeSavedAnalysisErrorContext = {},
 ): string {
   if (context.reason === "config") {
-    if (operation === "delete") {
-      return "Could not delete this analysis because Supabase is not configured. Check your Supabase environment variables.";
-    }
-    return operation === "save"
-      ? "Cloud save is not available because Supabase is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY."
-      : "Saved analyses cannot load because Supabase is not configured. Check your Supabase environment variables.";
+    return "This feature is temporarily unavailable. Please try again shortly.";
   }
 
   if (context.reason === "session") {
-    return operation === "delete"
-      ? "Your sign-in session is not ready yet. Wait a moment and try again."
-      : "Your sign-in session is not ready yet. Wait a moment and try again.";
+    return "Your sign-in session is not ready yet. Wait a moment and try again.";
   }
 
   if (context.reason === "network") {
@@ -94,12 +87,12 @@ export function getSafeSavedAnalysisErrorMessage(
       return "Could not delete this analysis. Check your connection and try again.";
     }
     return operation === "save"
-      ? "Could not reach Supabase to save your analysis. Check your connection and try again."
+      ? "Could not save your analysis. Check your connection and try again."
       : "Could not load your saved analyses. Check your connection and try again.";
   }
 
   if (context.partialSave) {
-    return "The save did not finish completely. Please try again. If this keeps happening, check Supabase for partial rows.";
+    return "The save did not finish completely. Please try again shortly.";
   }
 
   const code = error?.code ?? "";
@@ -107,24 +100,26 @@ export function getSafeSavedAnalysisErrorMessage(
 
   if (isAuthOrRlsError(code, combined)) {
     if (operation === "delete") {
-      return "Could not delete this analysis. Clerk sign-in or Supabase row permissions may be blocking the delete. Confirm you are signed in and RLS policies allow deletes for your user.";
+      return "Could not delete this analysis. Your session may have expired. Refresh the page or sign in again.";
     }
     return operation === "save"
-      ? "Could not save your analysis. Clerk sign-in or Supabase row permissions may be blocking the save. Confirm Clerk is linked to Supabase and RLS policies allow inserts for your user."
-      : "Could not load your saved analyses. Clerk sign-in or Supabase row permissions may be blocking the read. Confirm Clerk is linked to Supabase and RLS policies are applied.";
+      ? "Could not save your analysis. Your session may have expired. Refresh the page or sign in again."
+      : "Could not load your saved analyses. Your session may have expired. Refresh the page or sign in again.";
   }
 
   if (isMissingTableError(combined)) {
     if (operation === "delete") {
-      return "Could not delete this analysis because the database tables are missing. Run web/database/schema.sql in Supabase.";
+      return "Could not delete this analysis right now. Please try again in a moment.";
     }
     return operation === "save"
-      ? "Could not save your analysis because the database tables are missing. Run web/database/schema.sql in Supabase."
-      : "Could not load saved analyses because the job_analyses table was not found. Run web/database/schema.sql in Supabase.";
+      ? "Could not save your analysis right now. Please try again in a moment."
+      : "Could not load your saved analyses right now. Please try again in a moment.";
   }
 
   if (isNetworkError(combined)) {
-    return getSafeSavedAnalysisErrorMessage(operation, null, { reason: "network" });
+    return getSafeSavedAnalysisErrorMessage(operation, null, {
+      reason: "network",
+    });
   }
 
   return operation === "save"
