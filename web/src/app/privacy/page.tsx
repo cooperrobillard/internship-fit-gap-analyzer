@@ -1,177 +1,140 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Privacy & data controls — Job Fit & Skill-Gap Analyzer",
+export const metadata: Metadata = {
+  title: "Privacy & data controls",
   description:
-    "What the hosted Job Fit & Skill-Gap Analyzer prototype saves, what it does not save, and your current data controls.",
+    "Current data-handling summary, user controls, and limitations for the rule-based job-fit analyzer public beta.",
 };
 
-const bulletClass = "flex gap-2";
+const navItems = [
+  ["#summary", "Summary"],
+  ["#transient-inputs", "Transient inputs"],
+  ["#saved-analyses", "Saved analyses"],
+  ["#resume-profiles", "Resume profiles"],
+  ["#service-providers", "Service providers"],
+  ["#controls", "Controls"],
+  ["#limitations", "Limitations"],
+] as const;
 
-function Bullet({ children, tone = "sky" }: { children: ReactNode; tone?: "sky" | "amber" | "emerald" | "zinc" }) {
-  const color = {
-    sky: "text-sky-600",
-    amber: "text-amber-600",
-    emerald: "text-emerald-700",
-    zinc: "text-zinc-500",
-  }[tone];
-
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <li className={bulletClass}>
-      <span className={color} aria-hidden="true">
-        •
-      </span>
-      <span>{children}</span>
-    </li>
+    <section id={id} aria-labelledby={`${id}-heading`} className="scroll-mt-24 border-t border-[var(--color-divider)] pt-8 first:border-t-0 first:pt-0">
+      <h2 id={`${id}-heading`} className="text-2xl font-extrabold tracking-tight text-[var(--color-text)]">
+        {title}
+      </h2>
+      <div className="mt-4 space-y-4 text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">{children}</div>
+    </section>
   );
+}
+
+function BulletList({ children }: { children: ReactNode }) {
+  return <ul className="space-y-2 pl-5 text-sm leading-7 text-[var(--color-text-muted)] marker:text-[var(--color-primary)] sm:text-base">{children}</ul>;
 }
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-4xl flex-1 px-6 py-12">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <p className="mb-3 inline-block rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+    <main className="app-shell-container flex-1 py-10 sm:py-14">
+      <header className="max-w-4xl">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-accent-warm)]">Limited public beta</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[var(--color-text)] sm:text-5xl">
           Privacy &amp; data controls
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Job Fit &amp; Skill-Gap Analyzer
         </h1>
-        <p className="mt-4 max-w-2xl text-zinc-600">
-          This page explains how the <strong>hosted prototype</strong> handles your
-          data today. It is <strong>not</strong> a formal legal privacy policy,
-          compliance sign-off, penetration test, or comprehensive security audit.
-          The analyzer is rule-based, not AI, and results are planning aids rather
-          than hiring decisions.
+        <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-muted)] sm:text-lg">
+          A plain-language summary of what the app processes, what optional saves contain, what controls exist today, and what limitations still apply before broader launch claims.
         </p>
-      </section>
+      </header>
 
-      <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">Hosted service roles</h2>
-        <ul className="mt-4 space-y-2 text-zinc-700">
-          <Bullet>Vercel hosts the Next.js web application and analysis proxy.</Bullet>
-          <Bullet>Render runs the rule-based FastAPI analysis service.</Bullet>
-          <Bullet>Clerk handles sign-in and dashboard route protection.</Bullet>
-          <Bullet>Supabase stores user-owned structured saved records with row-level security.</Bullet>
-        </ul>
-        <p className="mt-4 text-sm text-zinc-600">
-          These roles describe the current implementation at a high level. This page
-          does not make contractual, geographic, retention, encryption, compliance,
-          or absolute-security claims.
-        </p>
-      </section>
+      <div className="mt-10 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
+        <aside className="lg:sticky lg:top-6">
+          <nav aria-label="Privacy page sections" className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <p className="px-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">On this page</p>
+            <ul className="mt-3 space-y-1">
+              {navItems.map(([href, label]) => (
+                <li key={href}>
+                  <Link href={href} className="flex min-h-10 items-center rounded-2xl px-3 py-2 text-sm font-semibold text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]">
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-      <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">Saved analyses</h2>
-        <p className="mt-3 text-zinc-600">
-          When you choose to save an analysis, the app stores structured results and
-          metadata tied to your signed-in account. Saved analyses may contain:
-        </p>
-        <ul className="mt-4 space-y-2 text-zinc-700">
-          <Bullet>Job title, company, source URL, and optional notes you enter.</Bullet>
-          <Bullet>Timestamps and summary counts.</Bullet>
-          <Bullet>Matched skill names and categories.</Bullet>
-          <Bullet>Missing skill names and categories.</Bullet>
-          <Bullet>Derived recurring-gap information across your saved analyses.</Bullet>
-        </ul>
-        <p className="mt-4 text-sm text-zinc-600">
-          Saved-analysis data is scoped to your account through Clerk identity and
-          Supabase row-level security. Human production checks on June 22, 2026
-          confirmed two-user saved-analysis isolation for the current schema and UI.
-        </p>
-      </section>
+        <article className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm sm:p-8 lg:p-10">
+          <div className="space-y-10">
+            <Section id="summary" title="Plain-language summary">
+              <p>The analyzer is rule-based, not AI. It uses skill taxonomy and alias matching to compare resume information or a structured profile with a job description.</p>
+              <p>Pasted or uploaded resume and job text is processed for the request. The application save path does not intentionally persist raw resume body text or raw job-description body text.</p>
+              <p>Optional saved analyses contain structured results and metadata. Structured resume profiles contain profile metadata and skill lists rather than raw resume body text.</p>
+              <p>Platform or service logging cannot be guaranteed absent. Avoid unusually sensitive content, especially in a limited public beta.</p>
+              <p>This page is not a formal legal privacy policy, compliance certification, security audit, or penetration-test report.</p>
+            </Section>
 
-      <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">
-          Saved structured resume profiles
-        </h2>
-        <p className="mt-3 text-zinc-600">
-          Saved profiles are structured-skills-first. A saved profile may contain:
-        </p>
-        <ul className="mt-4 space-y-2 text-zinc-700">
-          <Bullet>Profile name.</Bullet>
-          <Bullet>Optional profile description or notes.</Bullet>
-          <Bullet>Extracted skill names.</Bullet>
-          <Bullet>User-added skill names.</Bullet>
-          <Bullet>Source type and timestamps.</Bullet>
-        </ul>
-        <p className="mt-4 text-zinc-600">
-          Structured profiles do <strong>not</strong> store raw resume body text.
-          Transient <code className="text-xs">.txt</code> uploads are not
-          automatically turned into saved profiles. When you explicitly select a saved
-          profile for analysis, the app constructs temporary structured analysis input
-          from the profile name, notes, and skill lists. That handoff is not full
-          resume parsing and is not raw resume storage.
-        </p>
-      </section>
+            <Section id="transient-inputs" title="Transient analysis inputs">
+              <p>Pasted text and transient <code className="rounded bg-[var(--color-surface-muted)] px-1 py-0.5 text-xs">.txt</code> uploads are used to produce the current analysis response. Uploaded files are not saved as files by the app.</p>
+              <p>Running analysis does not automatically save results. If you do not choose to save, the dashboard displays the result for the current session workflow only.</p>
+            </Section>
 
-      <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">Transient analysis inputs</h2>
-        <p className="mt-3 text-zinc-600">
-          Pasted or uploaded resume and job text are sent through the hosted Vercel
-          application to the Render analysis backend for that request. The product save
-          path does not intentionally persist raw resume text or raw job-description
-          text, and uploaded files are not saved as files.
-        </p>
-        <p className="mt-4 text-zinc-600">
-          Platform or service logging cannot be guaranteed absent in this
-          prototype/public-beta scope. Avoid unusually sensitive content and prefer
-          fictional or minimized sample text for demos.
-        </p>
-      </section>
+            <Section id="saved-analyses" title="Structured saved analyses">
+              <p>When you choose to save an analysis, the app stores structured records tied to your signed-in account. Saved analyses may include:</p>
+              <BulletList>
+                <li>job title, company, source URL, and notes;</li>
+                <li>counts and timestamps;</li>
+                <li>matched skills and categories;</li>
+                <li>missing skills and categories; and</li>
+                <li>derived recurring-gap information.</li>
+              </BulletList>
+              <p>Saved records are account-owned through Clerk identity and Supabase row-level security. That is an important boundary, but it is not an absolute-security guarantee. A June 22, 2026 two-user human verification checked saved-analysis isolation for the then-current schema and UI.</p>
+            </Section>
 
-      <section className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-8">
-        <h2 className="text-xl font-semibold text-zinc-900">Your current controls</h2>
-        <p className="mt-3 text-zinc-700">Today you can:</p>
-        <ul className="mt-4 space-y-2 text-zinc-700">
-          <Bullet tone="emerald">Run analysis without saving it to your account.</Bullet>
-          <Bullet tone="emerald">Review and delete individual saved analyses.</Bullet>
-          <Bullet tone="emerald">Create, edit, and delete structured resume profiles.</Bullet>
-          <Bullet tone="emerald">Export saved-analysis data and derived reports where the dashboard currently supports export/download.</Bullet>
-          <Bullet tone="emerald">Clear transient pasted/uploaded inputs in the browser.</Bullet>
-        </ul>
-      </section>
+            <Section id="resume-profiles" title="Structured resume profiles">
+              <p>Structured profiles may contain profile name, optional description or notes, extracted skill names, user-added skill names, source type, and timestamps.</p>
+              <p>No raw resume body text is stored in the structured profile. Transient <code className="rounded bg-[var(--color-surface-muted)] px-1 py-0.5 text-xs">.txt</code> uploads are not automatically saved as profiles.</p>
+              <p>When you explicitly select a saved profile for analysis, the app constructs temporary input from profile metadata and skill lists. This is not full resume parsing, PDF/DOCX parsing, AI extraction, or semantic matching.</p>
+            </Section>
 
-      <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-8">
-        <h2 className="text-xl font-semibold text-zinc-900">Current limitations</h2>
-        <ul className="mt-4 space-y-2 text-zinc-700">
-          <Bullet tone="amber">No one-click account-wide export.</Bullet>
-          <Bullet tone="amber">No one-click delete-all control.</Bullet>
-          <Bullet tone="amber">No automated retention schedule.</Bullet>
-          <Bullet tone="amber">No profile export control is currently provided.</Bullet>
-          <Bullet tone="amber">Deleting a Clerk account is not claimed here to automatically delete Supabase records.</Bullet>
-          <Bullet tone="amber">Deleted rows do not have a restore or undo flow.</Bullet>
-          <Bullet tone="amber">No formal penetration test, comprehensive security audit, or legal privacy-policy review has been completed.</Bullet>
-          <Bullet tone="amber">This is not mature production SaaS and does not guarantee absolute security.</Bullet>
-        </ul>
-      </section>
+            <Section id="service-providers" title="Service providers and data path">
+              <p>At a high level, Vercel hosts the Next.js web application and analysis proxy, Render runs the FastAPI rule-based analysis service, Clerk provides authentication surfaces, and Supabase stores user-owned structured saved records.</p>
+              <p>This provider summary does not make contractual, geographic, encryption, retention, legal, compliance, or absolute-security claims.</p>
+            </Section>
 
-      <section className="mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-8">
-        <h2 className="text-xl font-semibold text-zinc-900">Public-beta positioning</h2>
-        <p className="mt-3 text-zinc-600">
-          The current hardening pass added and verified basic public-beta safeguards,
-          including user isolation checks and abuse controls for the analysis route.
-          Those checks reduce risk for a limited portfolio/public-beta release, but
-          they do not make the product a mature production service.
-        </p>
-        <p className="mt-4 text-sm text-zinc-600">
-          Future storage, schema, authentication, provider, or data-control changes
-          should be re-reviewed before broader launch claims are made.
-        </p>
-      </section>
+            <Section id="controls" title="Current user controls">
+              <BulletList>
+                <li>Run an analysis without saving it.</li>
+                <li>Clear transient pasted or uploaded browser inputs.</li>
+                <li>Review and delete individual saved analyses.</li>
+                <li>Create, edit, and delete structured resume profiles.</li>
+                <li>Export supported saved-analysis, comparison, or recurring-gap views where the dashboard provides export/download controls.</li>
+              </BulletList>
+            </Section>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link
-          href="/dashboard"
-          className="rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-800"
-        >
-          Back to dashboard
+            <Section id="limitations" title="Current limitations">
+              <BulletList>
+                <li>No account-wide export or one-click delete-all control.</li>
+                <li>No automated retention schedule, restore flow, or undo flow.</li>
+                <li>No profile export control.</li>
+                <li>Deleting a Clerk account is not claimed to automatically delete Supabase rows.</li>
+                <li>No formal legal privacy-policy review, penetration test, or comprehensive security audit has been completed.</li>
+                <li>No absolute privacy or security guarantee is provided.</li>
+              </BulletList>
+            </Section>
+
+            <section aria-labelledby="beta-heading" className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-canvas-subtle)] p-6">
+              <h2 id="beta-heading" className="text-2xl font-extrabold tracking-tight text-[var(--color-text)]">Limited-public-beta positioning</h2>
+              <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">The current product is a limited public beta and portfolio application. It is useful for rule-based planning, saved structured results, and recurring-gap review, while final production launch verification remains a human release step.</p>
+            </section>
+          </div>
+        </article>
+      </div>
+
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <Link href="/dashboard" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-canvas)]">
+          Open dashboard
         </Link>
-        <Link
-          href="/"
-          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-        >
-          Home
+        <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm font-bold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-canvas)]">
+          Back to home
         </Link>
       </div>
     </main>

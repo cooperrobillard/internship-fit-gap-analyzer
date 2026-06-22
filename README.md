@@ -1,19 +1,23 @@
-# Internship Fit & Skill-Gap Analyzer
+# Job Fit & Skill-Gap Analyzer
 
-A **rule-based** internship fit and skill-gap analyzer. It compares resume text and job descriptions against a JSON **skill taxonomy** and **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
+Repository name: `internship-fit-gap-analyzer`.
 
-This is a **portfolio and learning project** and limited public-beta prototype—not mature production SaaS, not semantic/AI matching, and not a guarantee of job fit.
+A **rule-based** job-fit and skill-gap analyzer. It compares resume text and job descriptions against a JSON **skill taxonomy** and **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
+
+This is a **portfolio and learning project** and limited public-beta product—not mature production SaaS, not semantic/AI matching, and not a guarantee of job fit.
 
 ## Current status
 
 | Surface | Status |
 |---------|--------|
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
-| **Hosted prototype** | Limited public-beta / portfolio-ready checkpoint — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS, Dev 19 RLS and abuse checks passed |
+| **Hosted web app** | Dev 20 limited-public-beta release candidate — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS; Dev 19 privacy/RLS/abuse hardening complete; final production verification still pending |
 
-The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted prototype** is a separate dashboard path for sign-in, cloud analysis, structured resume-profile management, saved-profile analysis handoff, cloud save/review/search/compare/export/delete, recurring gap stats, privacy copy, and safe retry/error handling. It has completed the bounded Dev 19 privacy/RLS/abuse checkpoint, but it is still not mature production SaaS or formally security audited. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
+The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/`.txt` inputs, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
 
-## Architecture (hosted prototype)
+Dev 19 privacy/RLS/abuse hardening is complete, and Dev 20 application shell, landing page, dashboard hierarchy, responsive component polish, privacy-page, and auth-route launch pass are complete as a release candidate. Final production launch verification is tracked in [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) and remains pending until human preview, merge, production smoke test, screenshots, and deployed-environment verification are completed. This is still limited public beta/portfolio software, not mature production SaaS. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
+
+## Architecture (hosted web app)
 
 ```text
 Browser
@@ -44,15 +48,15 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - pandas recurring-gap summary CSVs
 - Automated test suite via `run_tests.py`
 
-**Hosted prototype**
+**Hosted web app**
 
 - Next.js landing page and Clerk sign-in/sign-up
-- Protected dashboard with analysis form
-- Hosted analysis via `/api/analyze` → Render FastAPI
-- Supabase save/read/delete of analyses with per-user RLS
+- Protected dashboard with analysis form and **Try sample inputs** / **Run analysis (does not save)** workflow
+- Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/`.txt` inputs
+- Supabase **Save structured results** / read / individual delete of analyses with per-user RLS
 - Structured resume-profile create/edit/delete and explicit saved-profile analysis handoff
-- Recurring gap stats, saved-analysis detail, search/filter, compare, export/download, privacy page (`/privacy`), metadata labels
-- Safe API validation/errors, proxy request-size handling, frontend retry/cooldown handling, and active Vercel rate limiting
+- Recurring gap stats, saved-analysis detail, search/filter, compare, export/download, privacy/data-control page (`/privacy`), metadata labels
+- Safe API validation/errors, safe loading states, safe `413` proxy request-size handling, safe `429` retry/cooldown handling, and active Vercel rate limiting
 - CI-oriented privacy/backend/lint/build checks documented for change review
 - Human two-user RLS verification passed on June 22, 2026
 - Hosted smoke-test checklist ([`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md))
@@ -66,13 +70,13 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - Account-wide export, one-click delete-all, restore/undo, automated retention, or account deletion data-cleanup integration
 - Raw resume or job-body persistence in the cloud save path (intentionally omitted)
 
-## Prototype limitations
+## Current limitations
 
 Be honest about what this is today:
 
 - **Rule-based matching only** — keywords and aliases, not meaning or evidence strength
 - **No semantic/AI matching**
-- **Hosted prototype is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, and rate limiting are in place, but there is no formal security audit or penetration test
+- **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, and rate limiting are in place, but there is no formal security audit or penetration test
 - **Do not paste unusually sensitive resume or job text** into the hosted dashboard—use generic sample text for demos when possible
 - **No raw resume or job-body persistence** in the application save path
 - **No account-wide export/delete or automated retention**
@@ -153,7 +157,7 @@ Starts FastAPI at http://127.0.0.1:8000 and Next.js at http://localhost:3000. Re
 | Full Python suite | `python3 run_tests.py` |
 | FastAPI service | `python3 tests/test_api_service.py` |
 | Web lint + build | `cd web && npm run lint && npm run build` |
-| **Hosted prototype smoke test** | [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md) |
+| **Hosted web app smoke test** | [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md) |
 | Testing guide | [`docs/TESTING.md`](docs/TESTING.md) |
 
 Run the hosted smoke test before demos or after Vercel/Render deploys.
@@ -184,7 +188,7 @@ Do **not** commit `.env`, `.env.local`, or `web/.env.local`. Do **not** put secr
 - Pasted/uploaded text in Streamlit is handled in memory for that session.
 - SQLite stores analysis results, skill lists, counts, and optional metadata—not raw resume or full job posting body text.
 
-**Hosted prototype**
+**Hosted web app**
 
 - Analysis runs through Vercel and Render for each request; raw pasted/uploaded text is **not intentionally stored** in Supabase by the product save path.
 - Cloud save writes **matched/missing skills and metadata** (title, company, source URL, notes, counts, categories, timestamps, etc.) per the current write contract.
@@ -234,7 +238,8 @@ Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_repor
 | [`docs/TESTING.md`](docs/TESTING.md) | Canonical testing guide |
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Historical pre-hosting checklist; see Dev 19 checkpoint for current readiness |
-| [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) | Current privacy/data-control/readiness checkpoint |
+| [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) | Dev 19 privacy/data-control/readiness checkpoint |
+| [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) | Dev 20 release-candidate readiness record; final production verdict pending |
 | [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
 | [`docs/PUBLIC_PRODUCT_ROADMAP.md`](docs/PUBLIC_PRODUCT_ROADMAP.md) | Public app vision, parity audit, Version 17+ plan |
 | [`docs/VERSION_16_CHECKPOINT.md`](docs/VERSION_16_CHECKPOINT.md) | Version 16 comparison, export, privacy, readiness review (complete) |
