@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
 /** Hosted Render cold starts can be slow; allow time for the backend to wake up. */
 const BACKEND_REQUEST_TIMEOUT_MS = 25_000;
+const MAX_ANALYSIS_REQUEST_BODY_BYTES = 1_000_000;
 
 type ErrorBody = { detail: string };
+
+const REQUEST_TOO_LARGE_MESSAGE =
+  "The analysis request is too large. Shorten the resume or job description and try again.";
 
 function jsonError(detail: string, status: number): NextResponse<ErrorBody> {
   return NextResponse.json({ detail }, { status });
@@ -35,6 +39,20 @@ function safeBackendErrorMessage(status: number): string {
   return "We could not complete that action right now. Please try again.";
 }
 
+function contentLengthExceedsLimit(request: Request): boolean {
+  const value = request.headers.get("content-length");
+  if (value === null) {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!/^[0-9]+$/.test(trimmed)) {
+    return false;
+  }
+
+  return Number(trimmed) > MAX_ANALYSIS_REQUEST_BODY_BYTES;
+}
+
 function clientStatusForBackendError(status: number): number {
   if (status === 422) {
     return 422;
@@ -51,9 +69,24 @@ function clientStatusForBackendError(status: number): number {
 export async function POST(request: Request) {
   await auth.protect();
 
+  if (contentLengthExceedsLimit(request)) {
+    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413);
+  }
+
+  let requestText: string;
+  try {
+    requestText = await request.text();
+  } catch {
+    return jsonError("The request could not be read. Check the inputs and try again.", 400);
+  }
+
+  if (new TextEncoder().encode(requestText).length > MAX_ANALYSIS_REQUEST_BODY_BYTES) {
+    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413);
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(requestText);
   } catch {
     return jsonError("The request could not be read. Check the inputs and try again.", 400);
   }

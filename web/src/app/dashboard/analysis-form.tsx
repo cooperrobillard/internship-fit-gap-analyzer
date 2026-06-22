@@ -425,6 +425,15 @@ type AnalysisFormProps = {
   onSaveSuccess?: () => void;
 };
 
+function formatCooldownSeconds(seconds: number): string {
+  if (seconds >= 60) {
+    const minutes = Math.ceil(seconds / 60);
+    return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  }
+
+  return `${seconds} second${seconds === 1 ? "" : "s"}`;
+}
+
 export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
@@ -456,6 +465,32 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [result, setResult] = useState<WebAnalysisResult | null>(null);
   const [saveUiState, setSaveUiState] = useState<SaveUiState>({ kind: "idle" });
   const [sampleInputsLoaded, setSampleInputsLoaded] = useState(false);
+  const [rateLimitRetryAt, setRateLimitRetryAt] = useState<number | null>(null);
+  const [cooldownSecondsRemaining, setCooldownSecondsRemaining] = useState(0);
+
+  const isRateLimited = cooldownSecondsRemaining > 0;
+
+  useEffect(() => {
+    if (rateLimitRetryAt === null) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const remaining = Math.ceil((rateLimitRetryAt - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setCooldownSecondsRemaining(0);
+        setRateLimitRetryAt(null);
+        window.clearInterval(intervalId);
+        return;
+      }
+
+      setCooldownSecondsRemaining(remaining);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [rateLimitRetryAt]);
 
   const canAttemptSave =
     configured &&
@@ -472,7 +507,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     (resumeInputMode === "saved_profile"
       ? Boolean(selectedResumeProfile)
       : resumeText.trim().length > 0) &&
-    !isAnalyzing;
+    !isAnalyzing &&
+    !isRateLimited;
 
   const handleSelectedResumeProfileChange = useCallback(
     (profile: ResumeProfile | null) => {
@@ -581,7 +617,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   }
 
   async function handleAnalyze() {
-    if (isAnalyzing) {
+    if (isAnalyzing || isRateLimited) {
       return;
     }
     const trimmedResume = resumeText.trim();
@@ -633,8 +669,6 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setAnalysisError(null);
     setSaveUiState({ kind: "idle" });
     setIsAnalyzing(true);
-    setResult(null);
-    setLastInput(null);
 
     const analysisInput: WebAnalysisInput = {
       resumeText: analysisResumeText,
@@ -649,6 +683,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setIsAnalyzing(false);
 
     if (apiResult.status === "error") {
+      if (apiResult.category === "rate_limited") {
+        const retryAfterSeconds = apiResult.retryAfterSeconds ?? 60;
+        setRateLimitRetryAt(Date.now() + retryAfterSeconds * 1000);
+        setCooldownSecondsRemaining(retryAfterSeconds);
+      }
       setAnalysisError({
         message: apiResult.message,
         category: apiResult.category,
@@ -657,6 +696,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       return;
     }
 
+    setRateLimitRetryAt(null);
+    setCooldownSecondsRemaining(0);
     setLastInput(analysisInput);
     setResult(apiResult.result);
   }
@@ -755,7 +796,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           <button
             type="button"
             onClick={handleTrySampleInputs}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || isRateLimited}
             className="rounded-md border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-950 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Try sample inputs
@@ -763,7 +804,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           <button
             type="button"
             onClick={handleClearInputs}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || isRateLimited}
             className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Clear inputs
@@ -790,7 +831,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           file itself is not kept as a resume profile.
         </p>
         <ResumeProfileAnalysisGuardrail
-          disabled={isAnalyzing}
+          disabled={isAnalyzing || isRateLimited}
           inputMode={resumeInputMode}
           onInputModeChange={(mode) => {
             setResumeInputMode(mode);
@@ -803,7 +844,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
             className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
-              isAnalyzing
+              isAnalyzing || isRateLimited
                 ? "cursor-not-allowed opacity-50"
                 : "cursor-pointer hover:bg-violet-100"
             }`}
@@ -814,7 +855,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               type="file"
               accept=".txt,text/plain"
               className="sr-only"
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isRateLimited}
               onChange={(event) => void handleResumeFileUpload(event)}
             />
           </label>
@@ -871,7 +912,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
             className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
-              isAnalyzing
+              isAnalyzing || isRateLimited
                 ? "cursor-not-allowed opacity-50"
                 : "cursor-pointer hover:bg-violet-100"
             }`}
@@ -882,7 +923,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               type="file"
               accept=".txt,text/plain"
               className="sr-only"
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isRateLimited}
               onChange={(event) => void handleJobFileUpload(event)}
             />
           </label>
@@ -1023,14 +1064,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           <p className="font-medium">
             {analysisError.category === "validation"
               ? "Check the analysis inputs"
-              : "Analysis could not be completed"}
+              : analysisError.category === "rate_limited"
+                ? "Analysis is cooling down"
+                : "Analysis could not be completed"}
           </p>
           <p className="mt-1">{analysisError.message}</p>
-          {analysisError.retryable ? (
+          {analysisError.retryable && !isRateLimited ? (
             <button
               type="button"
               onClick={() => void handleAnalyze()}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isRateLimited}
               className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Try analysis again
@@ -1045,14 +1088,24 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         disabled={!canRunAnalysis}
         className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isAnalyzing ? "Running analysis…" : "Run analysis (does not save)"}
+        {isAnalyzing
+          ? "Running analysis…"
+          : isRateLimited
+            ? "Analysis temporarily paused"
+            : "Run analysis (does not save)"}
       </button>
 
-      {!canRunAnalysis && !isAnalyzing && !validationError ? (
+      {!canRunAnalysis && !isAnalyzing && !validationError && !isRateLimited ? (
         <p className="mt-2 text-xs text-violet-800/80">
           {resumeInputMode === "saved_profile"
             ? "Choose a saved structured resume profile and add job description text to enable analysis."
             : "Add both resume and job description text to enable analysis."}
+        </p>
+      ) : null}
+
+      {isRateLimited ? (
+        <p className="mt-2 text-sm text-violet-900" role="status">
+          You can try running analysis again in about {formatCooldownSeconds(cooldownSecondsRemaining)}. Your inputs are still here.
         </p>
       ) : null}
 
