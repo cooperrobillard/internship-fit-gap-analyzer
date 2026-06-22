@@ -6,14 +6,62 @@ Local FastAPI prototype for the rule-based Python analyzer.
 - Does not replace the Streamlit app
 """
 
+import logging
 import os
 import secrets
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from api.analysis_service import analyze_request
 from api.models import AnalyzeRequest, AnalyzeResponse
+
+logger = logging.getLogger(__name__)
+
+_SAFE_VALIDATION_MESSAGES = {
+    "json_invalid": "Malformed JSON.",
+    "missing": "This field is required.",
+    "string_type": "Must be text.",
+    "string_too_long": "Must be 100,000 characters or fewer.",
+    "value_error": "Must not be blank.",
+}
+
+
+def _safe_validation_field(location: tuple[object, ...]) -> str | None:
+    for part in location:
+        if part in {"resumeText", "jobText"}:
+            return str(part)
+    return None
+
+
+def _safe_validation_message(error_type: str) -> str:
+    return _SAFE_VALIDATION_MESSAGES.get(error_type, "Invalid value.")
+
+
+def _sanitize_validation_errors(exc: RequestValidationError) -> list[dict[str, str]]:
+    safe_errors: list[dict[str, str]] = []
+
+    for error in exc.errors():
+        error_type = str(error.get("type", ""))
+        location = tuple(error.get("loc", ()))
+        field = _safe_validation_field(location)
+
+        if error_type == "missing" and location == ("body",):
+            safe_errors.append({"field": "body", "message": "Request body is required."})
+            continue
+
+        if error_type == "json_invalid":
+            safe_errors.append({"field": "body", "message": "Malformed JSON."})
+            continue
+
+        safe_error = {"message": _safe_validation_message(error_type)}
+        if field is not None:
+            safe_error["field"] = field
+        safe_errors.append(safe_error)
+
+    return safe_errors or [{"message": "Invalid request data."}]
 
 _DEFAULT_LOCAL_DEV_ORIGINS = [
     "http://localhost:3000",
@@ -99,6 +147,19 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Invalid request data.",
+            "errors": _sanitize_validation_errors(exc),
+        },
+    )
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -115,4 +176,16 @@ def analyze(
     Returns matched/missing skills and optional metadata echo only.
     Raw resumeText and jobText are not included in the response.
     """
-    return analyze_request(request)
+    try:
+        return analyze_request(request)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(
+            "Unexpected analysis failure occurred: %s",
+            exc.__class__.__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="The analysis could not be completed. Please try again.",
+        ) from None
