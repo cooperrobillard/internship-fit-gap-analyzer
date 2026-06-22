@@ -87,7 +87,7 @@ function ResumeProfileSkillPreview({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-violet-800/80">
+      <p className="text-xs font-medium uppercase tracking-wide text-sky-800/80">
         {title}
       </p>
       {skills.length > 0 ? (
@@ -95,14 +95,14 @@ function ResumeProfileSkillPreview({
           {skills.map((skill) => (
             <span
               key={`${title}-${skill}`}
-              className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-950"
+              className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-sky-950"
             >
               {skill}
             </span>
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-violet-800/70">
+        <p className="mt-2 text-xs text-sky-800/70">
           No skills saved in this section.
         </p>
       )}
@@ -181,11 +181,11 @@ function ResumeProfileAnalysisGuardrail({
   }, [canUseProfiles, session, userId, retryNonce]);
 
   return (
-    <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50/70 p-4 text-sm text-violet-950">
+    <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)]/70 p-4 text-sm text-zinc-950">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-medium">Resume input source</p>
-          <p className="mt-1 text-violet-900/85">
+          <p className="mt-1 text-sky-900/85">
             Choose whether this run uses pasted/uploaded transient resume text
             or a saved structured profile. Saved profile analysis uses
             structured skills and notes from your saved profile, not raw resume
@@ -194,7 +194,7 @@ function ResumeProfileAnalysisGuardrail({
         </div>
         <Link
           href="#resume-profiles"
-          className="text-xs font-medium text-violet-950 underline"
+          className="text-xs font-medium text-sky-950 underline"
         >
           Manage profiles
         </Link>
@@ -205,7 +205,9 @@ function ResumeProfileAnalysisGuardrail({
         role="radiogroup"
         aria-label="Resume input source"
       >
-        <label className="flex gap-2 rounded-md border border-violet-200 bg-white px-3 py-2 text-sm text-violet-950">
+        <label
+          className={`flex min-h-11 cursor-pointer gap-3 rounded-md border px-3 py-3 text-sm ${inputMode === "pasted" ? "border-sky-500 bg-sky-50 text-sky-950 ring-1 ring-sky-200" : "border-zinc-200 bg-white text-zinc-900"}`}
+        >
           <input
             type="radio"
             name="resume-input-mode"
@@ -218,12 +220,14 @@ function ResumeProfileAnalysisGuardrail({
             <span className="block font-medium">
               Use pasted/uploaded resume input
             </span>
-            <span className="block text-xs text-violet-800/75">
+            <span className="block text-xs text-sky-800/75">
               Default. Uses the text box below for this run.
             </span>
           </span>
         </label>
-        <label className="flex gap-2 rounded-md border border-violet-200 bg-white px-3 py-2 text-sm text-violet-950">
+        <label
+          className={`flex min-h-11 cursor-pointer gap-3 rounded-md border px-3 py-3 text-sm ${inputMode === "saved_profile" ? "border-sky-500 bg-sky-50 text-sky-950 ring-1 ring-sky-200" : "border-zinc-200 bg-white text-zinc-900"}`}
+        >
           <input
             type="radio"
             name="resume-input-mode"
@@ -236,7 +240,7 @@ function ResumeProfileAnalysisGuardrail({
             <span className="block font-medium">
               Use saved structured resume profile
             </span>
-            <span className="block text-xs text-violet-800/75">
+            <span className="block text-xs text-sky-800/75">
               Converts profile name, notes, and saved skills only at analysis
               time.
             </span>
@@ -252,7 +256,7 @@ function ResumeProfileAnalysisGuardrail({
       ) : null}
 
       {configured && !isLoaded ? (
-        <p className="mt-3 text-xs text-violet-800" role="status">
+        <p className="mt-3 text-xs text-sky-800" role="status">
           Checking your sign-in session…
         </p>
       ) : null}
@@ -267,7 +271,7 @@ function ResumeProfileAnalysisGuardrail({
       {canUseProfiles ? (
         <>
           {isLoading ? (
-            <p className="mt-3 text-xs text-violet-800" role="status">
+            <p className="mt-3 text-xs text-sky-800" role="status">
               Loading saved resume profiles…
             </p>
           ) : null}
@@ -285,7 +289,7 @@ function ResumeProfileAnalysisGuardrail({
                 type="button"
                 onClick={() => setRetryNonce((nonce) => nonce + 1)}
                 disabled={isLoading}
-                className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-2 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
               >
                 Try loading profiles again
               </button>
@@ -293,7 +297,7 @@ function ResumeProfileAnalysisGuardrail({
           ) : null}
 
           {!isLoading && !loadError && profiles.length === 0 ? (
-            <p className="mt-3 rounded-md border border-dashed border-violet-200 bg-white px-3 py-2 text-xs text-violet-800">
+            <p className="mt-3 rounded-md border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-sky-800">
               No saved resume profiles yet. Create one in the Resume profiles
               section, or use pasted/uploaded resume text for this analysis.
             </p>
@@ -302,7 +306,7 @@ function ResumeProfileAnalysisGuardrail({
           {profiles.length > 0 ? (
             <div className="mt-4">
               <label
-                className="block text-sm font-medium text-violet-950"
+                className="block text-sm font-medium text-sky-950"
                 htmlFor="resume-profile-preview-select"
               >
                 Saved profile for this analysis
@@ -312,7 +316,7 @@ function ResumeProfileAnalysisGuardrail({
                 value={selectedProfileId}
                 onChange={(event) => setSelectedProfileId(event.target.value)}
                 disabled={disabled}
-                className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="">Choose a saved profile…</option>
                 {profiles.map((profile) => (
@@ -321,7 +325,7 @@ function ResumeProfileAnalysisGuardrail({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-violet-800/70">
+              <p className="mt-1 text-xs text-sky-800/70">
                 Selecting a profile keeps the preview visible and does not
                 overwrite the resume text box. It only affects analysis when the
                 saved-profile mode is selected.
@@ -342,17 +346,17 @@ function ResumeProfileAnalysisGuardrail({
           ) : null}
 
           {selectedProfile ? (
-            <div className="mt-4 rounded-lg border border-violet-200 bg-white p-4 text-violet-950">
+            <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-4 text-sky-950">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="font-medium">{selectedProfile.profileName}</p>
                   {selectedProfile.profileDescription ? (
-                    <p className="mt-1 text-sm text-violet-900/80">
+                    <p className="mt-1 text-sm text-sky-900/80">
                       {selectedProfile.profileDescription}
                     </p>
                   ) : null}
                 </div>
-                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-900">
+                <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900">
                   {SOURCE_TYPE_LABELS[selectedProfile.sourceType]}
                 </span>
               </div>
@@ -524,7 +528,6 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setLastInput(null);
     setSaveUiState({ kind: "idle" });
   }
-
 
   function clearStaleAnalysisError() {
     if (analysisError) {
@@ -754,40 +757,40 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   return (
     <section
       id="analyze"
-      className={`${boxClass} scroll-mt-24 border-violet-200 bg-violet-50 text-violet-950`}
+      className={`${boxClass} scroll-mt-24 border-zinc-200 bg-sky-50 text-sky-950`}
       aria-busy={isAnalyzing}
       aria-labelledby="analyze-heading"
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-violet-800">
+      <p className="text-xs font-medium uppercase tracking-wide text-sky-800">
         Analyze
       </p>
       <h2
         id="analyze-heading"
-        className="mt-1 text-lg font-semibold text-violet-950"
+        className="mt-1 text-lg font-semibold text-sky-950"
       >
         Analyze a job
       </h2>
-      <p className="mt-2 text-violet-900/90">
+      <p className="mt-2 text-sky-900/90">
         Paste or upload plain <code className="text-xs">.txt</code> resume and
         job text below, or select a saved structured resume profile. The hosted
-        app sends the selected inputs for a{" "}
-        <strong>one-time rule-based</strong> comparison (keyword taxonomy—not
-        AI). <strong>Running analysis does not save anything</strong> until you
+        app sends the selected inputs for a <strong>one-time rule-based</strong>{" "}
+        comparison (keyword taxonomy—not AI).{" "}
+        <strong>Running analysis does not save anything</strong> until you
         choose Save later—and save stores{" "}
         <strong>structured skills and metadata only</strong>, not the resume or
         job body text. Uploaded files are read in your browser only—not stored
         as files or profiles.
       </p>
-      <p className="mt-2 text-sm text-violet-900/80">
+      <p className="mt-2 text-sm text-sky-900/80">
         New here? Use <strong>Try sample inputs</strong> for a fictional demo
         resume and job posting—then replace with your own paste or{" "}
         <code className="text-xs">.txt</code> upload when ready.{" "}
-        <Link href="/privacy" className="font-medium text-violet-950 underline">
+        <Link href="/privacy" className="font-medium text-sky-950 underline">
           Privacy &amp; data controls
         </Link>
       </p>
 
-      <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/80 px-3 py-3 text-sky-950">
+      <div className="mt-4 rounded-lg border border-zinc-200 bg-white/70 px-3 py-3 text-zinc-900">
         <p className="font-medium">Quick try without your own resume</p>
         <p className="mt-1 text-sm text-sky-900/90">
           Load fictional demo text for Alex Rivera and a Demo Robotics
@@ -802,7 +805,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             type="button"
             onClick={handleTrySampleInputs}
             disabled={isAnalyzing || isRateLimited}
-            className="rounded-md border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-950 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-10 rounded-md border border-sky-300 bg-white px-3 py-2 text-sm font-medium text-sky-950 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
           >
             Try sample inputs
           </button>
@@ -810,7 +813,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             type="button"
             onClick={handleClearInputs}
             disabled={isAnalyzing || isRateLimited}
-            className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
           >
             Clear inputs
           </button>
@@ -824,11 +827,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         ) : null}
       </div>
 
-      <fieldset className="mt-5 rounded-lg border border-violet-200/80 bg-white/60 p-4">
-        <legend className="px-1 text-sm font-medium text-violet-950">
+      <fieldset className="mt-5 rounded-lg border border-zinc-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-sky-950">
           Resume text (required for analysis)
         </legend>
-        <p className="text-sm text-violet-900/80">
+        <p className="text-sm text-sky-900/80">
           Paste or upload a plain <code className="text-xs">.txt</code> file
           with skills, experience, and education. Used only for this comparison
           run—it is <strong>not saved</strong> to your account when you click
@@ -848,10 +851,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         />
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
-            className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
+            className={`inline-flex min-h-10 items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-sky-900 ${
               isAnalyzing || isRateLimited
-                ? "cursor-not-allowed opacity-50"
-                : "cursor-pointer hover:bg-violet-100"
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer hover:bg-sky-100"
             }`}
           >
             Upload resume .txt
@@ -864,7 +867,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               onChange={(event) => void handleResumeFileUpload(event)}
             />
           </label>
-          <span className="text-xs text-violet-800/70">
+          <span className="text-xs text-sky-800/70">
             Convenience only—read in your browser, not uploaded to cloud
             storage.
           </span>
@@ -890,24 +893,24 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               setSampleInputsLoaded(false);
             }}
             rows={5}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
             placeholder="e.g. Python, SQL, Git, data analysis, REST APIs, teamwork…"
             aria-describedby="resume-text-stats"
           />
           <span
             id="resume-text-stats"
-            className="mt-1 block text-xs text-violet-800/70"
+            className="mt-1 block text-xs text-sky-800/70"
           >
             {resumeStats}
           </span>
         </label>
       </fieldset>
 
-      <fieldset className="mt-4 rounded-lg border border-violet-200/80 bg-white/60 p-4">
-        <legend className="px-1 text-sm font-medium text-violet-950">
+      <fieldset className="mt-4 rounded-lg border border-zinc-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-sky-950">
           Job description text (required for analysis)
         </legend>
-        <p className="text-sm text-violet-900/80">
+        <p className="text-sm text-sky-900/80">
           Paste or upload a plain <code className="text-xs">.txt</code> file
           with posting requirements or description. Like resume text, this is
           used for analysis in memory and is <strong>not stored</strong> as raw
@@ -916,10 +919,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <label
-            className={`inline-flex items-center rounded-md border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 ${
+            className={`inline-flex min-h-10 items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-sky-900 ${
               isAnalyzing || isRateLimited
-                ? "cursor-not-allowed opacity-50"
-                : "cursor-pointer hover:bg-violet-100"
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer hover:bg-sky-100"
             }`}
           >
             Upload job .txt
@@ -932,7 +935,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               onChange={(event) => void handleJobFileUpload(event)}
             />
           </label>
-          <span className="text-xs text-violet-800/70">
+          <span className="text-xs text-sky-800/70">
             Convenience only—read in your browser, not uploaded to cloud
             storage.
           </span>
@@ -957,31 +960,31 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               setSampleInputsLoaded(false);
             }}
             rows={5}
-            className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
             placeholder="e.g. Intern role requiring Python, SQL, FastAPI, and communication skills…"
             aria-describedby="job-text-stats"
           />
           <span
             id="job-text-stats"
-            className="mt-1 block text-xs text-violet-800/70"
+            className="mt-1 block text-xs text-sky-800/70"
           >
             {jobStats}
           </span>
         </label>
       </fieldset>
 
-      <fieldset className="mt-4 rounded-lg border border-violet-200/80 bg-white/60 p-4">
-        <legend className="px-1 text-sm font-medium text-violet-950">
+      <fieldset className="mt-4 rounded-lg border border-zinc-200/80 bg-white/60 p-4">
+        <legend className="px-1 text-sm font-medium text-sky-950">
           Labels for saved results (optional)
         </legend>
-        <p className="text-sm text-violet-900/80">
+        <p className="text-sm text-sky-900/80">
           Optional metadata if you save after analysis. Helps you find this
           comparison in your saved list—job title, company, URL, and notes only;
           not resume or job body text.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
-            <span className="font-medium text-violet-950">Job title</span>
+            <span className="font-medium text-sky-950">Job title</span>
             <input
               type="text"
               value={jobTitle}
@@ -989,16 +992,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 setJobTitle(event.target.value);
                 clearStaleAnalysisError();
               }}
-              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Software Engineering Intern"
               autoComplete="organization-title"
             />
-            <span className="mt-1 block text-xs text-violet-800/70">
+            <span className="mt-1 block text-xs text-sky-800/70">
               Shown as the main title in your saved list.
             </span>
           </label>
           <label className="block text-sm">
-            <span className="font-medium text-violet-950">Company</span>
+            <span className="font-medium text-sky-950">Company</span>
             <input
               type="text"
               value={company}
@@ -1006,16 +1009,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 setCompany(event.target.value);
                 clearStaleAnalysisError();
               }}
-              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Acme Corp"
               autoComplete="organization"
             />
-            <span className="mt-1 block text-xs text-violet-800/70">
+            <span className="mt-1 block text-xs text-sky-800/70">
               Helps group postings from the same employer.
             </span>
           </label>
           <label className="block text-sm sm:col-span-2">
-            <span className="font-medium text-violet-950">Source URL</span>
+            <span className="font-medium text-sky-950">Source URL</span>
             <input
               type="url"
               value={sourceUrl}
@@ -1023,16 +1026,16 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 setSourceUrl(event.target.value);
                 clearStaleAnalysisError();
               }}
-              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
               placeholder="https://careers.example.com/jobs/123"
               inputMode="url"
             />
-            <span className="mt-1 block text-xs text-violet-800/70">
+            <span className="mt-1 block text-xs text-sky-800/70">
               Link back to the job posting when you review saved results.
             </span>
           </label>
           <label className="block text-sm sm:col-span-2">
-            <span className="font-medium text-violet-950">Notes</span>
+            <span className="font-medium text-sky-950">Notes</span>
             <textarea
               value={notes}
               onChange={(event) => {
@@ -1040,10 +1043,10 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 clearStaleAnalysisError();
               }}
               rows={2}
-              className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-zinc-900"
+              className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
               placeholder="e.g. Referral from Alex · apply by Friday"
             />
-            <span className="mt-1 block text-xs text-violet-800/70">
+            <span className="mt-1 block text-xs text-sky-800/70">
               Short reminders for yourself—deadlines, referrals, or interview
               stage.
             </span>
@@ -1079,7 +1082,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               type="button"
               onClick={() => void handleAnalyze()}
               disabled={isAnalyzing || isRateLimited}
-              className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-3 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
             >
               Try analysis again
             </button>
@@ -1091,7 +1094,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         type="button"
         onClick={() => void handleAnalyze()}
         disabled={!canRunAnalysis}
-        className="mt-4 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 min-h-11 rounded-md bg-sky-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-sky-800"
       >
         {isAnalyzing
           ? "Running analysis…"
@@ -1101,7 +1104,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       </button>
 
       {!canRunAnalysis && !isAnalyzing && !validationError && !isRateLimited ? (
-        <p className="mt-2 text-xs text-violet-800/80">
+        <p className="mt-2 text-xs text-sky-800/80">
           {resumeInputMode === "saved_profile"
             ? "Choose a saved structured resume profile and add job description text to enable analysis."
             : "Add both resume and job description text to enable analysis."}
@@ -1109,13 +1112,15 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       ) : null}
 
       {isRateLimited ? (
-        <p className="mt-2 text-sm text-violet-900" role="status">
-          You can try running analysis again in about {formatCooldownSeconds(cooldownSecondsRemaining)}. Your inputs are still here.
+        <p className="mt-2 text-sm text-sky-900" role="status">
+          You can try running analysis again in about{" "}
+          {formatCooldownSeconds(cooldownSecondsRemaining)}. Your inputs are
+          still here.
         </p>
       ) : null}
 
       {isAnalyzing ? (
-        <p className="mt-2 text-sm text-violet-900" role="status">
+        <p className="mt-2 text-sm text-sky-900" role="status">
           {resumeInputMode === "saved_profile"
             ? "Comparing saved structured profile skills and job text with the rule-based analyzer…"
             : "Comparing resume and job text with the rule-based analyzer…"}
@@ -1123,12 +1128,18 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       ) : null}
 
       {result ? (
-        <div className="mt-6 rounded-lg border border-violet-200 bg-white p-4 text-zinc-800">
-          <p className="font-medium text-zinc-900">Analysis complete</p>
+        <div
+          className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 text-zinc-800 sm:p-5"
+          role="status"
+          aria-live="polite"
+        >
+          <h3 className="text-lg font-semibold text-zinc-950">
+            Analysis complete
+          </h3>
           <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
           <p className="mt-3 text-sm text-zinc-700">
-            Matched: <strong>{result.matchedSkillsCount}</strong> · Missing:{" "}
-            <strong>{result.missingSkillsCount}</strong>
+            Matched skills: <strong>{result.matchedSkillsCount}</strong> ·
+            Missing skills: <strong>{result.missingSkillsCount}</strong>
           </p>
 
           <div className="mt-4 rounded-md border border-sky-100 bg-sky-50/80 px-3 py-3 text-sm text-sky-950">
@@ -1161,7 +1172,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               emptyMessage="No missing skills found."
             />
           </div>
-          <div className="mt-5 border-t border-violet-100 pt-4">
+          <div className="mt-5 border-t border-zinc-100 pt-4">
             <p className="text-sm font-medium text-zinc-900">
               Save structured results (optional)
             </p>
@@ -1173,7 +1184,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
             {!configured ? (
               <p className="mt-2 text-xs text-zinc-500">
-                Saving is temporarily unavailable. You can still review results and try saving again later.
+                Saving is temporarily unavailable. You can still review results
+                and try saving again later.
               </p>
             ) : null}
 
@@ -1190,7 +1202,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             ) : null}
 
             {saveUiState.kind === "saving" ? (
-              <p className="mt-3 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
+              <p className="mt-3 rounded-md border border-zinc-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
                 Saving to your account…
               </p>
             ) : null}
@@ -1199,7 +1211,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               type="button"
               onClick={() => void handleSavePrototype()}
               disabled={!canAttemptSave || saveUiState.kind === "saving"}
-              className="mt-3 rounded-md bg-violet-800 px-4 py-2 text-sm font-medium text-white hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-3 min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-sky-800"
             >
               {saveUiState.kind === "saving"
                 ? "Saving…"
@@ -1230,8 +1242,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                 <p className="font-medium">Could not save analysis</p>
                 <p className="mt-1">{saveUiState.message}</p>
                 <p className="mt-2 text-xs">
-                  Your analysis results and labels are still here. Use Try saving
-                  again when ready.
+                  Your analysis results and labels are still here. Use Try
+                  saving again when ready.
                 </p>
               </div>
             ) : null}
