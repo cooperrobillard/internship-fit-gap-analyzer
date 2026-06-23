@@ -45,23 +45,12 @@ export function LandingAnalysisPreview() {
       </figcaption>
 
       <div className="mt-5 border-b border-[var(--color-divider)] pb-5">
-        <p className="text-sm font-semibold text-[var(--color-primary)]">Example result</p>
-        <p className="mt-3 text-2xl font-semibold tracking-tight text-[var(--color-text)]">
+        <p className="text-2xl font-semibold tracking-tight text-[var(--color-text)]">
           Product Engineering Intern
         </p>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">Example Company</p>
+        <p className="mt-3 text-sm text-[var(--color-text-muted)]">4 matched · 3 missing</p>
       </div>
-
-      <dl className="grid grid-cols-2 border-b border-[var(--color-divider)] text-sm">
-        <div className="border-r border-[var(--color-divider)] py-4 pr-4">
-          <dt className="text-[var(--color-text-muted)]">Matched</dt>
-          <dd className="mt-1 text-2xl font-semibold text-[var(--color-text)]">4</dd>
-        </div>
-        <div className="py-4 pl-4">
-          <dt className="text-[var(--color-text-muted)]">Missing</dt>
-          <dd className="mt-1 text-2xl font-semibold text-[var(--color-text)]">3</dd>
-        </div>
-      </dl>
 
       <div className="mt-5 grid gap-6 sm:grid-cols-2">
         <SkillRows label="Matched" skills={matchedSkills} tone="matched" />

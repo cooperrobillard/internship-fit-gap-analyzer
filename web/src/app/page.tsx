@@ -93,7 +93,7 @@ export default function Home() {
           <div className="relative min-w-0">
             <div
               aria-hidden="true"
-              className="absolute inset-x-[-1rem] bottom-[-1rem] top-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_25%_20%,rgba(254,215,170,0.55),transparent_32%),linear-gradient(135deg,rgba(254,249,195,0.48),rgba(186,230,253,0.34)_48%,rgba(209,250,229,0.28))]"
+              className="absolute inset-x-[-1rem] bottom-[-1rem] top-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_25%_20%,rgba(254,215,170,0.38),transparent_32%),linear-gradient(135deg,rgba(254,249,195,0.48),rgba(186,230,253,0.34)_48%,rgba(209,250,229,0.28))]"
             />
             <div className="relative p-3 sm:p-5">
               <LandingAnalysisPreview />
@@ -110,7 +110,9 @@ export default function Home() {
           <div className="mt-8 grid gap-8 md:grid-cols-3">
             {benefits.map((benefit, index) => (
               <section key={benefit.title} className="border-t border-[var(--color-divider)] pt-5">
-                <p className="text-sm font-semibold text-[var(--color-primary)]">0{index + 1}</p>
+                <p className="text-sm font-semibold text-[var(--color-primary)]" aria-hidden="true">
+                  0{index + 1}
+                </p>
                 <h3 className="mt-3 text-xl font-semibold text-[var(--color-text)]">{benefit.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">{benefit.body}</p>
               </section>
@@ -131,7 +133,9 @@ export default function Home() {
           <ol className="mt-8 grid gap-8 md:grid-cols-3 md:gap-0">
             {workflowSteps.map((step, index) => (
               <li key={step.title} className="border-t border-[var(--color-divider)] pt-5 md:border-r md:pr-6 md:pl-6 md:first:pl-0 md:last:border-r-0 md:last:pr-0">
-                <span className="text-sm font-semibold text-[var(--color-primary)]">0{index + 1}</span>
+                <span className="text-sm font-semibold text-[var(--color-primary)]" aria-hidden="true">
+                  0{index + 1}
+                </span>
                 <h3 className="mt-3 text-lg font-semibold text-[var(--color-text)]">{step.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">{step.body}</p>
               </li>
