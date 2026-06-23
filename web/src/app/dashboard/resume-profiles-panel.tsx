@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuth, useSession } from "@clerk/nextjs";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   type FormEvent,
   type ReactNode,
@@ -23,10 +25,17 @@ import {
   type ResumeProfileSourceType,
 } from "@/lib/supabase/resume-profiles";
 
-const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
+const boxClass = "rounded-xl border p-5 text-sm leading-relaxed";
 const inputClass =
   "mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60";
 const textareaClass = `${inputClass} min-h-[4.5rem] resize-y`;
+const focusVisibleClass =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700";
+const secondaryButtonClass = `min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`;
+const primaryButtonClass = `min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`;
+const textLinkButtonClass = `text-sm font-medium text-sky-800 hover:text-sky-950 ${focusVisibleClass}`;
+
+type WorkspaceMode = "browse" | "create" | "edit";
 
 const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
   manual: "Manual",
@@ -40,11 +49,7 @@ const DEFAULT_SOURCE_TYPE: ResumeProfileSourceType = "manual";
 
 function ResumeProfilesSectionShell({ children }: { children: ReactNode }) {
   return (
-    <section
-      id="resume-profiles"
-      className="scroll-mt-24"
-      aria-labelledby="resume-profiles-heading"
-    >
+    <section id="resume-profiles" className="scroll-mt-24" aria-label="Profiles workspace">
       {children}
     </section>
   );
@@ -67,6 +72,18 @@ const emptyCreateForm = (): ProfileFormState => ({
 });
 
 function formatProfileDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatExactProfileDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return iso;
@@ -98,33 +115,21 @@ function profileToFormState(profile: ResumeProfile): ProfileFormState {
   };
 }
 
-function SkillTags({ title, skills }: { title: string; skills: string[] }) {
-  if (skills.length === 0) {
-    return (
-      <div>
-        <p className="text-xs font-medium text-zinc-700">{title}</p>
-        <p className="mt-1 text-xs text-zinc-500">None listed</p>
-      </div>
-    );
+function getCombinedProfileSkills(profile: ResumeProfile): string[] {
+  const seen = new Set<string>();
+  const combined: string[] = [];
+
+  for (const skill of [...profile.extractedSkills, ...profile.userAddedSkills]) {
+    const trimmed = skill.trim();
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    combined.push(trimmed);
   }
 
-  return (
-    <div>
-      <p className="text-xs font-medium text-zinc-700">
-        {title} ({skills.length})
-      </p>
-      <ul className="mt-1 flex flex-wrap gap-1.5">
-        {skills.map((skill) => (
-          <li
-            key={skill}
-            className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs text-zinc-800"
-          >
-            {skill}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return combined;
 }
 
 function SourceTypeSelect({
@@ -169,7 +174,7 @@ function ProfileFormFields({
   disabled?: boolean;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <label className="block text-sm" htmlFor={`${formIdPrefix}-name`}>
         <span className="font-medium text-zinc-900">Profile name</span>
         <input
@@ -188,8 +193,7 @@ function ProfileFormFields({
 
       <label className="block text-sm" htmlFor={`${formIdPrefix}-description`}>
         <span className="font-medium text-zinc-900">
-          Description{" "}
-          <span className="font-normal text-zinc-500">(optional)</span>
+          Notes <span className="font-normal text-zinc-500">(optional)</span>
         </span>
         <textarea
           id={`${formIdPrefix}-description`}
@@ -198,56 +202,63 @@ function ProfileFormFields({
             onChange({ ...form, profileDescription: event.target.value })
           }
           disabled={disabled}
-          rows={2}
-          className={textareaClass}
-        />
-      </label>
-
-      <label className="block text-sm" htmlFor={`${formIdPrefix}-extracted`}>
-        <span className="font-medium text-zinc-900">Extracted skills</span>
-        <span className="mt-0.5 block text-xs text-zinc-500">
-          Comma- or newline-separated skill names
-        </span>
-        <textarea
-          id={`${formIdPrefix}-extracted`}
-          value={form.extractedSkillsText}
-          onChange={(event) =>
-            onChange({ ...form, extractedSkillsText: event.target.value })
-          }
-          disabled={disabled}
           rows={3}
           className={textareaClass}
-          placeholder="Python, SQL, communication"
         />
       </label>
 
-      <label className="block text-sm" htmlFor={`${formIdPrefix}-added`}>
-        <span className="font-medium text-zinc-900">User-added skills</span>
-        <span className="mt-0.5 block text-xs text-zinc-500">
-          Comma- or newline-separated skill names
-        </span>
-        <textarea
-          id={`${formIdPrefix}-added`}
-          value={form.userAddedSkillsText}
-          onChange={(event) =>
-            onChange({ ...form, userAddedSkillsText: event.target.value })
-          }
-          disabled={disabled}
-          rows={3}
-          className={textareaClass}
-          placeholder="Leadership, public speaking"
-        />
-      </label>
+      <div>
+        <p className="font-medium text-zinc-900">Skills</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Separate skills with commas or new lines.
+        </p>
+        <div className="mt-3 space-y-3">
+          <label className="block text-sm" htmlFor={`${formIdPrefix}-extracted`}>
+            <span className="font-medium text-zinc-800">Skills from the source</span>
+            <textarea
+              id={`${formIdPrefix}-extracted`}
+              value={form.extractedSkillsText}
+              onChange={(event) =>
+                onChange({ ...form, extractedSkillsText: event.target.value })
+              }
+              disabled={disabled}
+              rows={3}
+              className={textareaClass}
+              placeholder="Python, SQL, communication"
+            />
+          </label>
 
-      <label className="block text-sm" htmlFor={`${formIdPrefix}-source`}>
-        <span className="font-medium text-zinc-900">Source type</span>
-        <SourceTypeSelect
-          id={`${formIdPrefix}-source`}
-          value={form.sourceType}
-          onChange={(sourceType) => onChange({ ...form, sourceType })}
-          disabled={disabled}
-        />
-      </label>
+          <label className="block text-sm" htmlFor={`${formIdPrefix}-added`}>
+            <span className="font-medium text-zinc-800">Skills you added</span>
+            <textarea
+              id={`${formIdPrefix}-added`}
+              value={form.userAddedSkillsText}
+              onChange={(event) =>
+                onChange({ ...form, userAddedSkillsText: event.target.value })
+              }
+              disabled={disabled}
+              rows={3}
+              className={textareaClass}
+              placeholder="Leadership, public speaking"
+            />
+          </label>
+        </div>
+      </div>
+
+      <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+        <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
+          Advanced profile details
+        </summary>
+        <label className="mt-3 block text-sm" htmlFor={`${formIdPrefix}-source`}>
+          <span className="font-medium text-zinc-900">Source type</span>
+          <SourceTypeSelect
+            id={`${formIdPrefix}-source`}
+            value={form.sourceType}
+            onChange={(sourceType) => onChange({ ...form, sourceType })}
+            disabled={disabled}
+          />
+        </label>
+      </details>
     </div>
   );
 }
@@ -258,6 +269,29 @@ type DeleteUiState =
   | { kind: "deleting"; profileId: string }
   | { kind: "error"; message: string };
 
+function ProfileSkillList({ skills }: { skills: string[] }) {
+  if (skills.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-3 py-3 text-sm text-zinc-600">
+        No skills have been added to this profile.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="grid gap-2 sm:grid-cols-2">
+      {skills.map((skill) => (
+        <li
+          key={skill}
+          className="min-w-0 border-b border-zinc-100 pb-2 text-sm text-zinc-800 before:mr-2 before:text-zinc-400 before:content-['•']"
+        >
+          <span className="break-words">{skill}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ResumeProfilesPanel() {
   const configured = isSupabaseConfigured();
   const { isLoaded, session } = useSession();
@@ -267,33 +301,33 @@ export function ResumeProfilesPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [mode, setMode] = useState<WorkspaceMode>("browse");
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
-  const [createForm, setCreateForm] =
-    useState<ProfileFormState>(emptyCreateForm);
+  const [createForm, setCreateForm] = useState<ProfileFormState>(emptyCreateForm);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [createSuccessMessage, setCreateSuccessMessage] = useState<
-    string | null
-  >(null);
 
-  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ProfileFormState | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const [deleteUiState, setDeleteUiState] = useState<DeleteUiState>({
-    kind: "idle",
-  });
+  const [deleteUiState, setDeleteUiState] = useState<DeleteUiState>({ kind: "idle" });
+
+  const selectedProfile = useMemo(
+    () => profiles.find((profile) => profile.id === selectedProfileId) ?? null,
+    [profiles, selectedProfileId],
+  );
 
   const reloadList = useCallback(() => {
     setReloadNonce((nonce) => nonce + 1);
   }, []);
 
   function handleLoadRetry() {
-    if (isLoading) {
-      return;
+    if (!isLoading) {
+      reloadList();
     }
-    reloadList();
   }
 
   useEffect(() => {
@@ -317,6 +351,11 @@ export function ResumeProfilesPanel() {
       if (result.status === "success") {
         setProfiles(result.profiles);
         setLoadError(null);
+        setSelectedProfileId((current) =>
+          current && result.profiles.some((profile) => profile.id === current)
+            ? current
+            : null,
+        );
       } else {
         setProfiles([]);
         setLoadError(result.message);
@@ -332,16 +371,43 @@ export function ResumeProfilesPanel() {
     };
   }, [configured, isLoaded, session, userId, reloadNonce]);
 
+  function startCreate() {
+    setMode("create");
+    setCreateError(null);
+    setStatusMessage(null);
+    setDeleteUiState({ kind: "idle" });
+  }
+
+  function cancelCreate() {
+    setMode("browse");
+    setCreateError(null);
+    setCreateForm(emptyCreateForm());
+  }
+
+  function selectProfile(profileId: string) {
+    if (mode === "edit") {
+      return;
+    }
+
+    setSelectedProfileId(profileId);
+    setMode("browse");
+    setCreateError(null);
+    setEditError(null);
+    setStatusMessage(null);
+    setDeleteUiState({ kind: "idle" });
+  }
+
   function startEditing(profile: ResumeProfile) {
-    setEditingProfileId(profile.id);
+    setSelectedProfileId(profile.id);
+    setMode("edit");
     setEditForm(profileToFormState(profile));
     setEditError(null);
-    setCreateSuccessMessage(null);
+    setStatusMessage(null);
     setDeleteUiState({ kind: "idle" });
   }
 
   function cancelEditing() {
-    setEditingProfileId(null);
+    setMode("browse");
     setEditForm(null);
     setEditError(null);
   }
@@ -362,7 +428,7 @@ export function ResumeProfilesPanel() {
 
     setIsCreating(true);
     setCreateError(null);
-    setCreateSuccessMessage(null);
+    setStatusMessage(null);
 
     const supabase = createClerkSupabaseClient(() => session.getToken());
     const result = await createResumeProfile(supabase, userId, {
@@ -381,14 +447,20 @@ export function ResumeProfilesPanel() {
     }
 
     setCreateForm(emptyCreateForm());
-    setCreateSuccessMessage(`"${result.profile.profileName}" was saved.`);
+    setProfiles((current) => [
+      result.profile,
+      ...current.filter((profile) => profile.id !== result.profile.id),
+    ]);
+    setSelectedProfileId(result.profile.id);
+    setMode("browse");
+    setStatusMessage(`Profile created. “${result.profile.profileName}” is ready to use.`);
     reloadList();
   }
 
   async function handleSaveEdit(event: FormEvent) {
     event.preventDefault();
 
-    if (!userId || !session || !editingProfileId || !editForm) {
+    if (!userId || !session || !selectedProfileId || !editForm) {
       return;
     }
 
@@ -400,20 +472,16 @@ export function ResumeProfilesPanel() {
 
     setIsSavingEdit(true);
     setEditError(null);
+    setStatusMessage(null);
 
     const supabase = createClerkSupabaseClient(() => session.getToken());
-    const result = await updateResumeProfile(
-      supabase,
-      userId,
-      editingProfileId,
-      {
-        profileName: trimmedName,
-        profileDescription: editForm.profileDescription.trim() || null,
-        extractedSkills: parseSkillTextInput(editForm.extractedSkillsText),
-        userAddedSkills: parseSkillTextInput(editForm.userAddedSkillsText),
-        sourceType: editForm.sourceType,
-      },
-    );
+    const result = await updateResumeProfile(supabase, userId, selectedProfileId, {
+      profileName: trimmedName,
+      profileDescription: editForm.profileDescription.trim() || null,
+      extractedSkills: parseSkillTextInput(editForm.extractedSkillsText),
+      userAddedSkills: parseSkillTextInput(editForm.userAddedSkillsText),
+      sourceType: editForm.sourceType,
+    });
 
     setIsSavingEdit(false);
 
@@ -423,15 +491,19 @@ export function ResumeProfilesPanel() {
     }
 
     if (result.status === "not_found") {
-      setEditError(
-        "This resume profile could not be found. It may have been deleted.",
-      );
+      setEditError("This resume profile could not be found. It may have been deleted.");
       cancelEditing();
       reloadList();
       return;
     }
 
-    cancelEditing();
+    setProfiles((current) =>
+      current.map((profile) => (profile.id === result.profile.id ? result.profile : profile)),
+    );
+    setSelectedProfileId(result.profile.id);
+    setMode("browse");
+    setEditForm(null);
+    setStatusMessage("Profile updated.");
     reloadList();
   }
 
@@ -446,36 +518,25 @@ export function ResumeProfilesPanel() {
     const result = await deleteResumeProfile(supabase, userId, profileId);
 
     if (result.status === "success" || result.status === "not_found") {
-      if (editingProfileId === profileId) {
-        cancelEditing();
-      }
+      setProfiles((current) => current.filter((profile) => profile.id !== profileId));
+      setSelectedProfileId(null);
+      setMode("browse");
+      setEditForm(null);
+      setEditError(null);
       setDeleteUiState({ kind: "idle" });
+      setStatusMessage("Profile deleted.");
       reloadList();
       return;
     }
 
-    setDeleteUiState({
-      kind: "error",
-      message: result.message,
-    });
+    setDeleteUiState({ kind: "error", message: result.message });
   }
 
   if (!configured) {
     return (
       <ResumeProfilesSectionShell>
-        <div
-          className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-700`}
-        >
-          <h2
-            id="resume-profiles-heading"
-            className="font-medium text-zinc-900"
-          >
-            Resume profiles
-          </h2>
-          <p className="mt-2">
-            Resume profiles are temporarily unavailable. You can still run
-            analysis with pasted/uploaded text.
-          </p>
+        <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-700`} role="status">
+          Resume profiles are temporarily unavailable. You can still run an analysis.
         </div>
       </ResumeProfilesSectionShell>
     );
@@ -484,14 +545,8 @@ export function ResumeProfilesPanel() {
   if (!isLoaded) {
     return (
       <ResumeProfilesSectionShell>
-        <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`}>
-          <h2
-            id="resume-profiles-heading"
-            className="font-medium"
-            role="status"
-          >
-            Loading resume profiles…
-          </h2>
+        <div className={`${boxClass} border-sky-200 bg-sky-50 text-sky-900`} role="status">
+          Loading resume profiles…
         </div>
       </ResumeProfilesSectionShell>
     );
@@ -500,287 +555,262 @@ export function ResumeProfilesPanel() {
   if (!userId || !session) {
     return (
       <ResumeProfilesSectionShell>
-        <div
-          className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-700`}
-        >
-          <h2
-            id="resume-profiles-heading"
-            className="font-medium text-zinc-900"
-          >
-            Resume profiles
-          </h2>
-          <p className="mt-2">Sign in to manage structured resume profiles.</p>
+        <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-700`}>
+          Sign in to manage structured resume profiles.
         </div>
       </ResumeProfilesSectionShell>
     );
   }
 
-  const isDeleting =
-    deleteUiState.kind === "deleting" || deleteUiState.kind === "confirming";
+  const activeProfile = selectedProfile;
+  const isFormMode = mode === "create" || mode === "edit";
+  const showMobileList = mode === "browse" && !activeProfile;
+  const isDeletingSelected =
+    deleteUiState.kind === "deleting" && activeProfile?.id === deleteUiState.profileId;
+  const showEmptyWorkspaceOnly =
+    profiles.length === 0 && !isLoading && !loadError && mode === "browse";
+
+  const profileList = (
+    <div className={`${!showMobileList && isFormMode ? "hidden xl:block" : !showMobileList && activeProfile ? "hidden xl:block" : ""}`}>
+      <div className="flex items-start justify-between gap-3 border-b border-zinc-200 pb-3">
+        <div>
+          <p className="font-medium text-zinc-950">Your profiles</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            {profiles.length} reusable {profiles.length === 1 ? "profile" : "profiles"}
+          </p>
+        </div>
+        {mode === "browse" ? (
+          <button type="button" onClick={startCreate} className={secondaryButtonClass}>
+            New profile
+          </button>
+        ) : null}
+      </div>
+
+      {mode === "edit" ? (
+        <p className="mb-3 text-xs text-zinc-600" role="status">
+          Save or cancel your changes before choosing another profile.
+        </p>
+      ) : null}
+
+      {profiles.length > 0 ? (
+        <ul className="divide-y divide-zinc-200">
+          {profiles.map((profile) => {
+            const combinedSkills = getCombinedProfileSkills(profile);
+            const isSelected = activeProfile?.id === profile.id;
+            const isRowSelectionDisabled = mode === "edit";
+            return (
+              <li key={profile.id}>
+                <button
+                  type="button"
+                  onClick={() => selectProfile(profile.id)}
+                  aria-pressed={isSelected}
+                  disabled={isRowSelectionDisabled}
+                  aria-disabled={isRowSelectionDisabled}
+                  className={`group flex min-h-20 w-full items-stretch gap-3 py-3 text-left disabled:cursor-not-allowed ${
+                    isSelected ? "bg-sky-50/70" : "hover:bg-zinc-50"
+                  } ${isRowSelectionDisabled && !isSelected ? "disabled:opacity-60" : ""} ${focusVisibleClass}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`w-1 shrink-0 rounded-full ${isSelected ? "bg-sky-800" : "bg-transparent group-hover:bg-zinc-300"}`}
+                  />
+                  <span className="min-w-0 flex-1 pr-3">
+                    <span className="block break-words font-medium text-zinc-950">
+                      {profile.profileName}
+                    </span>
+                    {profile.profileDescription ? (
+                      <span className="mt-1 line-clamp-1 block break-words text-xs text-zinc-600">
+                        {profile.profileDescription}
+                      </span>
+                    ) : null}
+                    <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+                      <span>{combinedSkills.length} {combinedSkills.length === 1 ? "skill" : "skills"}</span>
+                      <span>Updated {formatProfileDate(profile.updatedAt)}</span>
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : !isLoading && !loadError ? (
+        <div className="py-10 text-center">
+          <p className="text-base font-semibold text-zinc-950">No profiles yet</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-600">
+            Create a reusable set of skills for future role comparisons. Profiles store structured skills and notes—not raw résumé text.
+          </p>
+          <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+            <button type="button" onClick={startCreate} className={primaryButtonClass}>
+              Create profile
+            </button>
+            <Link
+              href="/dashboard"
+              className={`${secondaryButtonClass} inline-flex items-center justify-center`}
+            >
+              Analyze without a profile
+            </Link>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const createFormView = (
+    <form onSubmit={(event) => void handleCreate(event)} aria-busy={isCreating} className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <button type="button" onClick={cancelCreate} className={`mb-3 xl:hidden ${textLinkButtonClass}`}>
+            Back to profiles
+          </button>
+          <h2 className="text-xl font-semibold text-zinc-950">New profile</h2>
+        </div>
+      </div>
+      <ProfileFormFields formIdPrefix="create-profile" form={createForm} onChange={setCreateForm} disabled={isCreating} />
+      {createError ? <p className="text-sm text-red-800" role="alert">{createError}</p> : null}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button type="submit" disabled={isCreating} className={primaryButtonClass}>
+          {isCreating ? "Creating…" : "Create profile"}
+        </button>
+        <button type="button" onClick={cancelCreate} disabled={isCreating} className={secondaryButtonClass}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+
+  const editFormView = activeProfile && editForm ? (
+    <form onSubmit={(event) => void handleSaveEdit(event)} aria-busy={isSavingEdit} className="space-y-4">
+      <button type="button" onClick={cancelEditing} className={`xl:hidden ${textLinkButtonClass}`}>
+        Back to profiles
+      </button>
+      <div>
+        <h2 className="text-xl font-semibold text-zinc-950">Edit profile</h2>
+        <p className="mt-1 break-words text-sm text-zinc-600">{activeProfile.profileName}</p>
+      </div>
+      <ProfileFormFields formIdPrefix={`edit-${activeProfile.id}`} form={editForm} onChange={setEditForm} disabled={isSavingEdit} />
+      {editError ? <p className="text-sm text-red-800" role="alert">{editError}</p> : null}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button type="submit" disabled={isSavingEdit} className={primaryButtonClass}>
+          {isSavingEdit ? "Saving…" : "Save changes"}
+        </button>
+        <button type="button" onClick={cancelEditing} disabled={isSavingEdit} className={secondaryButtonClass}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  ) : null;
+
+  const detailView = activeProfile ? (() => {
+    const combinedSkills = getCombinedProfileSkills(activeProfile);
+    const isConfirmingDelete =
+      deleteUiState.kind === "confirming" && deleteUiState.profileId === activeProfile.id;
+    return (
+      <div className="space-y-5">
+        <button type="button" onClick={() => setSelectedProfileId(null)} className={`xl:hidden ${textLinkButtonClass}`}>
+          Back to profiles
+        </button>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold text-zinc-950">{activeProfile.profileName}</h2>
+            {activeProfile.profileDescription ? (
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-700">{activeProfile.profileDescription}</p>
+            ) : null}
+          </div>
+          <p className="shrink-0 text-xs text-zinc-500">Updated {formatProfileDate(activeProfile.updatedAt)}</p>
+        </div>
+
+        <div>
+          <div className="mb-3 flex flex-wrap items-baseline gap-2">
+            <h3 className="font-medium text-zinc-950">Skills</h3>
+            <span className="text-xs text-zinc-500">{combinedSkills.length} {combinedSkills.length === 1 ? "skill" : "skills"}</span>
+          </div>
+          <ProfileSkillList skills={combinedSkills} />
+        </div>
+
+        <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+          <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
+            Profile details
+          </summary>
+          <dl className="mt-3 space-y-2 text-sm text-zinc-700">
+            <div className="flex flex-wrap justify-between gap-2"><dt>Source type</dt><dd>{SOURCE_TYPE_LABELS[activeProfile.sourceType]}</dd></div>
+            <div className="flex flex-wrap justify-between gap-2"><dt>Created</dt><dd>{formatExactProfileDate(activeProfile.createdAt)}</dd></div>
+            <div className="flex flex-wrap justify-between gap-2"><dt>Updated</dt><dd>{formatExactProfileDate(activeProfile.updatedAt)}</dd></div>
+            <div className="flex flex-wrap justify-between gap-2"><dt>Skills from the source</dt><dd>{activeProfile.extractedSkills.length}</dd></div>
+            <div className="flex flex-wrap justify-between gap-2"><dt>Skills you added</dt><dd>{activeProfile.userAddedSkills.length}</dd></div>
+          </dl>
+        </details>
+
+        <div className="border-t border-zinc-200 pt-4">
+          {isConfirmingDelete ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950" aria-busy={isDeletingSelected}>
+              <p className="font-medium">Delete “{activeProfile.profileName}”?</p>
+              <p className="mt-1 text-sm">This structured skill profile will be removed. Saved job analyses are not affected. This action cannot be undone.</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <button type="button" onClick={() => void handleConfirmDelete(activeProfile.id)} disabled={isDeletingSelected} className={`min-h-10 rounded-md bg-red-800 px-3 py-2 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
+                  {isDeletingSelected ? "Deleting…" : "Delete profile"}
+                </button>
+                <button type="button" onClick={() => setDeleteUiState({ kind: "idle" })} disabled={isDeletingSelected} className={secondaryButtonClass}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button type="button" onClick={() => startEditing(activeProfile)} className={secondaryButtonClass}>
+                Edit
+              </button>
+              <button type="button" onClick={() => setDeleteUiState({ kind: "confirming", profileId: activeProfile.id, profileName: activeProfile.profileName })} className={`min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })() : (
+    <div className="hidden min-h-64 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-sm text-zinc-500 xl:flex">
+      Select a profile to review its skills and details.
+    </div>
+  );
 
   return (
     <ResumeProfilesSectionShell>
       <div className={`${boxClass} border-zinc-200 bg-white text-zinc-700`}>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
-          Resume profiles
-        </p>
-        <h2
-          id="resume-profiles-heading"
-          className="mt-1 text-xl font-semibold text-zinc-950"
-        >
-          Resume profiles
-        </h2>
-        <p className="mt-2 text-zinc-600">
-          Save named structured skill profiles with optional notes instead of
-          raw resume body text. Select a saved profile in the Analyze section to
-          create temporary structured analysis input for that run; this is not
-          full resume parsing, raw resume storage, or AI extraction. Create,
-          edit, and delete reusable profiles here.
-        </p>
-
-        {isLoading ? (
-          <p className="mt-4 text-sm text-sky-800" role="status">
-            Loading your resume profiles…
+        {statusMessage ? (
+          <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status" aria-live="polite">
+            {statusMessage}
           </p>
         ) : null}
 
+        {isLoading ? <p className="mb-4 text-sm text-sky-800" role="status">Loading your resume profiles…</p> : null}
+
         {loadError ? (
-          <div
-            className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
-            role="alert"
-          >
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
             <p className="font-medium">Could not load resume profiles</p>
             <p className="mt-1">{loadError}</p>
-            <button
-              type="button"
-              onClick={handleLoadRetry}
-              disabled={isLoading}
-              className="mt-3 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <button type="button" onClick={handleLoadRetry} disabled={isLoading} className={`mt-3 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
               Try again
             </button>
           </div>
         ) : null}
 
-        <form
-          onSubmit={(event) => void handleCreate(event)}
-          className="mt-5 rounded-lg border border-zinc-200 bg-white/70 p-4"
-          aria-busy={isCreating}
-        >
-          <h3 className="font-medium text-zinc-900">Create profile</h3>
-          <p className="mt-1 text-xs text-zinc-600">
-            Enter skills manually—no PDF/DOCX parsing or AI extraction.
-          </p>
-
-          <div className="mt-4">
-            <ProfileFormFields
-              formIdPrefix="create-profile"
-              form={createForm}
-              onChange={setCreateForm}
-              disabled={isCreating}
-            />
-          </div>
-
-          {createError ? (
-            <p className="mt-3 text-sm text-red-800" role="alert">
-              {createError}
-            </p>
-          ) : null}
-
-          {createSuccessMessage ? (
-            <p className="mt-3 text-sm text-emerald-800" role="status">
-              {createSuccessMessage}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isCreating}
-            className="mt-4 min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isCreating ? "Saving…" : "Create profile"}
-          </button>
-        </form>
-
-        {!isLoading && !loadError && profiles.length === 0 ? (
-          <div className="mt-5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-zinc-700">
-            <p className="font-medium text-zinc-900">No resume profiles yet</p>
-            <p className="mt-2 text-sm text-zinc-600">
-              Create a profile above to save structured skills and notes, not
-              raw resume body text. You can then select it as the resume source
-              in the Analyze section for a future run; creating one is optional.
-            </p>
-          </div>
-        ) : null}
-
-        {profiles.length > 0 ? (
-          <ul className="mt-5 space-y-3">
-            {profiles.map((profile) => {
-              const isEditing = editingProfileId === profile.id;
-              const isConfirmingDelete =
-                deleteUiState.kind === "confirming" &&
-                deleteUiState.profileId === profile.id;
-              const isDeletingThis =
-                deleteUiState.kind === "deleting" &&
-                deleteUiState.profileId === profile.id;
-
-              return (
-                <li
-                  key={profile.id}
-                  className="rounded-lg border border-zinc-200 bg-white/70 p-4"
-                >
-                  {isEditing && editForm ? (
-                    <form
-                      onSubmit={(event) => void handleSaveEdit(event)}
-                      aria-busy={isSavingEdit}
-                    >
-                      <h3 className="font-medium text-zinc-900">
-                        Edit profile
-                      </h3>
-                      <div className="mt-3">
-                        <ProfileFormFields
-                          formIdPrefix={`edit-${profile.id}`}
-                          form={editForm}
-                          onChange={setEditForm}
-                          disabled={isSavingEdit}
-                        />
-                      </div>
-                      {editError ? (
-                        <p className="mt-3 text-sm text-red-800" role="alert">
-                          {editError}
-                        </p>
-                      ) : null}
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="submit"
-                          disabled={isSavingEdit}
-                          className="min-h-10 rounded-md bg-sky-800 px-3 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isSavingEdit ? "Saving…" : "Save changes"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelEditing}
-                          disabled={isSavingEdit}
-                          className="min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <>
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-medium text-zinc-900">
-                            {profile.profileName}
-                          </h3>
-                          {profile.profileDescription ? (
-                            <p className="mt-1 text-sm text-zinc-600">
-                              {profile.profileDescription}
-                            </p>
-                          ) : null}
-                        </div>
-                        <p className="shrink-0 text-xs text-zinc-500">
-                          Updated {formatProfileDate(profile.updatedAt)}
-                        </p>
-                      </div>
-
-                      <p className="mt-2 text-xs text-zinc-600">
-                        Source: {SOURCE_TYPE_LABELS[profile.sourceType]} ·
-                        Created {formatProfileDate(profile.createdAt)}
-                      </p>
-
-                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        <SkillTags
-                          title="Extracted skills"
-                          skills={profile.extractedSkills}
-                        />
-                        <SkillTags
-                          title="User-added skills"
-                          skills={profile.userAddedSkills}
-                        />
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-200 pt-3">
-                        <button
-                          type="button"
-                          onClick={() => startEditing(profile)}
-                          disabled={isDeleting}
-                          className="min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Edit
-                        </button>
-
-                        {isConfirmingDelete ? (
-                          <div
-                            className="w-full rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950"
-                            aria-busy={isDeletingThis}
-                          >
-                            <p className="text-sm font-medium">
-                              Remove &ldquo;{profile.profileName}&rdquo;?
-                            </p>
-                            <p className="mt-1 text-xs">
-                              This deletes the structured skill list from your
-                              account. Your saved job analyses are not affected.
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void handleConfirmDelete(profile.id)
-                                }
-                                disabled={isDeletingThis}
-                                className="min-h-10 rounded-md bg-red-800 px-3 py-2 text-xs font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {isDeletingThis ? "Removing…" : "Yes, remove"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setDeleteUiState({ kind: "idle" })
-                                }
-                                disabled={isDeletingThis}
-                                className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDeleteUiState({
-                                kind: "confirming",
-                                profileId: profile.id,
-                                profileName: profile.profileName,
-                              })
-                            }
-                            disabled={isDeleting}
-                            className="min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-
         {deleteUiState.kind === "error" ? (
-          <div
-            className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
-            role="alert"
-          >
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
             <p className="font-medium">Could not delete resume profile</p>
             <p className="mt-1">{deleteUiState.message}</p>
           </div>
         ) : null}
+
+        {showEmptyWorkspaceOnly ? (
+          profileList
+        ) : (
+          <div className="xl:grid xl:grid-cols-[minmax(15rem,0.72fr)_minmax(0,1.35fr)] xl:gap-6">
+            {profileList}
+            <div className={`${mode === "browse" && !activeProfile ? "hidden xl:block" : ""} min-w-0 xl:border-l xl:border-zinc-200 xl:pl-6`}>
+              {mode === "create" ? createFormView : mode === "edit" ? editFormView : detailView}
+            </div>
+          </div>
+        )}
       </div>
     </ResumeProfilesSectionShell>
   );
