@@ -104,7 +104,7 @@ export function SavedAnalysisDetailPanel({ analysisId, refreshKey = 0, onDeleted
 
   return (
     <article className={`${surfaceClass} min-w-0`} aria-busy={isDeleting}>
-      {showBackLink ? <button type="button" onClick={onBackToList} className="mb-4 min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">Back to saved analyses</button> : null}
+      {showBackLink ? <button type="button" onClick={onBackToList} className="mb-4 min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 xl:hidden">Back to saved analyses</button> : null}
       <header className="border-b border-zinc-200 pb-4">
         <h2 className="break-words text-xl font-semibold text-zinc-950">{title}</h2>
         <p className={`mt-1 break-words ${analysis.company?.trim() ? "text-zinc-700" : "text-zinc-500 italic"}`}>{companyLabel}</p>

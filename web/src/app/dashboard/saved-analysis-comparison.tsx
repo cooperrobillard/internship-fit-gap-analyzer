@@ -118,7 +118,7 @@ export function SavedAnalysisComparisonPanel({
             onChange={(event) =>
               onFirstAnalysisIdChange(event.target.value || null)
             }
-            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
           >
             <option value="">Select an analysis…</option>
             {analyses.map((analysis) => (
@@ -136,7 +136,7 @@ export function SavedAnalysisComparisonPanel({
             onChange={(event) =>
               onSecondAnalysisIdChange(event.target.value || null)
             }
-            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900"
+            className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
           >
             <option value="">Select an analysis…</option>
             {analyses.map((analysis) => (
@@ -152,7 +152,7 @@ export function SavedAnalysisComparisonPanel({
         <button
           type="button"
           onClick={handleClearComparison}
-          className="mt-3 min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+          className="mt-3 min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
         >
 Clear selection
         </button>
