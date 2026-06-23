@@ -17,7 +17,7 @@ import {
   type SavedCloudAnalysisListItem,
 } from "@/lib/supabase/saved-analyses";
 
-const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
+const boxClass = "mt-4 text-sm leading-relaxed";
 
 function analysisOptionLabel(analysis: SavedCloudAnalysisListItem): string {
   const title = getSavedAnalysisDisplayTitle(analysis);
@@ -35,7 +35,7 @@ function SkillGroup({
   emptyMessage: string;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3">
+    <div className="min-w-0 border-t border-zinc-200 pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0 first:lg:border-l-0 first:lg:pl-0">
       <h4 className="font-medium text-zinc-900">
         {title} <span className="text-zinc-500">({skills.length})</span>
       </h4>
@@ -46,7 +46,7 @@ function SkillGroup({
           {skills.map((item) => (
             <li
               key={`${item.skill}-${item.category}`}
-              className="rounded-md bg-zinc-50 px-2 py-1.5 text-zinc-800"
+              className="py-1.5 text-zinc-800"
             >
               <span className="font-medium">{item.skill}</span>
               <span className="text-zinc-500"> · {item.category}</span>
@@ -99,23 +99,15 @@ export function SavedAnalysisComparisonPanel({
 
   if (analyses.length < 2) {
     return (
-      <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-900`}>
-        <p className="font-medium text-zinc-950">Compare saved analyses</p>
-        <p className="mt-2 text-zinc-700">
-          Save at least two analyses to compare missing and matched skills side
-          by side.
-        </p>
+      <div className={`${boxClass} text-zinc-900`}>
+        <p className="font-medium text-zinc-950">Compare</p>
+        <p className="mt-2 text-zinc-700">Save at least two analyses to compare skills.</p>
       </div>
     );
   }
 
   return (
-    <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-900`}>
-      <p className="font-medium text-zinc-950">Compare saved analyses</p>
-      <p className="mt-2 text-zinc-700">
-        Pick two saved analyses to compare structured skill results. Uses saved
-        skill rows only—not resume or job description text.
-      </p>
+    <div className={`${boxClass} text-zinc-900`}>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm" htmlFor="compare-first-analysis">
@@ -162,14 +154,13 @@ export function SavedAnalysisComparisonPanel({
           onClick={handleClearComparison}
           className="mt-3 min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50"
         >
-          Clear comparison selection
+Clear selection
         </button>
       ) : null}
 
       {!firstAnalysisId || !secondAnalysisId ? (
         <p className="mt-4 rounded-lg border border-zinc-300/80 bg-white/70 px-3 py-3 text-zinc-700">
-          Select two analyses above to see shared and unique missing and matched
-          skills.
+Choose two analyses to compare skills.
         </p>
       ) : null}
 
@@ -183,12 +174,9 @@ export function SavedAnalysisComparisonPanel({
 
       {comparison && firstAnalysis && secondAnalysis ? (
         <div className="mt-4 space-y-4" aria-live="polite">
-          <p className="text-sm text-zinc-700">
-            Comparing <span className="font-medium">{firstLabel}</span> with{" "}
-            <span className="font-medium">{secondLabel}</span>.
-          </p>
+          <p className="text-sm text-zinc-700"><span className="font-medium">{firstLabel}</span> ↔ <span className="font-medium">{secondLabel}</span></p>
 
-          <ExportDownloadGroup description="Shared and unique skill groups for this comparison pair.">
+          <ExportDownloadGroup title="Export comparison" description="Shared and unique skill groups.">
             <ExportDownloadButton
               label="Comparison (Markdown)"
               onClick={() =>
@@ -213,7 +201,7 @@ export function SavedAnalysisComparisonPanel({
 
           <div>
             <h3 className="font-medium text-zinc-950">Missing skills</h3>
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <div className="mt-3 grid gap-4 lg:grid-cols-3">
               <SkillGroup
                 title="Shared missing skills"
                 skills={comparison.missing.shared}
@@ -234,7 +222,7 @@ export function SavedAnalysisComparisonPanel({
 
           <div>
             <h3 className="font-medium text-zinc-950">Matched skills</h3>
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <div className="mt-3 grid gap-4 lg:grid-cols-3">
               <SkillGroup
                 title="Shared matched skills"
                 skills={comparison.matched.shared}

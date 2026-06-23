@@ -52,11 +52,11 @@ export function RecurringGapExportActions() {
 
   return (
     <ExportDownloadGroup
-      title="Download recurring gaps"
+      title="Export recurring gaps"
       description={
         isDownloading
           ? "Preparing recurring-gap CSV…"
-          : "Exports skill names and counts from your saved analyses. Structured data only."
+          : "Exports skill names and counts."
       }
     >
       <ExportDownloadButton

@@ -9,8 +9,8 @@ import {
   type RecurringGapStatsResult,
 } from "@/lib/supabase/recurring-gap-stats";
 
-const boxClass = "mt-6 rounded-xl border p-5 text-sm leading-relaxed";
-const DEFAULT_VISIBLE_ROWS = 12;
+const boxClass = "rounded-lg border border-zinc-200 bg-white/70 p-4 text-sm leading-relaxed";
+const DEFAULT_VISIBLE_ROWS = 5;
 
 type RecurringGapStatsPanelProps = {
   refreshKey?: number;
@@ -100,7 +100,7 @@ export function RecurringGapStatsPanel({
       >
         <p className="font-medium">Recurring skill gaps</p>
         <p className="mt-2 text-zinc-600">
-          Counting missing skills across your saved analyses…
+          Counting missing skills…
         </p>
       </div>
     );
@@ -139,9 +139,6 @@ export function RecurringGapStatsPanel({
       <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-900`}>
         <p className="font-medium">Recurring skill gaps</p>
         <p className="mt-2 text-zinc-700">
-          Skills that appear most often as missing across your saved analyses.
-        </p>
-        <p className="mt-3 text-zinc-600">
           Save an analysis to start seeing recurring gaps here.
         </p>
       </div>
@@ -153,13 +150,9 @@ export function RecurringGapStatsPanel({
       <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-900`}>
         <p className="font-medium">Recurring skill gaps</p>
         <p className="mt-2 text-zinc-700">
-          Skills that appear most often as missing across your saved analyses.
-        </p>
-        <p className="mt-3 text-zinc-600">
           Your {totalSavedAnalyses} saved{" "}
           {totalSavedAnalyses === 1 ? "analysis has" : "analyses have"} no
-          missing skills recorded. Rule-based matching only—results depend on
-          the skill taxonomy.
+          missing skills recorded.
         </p>
       </div>
     );
@@ -168,53 +161,56 @@ export function RecurringGapStatsPanel({
   const visibleStats = stats.slice(0, DEFAULT_VISIBLE_ROWS);
 
   return (
-    <div className={`${boxClass} border-zinc-200 bg-white/70 text-zinc-900`}>
-      <p className="font-medium">Recurring skill gaps</p>
-      <p className="mt-2 text-zinc-700">
-        Skills that appear most often as missing across your saved analyses
-        (rule-based, from {totalSavedAnalyses} saved{" "}
-        {totalSavedAnalyses === 1 ? "analysis" : "analyses"}).
-      </p>
-      <div className="mt-4 overflow-x-auto rounded-lg border border-teal-200 bg-white">
-        <table className="w-full min-w-[20rem] text-left text-sm">
-          <caption className="sr-only">
-            Top recurring missing skills across saved analyses
-          </caption>
-          <thead>
-            <tr className="border-b border-teal-100 text-xs uppercase tracking-wide text-zinc-600">
-              <th scope="col" className="px-3 py-2 font-medium">
-                Skill
-              </th>
-              <th scope="col" className="px-3 py-2 font-medium">
-                Category
-              </th>
-              <th scope="col" className="px-3 py-2 font-medium">
-                Frequency
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleStats.map((stat) => (
-              <tr
-                key={`${stat.skill}-${stat.category}`}
-                className="border-b border-teal-50 last:border-0"
-              >
-                <td className="px-3 py-2 font-medium text-zinc-900">
-                  {stat.skill}
-                </td>
-                <td className="px-3 py-2 text-zinc-600">{stat.category}</td>
-                <td className="px-3 py-2 font-medium text-zinc-800">
-                  {formatRecurringGapFrequency(stat, totalSavedAnalyses)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {stats.length > visibleStats.length ? (
-        <p className="mt-2 text-xs text-zinc-600">
-          Showing top {visibleStats.length} of {stats.length} recurring gaps.
+    <div className={`${boxClass} text-zinc-900`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-medium text-zinc-950">Recurring skill gaps</h2>
+        <p className="text-xs text-zinc-600">
+          {totalSavedAnalyses} saved {totalSavedAnalyses === 1 ? "analysis" : "analyses"}
         </p>
+      </div>
+      <ul className="mt-4 divide-y divide-zinc-200 border-y border-zinc-200">
+        {visibleStats.map((stat) => (
+          <li
+            key={`${stat.skill}-${stat.category}`}
+            className="grid gap-1 py-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(7rem,0.4fr)_auto] sm:items-baseline sm:gap-3"
+          >
+            <span className="break-words font-medium text-zinc-950">{stat.skill}</span>
+            <span className="break-words text-zinc-600">{stat.category}</span>
+            <span className="font-medium text-zinc-800">
+              {formatRecurringGapFrequency(stat, totalSavedAnalyses)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {stats.length > visibleStats.length ? (
+        <details className="mt-4 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 py-2">
+          <summary className="min-h-10 cursor-pointer font-medium text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
+            View full table
+          </summary>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full min-w-[20rem] text-left text-sm">
+              <caption className="sr-only">
+                Recurring missing skills across saved analyses
+              </caption>
+              <thead>
+                <tr className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-600">
+                  <th scope="col" className="px-3 py-2 font-medium">Skill</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Category</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Frequency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.map((stat) => (
+                  <tr key={`${stat.skill}-${stat.category}`} className="border-b border-zinc-100 last:border-0">
+                    <td className="px-3 py-2 font-medium text-zinc-900">{stat.skill}</td>
+                    <td className="px-3 py-2 text-zinc-600">{stat.category}</td>
+                    <td className="px-3 py-2 font-medium text-zinc-800">{formatRecurringGapFrequency(stat, totalSavedAnalyses)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       ) : null}
     </div>
   );
