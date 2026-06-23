@@ -3716,3 +3716,18 @@ This step reinforced the difference between authoring a migration and applying i
 - Kept transient raw resume and job inputs unpersisted across routes.
 - Deferred detailed component redesign to later Dev 21 work.
 - Made no API, auth, database, schema, RLS, dependency, export, or persistence changes.
+
+2026-06-23 — Dev 21 Step 3B Analyze workspace redesign
+
+- Simplified the Analyze route introduction and removed the duplicate dashboard eyebrow/verbose setup copy.
+- Removed the giant tinted form card in favor of a calmer borderless workspace with focused input and result surfaces.
+- Replaced the large sample-data card with compact sample and clear utilities.
+- Simplified the resume-source selector while preserving paste/upload and saved-profile behavior.
+- Created a two-input desktop workspace for resume information and job description.
+- Collapsed optional job details into a native disclosure that preserves populated values.
+- Moved upload/privacy/method detail into progressive disclosures.
+- Made Run analysis the dominant pre-result action and kept save as an optional post-result step.
+- Cleaned up matched/missing result presentation and removed the instructional next-steps card.
+- Corrected post-save copy to link to saved analyses instead of referring to a list below.
+- Preserved analysis, upload, profile, rate-limit, and save behavior.
+- No API, auth, database, schema, RLS, dependency, or persistence changes.
