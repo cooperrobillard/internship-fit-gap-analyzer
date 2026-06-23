@@ -1,7 +1,7 @@
 const matchedSkills = ["Python", "SQL", "Git", "REST APIs"];
 const missingSkills = ["Docker", "AWS", "CI/CD"];
 
-function SkillList({
+function SkillRows({
   label,
   skills,
   tone,
@@ -10,31 +10,26 @@ function SkillList({
   skills: string[];
   tone: "matched" | "missing";
 }) {
-  const toneClasses =
+  const markerClasses =
     tone === "matched"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-      : "border-amber-200 bg-amber-50 text-amber-950";
+      ? "border-emerald-700 bg-emerald-50 text-emerald-800"
+      : "border-amber-700 bg-amber-50 text-amber-800";
 
   return (
     <section aria-labelledby={`${tone}-skills-heading`} className="min-w-0">
-      <div className="flex items-baseline justify-between gap-3 border-b border-[var(--color-divider)] pb-2">
-        <h3
-          id={`${tone}-skills-heading`}
-          className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
-        >
-          {label}
-        </h3>
-        <span className="text-sm font-semibold text-[var(--color-text)]">
-          {skills.length}
-        </span>
-      </div>
-      <ul className="mt-3 flex flex-wrap gap-2" aria-label={`${label} in the illustrative result`}>
+      <h3 id={`${tone}-skills-heading`} className="text-sm font-semibold text-[var(--color-text)]">
+        {label}
+      </h3>
+      <ul className="mt-3 space-y-2" aria-label={`${label} in the fictional result`}>
         {skills.map((skill) => (
-          <li
-            key={skill}
-            className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${toneClasses}`}
-          >
-            {skill}
+          <li key={skill} className="flex min-w-0 items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-bold leading-none ${markerClasses}`}
+              aria-hidden="true"
+            >
+              {tone === "matched" ? "✓" : "!"}
+            </span>
+            <span className="min-w-0 break-words">{skill}</span>
           </li>
         ))}
       </ul>
@@ -44,51 +39,33 @@ function SkillList({
 
 export function LandingAnalysisPreview() {
   return (
-    <figure className="relative overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)] sm:p-6">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[var(--color-primary-soft)] opacity-70"
-      />
-      <div className="relative">
-        <figcaption className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
-          Illustrative example result
-        </figcaption>
+    <figure className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6">
+      <figcaption className="text-sm font-medium text-[var(--color-text-muted)]">
+        Fictional example · Structured skill result
+      </figcaption>
 
-        <div className="mt-5 rounded-3xl border border-[var(--color-divider)] bg-[var(--color-canvas)] p-4 sm:p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-            Job metadata
-          </p>
-          <p className="mt-2 text-xl font-bold tracking-tight text-[var(--color-text)]">
-            Product Engineering Intern
-          </p>
-          <p className="mt-1 text-sm font-medium text-[var(--color-text-muted)]">
-            Example Company · Fictional posting
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <SkillList label="Matched skills" skills={matchedSkills} tone="matched" />
-          <SkillList label="Missing skills" skills={missingSkills} tone="missing" />
-        </div>
-
-        <dl className="mt-6 grid gap-3 border-t border-[var(--color-divider)] pt-5 text-sm sm:grid-cols-3">
-          <div>
-            <dt className="font-semibold text-[var(--color-text)]">Output type</dt>
-            <dd className="mt-1 text-[var(--color-text-muted)]">Structured skill names</dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-[var(--color-text)]">Method</dt>
-            <dd className="mt-1 text-[var(--color-text-muted)]">Taxonomy and aliases</dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-[var(--color-text)]">Purpose</dt>
-            <dd className="mt-1 text-[var(--color-text-muted)]">Planning guidance</dd>
-          </div>
-        </dl>
-
-        <p className="mt-5 rounded-2xl bg-[var(--color-primary-soft)] px-4 py-3 text-sm leading-relaxed text-[var(--color-primary-hover)]">
-          This static preview uses fictional data. It is not a live form, score, or hiring decision.
+      <div className="mt-5 border-b border-[var(--color-divider)] pb-5">
+        <p className="text-sm font-semibold text-[var(--color-primary)]">Example result</p>
+        <p className="mt-3 text-2xl font-semibold tracking-tight text-[var(--color-text)]">
+          Product Engineering Intern
         </p>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Example Company</p>
+      </div>
+
+      <dl className="grid grid-cols-2 border-b border-[var(--color-divider)] text-sm">
+        <div className="border-r border-[var(--color-divider)] py-4 pr-4">
+          <dt className="text-[var(--color-text-muted)]">Matched</dt>
+          <dd className="mt-1 text-2xl font-semibold text-[var(--color-text)]">4</dd>
+        </div>
+        <div className="py-4 pl-4">
+          <dt className="text-[var(--color-text-muted)]">Missing</dt>
+          <dd className="mt-1 text-2xl font-semibold text-[var(--color-text)]">3</dd>
+        </div>
+      </dl>
+
+      <div className="mt-5 grid gap-6 sm:grid-cols-2">
+        <SkillRows label="Matched" skills={matchedSkills} tone="matched" />
+        <SkillRows label="Missing" skills={missingSkills} tone="missing" />
       </div>
     </figure>
   );

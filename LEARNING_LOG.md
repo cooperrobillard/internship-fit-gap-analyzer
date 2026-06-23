@@ -3754,3 +3754,15 @@ This step reinforced the difference between authoring a migration and applying i
 - Create and edit forms became focused modes with preserved create/update/delete behavior.
 - A stronger empty state was added, and delete moved to selected detail while confirmation behavior remained.
 - All create/update/delete and RLS behavior was preserved with no API, auth, database, schema, dependency, analysis, or persistence changes.
+
+2026-06-23 — Dev 21 Step 3E public landing-page refinement
+
+- Reduced the landing page to hero with preview, three benefits, three-step workflow, trust, and closing CTA.
+- Made the hero quieter and more editorial, changed the positioning badge to plain text, and kept one dominant hero action.
+- Grounded the product preview in matched/missing output and removed preview cards, chips, floating blob, method grid, and large callout.
+- Reduced five feature points to three benefits and shortened the workflow to three steps.
+- Merged the rule-based and privacy sections into one restrained trust section.
+- Removed the dark final CTA and local-tools promotion.
+- Added subtle static summer warmth around the hero preview.
+- Preserved signed-in and signed-out behavior.
+- Made no auth, API, database, schema, RLS, dependency, dashboard, or persistence changes.
