@@ -3731,3 +3731,17 @@ This step reinforced the difference between authoring a migration and applying i
 - Corrected post-save copy to link to saved analyses instead of referring to a list below.
 - Preserved analysis, upload, profile, rate-limit, and save behavior.
 - No API, auth, database, schema, RLS, dependency, or persistence changes.
+
+2026-06-23 — Dev 21 Step 3C Saved analyses workspace redesign
+- Analyses, Insights, and Compare became on-demand views.
+- The default Saved view changed to list/detail.
+- Search/filter controls were reduced.
+- List rows were simplified.
+- Mobile list-to-detail behavior was added.
+- Selected detail metadata moved into progressive disclosure.
+- Recurring gaps became an Insights view.
+- Full recurring-gap data moved behind disclosure.
+- Comparison became an intentional mode.
+- Export controls became compact disclosures.
+- All loading, export, comparison, recurring-gap, and delete behavior was preserved.
+- No API, auth, schema, RLS, dependency, export-data, or persistence changes.
