@@ -29,10 +29,11 @@ const boxClass = "rounded-xl border p-5 text-sm leading-relaxed";
 const inputClass =
   "mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60";
 const textareaClass = `${inputClass} min-h-[4.5rem] resize-y`;
-const secondaryButtonClass =
-  "min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60";
-const primaryButtonClass =
-  "min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60";
+const focusVisibleClass =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700";
+const secondaryButtonClass = `min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`;
+const primaryButtonClass = `min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm font-medium text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`;
+const textLinkButtonClass = `text-sm font-medium text-sky-800 hover:text-sky-950 ${focusVisibleClass}`;
 
 type WorkspaceMode = "browse" | "create" | "edit";
 
@@ -245,7 +246,7 @@ function ProfileFormFields({
       </div>
 
       <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
-        <summary className="cursor-pointer text-sm font-medium text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2">
+        <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
           Advanced profile details
         </summary>
         <label className="mt-3 block text-sm" htmlFor={`${formIdPrefix}-source`}>
@@ -380,9 +381,14 @@ export function ResumeProfilesPanel() {
   function cancelCreate() {
     setMode("browse");
     setCreateError(null);
+    setCreateForm(emptyCreateForm());
   }
 
   function selectProfile(profileId: string) {
+    if (mode === "edit") {
+      return;
+    }
+
     setSelectedProfileId(profileId);
     setMode("browse");
     setCreateError(null);
@@ -561,6 +567,8 @@ export function ResumeProfilesPanel() {
   const showMobileList = mode === "browse" && !activeProfile;
   const isDeletingSelected =
     deleteUiState.kind === "deleting" && activeProfile?.id === deleteUiState.profileId;
+  const showEmptyWorkspaceOnly =
+    profiles.length === 0 && !isLoading && !loadError && mode === "browse";
 
   const profileList = (
     <div className={`${!showMobileList && isFormMode ? "hidden xl:block" : !showMobileList && activeProfile ? "hidden xl:block" : ""}`}>
@@ -578,20 +586,29 @@ export function ResumeProfilesPanel() {
         ) : null}
       </div>
 
+      {mode === "edit" ? (
+        <p className="mb-3 text-xs text-zinc-600" role="status">
+          Save or cancel your changes before choosing another profile.
+        </p>
+      ) : null}
+
       {profiles.length > 0 ? (
         <ul className="divide-y divide-zinc-200">
           {profiles.map((profile) => {
             const combinedSkills = getCombinedProfileSkills(profile);
             const isSelected = activeProfile?.id === profile.id;
+            const isRowSelectionDisabled = mode === "edit";
             return (
               <li key={profile.id}>
                 <button
                   type="button"
                   onClick={() => selectProfile(profile.id)}
                   aria-pressed={isSelected}
-                  className={`group flex min-h-20 w-full items-stretch gap-3 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 ${
+                  disabled={isRowSelectionDisabled}
+                  aria-disabled={isRowSelectionDisabled}
+                  className={`group flex min-h-20 w-full items-stretch gap-3 py-3 text-left disabled:cursor-not-allowed ${
                     isSelected ? "bg-sky-50/70" : "hover:bg-zinc-50"
-                  }`}
+                  } ${isRowSelectionDisabled && !isSelected ? "disabled:opacity-60" : ""} ${focusVisibleClass}`}
                 >
                   <span
                     aria-hidden="true"
@@ -626,7 +643,10 @@ export function ResumeProfilesPanel() {
             <button type="button" onClick={startCreate} className={primaryButtonClass}>
               Create profile
             </button>
-            <Link href="/dashboard" className={secondaryButtonClass}>
+            <Link
+              href="/dashboard"
+              className={`${secondaryButtonClass} inline-flex items-center justify-center`}
+            >
               Analyze without a profile
             </Link>
           </div>
@@ -639,7 +659,7 @@ export function ResumeProfilesPanel() {
     <form onSubmit={(event) => void handleCreate(event)} aria-busy={isCreating} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <button type="button" onClick={cancelCreate} className="mb-3 text-sm font-medium text-sky-800 hover:text-sky-950 xl:hidden">
+          <button type="button" onClick={cancelCreate} className={`mb-3 xl:hidden ${textLinkButtonClass}`}>
             Back to profiles
           </button>
           <h2 className="text-xl font-semibold text-zinc-950">New profile</h2>
@@ -660,7 +680,7 @@ export function ResumeProfilesPanel() {
 
   const editFormView = activeProfile && editForm ? (
     <form onSubmit={(event) => void handleSaveEdit(event)} aria-busy={isSavingEdit} className="space-y-4">
-      <button type="button" onClick={cancelEditing} className="text-sm font-medium text-sky-800 hover:text-sky-950 xl:hidden">
+      <button type="button" onClick={cancelEditing} className={`xl:hidden ${textLinkButtonClass}`}>
         Back to profiles
       </button>
       <div>
@@ -686,7 +706,7 @@ export function ResumeProfilesPanel() {
       deleteUiState.kind === "confirming" && deleteUiState.profileId === activeProfile.id;
     return (
       <div className="space-y-5">
-        <button type="button" onClick={() => setSelectedProfileId(null)} className="text-sm font-medium text-sky-800 hover:text-sky-950 xl:hidden">
+        <button type="button" onClick={() => setSelectedProfileId(null)} className={`xl:hidden ${textLinkButtonClass}`}>
           Back to profiles
         </button>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -708,7 +728,7 @@ export function ResumeProfilesPanel() {
         </div>
 
         <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
-          <summary className="cursor-pointer text-sm font-medium text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2">
+          <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
             Profile details
           </summary>
           <dl className="mt-3 space-y-2 text-sm text-zinc-700">
@@ -726,7 +746,7 @@ export function ResumeProfilesPanel() {
               <p className="font-medium">Delete “{activeProfile.profileName}”?</p>
               <p className="mt-1 text-sm">This structured skill profile will be removed. Saved job analyses are not affected. This action cannot be undone.</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                <button type="button" onClick={() => void handleConfirmDelete(activeProfile.id)} disabled={isDeletingSelected} className="min-h-10 rounded-md bg-red-800 px-3 py-2 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="button" onClick={() => void handleConfirmDelete(activeProfile.id)} disabled={isDeletingSelected} className={`min-h-10 rounded-md bg-red-800 px-3 py-2 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
                   {isDeletingSelected ? "Deleting…" : "Delete profile"}
                 </button>
                 <button type="button" onClick={() => setDeleteUiState({ kind: "idle" })} disabled={isDeletingSelected} className={secondaryButtonClass}>
@@ -739,7 +759,7 @@ export function ResumeProfilesPanel() {
               <button type="button" onClick={() => startEditing(activeProfile)} className={secondaryButtonClass}>
                 Edit
               </button>
-              <button type="button" onClick={() => setDeleteUiState({ kind: "confirming", profileId: activeProfile.id, profileName: activeProfile.profileName })} className="min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="button" onClick={() => setDeleteUiState({ kind: "confirming", profileId: activeProfile.id, profileName: activeProfile.profileName })} className={`min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
                 Delete
               </button>
             </div>
@@ -768,7 +788,7 @@ export function ResumeProfilesPanel() {
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
             <p className="font-medium">Could not load resume profiles</p>
             <p className="mt-1">{loadError}</p>
-            <button type="button" onClick={handleLoadRetry} disabled={isLoading} className="mt-3 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" onClick={handleLoadRetry} disabled={isLoading} className={`mt-3 min-h-10 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 ${focusVisibleClass}`}>
               Try again
             </button>
           </div>
@@ -781,12 +801,16 @@ export function ResumeProfilesPanel() {
           </div>
         ) : null}
 
-        <div className="xl:grid xl:grid-cols-[minmax(15rem,0.72fr)_minmax(0,1.35fr)] xl:gap-6">
-          {profileList}
-          <div className={`${mode === "browse" && !activeProfile ? "hidden xl:block" : ""} min-w-0 xl:border-l xl:border-zinc-200 xl:pl-6`}>
-            {mode === "create" ? createFormView : mode === "edit" ? editFormView : detailView}
+        {showEmptyWorkspaceOnly ? (
+          profileList
+        ) : (
+          <div className="xl:grid xl:grid-cols-[minmax(15rem,0.72fr)_minmax(0,1.35fr)] xl:gap-6">
+            {profileList}
+            <div className={`${mode === "browse" && !activeProfile ? "hidden xl:block" : ""} min-w-0 xl:border-l xl:border-zinc-200 xl:pl-6`}>
+              {mode === "create" ? createFormView : mode === "edit" ? editFormView : detailView}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </ResumeProfilesSectionShell>
   );
