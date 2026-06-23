@@ -3766,3 +3766,17 @@ This step reinforced the difference between authoring a migration and applying i
 - Added subtle static summer warmth around the hero preview.
 - Preserved signed-in and signed-out behavior.
 - Made no auth, API, database, schema, RLS, dependency, dashboard, or persistence changes.
+
+2026-06-23 — Dev 21 Step 3F Privacy and authentication entry-page redesign
+- Privacy became a borderless editorial document.
+- Large navigation and article cards were removed.
+- At-a-glance data handling was added.
+- Material disclosures and limitations were preserved.
+- Provider architecture and dated verification moved into Technical data path disclosure.
+- Separate beta-positioning card was removed.
+- Privacy actions were simplified.
+- Sign-in and Sign-up copy was substantially reduced.
+- Authentication double-card layouts were removed.
+- Clerk forms and behavior were preserved.
+- Local static summer warmth was added.
+- No auth, middleware, API, database, schema, RLS, dependency, or persistence changes.
