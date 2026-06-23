@@ -3745,3 +3745,12 @@ This step reinforced the difference between authoring a migration and applying i
 - Export controls became compact disclosures.
 - All loading, export, comparison, recurring-gap, and delete behavior was preserved.
 - No API, auth, schema, RLS, dependency, export-data, or persistence changes.
+
+2026-06-23 — Dev 21 Step 3D Resume profiles workspace redesign
+- Profile creation became on demand instead of a default expanded form.
+- Profiles became a list/detail workspace with mobile list-to-detail/create/edit behavior.
+- Default skill presentation now combines extracted and user-added skills while the underlying arrays and profile schema remain unchanged.
+- Source type and detailed timestamps moved into disclosures.
+- Create and edit forms became focused modes with preserved create/update/delete behavior.
+- A stronger empty state was added, and delete moved to selected detail while confirmation behavior remained.
+- All create/update/delete and RLS behavior was preserved with no API, auth, database, schema, dependency, analysis, or persistence changes.
