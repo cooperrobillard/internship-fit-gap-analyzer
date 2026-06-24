@@ -8,7 +8,7 @@ const primaryLinks = [
   { href: "/", label: "Home", match: (pathname: string) => pathname === "/" },
   {
     href: "/dashboard",
-    label: "Dashboard",
+    label: "Workspace",
     match: (pathname: string) => pathname === "/dashboard" || pathname.startsWith("/dashboard/"),
   },
 ];
@@ -18,30 +18,26 @@ export function AppHeader() {
 
   return (
     <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-surface)]/88">
-      <div className="app-shell-container flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="app-shell-container flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--color-surface)]"
+          className="group flex min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--color-surface)]"
           aria-label="Job Fit & Skill-Gap Analyzer home"
         >
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[linear-gradient(135deg,var(--color-accent-warm),var(--color-primary))] text-sm font-black tracking-tight text-white shadow-sm"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--color-primary-ring)] bg-[var(--color-primary-soft)] text-xs font-black tracking-tight text-[var(--color-primary)]"
             aria-hidden="true"
           >
             JF
           </span>
-          <span className="min-w-0">
-            <span className="block truncate text-base font-semibold tracking-tight text-[var(--color-text)]">
-              Job Fit &amp; Skill-Gap Analyzer
-            </span>
-            <span className="block text-sm font-medium text-[var(--color-text-muted)]">
-              Rule-based career workspace
-            </span>
+          <span className="min-w-0 text-base font-semibold tracking-tight text-[var(--color-text)]">
+            <span className="block truncate sm:hidden">Job Fit Analyzer</span>
+            <span className="hidden truncate sm:block">Job Fit &amp; Skill-Gap Analyzer</span>
           </span>
         </Link>
 
         <nav
-          className="flex flex-wrap items-center gap-2 sm:justify-end"
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:justify-end"
           aria-label="Primary navigation"
         >
           {primaryLinks.map((link) => {
@@ -52,16 +48,16 @@ export function AppHeader() {
                 key={link.href}
                 href={link.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative inline-flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] ${
+                className={`relative inline-flex min-h-11 items-center rounded-md px-2.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] ${
                   isActive
-                    ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)] shadow-[inset_0_0_0_1px_var(--color-primary-ring)]"
+                    ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
                     : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                 }`}
               >
                 <span>{link.label}</span>
                 {isActive ? (
                   <span
-                    className="absolute inset-x-3 bottom-1 h-0.5 rounded-full bg-[var(--color-primary)]"
+                    className="absolute inset-x-2.5 bottom-1 h-0.5 rounded-sm bg-[var(--color-primary)]"
                     aria-hidden="true"
                   />
                 ) : null}
@@ -73,20 +69,20 @@ export function AppHeader() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/sign-in"
-                className="inline-flex min-h-11 items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               >
                 Sign in
               </Link>
               <Link
                 href="/sign-up"
-                className="inline-flex min-h-11 items-center rounded-full bg-[var(--color-primary)] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+                className="inline-flex min-h-11 items-center rounded-lg bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               >
                 Sign up
               </Link>
             </div>
           </Show>
           <Show when="signed-in">
-            <div className="flex min-h-11 items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2">
+            <div className="flex min-h-11 items-center">
               <UserButton />
             </div>
           </Show>

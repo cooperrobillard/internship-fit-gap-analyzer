@@ -3780,3 +3780,16 @@ This step reinforced the difference between authoring a migration and applying i
 - Clerk forms and behavior were preserved.
 - Local static summer warmth was added.
 - No auth, middleware, API, database, schema, RLS, dependency, or persistence changes.
+
+## 2026-06-24 — Dev 21 Step 3G cross-route visual QA and finishing pass
+
+- Completed a cross-route audit pass across the public, auth, dashboard, saved, and profile surfaces as far as the local browser environment allowed; local screenshot capture was blocked because no browser automation binary was available in the container.
+- Refined the shared header by reducing the monogram, removing the permanent subtitle, using the consistent Workspace label, simplifying active navigation treatment, and removing the decorative signed-in account wrapper.
+- Refined the shared footer into concise planning-guidance and privacy-control copy without a CTA card or expanded navigation inventory.
+- Simplified the dashboard workspace navigation from a rounded shadowed card into a restrained vertical rail on desktop and bottom-rule route bar on smaller viewports.
+- Reviewed the global canvas, shell width, focus treatment, reduced-motion support, and overflow posture; reduced the global decorative wash and widened the shell modestly for dashboard workspace views.
+- Corrected responsive edge cases around compact header wrapping and mobile dashboard route navigation without adding a hamburger, dependencies, routes, or behavior changes.
+- Verified accessibility behavior through code inspection for link semantics, aria-current retention, focus-visible styling, skip-link preservation, native route links, and unchanged form/disclosure semantics.
+- Made route-level fixes only where audit evidence required them; no conditional route files were changed in this pass.
+- Reviewed the launch-quality screenshot inventory requirements; final screenshot attachment still requires a browser-capable preview environment.
+- Preserved product, auth, privacy, data, export, and persistence behavior; no API, database, schema, RLS, dependency, or feature changes were made.

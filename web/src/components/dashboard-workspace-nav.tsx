@@ -23,12 +23,12 @@ export function DashboardWorkspaceNav() {
   return (
     <nav
       aria-label="Dashboard workspace"
-      className="rounded-2xl border border-zinc-200 bg-stone-50/85 p-2 shadow-sm shadow-stone-200/40 lg:sticky lg:top-24 lg:w-48 lg:shrink-0"
+      className="border-b border-zinc-200 pb-1 lg:sticky lg:top-24 lg:w-44 lg:shrink-0 lg:border-b-0 lg:pb-0"
     >
-      <p className="hidden px-3 pt-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 lg:block">
+      <p className="hidden px-3 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 lg:block">
         Workspace
       </p>
-      <ul className="grid grid-cols-3 gap-1 lg:mt-3 lg:grid-cols-1 lg:gap-1.5">
+      <ul className="grid grid-cols-3 gap-0 lg:mt-3 lg:grid-cols-1 lg:gap-1">
         {dashboardRoutes.map((route) => {
           const active = isActiveRoute(pathname, route.href);
 
@@ -37,10 +37,10 @@ export function DashboardWorkspaceNav() {
               <Link
                 href={route.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 lg:justify-start ${
+                className={`flex min-h-11 items-center justify-center border-b-2 px-2 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 lg:justify-start lg:border-b-0 lg:border-l-2 lg:px-3 ${
                   active
-                    ? "border-zinc-900 bg-white text-zinc-950 shadow-sm before:mr-2 before:h-2 before:w-2 before:rounded-full before:bg-sky-800 before:content-['']"
-                    : "border-transparent text-zinc-600 hover:border-zinc-200 hover:bg-white/80 hover:text-zinc-950"
+                    ? "border-sky-800 bg-sky-50/70 text-zinc-950"
+                    : "border-transparent text-zinc-600 hover:border-zinc-300 hover:bg-white/70 hover:text-zinc-950"
                 }`}
               >
                 {route.label}

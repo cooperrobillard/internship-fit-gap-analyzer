@@ -41,9 +41,7 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.16), transparent 32rem),
-    linear-gradient(180deg, var(--color-canvas), #f8f3ea 48rem, var(--color-canvas));
+  background: linear-gradient(180deg, var(--color-canvas), #faf7f0 48rem, var(--color-canvas));
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -72,7 +70,7 @@ body {
 }
 
 .app-shell-container {
-  width: min(100% - 2rem, 72rem);
+  width: min(100% - 1.5rem, 76rem);
   margin-inline: auto;
 }
 
@@ -83,7 +81,7 @@ body {
   z-index: 50;
   transform: translateY(-150%);
   border: 2px solid var(--color-focus);
-  border-radius: 999px;
+  border-radius: 0.75rem;
   background: var(--color-text);
   color: var(--color-surface);
   padding: 0.75rem 1rem;
@@ -103,12 +101,12 @@ body {
 
 @media (min-width: 640px) {
   .app-shell-container {
-    width: min(100% - 3rem, 72rem);
+    width: min(100% - 3rem, 76rem);
   }
 }
 
 @media (min-width: 1024px) {
   .app-shell-container {
-    width: min(100% - 4rem, 72rem);
+    width: min(100% - 4rem, 76rem);
   }
 }
