@@ -141,7 +141,7 @@ export default function PrivacyPage() {
 
           <Section id="resume-profiles" title="Resume profiles">
             <p>
-              Resume profiles are structured skill sets rather than full résumé documents. They may contain profile name, optional description or notes, extracted skill names, user-added skill names, source type, and timestamps.
+              Resume profiles are structured skill sets rather than full résumé documents; they do not provide full résumé parsing, PDF or DOCX parsing, or AI extraction. They may contain profile name, optional description or notes, extracted skill names, user-added skill names, source type, and timestamps.
             </p>
             <p>
               Raw résumé body text is not part of the structured profile. Transient <InlineCode>.txt</InlineCode> uploads are not automatically saved as profiles.
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
               <li>Review individual saved analyses.</li>
               <li>Delete individual saved analyses.</li>
               <li>Create, edit, and delete profiles.</li>
-              <li>Use supported exports for saved-analysis views where export/download controls are available.</li>
+              <li>Use supported exports for individual saved analyses, comparisons, and recurring-gap views where export or download controls are available.</li>
             </BulletList>
           </Section>
 
