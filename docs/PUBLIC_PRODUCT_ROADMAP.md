@@ -264,9 +264,13 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 ## 9. Recommended next implementation step
 
-**Version 23 — Bulk saved-analysis management** is the next implementation track.
+**Version 23 — Bulk saved-analysis management** is the current implementation track.
 
-Planned work should focus on user-owned multi-row saved-analysis workflows such as bulk selection, bulk export where appropriate, and carefully scoped bulk delete or account-wide management controls. Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented.
+- [x] Step 1 — Accessible saved-analysis multi-selection foundation with native row checkboxes, **Select all visible**, indeterminate state, selected/hidden counts, Clear selection, and session/refresh/delete cleanup. See [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md).
+- [ ] Step 2 — Selected CSV export for checked saved analyses.
+- [ ] Later — Carefully scoped selected deletion or account-wide management controls. Account-wide claims remain unimplemented until an explicit future step builds and verifies them.
+
+Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Selected export and selected deletion remain pending after Step 1.
 
 **Still later:** custom domain, observability, mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, and formal security/legal certification.
 
