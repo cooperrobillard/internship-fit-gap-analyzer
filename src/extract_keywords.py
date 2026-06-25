@@ -20,11 +20,13 @@ def phrase_appears_in_text(search_phrase, normalized_text):
     # re.escape() makes sure Python searches for the slash normally.
     escaped_phrase = re.escape(normalized_phrase)
 
-    # Build a search pattern with word boundaries.
+    # Build a search pattern with non-word lookarounds.
     #
-    # This helps avoid matching short skills inside larger words.
-    # Example: "java" should not match inside "javascript."
-    pattern = r"\b" + escaped_phrase + r"\b"
+    # This keeps phrase matches separated from letters, numbers, and underscores
+    # without relying on outer word boundaries. That preserves Java-versus-
+    # JavaScript safety while supporting punctuation-heavy skills such as
+    # "c++", "c#", ".net", and "node.js".
+    pattern = r"(?<!\w)" + escaped_phrase + r"(?!\w)"
 
     # Search the text for this pattern.
     match = re.search(pattern, normalized_text)

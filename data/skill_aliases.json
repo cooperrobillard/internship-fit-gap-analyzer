@@ -1,17 +1,376 @@
 {
-  "rest api": ["rest api", "rest apis", "restful api"],
-  "openai api": ["openai api", "openai"],
-  "rag": ["rag", "retrieval-augmented generation", "retrieval augmented generation"],
-  "langchain": ["langchain", "lang chain"],
-  "llamaindex": ["llamaindex", "llama index"],
-  "machine learning": ["machine learning", "ml"],
-  "vector database": ["vector database", "vector databases"],
-  "embeddings": ["embeddings", "embedding"],
-  "fastapi": ["fastapi", "fast api"],
-  "postgres": ["postgres", "postgresql"],
-  "sql": ["sql", "sql databases", "sql/nosql"],
-  "github": ["github", "git hub"],
-  "vs code": ["vs code", "visual studio code"],
-  "ai governance": ["ai governance", "ai safety", "responsible ai governance"],
-  "human review": ["human review", "human-in-the-loop", "human in the loop"]
+  ".net": [
+    ".net",
+    "dot net",
+    "dotnet"
+  ],
+  "a/b testing": [
+    "a/b testing",
+    "ab testing",
+    "split testing"
+  ],
+  "account reconciliation": [
+    "account reconciliation",
+    "account reconciliations",
+    "reconciliation"
+  ],
+  "adobe illustrator": [
+    "adobe illustrator",
+    "illustrator"
+  ],
+  "adobe photoshop": [
+    "adobe photoshop",
+    "photoshop"
+  ],
+  "ai governance": [
+    "ai governance",
+    "responsible ai governance"
+  ],
+  "american sign language": [
+    "american sign language",
+    "asl"
+  ],
+  "aml": [
+    "aml",
+    "anti money laundering",
+    "anti-money laundering"
+  ],
+  "aws": [
+    "amazon web services",
+    "aws"
+  ],
+  "azure": [
+    "azure",
+    "microsoft azure"
+  ],
+  "c": [
+    "ansi c",
+    "c language",
+    "c programming"
+  ],
+  "c#": [
+    "c sharp",
+    "c#",
+    "c-sharp"
+  ],
+  "c++": [
+    "c plus plus",
+    "c++",
+    "cpp"
+  ],
+  "cad": [
+    "cad",
+    "computer aided design",
+    "computer-aided design"
+  ],
+  "crm": [
+    "crm",
+    "customer relationship management"
+  ],
+  "data warehousing": [
+    "data warehouse",
+    "data warehousing"
+  ],
+  "digital forensics": [
+    "computer forensics",
+    "digital forensics"
+  ],
+  "django": [
+    "django",
+    "django framework"
+  ],
+  "electronic health records": [
+    "ehr",
+    "ehrs",
+    "electronic health records",
+    "emr"
+  ],
+  "embeddings": [
+    "embedding",
+    "embeddings"
+  ],
+  "erp": [
+    "enterprise resource planning",
+    "erp"
+  ],
+  "etl": [
+    "etl",
+    "extract transform load",
+    "extract-transform-load"
+  ],
+  "excel": [
+    "excel spreadsheet",
+    "excel spreadsheets",
+    "microsoft excel",
+    "ms excel"
+  ],
+  "fastapi": [
+    "fast api",
+    "fastapi"
+  ],
+  "figma": [
+    "figma",
+    "figma design"
+  ],
+  "flask": [
+    "flask",
+    "flask framework"
+  ],
+  "gaap": [
+    "gaap",
+    "generally accepted accounting principles"
+  ],
+  "gd&t": [
+    "gd&t",
+    "geometric dimensioning and tolerancing"
+  ],
+  "generative ai": [
+    "gen ai",
+    "genai",
+    "generative ai"
+  ],
+  "github": [
+    "git hub",
+    "github"
+  ],
+  "go": [
+    "go language",
+    "go programming",
+    "golang"
+  ],
+  "google ads": [
+    "google ads",
+    "google adwords"
+  ],
+  "google cloud": [
+    "gcp",
+    "google cloud",
+    "google cloud platform"
+  ],
+  "graphql": [
+    "graph ql",
+    "graphql"
+  ],
+  "hipaa": [
+    "health insurance portability and accountability act",
+    "hipaa"
+  ],
+  "hris": [
+    "hris",
+    "human resources information system"
+  ],
+  "hubspot": [
+    "hub spot",
+    "hubspot"
+  ],
+  "human review": [
+    "human in the loop",
+    "human review",
+    "human-in-the-loop"
+  ],
+  "identity and access management": [
+    "iam",
+    "identity and access management"
+  ],
+  "java": [
+    "java",
+    "java language",
+    "java programming"
+  ],
+  "javascript": [
+    "java script",
+    "javascript",
+    "js"
+  ],
+  "jira": [
+    "atlassian jira",
+    "jira"
+  ],
+  "kubernetes": [
+    "k8s",
+    "kubernetes"
+  ],
+  "kyc": [
+    "know your customer",
+    "kyc"
+  ],
+  "langchain": [
+    "lang chain",
+    "langchain"
+  ],
+  "lean manufacturing": [
+    "lean manufacturing",
+    "lean production"
+  ],
+  "learning management systems": [
+    "learning management systems",
+    "lms"
+  ],
+  "llamaindex": [
+    "llama index",
+    "llamaindex"
+  ],
+  "machine learning": [
+    "machine learning",
+    "ml"
+  ],
+  "mandarin chinese": [
+    "mandarin",
+    "mandarin chinese"
+  ],
+  "microsoft access": [
+    "access database",
+    "microsoft access",
+    "ms access"
+  ],
+  "microsoft outlook": [
+    "microsoft outlook",
+    "ms outlook"
+  ],
+  "microsoft powerpoint": [
+    "microsoft powerpoint",
+    "ms powerpoint",
+    "powerpoint presentations"
+  ],
+  "microsoft word": [
+    "microsoft word",
+    "ms word"
+  ],
+  "natural language processing": [
+    "natural language processing",
+    "nlp"
+  ],
+  "node.js": [
+    "node js",
+    "node.js",
+    "nodejs"
+  ],
+  "openai api": [
+    "openai api",
+    "openai apis"
+  ],
+  "patient care": [
+    "direct patient care",
+    "patient care"
+  ],
+  "pcr": [
+    "pcr",
+    "polymerase chain reaction"
+  ],
+  "plcs": [
+    "plcs",
+    "programmable logic controllers"
+  ],
+  "postgres": [
+    "postgres",
+    "postgresql"
+  ],
+  "power bi": [
+    "microsoft power bi",
+    "power bi",
+    "powerbi"
+  ],
+  "public relations": [
+    "pr",
+    "public relations"
+  ],
+  "quickbooks": [
+    "quick books",
+    "quickbooks"
+  ],
+  "r": [
+    "r language",
+    "r programming",
+    "r statistical programming"
+  ],
+  "rag": [
+    "rag",
+    "retrieval augmented generation",
+    "retrieval-augmented generation"
+  ],
+  "rest api": [
+    "rest api",
+    "rest apis",
+    "restful api"
+  ],
+  "root-cause analysis": [
+    "rca",
+    "root cause analysis",
+    "root-cause analysis"
+  ],
+  "salesforce": [
+    "sales force",
+    "salesforce"
+  ],
+  "sap erp": [
+    "sap enterprise resource planning",
+    "sap erp"
+  ],
+  "scikit-learn": [
+    "scikit learn",
+    "scikit-learn",
+    "sklearn"
+  ],
+  "seo": [
+    "search engine optimization",
+    "seo"
+  ],
+  "siem": [
+    "security information and event management",
+    "siem"
+  ],
+  "six sigma": [
+    "6 sigma",
+    "six sigma"
+  ],
+  "social media marketing": [
+    "social marketing",
+    "social media marketing"
+  ],
+  "solidworks": [
+    "solid works",
+    "solidworks"
+  ],
+  "spark": [
+    "apache spark",
+    "spark"
+  ],
+  "sql": [
+    "sql",
+    "sql databases",
+    "sql/nosql"
+  ],
+  "supabase": [
+    "supa base",
+    "supabase"
+  ],
+  "tensorflow": [
+    "tensor flow",
+    "tensorflow"
+  ],
+  "threat modeling": [
+    "threat modeling",
+    "threat modelling"
+  ],
+  "typescript": [
+    "ts",
+    "type script",
+    "typescript"
+  ],
+  "user experience design": [
+    "user experience design",
+    "ux design"
+  ],
+  "vs code": [
+    "visual studio code",
+    "vs code"
+  ],
+  "workday hcm": [
+    "workday hcm",
+    "workday human capital management"
+  ],
+  "zero trust": [
+    "zero trust",
+    "zero-trust security"
+  ]
 }
