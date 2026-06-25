@@ -267,10 +267,11 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 **Version 23 — Bulk saved-analysis management** is the current implementation track.
 
 - [x] Step 1 — Accessible saved-analysis multi-selection foundation with native row checkboxes, **Select all visible**, indeterminate state, selected/hidden counts, Clear selection, and session/refresh/delete cleanup. See [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md).
-- [ ] Step 2 — Selected CSV export for checked saved analyses.
-- [ ] Later — Carefully scoped selected deletion or account-wide management controls. Account-wide claims remain unimplemented until an explicit future step builds and verifies them.
+- [x] Step 2 — Selected CSV export for checked loaded saved analyses, including checked rows hidden by search/filter, using the existing structured CSV schema. See [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md).
+- [ ] Step 3 — Carefully scoped selected deletion design and implementation.
+- [ ] Later — Account-wide management controls. Account-wide export/delete claims remain unimplemented until an explicit future step builds and verifies them.
 
-Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Selected export and selected deletion remain pending after Step 1.
+Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Step 1 multi-selection and Step 2 selected CSV export are complete; selected deletion remains pending for Step 3.
 
 **Still later:** custom domain, observability, mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, and formal security/legal certification.
 
