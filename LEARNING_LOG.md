@@ -3833,3 +3833,11 @@ This step reinforced the difference between authoring a migration and applying i
 - Added the Version 22 checkpoint documenting Step 1 expansion, Step 2 validation evidence, Step 3 copy/documentation reconciliation, preserved privacy/API/storage boundaries, and known limitations.
 - Updated README, web README, limitations, hosted smoke-test expectations, and roadmap language to identify Version 23 bulk saved-analysis management as the next feature track.
 - Preserved taxonomy JSON, alias JSON, validation corpus, analyzer behavior, API contracts, database/RLS/auth behavior, dependencies, persistence behavior, and the non-AI/no-generated-fit-score product boundary.
+
+## Version 23 Step 1 — Saved-analysis multi-selection foundation
+
+- Added an accessible, transient multi-selection foundation for saved analyses using native row checkboxes plus a native **Select all visible** checkbox with indeterminate behavior.
+- Kept active detail selection separate from checked multi-selection so opening detail and checking rows remain independent interactions.
+- Documented visible-subset semantics, hidden selected-count behavior, session/refresh/delete cleanup, and the no-persistence boundary.
+- Clarified that the existing loaded-analysis CSV export remains independent of selection, search, and filter.
+- Preserved the current loaded-result limit, individual deletion behavior, Insights and Compare behavior, Supabase queries, database/RLS/auth/API boundaries, dependencies, taxonomy, and no-raw-resume/job-text storage posture.
