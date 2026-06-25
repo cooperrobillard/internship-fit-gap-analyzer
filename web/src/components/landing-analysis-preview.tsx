@@ -1,5 +1,5 @@
-const matchedSkills = ["Python", "SQL", "Git", "REST APIs"];
-const missingSkills = ["Docker", "AWS", "CI/CD"];
+const matchedSkills = ["Excel", "Inventory management", "Logistics", "Procurement"];
+const missingSkills = ["Demand planning", "ERP / SAP ERP", "Forecasting", "Supplier management"];
 
 function SkillRows({
   label,
@@ -46,10 +46,10 @@ export function LandingAnalysisPreview() {
 
       <div className="mt-5 border-b border-[var(--color-divider)] pb-5">
         <p className="text-2xl font-semibold tracking-tight text-[var(--color-text)]">
-          Product Engineering Intern
+          Supply Chain Operations Analyst Intern
         </p>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Example Company</p>
-        <p className="mt-3 text-sm text-[var(--color-text-muted)]">4 matched · 3 missing</p>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Northstar Distribution</p>
+        <p className="mt-3 text-sm text-[var(--color-text-muted)]">4 matched · 5 missing</p>
       </div>
 
       <div className="mt-5 grid gap-6 sm:grid-cols-2">

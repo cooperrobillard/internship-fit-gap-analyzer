@@ -6,7 +6,7 @@ import { LandingAnalysisPreview } from "@/components/landing-analysis-preview";
 const benefits = [
   {
     title: "Understand the role",
-    body: "Review the matched and missing skills found by the defined taxonomy.",
+    body: "Review matched and missing skills found by a curated cross-domain taxonomy.",
   },
   {
     title: "Compare opportunities",
@@ -14,7 +14,7 @@ const benefits = [
   },
   {
     title: "Reuse your skills",
-    body: "Build structured profiles you can use across future comparisons.",
+    body: "Build structured profiles you can use across technical, business, operations, and other role comparisons.",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function Home() {
               Compare your résumé with the role in front of you.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--color-text-muted)]">
-              See the skills you already show, the gaps worth investigating, and patterns across the opportunities you choose to save.
+              See explicitly recognized skill phrases, gaps worth investigating, and patterns across the technical, operations, business, and other opportunities you choose to save.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -150,9 +150,9 @@ export default function Home() {
             Clear method. Deliberate saving.
           </h2>
           <div className="mt-6 grid gap-5 text-sm leading-6 text-[var(--color-text-muted)] md:grid-cols-3">
-            <p>The analyzer uses a defined skill taxonomy and aliases—not semantic AI or a generated fit score.</p>
+            <p>The analyzer uses a curated cross-domain taxonomy and reviewed aliases—not semantic AI or a generated fit score.</p>
             <p>Running an analysis does not automatically save it. Optional saved records contain structured skills and metadata rather than the raw résumé or job-description body text.</p>
-            <p>Results are planning guidance, not a hiring decision or guarantee.</p>
+            <p>Detected phrases do not prove proficiency, evidence strength, candidate quality, or hiring fit; results require human interpretation.</p>
           </div>
           <div className="mt-6">
             <TextLink href="/privacy">Privacy and data controls</TextLink>

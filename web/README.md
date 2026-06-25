@@ -2,16 +2,16 @@
 
 This folder contains the Next.js 16 frontend for the hosted **Job Fit & Skill-Gap Analyzer**. The repository remains named `internship-fit-gap-analyzer`. The web app runs on Vercel with Clerk authentication, a Next.js `/api/analyze` proxy, Render FastAPI analysis, and Supabase structured saved data protected by RLS.
 
-The current web app is an active limited-public-beta release candidate. Dev 19 privacy/RLS/abuse evidence exists, and Dev 20 app-shell, landing, dashboard, privacy, auth-route, and launch-documentation polish is complete for review. Final production launch verification has not been declared complete.
+The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, and Version 22 curated cross-domain taxonomy validation are complete in the repository. Final production launch verification has not been declared complete.
 
 ## Current frontend surfaces
 
-- Public landing page with rule-based/not-AI positioning, current feature proof, and privacy/data-control links.
+- Public landing page with rule-based/not-AI positioning, curated cross-domain taxonomy copy, current feature proof, and privacy/data-control links.
 - Clerk sign-in and sign-up routes with product context.
 - Protected `/dashboard` workspace.
 - Dashboard `POST /api/analyze` proxy to Render FastAPI rule-based analysis.
 - Transient pasted text and transient `.txt` input support.
-- **Try sample inputs** and **Run analysis (does not save)** workflow labels.
+- **Try sample inputs** and **Run analysis (does not save)** workflow labels, currently using a fictional Supply Chain Operations Analyst Intern sample for Northstar Distribution.
 - Structured resume profiles with profile metadata and skill lists.
 - Saved-profile analysis handoff that constructs temporary analysis input from selected profile metadata and skills.
 - **Save structured results** for matched/missing skills, categories, counts, timestamps, job metadata, and notes.
@@ -33,7 +33,7 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 
 ## Privacy posture
 
-- Analysis is rule-based, not AI or semantic judgment.
+- Analysis is rule-based with explicit taxonomy phrases and reviewed aliases, not AI or semantic judgment.
 - Pasted or uploaded resume/job text is processed for the request.
 - The application save path does not intentionally persist raw resume body text or raw job-description body text.
 - Saved analyses store structured results and metadata.
@@ -42,6 +42,9 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 - Dev 19 recorded two-user RLS verification and abuse/rate-limit evidence, but this is not a formal security audit, penetration test, or legal privacy-policy review.
 
 Supporting records:
+
+- [`../docs/VERSION_22_CHECKPOINT.md`](../docs/VERSION_22_CHECKPOINT.md)
+- [`../docs/TAXONOMY_MAINTENANCE.md`](../docs/TAXONOMY_MAINTENANCE.md)
 
 - [`../docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](../docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md)
 - [`../docs/DEV19_RLS_AUTH_REVERIFICATION.md`](../docs/DEV19_RLS_AUTH_REVERIFICATION.md)
@@ -118,4 +121,4 @@ Before preview or production review, also run the tracked-file privacy checks do
 - Limited public beta/portfolio software, not mature production SaaS.
 - No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
 - No account-wide export, one-click delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee.
-- Final Dev 20 production verdict remains pending human Vercel preview review, merge, production smoke test, screenshot evidence, and deployed-environment verification.
+- Final production verdict remains pending human Vercel preview review, merge, production smoke test, screenshot evidence, and deployed-environment verification.

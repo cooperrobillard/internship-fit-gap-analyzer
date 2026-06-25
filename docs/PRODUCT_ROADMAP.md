@@ -1,10 +1,14 @@
 # Product Roadmap
 
-This document describes a practical future path for the **Internship Fit & Skill-Gap Analyzer**: from the current CLI and local data-analysis tool toward a possible **private or unlisted web UI**, potentially linked from a personal site such as [cooperrobillard.com/jobfit](https://cooperrobillard.com/jobfit).
+> **Historical roadmap notice (current as of Version 11 only).** This file preserves the early local/CLI/Streamlit roadmap through Version 11. The hosted Next.js/FastAPI/Clerk/Supabase stack now exists, and later project status is tracked elsewhere. For current status, use [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), the root [`README.md`](../README.md), and [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md).
 
-**This is planning documentation only.** The web app, hosting stack, authentication, and AI features described here are **not built yet** and should not be treated as current capabilities.
+This document is a **historical roadmap through Version 11** for the **Internship Fit & Skill-Gap Analyzer**: from the CLI and local data-analysis tool toward a possible **private or unlisted web UI**, potentially linked from a personal site such as [cooperrobillard.com/jobfit](https://cooperrobillard.com/jobfit).
 
-For what the project does today, see the [README](../README.md), [`VERSION_2_CHECKPOINT.md`](VERSION_2_CHECKPOINT.md), and [`LIMITATIONS.md`](LIMITATIONS.md).
+The hosted **Next.js / FastAPI / Clerk / Supabase** stack now exists. Sections below that describe hosting, authentication, or deployment as future work are **retained historical text** from the Version 11 planning era and should not be read as current status.
+
+**AI functionality remains unbuilt** and would require a separate product and privacy design decision before implementation.
+
+For current project status, see [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), the root [`README.md`](../README.md), and [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md).
 
 ---
 

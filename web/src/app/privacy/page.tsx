@@ -102,7 +102,7 @@ export default function PrivacyPage() {
         <article className="min-w-0 space-y-10">
           <Section id="summary" title="Plain-language summary">
             <p>
-              Job Fit &amp; Skill-Gap Analyzer uses rule-based matching with a defined skill taxonomy and aliases rather than semantic AI.
+              Job Fit &amp; Skill-Gap Analyzer uses rule-based matching with a curated cross-domain skill taxonomy and reviewed aliases rather than semantic AI.
             </p>
             <p>
               Analysis compares résumé information or a structured profile with a job description, and input text is used to produce the current response.
@@ -164,6 +164,10 @@ export default function PrivacyPage() {
 
           <Section id="limitations" title="Current limitations">
             <BulletList>
+              <li>The taxonomy is broad but not exhaustive.</li>
+              <li>Differently worded skills may be missed when they do not match explicit recognized phrases or reviewed aliases.</li>
+              <li>Phrase detection does not prove proficiency, evidence strength, or hiring fit.</li>
+              <li>Human interpretation remains necessary.</li>
               <li>No account-wide export.</li>
               <li>No one-click delete-all control.</li>
               <li>No automated retention schedule.</li>

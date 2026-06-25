@@ -2,7 +2,7 @@
 
 Practical audit for evolving the **hosted prototype** into a **finished public web app** that strangers can safely use. Repository and folder name stay **internship-fit-gap-analyzer** for now; the public-facing product name can be **Job Fit & Skill-Gap Analyzer**.
 
-Related: [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md), root [`README.md`](../README.md).
+Related: [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`DEV19_RLS_AUTH_REVERIFICATION.md`](DEV19_RLS_AUTH_REVERIFICATION.md), [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md), [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md), [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md), [`DEPLOYMENT_READINESS.md`](DEPLOYMENT_READINESS.md), [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md), root [`README.md`](../README.md).
 
 ---
 
@@ -30,7 +30,7 @@ Related: [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODU
 | **CLI** (`src/main.py`) | Multi-job analysis, markdown/CSV outputs, optional SQLite, pandas recurring-gap CSVs |
 | **Streamlit** (`streamlit_app.py`) | Sample, paste, and **file upload**; save/search/**compare**/delete; exports and DB backup |
 | **SQLite** | Full saved-analysis history, skill rows, metadata (no raw resume/job body text in DB) |
-| **Analyzer** | Rule-based taxonomy + aliases in `src/` |
+| **Analyzer** | Rule-based curated cross-domain taxonomy + reviewed aliases in `src/` |
 
 ### Hosted web app (limited public-beta / portfolio prototype)
 
@@ -104,20 +104,20 @@ Browser → Vercel (Next.js) → Clerk
 - [x] **Abuse basics**: active Vercel IP-based rate limiting, safe `413`, safe `429`, and shared-secret forwarding verified; see [`DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](DEV19_ABUSE_RATE_LIMIT_REVIEW.md)
 - [x] **Hosted smoke test** passed for the Dev 19 checkpoint using supplied human verification facts
 - [x] **Error handling** remains user-safe (no secrets, tokens, or stack traces in UI)
-- [ ] Final UI, landing-page, dashboard hierarchy, accessibility, and mobile launch pass
+- [x] Final UI, landing-page, dashboard hierarchy, accessibility, and mobile launch pass
 
 ### Should have soon after launch
 
-- [ ] Search / filter saved analyses
-- [ ] Compare two saved analyses
-- [ ] Export (CSV or similar) of user-owned summary data
-- [ ] Resume/job **file upload** on web (with explicit privacy copy)
+- [x] Search / filter saved analyses
+- [x] Compare two saved analyses
+- [x] Export/download of supported user-owned structured saved-analysis and derived report data
+- [x] Transient resume/job `.txt` upload on web with explicit privacy copy
 - [ ] Basic monitoring (Vercel/Render/Supabase dashboards + alerts)
 - [ ] Custom domain decision
 
 ### Can wait until later
 
-- [ ] Persistent **resume profiles** (with per-analysis resume choice)
+- [x] Persistent structured resume profiles with explicit saved-profile analysis handoff
 - [ ] Semantic / AI matching
 - [ ] Application-status / job tracker product features
 - [ ] Full visual redesign (Version 19 track)
@@ -242,13 +242,17 @@ Target feel for the public app (Version 19+ visual system, informed earlier):
 
 Dev 19 supports a limited public-beta/portfolio readiness verdict after one final UI and launch pass. It does **not** certify the entire product as mature production SaaS, formally security audited, penetration tested, or legally/privacy compliant.
 
-### Dev 20 — Final UI and launch pass
+### Dev 20 — Final UI and launch pass ✅
 
-- Landing-page polish
-- Dashboard hierarchy
-- Accessibility pass
-- Mobile launch pass
-- Final pre-launch smoke test
+**Complete** — landing-page polish, dashboard hierarchy, accessibility pass, mobile launch pass, and launch-readiness documentation are recorded. Final deployed production verification remains a human release step.
+
+### Dev 21 — Route redesign and visual QA ✅
+
+**Complete** — route organization, visual QA, and polished hosted product surfaces were reconciled without changing auth, persistence, or analyzer behavior.
+
+### Version 22 — Curated cross-domain taxonomy rollout ✅
+
+**Complete** — see [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md). The analyzer now uses a validated curated cross-domain taxonomy with reviewed aliases while remaining deterministic, non-semantic, and non-AI.
 
 ### Future — Domain and broader public launch
 
@@ -260,39 +264,15 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 ## 9. Recommended next implementation step
 
-**Version 17 Step 10 — Resume-profile pre-migration review** — **Complete**
+**Version 23 — Bulk saved-analysis management** is the next implementation track.
 
-- [`RESUME_PROFILE_PRE_MIGRATION_REVIEW.md`](RESUME_PROFILE_PRE_MIGRATION_REVIEW.md) — design/SQL draft ready to **author** migration; **not ready to apply** until live Supabase `job_analyses` RLS predicate is confirmed
+Planned work should focus on user-owned multi-row saved-analysis workflows such as bulk selection, bulk export where appropriate, and carefully scoped bulk delete or account-wide management controls. Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented.
 
-**Version 17 Step 11 — Structured resume-profile migration file** — **Complete**
+**Still later:** custom domain, observability, mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, and formal security/legal certification.
 
-- [`web/database/migrations/20260617_structured_resume_profiles.sql`](../web/database/migrations/20260617_structured_resume_profiles.sql) — ALTER migration for legacy empty `resume_profiles`
+**Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
-**Dev 18 — Apply migration + verify RLS** — **Complete**
-
-- [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) — hosted structured schema, indexes, RLS, and smoke test verified at that checkpoint; later Dev 18 steps added helpers/UI
-
-**Dev 18 Step 7 — Resume-profile checkpoint** — **Complete**
-
-- [`RESUME_PROFILE_CHECKPOINT.md`](RESUME_PROFILE_CHECKPOINT.md) — structured database/RLS foundation, helpers, management UI, selector guardrail, controlled analysis handoff, privacy model, and limitations documented before Dev 19
-
-**Recommended next:** Dev 20 Step 1 — final UI, landing-page, dashboard-hierarchy, accessibility, and mobile launch pass.
-
-**Dev 18 Step 2 — Typed resume-profile helpers** — **Complete**
-
-- [`web/src/lib/supabase/resume-profiles.ts`](../web/src/lib/supabase/resume-profiles.ts) — list/create/update/delete; structured skills only; no UI yet
-
-**Dev 18 Step 3 — Helper test coverage** — **Complete (manual checklist)**
-
-- [`RESUME_PROFILE_MIGRATION_VERIFICATION.md`](RESUME_PROFILE_MIGRATION_VERIFICATION.md) § Helper test coverage — no web test runner; pure exports + manual checklist
-
-**Dev 18 Step 4 — Resume-profile management UI foundation** — **Complete**
-
-- [`web/src/app/dashboard/resume-profiles-panel.tsx`](../web/src/app/dashboard/resume-profiles-panel.tsx) — list/create/edit/delete structured profiles on dashboard
-
-**Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, account-wide export/delete, automated retention, and mature SaaS/security-certification claims.
-
-See [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md) and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
+See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
 ---
 
