@@ -3812,3 +3812,14 @@ This step reinforced the difference between authoring a migration and applying i
 * Added taxonomy quality tests, cross-domain fixture coverage, false-positive safeguards, punctuation-positive matcher checks, and a finance/accounting FastAPI integration test.
 * Preserved the deterministic keyword/alias analysis model, API response shape, privacy behavior, and no-raw-resume/job-storage boundary; no AI provider, database, schema, RLS, auth, dependency, or persistence changes were introduced.
 * Remaining Version 22 Step 2 work: validate broader role coverage with more real-world job families and review whether additional aliases are safe without increasing false positives.
+
+## Version 22 Step 2 — Cross-domain taxonomy validation
+
+- Created a fictional validation corpus with 21 role cases and 19 negative controls covering all 23 taxonomy categories.
+- Validated realistic resume and job-description prose across software, data, AI/ML, cloud, cybersecurity, manufacturing, research, clinical, finance, sales, marketing, operations, project/program, product, design, HR, legal/compliance, education, administration, multilingual outreach, and responsible AI domains.
+- Baseline validation found broad false positives for requirements, documentation, training, evaluation, privacy, limitations, stakeholder, presentation, leadership, and collaboration, plus an unsafe `js` alias that detected JavaScript inside Node JS.
+- Tuned evidence-backed aliases for guarded professional contexts, added safe aliases for customer service and data visualization, and removed the unsafe `js` alias; no canonical skills were added, deleted, renamed, or moved.
+- Final taxonomy statistics: 23 categories, 250 canonical skills, 98 alias groups, 0 duplicate canonical skills, 0 unknown alias keys, and 0 duplicate alias phrases.
+- Ran taxonomy role validation, taxonomy quality checks, API service tests, CLI tests, Python compilation, web install/lint/typecheck/build, diff checks, status checks, and privacy checks.
+- API contract, frontend, database/schema/RLS/auth, persistence behavior, and privacy/storage model remain unchanged; the analyzer remains deterministic and non-semantic.
+- Remaining limitation: fictional fixtures are validation evidence, not proof of exhaustive occupational coverage.

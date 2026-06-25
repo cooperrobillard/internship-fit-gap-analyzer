@@ -1,0 +1,1566 @@
+{
+  "role_cases": [
+    {
+      "id": "backend_software_engineer",
+      "domain": "Backend software engineering",
+      "resume_text": "Fictional engineer built Python services with Fast API, PostgreSQL, Docker, GitHub, technical documentation, and team collaboration.",
+      "job_text": "Fictional team needs RESTful API work with TypeScript, Node JS, AWS, Kubernetes, Terraform, microservices, JSON, and technical requirements analysis. The work also values python experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "python",
+          "category": "programming"
+        },
+        {
+          "skill": "fastapi",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "postgres",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "docker",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "github",
+          "category": "software_tools"
+        },
+        {
+          "skill": "documentation",
+          "category": "communication"
+        },
+        {
+          "skill": "collaboration",
+          "category": "communication"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "rest api",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "typescript",
+          "category": "programming"
+        },
+        {
+          "skill": "node.js",
+          "category": "programming"
+        },
+        {
+          "skill": "aws",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "kubernetes",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "terraform",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "microservices",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "json",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "requirements",
+          "category": "communication"
+        },
+        {
+          "skill": "python",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "data_analyst",
+      "domain": "Data analytics",
+      "resume_text": "Fictional analyst used SQL databases, Microsoft Excel, data cleaning, Tableau, and statistics to prepare visual analytics for operations leaders.",
+      "job_text": "Fictional role asks for PowerBI dashboards, ETL, data warehouse work, Python, pandas, regression, and presentation decks. The work also values sql experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "sql",
+          "category": "data"
+        },
+        {
+          "skill": "excel",
+          "category": "data"
+        },
+        {
+          "skill": "data cleaning",
+          "category": "data"
+        },
+        {
+          "skill": "tableau",
+          "category": "data"
+        },
+        {
+          "skill": "statistics",
+          "category": "data"
+        },
+        {
+          "skill": "data visualization",
+          "category": "data"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "power bi",
+          "category": "data"
+        },
+        {
+          "skill": "etl",
+          "category": "data"
+        },
+        {
+          "skill": "data warehousing",
+          "category": "data"
+        },
+        {
+          "skill": "python",
+          "category": "programming"
+        },
+        {
+          "skill": "pandas",
+          "category": "data"
+        },
+        {
+          "skill": "regression",
+          "category": "data"
+        },
+        {
+          "skill": "presentation",
+          "category": "communication"
+        },
+        {
+          "skill": "sql",
+          "category": "data"
+        }
+      ]
+    },
+    {
+      "id": "machine_learning_engineer",
+      "domain": "Machine learning engineering",
+      "resume_text": "Fictional builder trained ML models with PyTorch, sklearn, embeddings, and Jupyter notebooks while documenting model limitations.",
+      "job_text": "Fictional job requires Tensor Flow, natural language processing, computer vision, deep learning, generative AI, vector database, and model evaluation. The work also values ML experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "machine learning",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "pytorch",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "scikit-learn",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "embeddings",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "jupyter",
+          "category": "data"
+        },
+        {
+          "skill": "limitations",
+          "category": "responsible_ai"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "tensorflow",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "natural language processing",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "computer vision",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "deep learning",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "generative ai",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "vector database",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "model evaluation",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "evaluation",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "machine learning",
+          "category": "ai_ml"
+        }
+      ]
+    },
+    {
+      "id": "cloud_platform_engineer",
+      "domain": "Cloud platform engineering",
+      "resume_text": "Fictional platform engineer managed Amazon Web Services, GCP, Azure, Terraform, Linux, Bash, and Kubernetes clusters.",
+      "job_text": "Fictional platform role needs Docker, PostgreSQL, Supabase, Graph QL, .NET services, PowerShell automation, and zero-trust security. The work also values aws experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "aws",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "google cloud",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "azure",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "terraform",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "linux",
+          "category": "software_tools"
+        },
+        {
+          "skill": "bash",
+          "category": "programming"
+        },
+        {
+          "skill": "kubernetes",
+          "category": "cloud_backend"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "docker",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "postgres",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "supabase",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": "graphql",
+          "category": "cloud_backend"
+        },
+        {
+          "skill": ".net",
+          "category": "programming"
+        },
+        {
+          "skill": "powershell",
+          "category": "programming"
+        },
+        {
+          "skill": "zero trust",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "aws",
+          "category": "cloud_backend"
+        }
+      ]
+    },
+    {
+      "id": "cybersecurity_analyst",
+      "domain": "Cybersecurity",
+      "resume_text": "Fictional analyst triaged SIEM alerts in Splunk, supported incident response, IAM reviews, and vulnerability assessment reports.",
+      "job_text": "Fictional security role requests network security, penetration testing, threat modelling, digital forensics, zero-trust security, and risk assessment. The work also values siem experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "siem",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "splunk",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "incident response",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "identity and access management",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "vulnerability assessment",
+          "category": "cybersecurity"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "network security",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "penetration testing",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "threat modeling",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "digital forensics",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "zero trust",
+          "category": "cybersecurity"
+        },
+        {
+          "skill": "risk assessment",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "siem",
+          "category": "cybersecurity"
+        }
+      ]
+    },
+    {
+      "id": "manufacturing_quality_engineer",
+      "domain": "Manufacturing quality",
+      "resume_text": "Fictional quality engineer used CAD, SolidWorks, GD&T, quality control, RCA, and Six Sigma on assembly issues.",
+      "job_text": "Fictional plant role needs AutoCAD, computer-aided design, programmable logic controllers, lean production, process improvement, finite element analysis, and systems engineering.",
+      "expected_resume_skills": [
+        {
+          "skill": "cad",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "solidworks",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "gd&t",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "quality control",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "root-cause analysis",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "six sigma",
+          "category": "engineering_manufacturing"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "autocad",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "cad",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "plcs",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "lean manufacturing",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "process improvement",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "finite element analysis",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "systems engineering",
+          "category": "engineering_manufacturing"
+        }
+      ]
+    },
+    {
+      "id": "laboratory_research_assistant",
+      "domain": "Laboratory research",
+      "resume_text": "Fictional assistant followed laboratory safety practices, PCR protocols, microscopy imaging, data collection, and literature review notes.",
+      "job_text": "Fictional lab asks for cell culture, chromatography, experimental design, research methods, survey design, statistics, and technical writing. The work also values laboratory safety experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "laboratory safety",
+          "category": "science_research"
+        },
+        {
+          "skill": "pcr",
+          "category": "science_research"
+        },
+        {
+          "skill": "microscopy",
+          "category": "science_research"
+        },
+        {
+          "skill": "data collection",
+          "category": "science_research"
+        },
+        {
+          "skill": "literature review",
+          "category": "science_research"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "cell culture",
+          "category": "science_research"
+        },
+        {
+          "skill": "chromatography",
+          "category": "science_research"
+        },
+        {
+          "skill": "experimental design",
+          "category": "science_research"
+        },
+        {
+          "skill": "research methods",
+          "category": "science_research"
+        },
+        {
+          "skill": "survey design",
+          "category": "science_research"
+        },
+        {
+          "skill": "statistics",
+          "category": "data"
+        },
+        {
+          "skill": "technical writing",
+          "category": "communication"
+        },
+        {
+          "skill": "laboratory safety",
+          "category": "science_research"
+        }
+      ]
+    },
+    {
+      "id": "clinical_research_coordinator",
+      "domain": "Clinical research",
+      "resume_text": "Fictional coordinator maintained EHR records in Epic, followed HIPAA, supported clinical trials, and prepared clinical documentation.",
+      "job_text": "Fictional clinic role needs medical terminology, patient education, care coordination, vital signs, direct patient care, and privacy controls. The work also values EHR experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "electronic health records",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "epic",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "hipaa",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "clinical trials",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "clinical documentation",
+          "category": "healthcare_life_sciences"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "medical terminology",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "patient education",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "care coordination",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "vital signs",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "patient care",
+          "category": "healthcare_life_sciences"
+        },
+        {
+          "skill": "privacy",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "electronic health records",
+          "category": "healthcare_life_sciences"
+        }
+      ]
+    },
+    {
+      "id": "finance_accounting_associate",
+      "domain": "Finance and accounting",
+      "resume_text": "Fictional associate prepared GAAP financial reporting, account reconciliations, Quick Books entries, and budgeting schedules.",
+      "job_text": "Fictional finance role needs forecasting, financial modeling, auditing, payroll, tax preparation, valuation, and internal controls. The work also values gaap experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "gaap",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "financial reporting",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "account reconciliation",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "quickbooks",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "budgeting",
+          "category": "finance_accounting"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "forecasting",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "financial modeling",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "auditing",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "payroll",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "tax preparation",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "valuation",
+          "category": "finance_accounting"
+        },
+        {
+          "skill": "internal controls",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "gaap",
+          "category": "finance_accounting"
+        }
+      ]
+    },
+    {
+      "id": "sales_customer_success_specialist",
+      "domain": "Sales and customer success",
+      "resume_text": "Fictional specialist used CRM notes, Sales Force, prospecting, customer onboarding, and customer support playbooks.",
+      "job_text": "Fictional role asks for account management, pipeline management, solution selling, sales forecasting, customer retention, negotiation, and public speaking. The work also values crm experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "crm",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "salesforce",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "prospecting",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "customer onboarding",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "customer service",
+          "category": "communication"
+        },
+        {
+          "skill": "onboarding",
+          "category": "human_resources"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "account management",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "pipeline management",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "solution selling",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "sales forecasting",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "customer retention",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "negotiation",
+          "category": "communication"
+        },
+        {
+          "skill": "public speaking",
+          "category": "communication"
+        },
+        {
+          "skill": "crm",
+          "category": "sales_customer_success"
+        },
+        {
+          "skill": "forecasting",
+          "category": "finance_accounting"
+        }
+      ]
+    },
+    {
+      "id": "digital_marketing_coordinator",
+      "domain": "Digital marketing",
+      "resume_text": "Fictional coordinator improved search engine optimization, Hub Spot landing pages, email marketing, and copywriting.",
+      "job_text": "Fictional marketing role needs Google AdWords, social media marketing, content marketing, market research, PR, graphic design, and Adobe Photoshop. The work also values search engine optimization experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "seo",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "hubspot",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "email marketing",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "copywriting",
+          "category": "marketing_content"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "google ads",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "social media marketing",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "content marketing",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "market research",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "public relations",
+          "category": "marketing_content"
+        },
+        {
+          "skill": "graphic design",
+          "category": "design_creative"
+        },
+        {
+          "skill": "adobe photoshop",
+          "category": "design_creative"
+        },
+        {
+          "skill": "seo",
+          "category": "marketing_content"
+        }
+      ]
+    },
+    {
+      "id": "supply_chain_operations_analyst",
+      "domain": "Supply chain operations",
+      "resume_text": "Fictional analyst coordinated procurement, inventory management, logistics, SAP enterprise resource planning, and supplier management.",
+      "job_text": "Fictional operations role needs demand planning, order fulfillment, sourcing, enterprise resource planning, Excel spreadsheets, process improvement, and vendor risk management. The work also values procurement experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "procurement",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "inventory management",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "logistics",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "sap erp",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "supplier management",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "erp",
+          "category": "operations_supply_chain"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "demand planning",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "order fulfillment",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "sourcing",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "erp",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "excel",
+          "category": "data"
+        },
+        {
+          "skill": "process improvement",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "vendor risk management",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "procurement",
+          "category": "operations_supply_chain"
+        },
+        {
+          "skill": "risk management",
+          "category": "project_program_management"
+        }
+      ]
+    },
+    {
+      "id": "project_program_coordinator",
+      "domain": "Project and program coordination",
+      "resume_text": "Fictional coordinator maintained Jira boards, Agile ceremonies, Scrum notes, project scheduling, and stakeholder engagement updates.",
+      "job_text": "Fictional program role needs program management, Kanban, change management, risk management, scope management, Confluence, and executive presentation. The work also values jira experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "jira",
+          "category": "software_tools"
+        },
+        {
+          "skill": "agile",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "scrum",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "project scheduling",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "stakeholder",
+          "category": "communication"
+        },
+        {
+          "skill": "scheduling",
+          "category": "administrative_support"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "program management",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "kanban",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "change management",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "risk management",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "scope management",
+          "category": "project_program_management"
+        },
+        {
+          "skill": "confluence",
+          "category": "software_tools"
+        },
+        {
+          "skill": "presentation",
+          "category": "communication"
+        },
+        {
+          "skill": "jira",
+          "category": "software_tools"
+        }
+      ]
+    },
+    {
+      "id": "product_manager",
+      "domain": "Product management",
+      "resume_text": "Fictional product manager led customer interviews, product discovery, user stories, backlog prioritization, and competitive analysis.",
+      "job_text": "Fictional product role needs product strategy, product roadmap, A/B testing, business requirements, stakeholder communication, data analysis, and team leadership. The work also values customer interviews experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "customer interviews",
+          "category": "product_management"
+        },
+        {
+          "skill": "product discovery",
+          "category": "product_management"
+        },
+        {
+          "skill": "user stories",
+          "category": "product_management"
+        },
+        {
+          "skill": "backlog prioritization",
+          "category": "product_management"
+        },
+        {
+          "skill": "competitive analysis",
+          "category": "product_management"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "product strategy",
+          "category": "product_management"
+        },
+        {
+          "skill": "product roadmap",
+          "category": "product_management"
+        },
+        {
+          "skill": "a/b testing",
+          "category": "product_management"
+        },
+        {
+          "skill": "requirements",
+          "category": "communication"
+        },
+        {
+          "skill": "stakeholder",
+          "category": "communication"
+        },
+        {
+          "skill": "data analysis",
+          "category": "data"
+        },
+        {
+          "skill": "leadership",
+          "category": "communication"
+        },
+        {
+          "skill": "customer interviews",
+          "category": "product_management"
+        }
+      ]
+    },
+    {
+      "id": "ux_ui_designer",
+      "domain": "UX and UI design",
+      "resume_text": "Fictional designer created Figma prototyping, wireframing, UX research, user experience design, and UI design reviews.",
+      "job_text": "Fictional design role asks for Adobe Illustrator, Photoshop, graphic design, motion graphics, video editing, presentation decks, and team collaboration. The work also values Figma experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "figma",
+          "category": "design_creative"
+        },
+        {
+          "skill": "prototyping",
+          "category": "design_creative"
+        },
+        {
+          "skill": "wireframing",
+          "category": "design_creative"
+        },
+        {
+          "skill": "ux research",
+          "category": "design_creative"
+        },
+        {
+          "skill": "user experience design",
+          "category": "design_creative"
+        },
+        {
+          "skill": "ui design",
+          "category": "design_creative"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "adobe illustrator",
+          "category": "design_creative"
+        },
+        {
+          "skill": "adobe photoshop",
+          "category": "design_creative"
+        },
+        {
+          "skill": "graphic design",
+          "category": "design_creative"
+        },
+        {
+          "skill": "motion graphics",
+          "category": "design_creative"
+        },
+        {
+          "skill": "video editing",
+          "category": "design_creative"
+        },
+        {
+          "skill": "presentation",
+          "category": "communication"
+        },
+        {
+          "skill": "collaboration",
+          "category": "communication"
+        },
+        {
+          "skill": "figma",
+          "category": "design_creative"
+        }
+      ]
+    },
+    {
+      "id": "talent_acquisition_coordinator",
+      "domain": "Talent acquisition",
+      "resume_text": "Fictional coordinator supported recruiting, talent acquisition, interviewing, onboarding, and HRIS updates.",
+      "job_text": "Fictional HR role needs Workday human capital management, employee relations, benefits administration, scheduling, Microsoft Outlook, and employee training programs. The work also values recruiting experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "recruiting",
+          "category": "human_resources"
+        },
+        {
+          "skill": "talent acquisition",
+          "category": "human_resources"
+        },
+        {
+          "skill": "interviewing",
+          "category": "human_resources"
+        },
+        {
+          "skill": "onboarding",
+          "category": "human_resources"
+        },
+        {
+          "skill": "hris",
+          "category": "human_resources"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "workday hcm",
+          "category": "human_resources"
+        },
+        {
+          "skill": "employee relations",
+          "category": "human_resources"
+        },
+        {
+          "skill": "benefits administration",
+          "category": "human_resources"
+        },
+        {
+          "skill": "scheduling",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "microsoft outlook",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "training",
+          "category": "communication"
+        },
+        {
+          "skill": "recruiting",
+          "category": "human_resources"
+        }
+      ]
+    },
+    {
+      "id": "compliance_legal_operations_analyst",
+      "domain": "Compliance and legal operations",
+      "resume_text": "Fictional analyst performed contract review, legal research, regulatory compliance, KYC, and anti-money laundering checks.",
+      "job_text": "Fictional compliance role needs GDPR, policy development, internal controls, risk assessment, vendor risk management, privacy review, and process documentation. The work also values contract review experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "contract review",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "legal research",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "regulatory compliance",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "kyc",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "aml",
+          "category": "legal_risk_compliance"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "gdpr",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "policy development",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "internal controls",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "risk assessment",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "vendor risk management",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "privacy",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "documentation",
+          "category": "communication"
+        },
+        {
+          "skill": "contract review",
+          "category": "legal_risk_compliance"
+        },
+        {
+          "skill": "risk management",
+          "category": "project_program_management"
+        }
+      ]
+    },
+    {
+      "id": "instructional_designer",
+      "domain": "Instructional design",
+      "resume_text": "Fictional designer built curriculum development plans, instructional design storyboards, LMS modules, and assessment design rubrics.",
+      "job_text": "Fictional education role needs lesson planning, classroom management, student advising, training facilitation, program evaluation, technical writing, and presentation decks. The work also values curriculum development experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "curriculum development",
+          "category": "education_training"
+        },
+        {
+          "skill": "instructional design",
+          "category": "education_training"
+        },
+        {
+          "skill": "learning management systems",
+          "category": "education_training"
+        },
+        {
+          "skill": "assessment design",
+          "category": "education_training"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "lesson planning",
+          "category": "education_training"
+        },
+        {
+          "skill": "classroom management",
+          "category": "education_training"
+        },
+        {
+          "skill": "student advising",
+          "category": "education_training"
+        },
+        {
+          "skill": "training facilitation",
+          "category": "education_training"
+        },
+        {
+          "skill": "evaluation",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "technical writing",
+          "category": "communication"
+        },
+        {
+          "skill": "presentation",
+          "category": "communication"
+        },
+        {
+          "skill": "curriculum development",
+          "category": "education_training"
+        }
+      ]
+    },
+    {
+      "id": "executive_assistant",
+      "domain": "Executive administrative support",
+      "resume_text": "Fictional assistant handled calendar management, scheduling, records management, data entry, and Microsoft Word minutes.",
+      "job_text": "Fictional administrative role needs PowerPoint presentations, MS Outlook, Microsoft Access, Microsoft Office, process documentation, and conflict resolution. The work also values calendar management experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "calendar management",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "scheduling",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "records management",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "data entry",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "microsoft word",
+          "category": "administrative_support"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "microsoft powerpoint",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "microsoft outlook",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "microsoft access",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "microsoft office",
+          "category": "software_tools"
+        },
+        {
+          "skill": "documentation",
+          "category": "communication"
+        },
+        {
+          "skill": "conflict resolution",
+          "category": "communication"
+        },
+        {
+          "skill": "calendar management",
+          "category": "administrative_support"
+        },
+        {
+          "skill": "presentation",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "multilingual_community_outreach",
+      "domain": "Multilingual community outreach",
+      "resume_text": "Fictional outreach assistant served Spanish, French, and Arabic speaking families while using customer service support and public speaking.",
+      "job_text": "Fictional community role needs Mandarin, American Sign Language, Portuguese, Korean, Japanese, German, Italian, and stakeholder engagement. The work also values spanish experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "spanish",
+          "category": "languages"
+        },
+        {
+          "skill": "french",
+          "category": "languages"
+        },
+        {
+          "skill": "arabic",
+          "category": "languages"
+        },
+        {
+          "skill": "customer service",
+          "category": "communication"
+        },
+        {
+          "skill": "public speaking",
+          "category": "communication"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "mandarin chinese",
+          "category": "languages"
+        },
+        {
+          "skill": "american sign language",
+          "category": "languages"
+        },
+        {
+          "skill": "portuguese",
+          "category": "languages"
+        },
+        {
+          "skill": "korean",
+          "category": "languages"
+        },
+        {
+          "skill": "japanese",
+          "category": "languages"
+        },
+        {
+          "skill": "german",
+          "category": "languages"
+        },
+        {
+          "skill": "italian",
+          "category": "languages"
+        },
+        {
+          "skill": "stakeholder",
+          "category": "communication"
+        },
+        {
+          "skill": "spanish",
+          "category": "languages"
+        }
+      ]
+    },
+    {
+      "id": "responsible_ai_analyst",
+      "domain": "Responsible AI",
+      "resume_text": "Fictional analyst supported responsible AI governance, bias assessment, explainability notes, human-in-the-loop review, and model monitoring.",
+      "job_text": "Fictional role needs data privacy, privacy controls, model limitations, evaluation rubric, prompt engineering, RAG, Lang Chain, Llama Index, and OpenAI APIs. The work also values AI governance experience.",
+      "expected_resume_skills": [
+        {
+          "skill": "ai governance",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "bias assessment",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "explainability",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "human review",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "model monitoring",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "responsible ai",
+          "category": "responsible_ai"
+        }
+      ],
+      "expected_job_skills": [
+        {
+          "skill": "data privacy",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "privacy",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "limitations",
+          "category": "responsible_ai"
+        },
+        {
+          "skill": "evaluation",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "prompt engineering",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "rag",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "langchain",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "llamaindex",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "openai api",
+          "category": "ai_ml"
+        },
+        {
+          "skill": "ai governance",
+          "category": "responsible_ai"
+        }
+      ]
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "go_generic_phrase",
+      "text": "Fictional note says teammates go above and beyond and go to lunch together.",
+      "forbidden_skills": [
+        {
+          "skill": "go",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "r_single_letter",
+      "text": "Fictional report mentions section r in an appendix and regular reviews.",
+      "forbidden_skills": [
+        {
+          "skill": "r",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "c_suite_phrase",
+      "text": "Fictional memo announces a C-suite presentation for company planning.",
+      "forbidden_skills": [
+        {
+          "skill": "c",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "excel_verb",
+      "text": "Fictional manager hopes employees excel in friendly service.",
+      "forbidden_skills": [
+        {
+          "skill": "excel",
+          "category": "data"
+        }
+      ]
+    },
+    {
+      "id": "access_portal",
+      "text": "Fictional employees can access the portal after orientation.",
+      "forbidden_skills": [
+        {
+          "skill": "microsoft access",
+          "category": "administrative_support"
+        }
+      ]
+    },
+    {
+      "id": "lean_on_mentor",
+      "text": "Fictional interns lean on mentors during training week.",
+      "forbidden_skills": [
+        {
+          "skill": "lean manufacturing",
+          "category": "engineering_manufacturing"
+        },
+        {
+          "skill": "training",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "workday_generic",
+      "text": "Fictional schedule says the workday starts at nine.",
+      "forbidden_skills": [
+        {
+          "skill": "workday hcm",
+          "category": "human_resources"
+        }
+      ]
+    },
+    {
+      "id": "sap_tree",
+      "text": "Fictional outdoor lesson notes that trees can release sap in spring.",
+      "forbidden_skills": [
+        {
+          "skill": "sap erp",
+          "category": "operations_supply_chain"
+        }
+      ]
+    },
+    {
+      "id": "java_inside_javascript",
+      "text": "Fictional frontend note names JavaScript and TypeScript only.",
+      "forbidden_skills": [
+        {
+          "skill": "java",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "requirements_application",
+      "text": "Fictional requirements say submit an application and arrive on time.",
+      "forbidden_skills": [
+        {
+          "skill": "requirements",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "documentation_generic",
+      "text": "Fictional handbook says documentation may be requested at the front desk.",
+      "forbidden_skills": [
+        {
+          "skill": "documentation",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "training_provided",
+      "text": "Fictional posting says training will be provided after hire.",
+      "forbidden_skills": [
+        {
+          "skill": "training",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "evaluation_generic",
+      "text": "Fictional note says evaluation happens after the event with no method described.",
+      "forbidden_skills": [
+        {
+          "skill": "evaluation",
+          "category": "ai_ml"
+        }
+      ]
+    },
+    {
+      "id": "privacy_generic",
+      "text": "Fictional webpage says we value privacy in general terms.",
+      "forbidden_skills": [
+        {
+          "skill": "privacy",
+          "category": "responsible_ai"
+        }
+      ]
+    },
+    {
+      "id": "limitations_generic",
+      "text": "Fictional guide mentions limitations of parking near the building.",
+      "forbidden_skills": [
+        {
+          "skill": "limitations",
+          "category": "responsible_ai"
+        }
+      ]
+    },
+    {
+      "id": "stakeholder_generic",
+      "text": "Fictional story says one stakeholder stopped by without describing engagement.",
+      "forbidden_skills": [
+        {
+          "skill": "stakeholder",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "presentation_c_suite",
+      "text": "Fictional announcement mentions a C-suite presentation without workplace presentation skills.",
+      "forbidden_skills": [
+        {
+          "skill": "presentation",
+          "category": "communication"
+        },
+        {
+          "skill": "c",
+          "category": "programming"
+        }
+      ]
+    },
+    {
+      "id": "leadership_generic",
+      "text": "Fictional article says leadership matters but gives no role activity.",
+      "forbidden_skills": [
+        {
+          "skill": "leadership",
+          "category": "communication"
+        }
+      ]
+    },
+    {
+      "id": "collaboration_generic",
+      "text": "Fictional value statement says collaboration is appreciated by all.",
+      "forbidden_skills": [
+        {
+          "skill": "collaboration",
+          "category": "communication"
+        }
+      ]
+    }
+  ]
+}

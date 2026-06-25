@@ -120,9 +120,9 @@ def test_required_categories_and_counts():
     canonical = [skill for skills in taxonomy.values() for skill in skills]
     assert REQUIRED_CATEGORIES.issubset(taxonomy)
     assert all(skills for skills in taxonomy.values())
-    assert len(taxonomy) >= 22
-    assert 200 <= len(canonical) <= 260
-    assert len(aliases) >= 60
+    assert len(taxonomy) == 23
+    assert 250 <= len(canonical) <= 285
+    assert len(aliases) >= 86
 
 
 def test_lowercase_trimmed_snake_case_alphabetized_and_non_empty():
@@ -181,6 +181,13 @@ def test_guarded_aliases_for_ambiguous_skills():
     assert "lean" not in aliases["lean manufacturing"]
     assert "workday" not in aliases["workday hcm"]
     assert "sap" not in aliases["sap erp"]
+    assert "js" not in aliases["javascript"]
+    assert "requirements" not in aliases["requirements"]
+    assert "training" not in aliases["training"]
+    assert "documentation" not in aliases["documentation"]
+    assert "privacy" not in aliases["privacy"]
+    assert "leadership" not in aliases["leadership"]
+    assert "collaboration" not in aliases["collaboration"]
 
 
 def test_cross_domain_positive_fixtures():
