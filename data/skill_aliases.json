@@ -63,9 +63,21 @@
     "computer aided design",
     "computer-aided design"
   ],
+  "collaboration": [
+    "cross-functional collaboration",
+    "team collaboration"
+  ],
   "crm": [
     "crm",
     "customer relationship management"
+  ],
+  "customer service": [
+    "customer service support",
+    "customer support"
+  ],
+  "data visualization": [
+    "data visualizations",
+    "visual analytics"
   ],
   "data warehousing": [
     "data warehouse",
@@ -78,6 +90,10 @@
   "django": [
     "django",
     "django framework"
+  ],
+  "documentation": [
+    "process documentation",
+    "technical documentation"
   ],
   "electronic health records": [
     "ehr",
@@ -97,6 +113,11 @@
     "etl",
     "extract transform load",
     "extract-transform-load"
+  ],
+  "evaluation": [
+    "evaluation rubric",
+    "model evaluation",
+    "program evaluation"
   ],
   "excel": [
     "excel spreadsheet",
@@ -179,8 +200,7 @@
   ],
   "javascript": [
     "java script",
-    "javascript",
-    "js"
+    "javascript"
   ],
   "jira": [
     "atlassian jira",
@@ -198,6 +218,10 @@
     "lang chain",
     "langchain"
   ],
+  "leadership": [
+    "cross-functional leadership",
+    "team leadership"
+  ],
   "lean manufacturing": [
     "lean manufacturing",
     "lean production"
@@ -205,6 +229,10 @@
   "learning management systems": [
     "learning management systems",
     "lms"
+  ],
+  "limitations": [
+    "known limitations",
+    "model limitations"
   ],
   "llamaindex": [
     "llama index",
@@ -270,6 +298,15 @@
     "power bi",
     "powerbi"
   ],
+  "presentation": [
+    "executive presentation",
+    "presentation decks",
+    "presentations"
+  ],
+  "privacy": [
+    "privacy controls",
+    "privacy review"
+  ],
   "public relations": [
     "pr",
     "public relations"
@@ -287,6 +324,12 @@
     "rag",
     "retrieval augmented generation",
     "retrieval-augmented generation"
+  ],
+  "requirements": [
+    "business requirements",
+    "requirements analysis",
+    "requirements gathering",
+    "technical requirements"
   ],
   "rest api": [
     "rest api",
@@ -340,6 +383,10 @@
     "sql databases",
     "sql/nosql"
   ],
+  "stakeholder": [
+    "stakeholder communication",
+    "stakeholder engagement"
+  ],
   "supabase": [
     "supa base",
     "supabase"
@@ -351,6 +398,11 @@
   "threat modeling": [
     "threat modeling",
     "threat modelling"
+  ],
+  "training": [
+    "designed training",
+    "employee training programs",
+    "training delivery"
   ],
   "typescript": [
     "ts",
