@@ -749,8 +749,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             How inputs and saves work
           </summary>
           <div className="mt-2 space-y-1 rounded-md border border-zinc-200 bg-white p-3">
-            <p>The analyzer uses a rule-based skill taxonomy and aliases.</p>
+            <p>Matching uses explicit taxonomy phrases and reviewed aliases.</p>
             <p><code>.txt</code> uploads are read for this browser workflow and are not stored as files or profiles.</p>
+            <p>It does not infer proficiency, evidence strength, or unstated skills.</p>
             <p>Running an analysis does not save anything. Optional saves store structured skills and metadata, not raw resume or job-description body text.</p>
             <Link href="/privacy" className="font-medium text-sky-800 underline underline-offset-4">Full privacy details</Link>
           </div>
@@ -988,7 +989,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
           <details className="mt-5 border-t border-zinc-100 pt-4 text-xs text-zinc-600">
             <summary className="cursor-pointer font-medium text-sky-900">How this result was generated</summary>
-            <p className="mt-2">Results come from a defined taxonomy and aliases using rule-based matching. Categories provide planning context; this is guidance, not a hiring decision.</p>
+            <p className="mt-2">Results come from explicit taxonomy phrases and reviewed aliases using rule-based matching. The analyzer does not infer proficiency, evidence strength, or unstated skills; this is planning guidance, not a hiring decision.</p>
           </details>
 
           <div className="mt-5 border-t border-zinc-100 pt-4">

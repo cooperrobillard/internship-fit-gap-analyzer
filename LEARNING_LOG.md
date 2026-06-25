@@ -3823,3 +3823,13 @@ This step reinforced the difference between authoring a migration and applying i
 - Ran taxonomy role validation, taxonomy quality checks, API service tests, CLI tests, Python compilation, web install/lint/typecheck/build, diff checks, status checks, and privacy checks.
 - API contract, frontend, database/schema/RLS/auth, persistence behavior, and privacy/storage model remain unchanged; the analyzer remains deterministic and non-semantic.
 - Remaining limitation: fictional fixtures are validation evidence, not proof of exhaustive occupational coverage.
+
+## Version 22 Step 3 — Product copy, documentation, and checkpoint reconciliation
+
+- Reconciled hosted product copy with the validated curated cross-domain taxonomy and reviewed aliases.
+- Replaced the hosted sample and landing preview with a fictional Supply Chain Operations Analyst Intern example for Northstar Distribution.
+- Recorded the accepted current-taxonomy behavior that `SAP ERP` detects both `erp` and `sap erp`, producing four matched and five missing canonical skills for the demo.
+- Added a taxonomy-maintenance guide covering canonical skills, aliases, ambiguous-term safeguards, fictional fixtures, negative controls, exact expectations, integrity checks, review boundaries, historical saved-result compatibility, external taxonomy cautions, and AI/semantic extraction boundaries.
+- Added the Version 22 checkpoint documenting Step 1 expansion, Step 2 validation evidence, Step 3 copy/documentation reconciliation, preserved privacy/API/storage boundaries, and known limitations.
+- Updated README, web README, limitations, hosted smoke-test expectations, and roadmap language to identify Version 23 bulk saved-analysis management as the next feature track.
+- Preserved taxonomy JSON, alias JSON, validation corpus, analyzer behavior, API contracts, database/RLS/auth behavior, dependencies, persistence behavior, and the non-AI/no-generated-fit-score product boundary.

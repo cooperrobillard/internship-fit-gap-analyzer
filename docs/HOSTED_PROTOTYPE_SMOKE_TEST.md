@@ -105,21 +105,38 @@ Manual checks are required; Lighthouse accessibility can support but must not re
 
 On `/dashboard`, use safe sample text only.
 
-Resume text:
+Use the built-in fictional sample for:
+
+- Role: **Supply Chain Operations Analyst Intern**
+- Company: **Northstar Distribution**
+- Candidate: **Demo Candidate**
+
+Expected matched canonical skills exactly:
 
 ```text
-Python SQL Git data analysis
+excel
+inventory management
+logistics
+procurement
 ```
 
-Job description text:
+Expected missing canonical skills exactly:
 
 ```text
-We are looking for an intern with Python, SQL, FastAPI, and cloud deployment experience.
+demand planning
+erp
+forecasting
+sap erp
+supplier management
 ```
 
-- [ ] Click **Try sample inputs** and confirm synthetic inputs load.
+- [ ] Click **Try sample inputs** and confirm synthetic inputs load into fields only.
+- [ ] Confirm loading the sample does not automatically run analysis.
+- [ ] Confirm loading the sample does not automatically save a record.
 - [ ] Click **Run analysis (does not save)**.
 - [ ] Matched and missing skills render with counts and lists.
+- [ ] Matched skills are exactly `excel`, `inventory management`, `logistics`, and `procurement`.
+- [ ] Missing skills are exactly `demand planning`, `erp`, `forecasting`, `sap erp`, and `supplier management`.
 - [ ] No skill appears in both matched and missing lists.
 - [ ] No raw stack trace, secret, token, SQL error, or provider body appears in the UI.
 - [ ] If Render was asleep, a calm retry message appears; retry once after the service wakes.
@@ -184,6 +201,9 @@ Check public copy on `/`, `/privacy`, `/sign-in`, `/sign-up`, `/dashboard`, `REA
 
 - [ ] Public name consistency: **Job Fit & Skill-Gap Analyzer**.
 - [ ] Limited-public-beta positioning.
+- [ ] Copy describes a curated cross-domain taxonomy and reviewed aliases.
+- [ ] Copy says the system is broad but not exhaustive and does not infer unstated skills.
+- [ ] Copy says phrase detection does not prove proficiency, evidence strength, or hiring fit.
 - [ ] Rule-based/not-AI accuracy.
 - [ ] No hiring, employment, ranking, or fit guarantees.
 - [ ] No absolute privacy/security claims.

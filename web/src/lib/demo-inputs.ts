@@ -15,47 +15,39 @@ export type DemoAnalysisInputs = {
 };
 
 export const DEMO_ANALYSIS_INPUTS: DemoAnalysisInputs = {
-  resumeText: `Alex Rivera
-Example University · Computer Science · Class of 2027
+  resumeText: `Demo Candidate
+Fictional State University · Business Analytics · Class of 2027
 
 Summary
-Junior student exploring data analytics and product-focused software work. Comfortable with Python, SQL, and collaborative Git workflows.
+Operations-focused student with internship and class project experience supporting distribution teams, inventory reporting, and cross-functional process updates. Comfortable using Microsoft Excel to organize shipment logs, reconcile cycle-count notes, and prepare weekly summaries for supervisors.
 
 Experience
-Campus Analytics Club — Project Lead
-- Built Python scripts to clean CSV exports and answer stakeholder questions with SQL queries.
-- Presented findings with clear documentation for non-technical teammates.
+Campus Supply Desk — Operations Assistant
+- Helped maintain inventory management trackers for lab supplies and event materials using Excel workbooks.
+- Coordinated logistics for incoming deliveries, pickup windows, and storage-room moves during busy campus events.
+- Compared purchase requests with procurement records and flagged missing vendor details for review.
+- Suggested a process improvement checklist that reduced repeated follow-up questions from student organizations.
+- Practiced stakeholder communication by sharing clear status updates with facilities staff, student leaders, and finance reviewers.`,
 
-Coursework & skills
-Programming: Python, JavaScript basics
-Data: SQL, pandas, Excel, regression
-Tools: Git, GitHub, terminal
-Communication: requirements gathering, technical writing, teamwork`,
-
-  jobText: `Product Data Analyst Intern — Demo Robotics (fictional posting)
+  jobText: `Supply Chain Operations Analyst Intern — Northstar Distribution
 
 About the role
-Demo Robotics is hiring a summer intern to support product analytics and internal reporting. This posting is fictional for app demos only.
+Northstar Distribution is a fictional regional distribution company hiring an intern to support operations planning and supplier coordination. This posting is synthetic demo content only.
 
 Responsibilities
-- Write Python and SQL to explore product usage datasets.
-- Build dashboards and summaries with pandas and clear documentation.
-- Collaborate with engineers using Git and REST APIs.
-- Communicate insights to stakeholders.
+- Maintain Microsoft Excel trackers for inventory management, logistics milestones, and procurement follow-up.
+- Assist with demand planning reviews by comparing historical order patterns with current warehouse capacity.
+- Use SAP ERP reports to reconcile purchase orders, inbound shipments, and stocking exceptions.
+- Prepare basic forecasting summaries for weekly operations meetings.
+- Support supplier management by documenting vendor response times, open issues, and escalation notes.
 
 Requirements
-- Python and SQL proficiency.
-- Experience with pandas or similar data tooling.
-- Git and collaborative development.
-- Strong written communication and technical writing.
+- Coursework or project experience with Excel, inventory management, logistics, and procurement.
+- Interest in demand planning, forecasting, SAP ERP, and supplier management.
+- Clear written updates for operations, warehouse, and purchasing stakeholders.`,
 
-Nice to have
-- FastAPI or backend API exposure.
-- Machine learning curiosity.
-- Interest in responsible AI and evaluation practices.`,
-
-  jobTitle: "Product Data Analyst Intern",
-  company: "Demo Robotics",
+  jobTitle: "Supply Chain Operations Analyst Intern",
+  company: "Northstar Distribution",
   sourceUrl: "",
-  notes: "Demo analysis for exploring saved results",
+  notes: "Fictional supply-chain demo for reviewing structured skill gaps",
 };

@@ -11,11 +11,11 @@ This is a **portfolio and learning project** and limited public-beta product—n
 | Surface | Status |
 |---------|--------|
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
-| **Hosted web app** | Dev 20 limited-public-beta release candidate — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS; Dev 19 privacy/RLS/abuse hardening complete; final production verification still pending |
+| **Hosted web app** | Dev 21/Version 22 limited-public-beta foundation — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS, polished routes, and validated curated cross-domain taxonomy; final production verification still pending |
 
 The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/`.txt` inputs, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
 
-Dev 19 privacy/RLS/abuse hardening is complete, and Dev 20 application shell, landing page, dashboard hierarchy, responsive component polish, privacy-page, and auth-route launch pass are complete as a release candidate. Final production launch verification is tracked in [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) and remains pending until human preview, merge, production smoke test, screenshots, and deployed-environment verification are completed. This is still limited public beta/portfolio software, not mature production SaaS. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
+Dev 19 privacy/RLS/abuse hardening, Dev 20 application-shell and launch polish, Dev 21 route redesign/visual QA, and Version 22 curated cross-domain taxonomy validation are complete in the repository. Final production launch verification remains pending until human preview, merge, production smoke test, screenshots, and deployed-environment verification are completed. This is still limited public beta/portfolio software, not mature production SaaS. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
 
 ## Architecture (hosted web app)
 
@@ -70,12 +70,17 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - Account-wide export, one-click delete-all, restore/undo, automated retention, or account deletion data-cleanup integration
 - Raw resume or job-body persistence in the cloud save path (intentionally omitted)
 
+
+## Current taxonomy and validation facts
+
+Technical documentation for Version 22 records a curated cross-domain taxonomy with 23 categories, 250 canonical skills, 98 alias groups, 21 fictional role cases, 19 negative controls, all categories exercised, 49 alias-driven expected detections, and 0 final validation failures. These are regression and integrity facts, not marketing claims of exhaustive occupational coverage. The hosted fictional supply-chain demo intentionally reflects current taxonomy behavior where `SAP ERP` detects both `erp` and `sap erp`. See [`docs/VERSION_22_CHECKPOINT.md`](docs/VERSION_22_CHECKPOINT.md) and [`docs/TAXONOMY_MAINTENANCE.md`](docs/TAXONOMY_MAINTENANCE.md).
+
 ## Current limitations
 
 Be honest about what this is today:
 
 - **Rule-based matching only** — curated keywords and aliases across multiple professional domains, not meaning or evidence strength
-- **No semantic/AI matching** — the taxonomy is intentionally not exhaustive and does not infer unstated skills
+- **No semantic/AI matching** — the curated cross-domain taxonomy is broad but not exhaustive and does not infer unstated skills, proficiency, or evidence strength
 - **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, and rate limiting are in place, but there is no formal security audit or penetration test
 - **Do not paste unusually sensitive resume or job text** into the hosted dashboard—use generic sample text for demos when possible
 - **No raw resume or job-body persistence** in the application save path
@@ -101,6 +106,8 @@ python3 -m pip install -r requirements.txt
 ```bash
 python3 run_tests.py
 python3 tests/test_api_service.py
+python3 tests/test_taxonomy_quality.py
+python3 tests/test_taxonomy_role_validation.py
 ```
 
 Expected: `All tests passed.` from `run_tests.py`.
@@ -156,6 +163,8 @@ Starts FastAPI at http://127.0.0.1:8000 and Next.js at http://localhost:3000. Re
 |-------|----------------|
 | Full Python suite | `python3 run_tests.py` |
 | FastAPI service | `python3 tests/test_api_service.py` |
+| Taxonomy quality | `python3 tests/test_taxonomy_quality.py` |
+| Taxonomy role validation | `python3 tests/test_taxonomy_role_validation.py` |
 | Web lint + build | `cd web && npm run lint && npm run build` |
 | **Hosted web app smoke test** | [`docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](docs/HOSTED_PROTOTYPE_SMOKE_TEST.md) |
 | Testing guide | [`docs/TESTING.md`](docs/TESTING.md) |
@@ -240,6 +249,8 @@ Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_repor
 | [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Historical pre-hosting checklist; see Dev 19 checkpoint for current readiness |
 | [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) | Dev 19 privacy/data-control/readiness checkpoint |
 | [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) | Dev 20 release-candidate readiness record; final production verdict pending |
+| [`docs/TAXONOMY_MAINTENANCE.md`](docs/TAXONOMY_MAINTENANCE.md) | Maintenance rules for canonical skills, aliases, fixtures, integrity checks, and review boundaries |
+| [`docs/VERSION_22_CHECKPOINT.md`](docs/VERSION_22_CHECKPOINT.md) | Version 22 cross-domain taxonomy expansion, validation evidence, copy reconciliation, and preserved limitations |
 | [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
 | [`docs/PUBLIC_PRODUCT_ROADMAP.md`](docs/PUBLIC_PRODUCT_ROADMAP.md) | Public app vision, parity audit, Version 17+ plan |
 | [`docs/VERSION_16_CHECKPOINT.md`](docs/VERSION_16_CHECKPOINT.md) | Version 16 comparison, export, privacy, readiness review (complete) |

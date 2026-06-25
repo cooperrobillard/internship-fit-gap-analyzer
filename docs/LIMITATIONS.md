@@ -32,7 +32,7 @@ The current version can:
 - optionally create pandas-generated summary CSV files (`--pandas-summary`),
 - run basic tests.
 
-This is useful for spotting repeated skill gaps across internship postings.
+This is useful for spotting repeated skill gaps across internship postings and other early-career or professional role descriptions covered by the current taxonomy.
 
 ## What the tool does not do yet
 
@@ -52,21 +52,23 @@ The current version does not:
 Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding of job descriptions or resume evidence.
 
 
-## Current hosted prototype limitations (Dev 19 checkpoint)
+## Current hosted limitations (Version 22 state)
 
 The hosted app now exists and includes a public landing page, Clerk sign-in, dashboard analysis, structured saved analyses, structured resume-profile management, saved-profile analysis handoff, comparison/export/delete surfaces, safe errors/retries, Supabase RLS, and basic Vercel rate limiting for `POST /api/analyze`.
 
 Important current limits:
 
-- **Not mature production SaaS.** Dev 19 completed bounded RLS, abuse-control, privacy-copy, and readiness checks, but there is no formal penetration test, comprehensive security audit, or legal/privacy compliance sign-off.
-- **Rule-based only.** Matching uses taxonomy keywords and aliases, not semantic understanding, AI extraction, or hiring judgment.
+- **Not mature production SaaS.** Dev 19 completed bounded RLS, abuse-control, privacy-copy, and readiness checks, and later work improved UI/routes and taxonomy validation, but there is no formal penetration test, comprehensive security audit, or legal/privacy compliance sign-off.
+- **Curated cross-domain but not exhaustive.** Version 22 validation exercises 23 categories with fictional role cases and negative controls, which is strong regression evidence but not proof of universal occupational coverage.
+- **Rule-based only.** Matching uses explicit taxonomy phrases and reviewed aliases, not semantic understanding, AI extraction, generated fit scores, or hiring judgment.
+- **Phrase detection is not proficiency evidence.** A detected phrase does not prove skill level, project depth, evidence strength, candidate quality, or hiring fit. Results require human interpretation.
 - **No PDF/DOCX parsing.** Hosted upload support is limited to transient `.txt` handling where available.
 - **No raw resume/job-body persistence by the application save path.** Pasted/uploaded text is sent through Vercel to Render for the request, but saved cloud records are structured results and metadata. Platform/service logging cannot be guaranteed absent.
 - **Structured resume profiles are not full resumes.** Profiles store names, optional notes/description, skill lists, source type, and timestamps; they do not store raw resume body text. Selecting a profile constructs temporary structured analysis input from those fields.
 - **Data controls are incomplete.** Users can analyze without saving, delete individual saved analyses, create/edit/delete structured profiles, export supported saved-analysis/derived reports, and clear browser inputs. There is no one-click account-wide export, delete-all, automated retention, restore/undo, profile export, or automatic Supabase cleanup claim when a Clerk account is deleted.
 - **Abuse controls are basic.** Vercel rate limiting is IP-based for the analysis route; it is not account quotas, bot prevention, or comprehensive DDoS protection.
 
-See [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) for the current readiness checkpoint.
+See [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) for the Dev 19 readiness checkpoint and [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md) for the current taxonomy checkpoint.
 
 ## Saved-analysis comparison limitations (Version 6)
 
@@ -115,7 +117,7 @@ See [`VERSION_10_CHECKPOINT.md`](VERSION_10_CHECKPOINT.md).
 
 ## Keyword matching limitations
 
-Because the analyzer uses keyword matching, it can miss skills when the wording is different.
+Because the analyzer uses explicit phrase matching, it can miss skills when the wording is different.
 
 For example, if the taxonomy contains:
 
@@ -131,7 +133,7 @@ API development
 
 the tool may not count that as the same skill unless an alias is added.
 
-The alias file helps, but it is still manual and incomplete.
+The reviewed alias file helps, but it is still manual, broad rather than exhaustive, and intentionally guarded against unsafe matches.
 
 ### False positives
 

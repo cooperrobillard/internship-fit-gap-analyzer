@@ -1,5 +1,7 @@
 # Product Roadmap
 
+> **Historical roadmap notice (current as of Version 11 only).** This file preserves the early local/CLI/Streamlit roadmap through Version 11. The hosted Next.js/FastAPI/Clerk/Supabase stack now exists, and later project status is tracked elsewhere. For current status, use [`PUBLIC_PRODUCT_ROADMAP.md`](PUBLIC_PRODUCT_ROADMAP.md), the root [`README.md`](../README.md), and [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md).
+
 This document describes a practical future path for the **Internship Fit & Skill-Gap Analyzer**: from the current CLI and local data-analysis tool toward a possible **private or unlisted web UI**, potentially linked from a personal site such as [cooperrobillard.com/jobfit](https://cooperrobillard.com/jobfit).
 
 **This is planning documentation only.** The web app, hosting stack, authentication, and AI features described here are **not built yet** and should not be treated as current capabilities.
