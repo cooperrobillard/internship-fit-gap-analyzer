@@ -31,7 +31,7 @@ export {
 const SAVED_ANALYSIS_LIST_FIELDS =
   "id, job_title, company, source_url, notes, matched_skills_count, missing_skills_count, created_at, matched_skills(skill, category), skill_gaps(skill, category)";
 
-const SAVED_ANALYSIS_DETAIL_FIELDS = `${SAVED_ANALYSIS_LIST_FIELDS}, matched_skills(skill, category), skill_gaps(skill, category)`;
+const SAVED_ANALYSIS_DETAIL_FIELDS = SAVED_ANALYSIS_LIST_FIELDS;
 
 const DEFAULT_LIST_LIMIT = 10;
 

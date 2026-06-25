@@ -3793,3 +3793,12 @@ This step reinforced the difference between authoring a migration and applying i
 - Made route-level fixes only where audit evidence required them; no conditional route files were changed in this pass.
 - Reviewed the launch-quality screenshot inventory requirements; final screenshot attachment still requires a browser-capable preview environment.
 - Preserved product, auth, privacy, data, export, and persistence behavior; no API, database, schema, RLS, dependency, or feature changes were made.
+
+## 2026-06-25 — Dev 21 Follow-up A saved-analysis detail loading repair
+
+- Investigated the production symptom where the saved-analysis list loaded for signed-in users, but selecting any saved analysis showed the friendly detail-load error and made detail exports and delete unreachable.
+- Found the detail Supabase select string appended `matched_skills(skill, category)` and `skill_gaps(skill, category)` even though the shared saved-analysis list selection already included those embedded relationship selectors.
+- Corrected the detail query to reuse the existing saved-analysis field selection once, preserving matched-skill and missing-skill rows for both list search and detail mapping.
+- Preserved the existing Clerk-aware Supabase client, RLS-scoped access path, safe error handling, privacy model, saved-analysis metadata, export/delete contracts, and no-raw-resume/job-text persistence boundary.
+- Performed the required backend, frontend, diff, status, and privacy checks for this bounded fix.
+- Vercel preview and production verification are still required to confirm saved-analysis detail loading, detail export access, and delete access against hosted Supabase/RLS behavior.
