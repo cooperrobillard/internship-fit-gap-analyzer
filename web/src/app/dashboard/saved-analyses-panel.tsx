@@ -31,6 +31,7 @@ function AnalysisRow({ analysis, isSelected, isChecked, onSelect, onCheckedChang
   const companyLabel = getSavedAnalysisCompanyLabel(analysis);
   const savedDate = formatSavedAnalysisDate(analysis.created_at);
   const checkboxLabel = `Select saved analysis ${title}, ${companyLabel}, saved ${savedDate}`;
+  const openLabel = `Open saved analysis ${title}, ${companyLabel}, saved ${savedDate}`;
 
   return (
     <li className={`border-b border-zinc-200 last:border-b-0 ${isSelected ? "bg-sky-50" : "bg-white"}`}>
@@ -46,7 +47,7 @@ function AnalysisRow({ analysis, isSelected, isChecked, onSelect, onCheckedChang
             />
           </label>
         </div>
-        <button type="button" onClick={() => onSelect(analysis.id)} aria-pressed={isSelected} className={`relative min-h-11 min-w-0 flex-1 px-3 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${isSelected ? "bg-sky-50" : "bg-white hover:bg-zinc-50"}`}>
+        <button type="button" onClick={() => onSelect(analysis.id)} aria-label={openLabel} aria-pressed={isSelected} className={`relative min-h-11 min-w-0 flex-1 px-3 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${isSelected ? "bg-sky-50" : "bg-white hover:bg-zinc-50"}`}>
           {isSelected ? <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-sky-700" aria-hidden="true" /> : null}
           <div className="flex flex-wrap items-baseline justify-between gap-2 pl-2"><p className="break-words font-medium text-zinc-950">{title}</p><p className="shrink-0 text-xs text-zinc-500">{savedDate}</p></div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 pl-2 text-xs text-zinc-600"><span className={analysis.company?.trim() ? "break-words" : "break-words italic text-zinc-500"}>{companyLabel}</span><span>Matched {analysis.matched_skills_count}</span><span>Missing {analysis.missing_skills_count}</span></div>
@@ -62,7 +63,7 @@ type SavedAnalysesListProps = SavedAnalysesPanelProps & { onAnalysisDeleted?: ()
 function SavedAnalysesList({ refreshKey = 0, onAnalysisDeleted }: SavedAnalysesListProps) {
   const configured = isSupabaseConfigured(); const { isLoaded, session } = useSession(); const sessionId = session?.id ?? null;
   const [activeView, setActiveView] = useState<WorkspaceView>("analyses");
-  const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null); const [isLoading, setIsLoading] = useState(false); const [retryNonce, setRetryNonce] = useState(0); const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null); const [checkedAnalysisIds, setCheckedAnalysisIds] = useState<Set<string>>(() => new Set()); const [checkedAnalysisSessionId, setCheckedAnalysisSessionId] = useState<string | null>(null); const [searchQuery, setSearchQuery] = useState(""); const [listFilter, setListFilter] = useState<SavedAnalysisListFilter>("all"); const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(null); const [compareFirstId, setCompareFirstId] = useState<string | null>(null); const [compareSecondId, setCompareSecondId] = useState<string | null>(null); const completedFetchKeyRef = useRef<string | null>(null); const selectAllVisibleRef = useRef<HTMLInputElement | null>(null);
+  const [loadResult, setLoadResult] = useState<SavedAnalysesResult | null>(null); const [isLoading, setIsLoading] = useState(false); const [retryNonce, setRetryNonce] = useState(0); const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null); const [checkedAnalysisIds, setCheckedAnalysisIds] = useState<Set<string>>(() => new Set()); const [checkedAnalysisSessionId, setCheckedAnalysisSessionId] = useState<string | null>(null); const [searchQuery, setSearchQuery] = useState(""); const [listFilter, setListFilter] = useState<SavedAnalysisListFilter>("all"); const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(null); const [compareFirstId, setCompareFirstId] = useState<string | null>(null); const [compareSecondId, setCompareSecondId] = useState<string | null>(null); const completedFetchKeyRef = useRef<string | null>(null); const selectAllVisibleRef = useRef<HTMLInputElement | null>(null); const boundSelectionSessionIdRef = useRef<string | null | undefined>(undefined);
   const allAnalyses = useMemo(() => loadResult?.status === "success" ? loadResult.analyses : [], [loadResult]);
   const effectiveCheckedAnalysisIds = useMemo(() => checkedAnalysisSessionId === sessionId ? checkedAnalysisIds : new Set<string>(), [checkedAnalysisIds, checkedAnalysisSessionId, sessionId]);
   const visibleCompareFirstId = compareFirstId && allAnalyses.some((analysis) => analysis.id === compareFirstId) ? compareFirstId : null; const visibleCompareSecondId = compareSecondId && allAnalyses.some((analysis) => analysis.id === compareSecondId) ? compareSecondId : null;
@@ -116,6 +117,13 @@ function SavedAnalysesList({ refreshKey = 0, onAnalysisDeleted }: SavedAnalysesL
   function handleCompareSecondChange(analysisId: string | null) { setCompareSecondId(analysisId); if (analysisId && analysisId === compareFirstId) setCompareFirstId(null); }
 
   useEffect(() => { if (selectAllVisibleRef.current) selectAllVisibleRef.current.indeterminate = someVisibleChecked; }, [someVisibleChecked]);
+
+  useEffect(() => {
+    if (boundSelectionSessionIdRef.current === sessionId) return;
+    boundSelectionSessionIdRef.current = sessionId;
+    setCheckedAnalysisIds(new Set());
+    setCheckedAnalysisSessionId(sessionId);
+  }, [sessionId]);
 
   useEffect(() => { if (!configured || !isLoaded || !sessionId || !session) return; const activeSession = session; const fetchKey = `${sessionId}:${refreshKey}:${retryNonce}`; if (completedFetchKeyRef.current === fetchKey) return; let cancelled = false; async function runLoad() { setIsLoading(true); setLoadResult(null); const result = await fetchRecentSavedAnalyses(() => activeSession.getToken()); if (cancelled) return; completedFetchKeyRef.current = fetchKey; setLoadResult(result); if (result.status === "success") { setSelectedAnalysisId((currentId) => currentId && result.analyses.some((analysis) => analysis.id === currentId) ? currentId : null); setCompareFirstId((currentId) => currentId && result.analyses.some((analysis) => analysis.id === currentId) ? currentId : null); setCompareSecondId((currentId) => currentId && result.analyses.some((analysis) => analysis.id === currentId) ? currentId : null); setCheckedAnalysisIds((currentIds) => { const loadedIds = new Set(result.analyses.map((analysis) => analysis.id)); const nextIds = new Set([...currentIds].filter((id) => loadedIds.has(id))); if (nextIds.size === currentIds.size) return currentIds; return nextIds; }); } setIsLoading(false); } void runLoad(); return () => { cancelled = true; }; }, [configured, isLoaded, sessionId, session, refreshKey, retryNonce]);
   function handleRetry() { completedFetchKeyRef.current = null; setRetryNonce((nonce) => nonce + 1); }
