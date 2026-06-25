@@ -322,6 +322,18 @@ export function downloadAllSavedAnalysesCsv(analyses: SavedAnalysisExportRecord[
   );
 }
 
+export function downloadSelectedSavedAnalysesCsv(analyses: SavedAnalysisExportRecord[]): void {
+  if (analyses.length === 0) {
+    return;
+  }
+
+  downloadTextFile(
+    `selected-saved-analyses-${analyses.length}-${formatIsoDate(new Date().toISOString())}.csv`,
+    buildAllSavedAnalysesCsv(analyses),
+    "text/csv;charset=utf-8",
+  );
+}
+
 export function downloadRecurringGapsCsv(stats: RecurringGapStat[]): void {
   downloadTextFile(
     `recurring-missing-skills-${formatIsoDate(new Date().toISOString())}.csv`,

@@ -3841,3 +3841,10 @@ This step reinforced the difference between authoring a migration and applying i
 - Documented visible-subset semantics, hidden selected-count behavior, session/refresh/delete cleanup, and the no-persistence boundary.
 - Clarified that the existing loaded-analysis CSV export remains independent of selection, search, and filter.
 - Preserved the current loaded-result limit, individual deletion behavior, Insights and Compare behavior, Supabase queries, database/RLS/auth/API boundaries, dependencies, taxonomy, and no-raw-resume/job-text storage posture.
+
+## Version 23 Step 2 — Selected saved-analysis CSV export
+
+- Added a selected CSV export action that reuses the Version 23 Step 1 checked-analysis state while keeping detail selection independent.
+- Derived selected export rows from `allAnalyses` plus `effectiveCheckedAnalysisIds`, so checked analyses hidden by search or filter remain included and unselected analyses remain excluded.
+- Reused the existing structured saved-analysis CSV builder, escaping behavior, and loaded-result boundary without raw resume/job text, Supabase requests, query changes, persistence, dependencies, or account-wide export claims.
+- Preserved the existing loaded-analysis export as a separate all-loaded action and left selected deletion deferred for a carefully scoped future step.
