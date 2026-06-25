@@ -310,6 +310,52 @@ def test_analyze_returns_matched_and_missing_skills():
     assert payload["metadata"]["company"] == "Example Co"
 
 
+
+def test_analyze_cross_domain_finance_accounting_taxonomy():
+    response = client.post(
+        "/analyze",
+        json={
+            "resumeText": (
+                "Financial analyst experienced with GAAP, budgeting, "
+                "QuickBooks, Microsoft Excel, and account reconciliation."
+            ),
+            "jobText": (
+                "Finance associate role requiring GAAP, budgeting, financial "
+                "modeling, forecasting, QuickBooks, and account reconciliation."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert set(payload) == {
+        "matchedSkills",
+        "missingSkills",
+        "matchedSkillsCount",
+        "missingSkillsCount",
+        "summary",
+        "metadata",
+    }
+
+    matched_names = {item["skill"] for item in payload["matchedSkills"]}
+    missing_names = {item["skill"] for item in payload["missingSkills"]}
+
+    assert {
+        "gaap",
+        "budgeting",
+        "quickbooks",
+        "account reconciliation",
+    }.issubset(matched_names)
+    assert {"financial modeling", "forecasting"}.issubset(missing_names)
+    assert "excel" not in missing_names
+    assert payload["matchedSkillsCount"] == len(payload["matchedSkills"])
+    assert payload["missingSkillsCount"] == len(payload["missingSkills"])
+    assert matched_names.isdisjoint(missing_names)
+    for item in payload["matchedSkills"] + payload["missingSkills"]:
+        assert set(item) == {"skill", "category"}
+
+
 def test_analyze_response_excludes_raw_resume_and_job_text():
     secret_resume = "SECRET_RESUME_PHRASE_FOR_API_TEST"
     secret_job = "SECRET_JOB_PHRASE_FOR_API_TEST with Python SQL"
@@ -566,6 +612,7 @@ if __name__ == "__main__":
     test_analyze_unexpected_exception_returns_generic_500_and_safe_logs()
     test_analyze_matched_and_missing_skills_are_disjoint()
     test_analyze_returns_matched_and_missing_skills()
+    test_analyze_cross_domain_finance_accounting_taxonomy()
     test_analyze_response_excludes_raw_resume_and_job_text()
     test_parse_allowed_origins_defaults_when_unset()
     test_parse_allowed_origins_trims_comma_separated_values()

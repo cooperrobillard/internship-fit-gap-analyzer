@@ -8,7 +8,7 @@ Engineering student interested in software, data analysis, applied AI, and human
 
 # Education
 
-Example University  
+Example University
 B.S. Engineering | Expected 2027
 
 # Projects
@@ -29,7 +29,7 @@ Engineering Design Project
 
 # Skills
 
-Programming: Python, MATLAB, JavaScript  
-Data: regression, Excel  
-Tools: Git, GitHub, terminal  
+Programming: Python, MATLAB, JavaScript
+Data: regression, Microsoft Excel
+Tools: Git, GitHub, terminal
 Communication: documentation, requirements, technical writing

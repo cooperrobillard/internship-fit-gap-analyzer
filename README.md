@@ -2,7 +2,7 @@
 
 Repository name: `internship-fit-gap-analyzer`.
 
-A **rule-based** job-fit and skill-gap analyzer. It compares resume text and job descriptions against a JSON **skill taxonomy** and **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
+A **rule-based** job-fit and skill-gap analyzer. It compares resume text and job descriptions against a curated cross-domain JSON **skill taxonomy** and reviewed **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
 
 This is a **portfolio and learning project** and limited public-beta product—not mature production SaaS, not semantic/AI matching, and not a guarantee of job fit.
 
@@ -74,8 +74,8 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 
 Be honest about what this is today:
 
-- **Rule-based matching only** — keywords and aliases, not meaning or evidence strength
-- **No semantic/AI matching**
+- **Rule-based matching only** — curated keywords and aliases across multiple professional domains, not meaning or evidence strength
+- **No semantic/AI matching** — the taxonomy is intentionally not exhaustive and does not infer unstated skills
 - **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, and rate limiting are in place, but there is no formal security audit or penetration test
 - **Do not paste unusually sensitive resume or job text** into the hosted dashboard—use generic sample text for demos when possible
 - **No raw resume or job-body persistence** in the application save path

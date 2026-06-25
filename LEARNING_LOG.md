@@ -3802,3 +3802,13 @@ This step reinforced the difference between authoring a migration and applying i
 - Preserved the existing Clerk-aware Supabase client, RLS-scoped access path, safe error handling, privacy model, saved-analysis metadata, export/delete contracts, and no-raw-resume/job-text persistence boundary.
 - Performed the required backend, frontend, diff, status, and privacy checks for this bounded fix.
 - Vercel preview and production verification are still required to confirm saved-analysis detail loading, detail export access, and delete access against hosted Supabase/RLS behavior.
+
+## 2026-06-25 — Version 22 Step 1: Cross-domain skill taxonomy expansion
+
+* Expanded the prior technically concentrated taxonomy into a broader curated cross-domain professional skill system spanning programming, data, AI/ML, cloud/backend, cybersecurity, engineering/manufacturing, science/research, healthcare/life sciences, finance/accounting, sales/customer success, marketing/content, operations/supply chain, project/program management, product management, design/creative, human resources, legal/risk/compliance, education/training, administrative support, languages, responsible AI, software tools, and communication.
+* Preserved the existing canonical skills and category names while adding reviewed aliases for common abbreviations, punctuation variants, product names, and professional phrasing.
+* Kept ambiguous skills guarded: generic prose such as “go,” “r,” “c,” “excel,” “access,” “lean,” “workday,” and “sap” is not treated as a skill unless safer contextual phrases appear.
+* Updated phrase matching to use non-word lookarounds so Java remains separate from JavaScript while punctuation-heavy skills such as C++, C#, .NET, and Node.js can be detected.
+* Added taxonomy quality tests, cross-domain fixture coverage, false-positive safeguards, punctuation-positive matcher checks, and a finance/accounting FastAPI integration test.
+* Preserved the deterministic keyword/alias analysis model, API response shape, privacy behavior, and no-raw-resume/job-storage boundary; no AI provider, database, schema, RLS, auth, dependency, or persistence changes were introduced.
+* Remaining Version 22 Step 2 work: validate broader role coverage with more real-world job families and review whether additional aliases are safe without increasing false positives.
