@@ -40,6 +40,8 @@ REPRESENTATIVE_SKILLS = {
     "data": {"sql", "excel", "tableau", "power bi", "statistics", "data visualization", "etl", "data warehousing", "spark", "sas", "spss"},
     "ai_ml": {"machine learning", "deep learning", "natural language processing", "computer vision", "tensorflow", "scikit-learn", "model evaluation", "generative ai"},
     "cloud_backend": {"aws", "azure", "google cloud", "docker", "kubernetes", "terraform", "fastapi", "django", "flask", "graphql", "microservices"},
+    "software_tools": {"git", "github", "jira", "linux", "microsoft office", "terminal", "vs code"},
+    "responsible_ai": {"ai governance", "bias assessment", "data privacy", "explainability", "human review", "model monitoring", "responsible ai"},
     "cybersecurity": {"incident response", "siem", "splunk", "vulnerability assessment", "identity and access management", "zero trust", "threat modeling", "digital forensics"},
     "engineering_manufacturing": {"cad", "autocad", "solidworks", "gd&t", "systems engineering", "plcs", "six sigma", "quality control", "root-cause analysis"},
     "science_research": {"experimental design", "literature review", "laboratory safety", "pcr", "cell culture", "microscopy", "chromatography"},
@@ -117,6 +119,7 @@ def test_required_categories_and_counts():
     taxonomy, aliases = load_taxonomy_and_aliases()
     canonical = [skill for skills in taxonomy.values() for skill in skills]
     assert REQUIRED_CATEGORIES.issubset(taxonomy)
+    assert all(skills for skills in taxonomy.values())
     assert len(taxonomy) >= 22
     assert 200 <= len(canonical) <= 260
     assert len(aliases) >= 60
@@ -132,6 +135,7 @@ def test_lowercase_trimmed_snake_case_alphabetized_and_non_empty():
         for skill in skills:
             assert skill
             assert skill == skill.strip().lower()
+    assert list(aliases) == sorted(aliases)
     for canonical, phrases in aliases.items():
         assert canonical
         assert canonical == canonical.strip().lower()
