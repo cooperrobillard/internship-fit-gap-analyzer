@@ -79,6 +79,17 @@ export type DeleteSavedAnalysisResult =
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
+export type DeleteSavedAnalysesFailure = {
+  analysisId: string;
+  message: string;
+};
+
+export type DeleteSavedAnalysesResult = {
+  deletedIds: string[];
+  unavailableIds: string[];
+  failures: DeleteSavedAnalysesFailure[];
+};
+
 type JobAnalysisListRow = SavedCloudAnalysis & {
   matched_skills: SavedAnalysisSkill[] | null;
   skill_gaps: SavedAnalysisSkill[] | null;
@@ -341,3 +352,55 @@ export async function deleteSavedAnalysis(
   }
 }
 
+/**
+ * Delete selected saved analyses sequentially through the existing RLS-scoped
+ * single-row helper. This is intentionally non-transactional: successful
+ * deletions are not rolled back if a later deletion fails.
+ */
+export async function deleteSavedAnalyses(
+  getAccessToken: AccessTokenGetter,
+  analysisIds: string[],
+): Promise<DeleteSavedAnalysesResult> {
+  const orderedIds = Array.from(
+    new Set(analysisIds.map((id) => id.trim()).filter(Boolean)),
+  );
+
+  const result: DeleteSavedAnalysesResult = {
+    deletedIds: [],
+    unavailableIds: [],
+    failures: [],
+  };
+
+  if (orderedIds.length === 0) {
+    return result;
+  }
+
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    const analysisId = orderedIds[index];
+    const deleteResult = await deleteSavedAnalysis(getAccessToken, analysisId);
+
+    if (deleteResult.status === "success") {
+      result.deletedIds.push(analysisId);
+      continue;
+    }
+
+    if (deleteResult.status === "not_found") {
+      result.unavailableIds.push(analysisId);
+      continue;
+    }
+
+    if (deleteResult.status === "not_configured") {
+      const message = getSafeSavedAnalysisErrorMessage("delete", null, {
+        reason: "config",
+      });
+      for (const remainingId of orderedIds.slice(index)) {
+        result.failures.push({ analysisId: remainingId, message });
+      }
+      break;
+    }
+
+    result.failures.push({ analysisId, message: deleteResult.message });
+  }
+
+  return result;
+}

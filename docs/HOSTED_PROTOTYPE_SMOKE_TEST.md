@@ -254,3 +254,17 @@ All critical safety, privacy, auth, data-isolation, and workflow checks pass, an
 ### NOT READY — BLOCKED
 
 Any critical workflow failure, cross-user data exposure, secret/token/private text leak, broken auth boundary, unsafe error display, inaccurate launch/privacy claim, or unresolved production deploy failure blocks launch.
+
+
+## Version 23 Step 3 selected deletion checks
+
+- [ ] Verify **Delete selected** is disabled with no selection.
+- [ ] Verify confirmation opens without deletion when **Delete selected** is pressed.
+- [ ] Verify **Cancel** preserves selection and data.
+- [ ] Verify confirmation includes selected records hidden by search/filter.
+- [ ] Verify successful selected deletion removes only checked loaded snapshot targets.
+- [ ] Verify failed targets remain selected.
+- [ ] Verify active detail and Compare selections clear only for removed records.
+- [ ] Verify Insights/list refresh once after a completed selected deletion with deleted or unavailable targets.
+- [ ] Verify no **Delete all** or account-wide wording appears.
+- [ ] Clean up any synthetic saved-analysis data used for verification.

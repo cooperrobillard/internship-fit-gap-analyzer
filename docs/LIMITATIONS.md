@@ -52,7 +52,7 @@ The current version does not:
 Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding of job descriptions or resume evidence.
 
 
-## Current hosted limitations (Version 22 state)
+## Current hosted limitations (Version 23 state)
 
 The hosted app now exists and includes a public landing page, Clerk sign-in, dashboard analysis, structured saved analyses, structured resume-profile management, saved-profile analysis handoff, comparison/export/delete surfaces, safe errors/retries, Supabase RLS, and basic Vercel rate limiting for `POST /api/analyze`.
 
@@ -65,7 +65,7 @@ Important current limits:
 - **No PDF/DOCX parsing.** Hosted upload support is limited to transient `.txt` handling where available.
 - **No raw resume/job-body persistence by the application save path.** Pasted/uploaded text is sent through Vercel to Render for the request, but saved cloud records are structured results and metadata. Platform/service logging cannot be guaranteed absent.
 - **Structured resume profiles are not full resumes.** Profiles store names, optional notes/description, skill lists, source type, and timestamps; they do not store raw resume body text. Selecting a profile constructs temporary structured analysis input from those fields.
-- **Data controls are incomplete.** Users can analyze without saving, delete individual saved analyses, create/edit/delete structured profiles, export supported saved-analysis/derived reports, and clear browser inputs. There is no one-click account-wide export, delete-all, automated retention, restore/undo, profile export, or automatic Supabase cleanup claim when a Clerk account is deleted.
+- **Data controls are incomplete.** Users can analyze without saving, delete individual saved analyses, delete selected currently loaded saved analyses after confirmation, create/edit/delete structured profiles, export supported saved-analysis/derived reports, and clear browser inputs. There is no one-click account-wide export, account-wide delete-all, automated retention, restore/undo, profile export, or automatic Supabase cleanup claim when a Clerk account is deleted.
 - **Abuse controls are basic.** Vercel rate limiting is IP-based for the analysis route; it is not account quotas, bot prevention, or comprehensive DDoS protection.
 
 See [`DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) for the Dev 19 readiness checkpoint and [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md) for the current taxonomy checkpoint.
