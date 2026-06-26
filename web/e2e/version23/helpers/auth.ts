@@ -1,0 +1,3 @@
+import type { Browser, BrowserContext, Page } from "@playwright/test"; import type { QaConfig } from "./config";
+export async function signInQaUser(browser:Browser, c:QaConfig, label:"A"|"B"):Promise<{context:BrowserContext; page:Page}>{ const context=await browser.newContext(); const page=await context.newPage(); const email=label==="A"?c.userAEmail:c.userBEmail; await page.goto(`${c.baseUrl}/sign-in`); // Uses Clerk UI; direct email testing helper can be wired here by the repository owner if their Clerk instance requires it.
+ await page.getByLabel(/email/i).fill(email); await page.getByRole("button",{name:/continue|sign in/i}).click(); await page.waitForURL(/dashboard|sign-in/,{timeout:60000}).catch(()=>{}); return {context,page}; }

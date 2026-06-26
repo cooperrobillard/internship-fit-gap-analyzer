@@ -1,0 +1,1 @@
+import { loadQaConfig } from '../helpers/config.ts'; import { cleanupCurrentRun, dryRunStaleCleanup } from '../helpers/supabase-admin.ts'; const c=loadQaConfig(); if(process.argv.includes('--dry-run')) await dryRunStaleCleanup(c); else await cleanupCurrentRun(c);
