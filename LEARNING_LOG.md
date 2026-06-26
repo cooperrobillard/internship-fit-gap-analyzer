@@ -3853,3 +3853,7 @@ This step reinforced the difference between authoring a migration and applying i
 ## Version 23 Step 3 — selected saved-analysis deletion
 
 Implemented selected deletion for checked currently loaded saved analyses with a stable confirmation snapshot, selection locking, sequential non-transactional RLS-preserving helper reuse, partial-failure notices, failed-selection retention, dependent detail/Compare cleanup, and one saved-list/recurring-gap refresh. The workflow stays deliberately non-account-wide and does not add query, pagination, schema, auth, export-helper, taxonomy, analyzer, dependency, or persistence changes.
+
+## Version 23 Step 4 — Saved-analysis load more
+
+Added manual saved-analysis pagination in pages of ten so users can progressively load older saved records without introducing account-wide select/export/delete behavior. The implementation uses stable newest-first ordering, an extra-row `hasMore` check without exact counts, append de-duplication, preserved refresh depth after deletion, and stale-request/session protection. Documentation and privacy copy now clarify that actions apply only to currently loaded browser records.

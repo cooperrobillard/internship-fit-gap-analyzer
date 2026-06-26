@@ -268,10 +268,12 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 - [x] Step 1 — Accessible saved-analysis multi-selection foundation with native row checkboxes, **Select all visible**, indeterminate state, selected/hidden counts, Clear selection, and session/refresh/delete cleanup. See [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md).
 - [x] Step 2 — Selected CSV export for checked loaded saved analyses, including checked rows hidden by search/filter, using the existing structured CSV schema. See [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md).
-- [ ] Step 3 — Carefully scoped selected deletion design and implementation.
+- [x] Step 3 — Carefully scoped selected deletion for checked loaded saved analyses. See [`VERSION_23_STEP_3_SELECTED_DELETION.md`](VERSION_23_STEP_3_SELECTED_DELETION.md).
+- [x] Step 4 — Manual progressive Load more pagination in pages of ten so saved-history controls can reach older loaded records. See [`VERSION_23_STEP_4_LOAD_MORE.md`](VERSION_23_STEP_4_LOAD_MORE.md).
+- [ ] Step 5 — Version 23 checkpoint and end-to-end data-control QA.
 - [ ] Later — Account-wide management controls. Account-wide export/delete claims remain unimplemented until an explicit future step builds and verifies them.
 
-Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Step 1 multi-selection and Step 2 selected CSV export are complete; selected deletion remains pending for Step 3.
+Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Step 1 multi-selection, Step 2 selected CSV export, Step 3 selected deletion, and Step 4 progressive loading are complete. Progressive loading now reaches older saved-analysis records in the browser, while account-wide one-click select-all, export-all, and delete-all controls remain unimplemented. Version 23 Step 5 is the checkpoint and end-to-end data-control QA pass.
 
 **Still later:** custom domain, observability, mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, and formal security/legal certification.
 
@@ -289,5 +291,5 @@ Update this file when hosted parity changes or public v1 scope shifts. Do not ma
 ## Version 23 Step 3 update — selected loaded deletion
 
 - Step 3 selected deletion is complete for checked saved analyses in the current loaded result set, with an explicit confirmation snapshot, sequential non-transactional processing, existing RLS-scoped single-delete helper reuse, partial-failure handling, failed-selection retention, and one dependent refresh.
-- Account-wide controls remain unimplemented: no Delete all, account-wide select-all, account-wide deletion, query deletion, older-record fetch, pagination, or Load more was added in Step 3.
-- Version 23 Step 4 is identified as accessible Load more/pagination for records beyond the current recent loaded set.
+- Account-wide controls remain unimplemented: no Delete all, account-wide select-all, account-wide deletion, or query deletion was added in Step 3.
+- Version 23 Step 4 added accessible Load more pagination for records beyond the previous recent loaded set.
