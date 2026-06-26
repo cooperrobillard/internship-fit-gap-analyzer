@@ -15,7 +15,7 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 - Structured resume profiles with profile metadata and skill lists.
 - Saved-profile analysis handoff that constructs temporary analysis input from selected profile metadata and skills.
 - **Save structured results** for matched/missing skills, categories, counts, timestamps, job metadata, and notes.
-- Saved-analysis history, detail view, search/filter, comparison, recurring-gap statistics, export/download controls where supported, and individual deletion.
+- Saved-analysis history, detail view, search/filter, comparison, recurring-gap statistics, export/download controls where supported, individual deletion, and selected deletion for checked currently loaded analyses after confirmation.
 - Privacy page explaining transient inputs, structured saves, structured profiles, current controls, providers, and limitations.
 - Safe loading, validation, error, retry, `413 Payload Too Large`, and `429` cooldown handling.
 
@@ -120,5 +120,5 @@ Before preview or production review, also run the tracked-file privacy checks do
 
 - Limited public beta/portfolio software, not mature production SaaS.
 - No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
-- No account-wide export, one-click delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee.
+- No account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion is limited to checked records in the current loaded result set.
 - Final production verdict remains pending human Vercel preview review, merge, production smoke test, screenshot evidence, and deployed-environment verification.

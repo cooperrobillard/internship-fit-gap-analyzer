@@ -3848,3 +3848,8 @@ This step reinforced the difference between authoring a migration and applying i
 - Derived selected export rows from `allAnalyses` plus `effectiveCheckedAnalysisIds`, so checked analyses hidden by search or filter remain included and unselected analyses remain excluded.
 - Reused the existing structured saved-analysis CSV builder, escaping behavior, and loaded-result boundary without raw resume/job text, Supabase requests, query changes, persistence, dependencies, or account-wide export claims.
 - Preserved the existing loaded-analysis export as a separate all-loaded action and left selected deletion deferred for a carefully scoped future step.
+
+
+## Version 23 Step 3 — selected saved-analysis deletion
+
+Implemented selected deletion for checked currently loaded saved analyses with a stable confirmation snapshot, selection locking, sequential non-transactional RLS-preserving helper reuse, partial-failure notices, failed-selection retention, dependent detail/Compare cleanup, and one saved-list/recurring-gap refresh. The workflow stays deliberately non-account-wide and does not add query, pagination, schema, auth, export-helper, taxonomy, analyzer, dependency, or persistence changes.

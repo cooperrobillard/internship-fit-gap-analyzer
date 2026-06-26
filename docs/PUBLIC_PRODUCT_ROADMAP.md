@@ -284,3 +284,10 @@ See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`TAXONOMY_MAINTENAN
 ## Document maintenance
 
 Update this file when hosted parity changes or public v1 scope shifts. Do not mark the product mature production SaaS or security-certified without a separate explicit review.
+
+
+## Version 23 Step 3 update — selected loaded deletion
+
+- Step 3 selected deletion is complete for checked saved analyses in the current loaded result set, with an explicit confirmation snapshot, sequential non-transactional processing, existing RLS-scoped single-delete helper reuse, partial-failure handling, failed-selection retention, and one dependent refresh.
+- Account-wide controls remain unimplemented: no Delete all, account-wide select-all, account-wide deletion, query deletion, older-record fetch, pagination, or Load more was added in Step 3.
+- Version 23 Step 4 is identified as accessible Load more/pagination for records beyond the current recent loaded set.
