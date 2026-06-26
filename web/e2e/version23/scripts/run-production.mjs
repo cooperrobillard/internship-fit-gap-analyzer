@@ -29,6 +29,12 @@ const runId = process.env.QA_RUN_ID?.trim() || generateRunId();
 process.env.QA_RUN_ID = runId;
 mkdirSync(resolve(webRoot, "test-results"), { recursive: true });
 
+await Promise.all([
+  import("../helpers/report.ts"),
+  import("../helpers/supabase-admin.ts"),
+]);
+console.log("Version 23 QA module import smoke check passed");
+
 let config;
 try {
   config = loadQaConfig();
