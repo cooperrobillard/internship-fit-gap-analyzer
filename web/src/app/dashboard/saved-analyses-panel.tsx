@@ -674,12 +674,15 @@ function SavedAnalysesList({
         </p>
       </div>
       {selectedDeleteTargets ? (
-        <div
+        <section
           id="selected-delete-confirmation"
           className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950"
+          aria-labelledby="selected-delete-confirmation-heading"
+          aria-describedby="selected-delete-irreversible-explanation selected-delete-sequential-notice"
           aria-busy={isDeletingSelected}
         >
           <h3
+            id="selected-delete-confirmation-heading"
             ref={deleteConfirmationHeadingRef}
             tabIndex={-1}
             className="font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
@@ -687,7 +690,7 @@ function SavedAnalysesList({
             Delete {selectedDeleteTargets.length} selected{" "}
             {pluralize(selectedDeleteTargets.length, "analysis", "analyses")}?
           </h3>
-          <p className="mt-2">
+          <p id="selected-delete-irreversible-explanation" className="mt-2">
             Only the {selectedDeleteTargets.length} checked loaded{" "}
             {pluralize(selectedDeleteTargets.length, "analysis", "analyses")}{" "}
             listed in this confirmation will be attempted, including checked
@@ -696,7 +699,7 @@ function SavedAnalysesList({
             missing skill rows are removed through the existing database cascade
             behavior. There is no undo.
           </p>
-          <p className="mt-2">
+          <p id="selected-delete-sequential-notice" className="mt-2">
             Deletion runs sequentially and is not transactional. Successful
             deletions are not rolled back if a later deletion fails. Failed
             analyses remain selected.
@@ -739,7 +742,7 @@ function SavedAnalysesList({
                 : `Delete ${selectedDeleteTargets.length} ${pluralize(selectedDeleteTargets.length, "analysis", "analyses")}`}
             </button>
           </div>
-        </div>
+        </section>
       ) : null}
       {actionNotice ? (
         <p
