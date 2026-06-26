@@ -492,6 +492,7 @@ function SavedAnalysesList({
         SAVED_ANALYSES_PAGE_SIZE,
       );
       setIsLoading(true);
+      setIsLoadingMore(false);
       setLoadResult(null);
       setLoadMoreError(null);
       setPaginationStatus("");
@@ -586,34 +587,42 @@ function SavedAnalysesList({
 
     if (result.status !== "success") {
       setLoadMoreError(
-        result.status === "not_configured"
-          ? "Saved analyses are unavailable right now."
-          : result.message,
+        "Could not load more analyses. Your currently loaded analyses are still available. Try again.",
       );
       return;
     }
 
-    setLoadResult((currentResult) => {
-      if (currentResult?.status !== "success") return currentResult;
-      const existingIds = new Set(
-        currentResult.analyses.map((analysis) => analysis.id),
-      );
-      const newAnalyses = result.analyses.filter(
-        (analysis) => !existingIds.has(analysis.id),
-      );
-      return {
-        ...result,
-        analyses: [...currentResult.analyses, ...newAnalyses],
-      };
+    const existingIds = new Set(
+      loadResult.analyses.map((analysis) => analysis.id),
+    );
+    const newAnalyses = result.analyses.filter(
+      (analysis) => !existingIds.has(analysis.id),
+    );
+    const mergedAnalyses = [...loadResult.analyses, ...newAnalyses];
+
+    setLoadResult({
+      ...result,
+      analyses: mergedAnalyses,
     });
     loadedWindowSizeRef.current = Math.max(
       SAVED_ANALYSES_PAGE_SIZE,
       result.nextOffset,
     );
+
+    if (newAnalyses.length > 0) {
+      setPaginationStatus(
+        `Loaded ${newAnalyses.length} more ${pluralize(newAnalyses.length, "analysis", "analyses")}. ${mergedAnalyses.length} ${pluralize(mergedAnalyses.length, "analysis", "analyses")} loaded.${result.hasMore ? "" : " No more saved analyses to load."}`,
+      );
+      return;
+    }
+
+    if (!result.hasMore) {
+      setPaginationStatus("No more saved analyses to load.");
+      return;
+    }
+
     setPaginationStatus(
-      result.analyses.length > 0
-        ? `Loaded ${result.analyses.length} more ${pluralize(result.analyses.length, "analysis", "analyses")}. ${result.nextOffset} ${pluralize(result.nextOffset, "analysis", "analyses")} loaded.${result.hasMore ? "" : " No more saved analyses to load."}`
-        : "No more saved analyses to load.",
+      `${mergedAnalyses.length} ${pluralize(mergedAnalyses.length, "analysis", "analyses")} loaded.`,
     );
   }
 
@@ -893,7 +902,10 @@ function SavedAnalysesList({
           ))}
         </ul>
       )}
-      <div className="mt-4 border-t border-zinc-200 pt-4">
+      <div
+        className="mt-4 border-t border-zinc-200 pt-4"
+        aria-busy={isLoadingMore}
+      >
         {hasMoreAnalyses ? (
           <button
             type="button"
