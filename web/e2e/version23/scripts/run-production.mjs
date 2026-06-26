@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resetQaReportArtifacts } from "../helpers/artifact-reset.ts";
 import { loadQaConfig } from "../helpers/config.ts";
 import { persistRunMeta } from "../helpers/manifest.ts";
-import { writeReport } from "../helpers/report.ts";
+import {
+  markPlaywrightRunStarted,
+  recordPreflightFailure,
+  writeReport,
+} from "../helpers/report.ts";
 import { cleanupCurrentRun } from "../helpers/supabase-admin.ts";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -27,7 +32,8 @@ function generateRunId() {
 
 const runId = process.env.QA_RUN_ID?.trim() || generateRunId();
 process.env.QA_RUN_ID = runId;
-mkdirSync(resolve(webRoot, "test-results"), { recursive: true });
+
+resetQaReportArtifacts(webRoot);
 
 await Promise.all([
   import("../helpers/report.ts"),
@@ -44,11 +50,24 @@ try {
   process.exit(1);
 }
 
-const preflightStatus = run("node", ["e2e/version23/scripts/preflight.mjs"], webRoot);
+const preflightStatus = run("npx", ["tsx", "e2e/version23/scripts/preflight.mjs"], webRoot);
 if (preflightStatus !== 0) {
-  writeReport(config);
+  const setup = existsSync(resolve(webRoot, "test-results/version23-setup-results.json"))
+    ? JSON.parse(
+        readFileSync(resolve(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+      )
+    : {};
+  const reason =
+    setup["Automated preflight"]?.detail ||
+    "Automated preflight failed before Playwright started.";
+  if (!setup["Automated preflight"]) {
+    recordPreflightFailure(reason, webRoot);
+  }
+  writeReport(config, { preflightFailed: "true" }, webRoot);
   process.exit(preflightStatus);
 }
+
+markPlaywrightRunStarted(config, webRoot);
 
 process.env.QA_SKIP_GLOBAL_TEARDOWN_CLEANUP = "1";
 const playwrightStatus = run(
@@ -64,7 +83,7 @@ const extra = existsSync(runtimePath)
   ? JSON.parse(readFileSync(runtimePath, "utf8"))
   : {};
 
-writeReport(config, extra);
+writeReport(config, extra, webRoot);
 
 let cleanupStatus = 0;
 if (existsSync(config.manifestPath)) {
@@ -74,7 +93,7 @@ if (existsSync(config.manifestPath)) {
     cleanupStatus = 1;
     console.error(error instanceof Error ? error.message : error);
   }
-  writeReport(config, extra);
+  writeReport(config, extra, webRoot);
 }
 
 console.log("Version 23 QA report: /tmp/version23-data-control-qa.md");
