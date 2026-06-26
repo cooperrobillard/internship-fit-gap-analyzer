@@ -23,8 +23,9 @@ import {
 } from "@/lib/saved-analysis-search";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
+  SAVED_ANALYSES_PAGE_SIZE,
   deleteSavedAnalyses,
-  fetchRecentSavedAnalyses,
+  fetchSavedAnalysesPage,
   formatSavedAnalysisDate,
   getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
@@ -246,6 +247,9 @@ function SavedAnalysesList({
     null,
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [paginationStatus, setPaginationStatus] = useState("");
   const [retryNonce, setRetryNonce] = useState(0);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(
     null,
@@ -267,6 +271,9 @@ function SavedAnalysesList({
   const [compareFirstId, setCompareFirstId] = useState<string | null>(null);
   const [compareSecondId, setCompareSecondId] = useState<string | null>(null);
   const completedFetchKeyRef = useRef<string | null>(null);
+  const loadedWindowSizeRef = useRef(SAVED_ANALYSES_PAGE_SIZE);
+  const requestGenerationRef = useRef(0);
+  const activeSessionIdRef = useRef<string | null>(null);
   const deleteSelectedButtonRef = useRef<HTMLButtonElement | null>(null);
   const deleteConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const selectAllVisibleRef = useRef<HTMLInputElement | null>(null);
@@ -293,6 +300,8 @@ function SavedAnalysesList({
   );
   const isDeleteConfirmationOpen = selectedDeleteTargets !== null;
   const isSelectionLocked = isDeleteConfirmationOpen || isDeletingSelected;
+  const hasMoreAnalyses =
+    loadResult?.status === "success" ? loadResult.hasMore : false;
   const visibleCompareFirstId =
     compareFirstId &&
     allAnalyses.some((analysis) => analysis.id === compareFirstId)
@@ -376,7 +385,8 @@ function SavedAnalysesList({
     });
   }
   function handleOpenSelectedDeleteConfirmation() {
-    if (selectedAnalyses.length === 0 || isSelectionLocked) return;
+    if (selectedAnalyses.length === 0 || isSelectionLocked || isLoadingMore)
+      return;
     setActionNotice(null);
     setSelectedDeleteTargets(
       selectedAnalyses.map((analysis) => ({
@@ -459,6 +469,12 @@ function SavedAnalysesList({
   useEffect(() => {
     if (boundSelectionSessionIdRef.current === sessionId) return;
     boundSelectionSessionIdRef.current = sessionId;
+    activeSessionIdRef.current = sessionId;
+    requestGenerationRef.current += 1;
+    loadedWindowSizeRef.current = SAVED_ANALYSES_PAGE_SIZE;
+    setLoadMoreError(null);
+    setPaginationStatus("");
+    setIsLoadingMore(false);
     setCheckedAnalysisIds(new Set());
     setCheckedAnalysisSessionId(sessionId);
   }, [sessionId]);
@@ -470,15 +486,36 @@ function SavedAnalysesList({
     if (completedFetchKeyRef.current === fetchKey) return;
     let cancelled = false;
     async function runLoad() {
-      setIsLoading(true);
-      setLoadResult(null);
-      const result = await fetchRecentSavedAnalyses(() =>
-        activeSession.getToken(),
+      const requestGeneration = (requestGenerationRef.current += 1);
+      const pageSize = Math.max(
+        loadedWindowSizeRef.current,
+        SAVED_ANALYSES_PAGE_SIZE,
       );
-      if (cancelled) return;
+      setIsLoading(true);
+      setIsLoadingMore(false);
+      setLoadResult(null);
+      setLoadMoreError(null);
+      setPaginationStatus("");
+      const result = await fetchSavedAnalysesPage(
+        () => activeSession.getToken(),
+        {
+          offset: 0,
+          pageSize,
+        },
+      );
+      if (
+        cancelled ||
+        requestGenerationRef.current !== requestGeneration ||
+        activeSessionIdRef.current !== activeSession.id
+      )
+        return;
       completedFetchKeyRef.current = fetchKey;
       setLoadResult(result);
       if (result.status === "success") {
+        loadedWindowSizeRef.current = Math.max(
+          SAVED_ANALYSES_PAGE_SIZE,
+          result.nextOffset,
+        );
         setSelectedAnalysisId((currentId) =>
           currentId &&
           result.analyses.some((analysis) => analysis.id === currentId)
@@ -515,6 +552,80 @@ function SavedAnalysesList({
       cancelled = true;
     };
   }, [configured, isLoaded, sessionId, session, refreshKey, retryNonce]);
+  async function handleLoadMore() {
+    if (
+      !session ||
+      !sessionId ||
+      loadResult?.status !== "success" ||
+      !loadResult.hasMore ||
+      isLoadingMore ||
+      isDeleteConfirmationOpen ||
+      isDeletingSelected
+    )
+      return;
+
+    const activeSession = session;
+    const activeSessionId = sessionId;
+    const requestGeneration = requestGenerationRef.current;
+    setIsLoadingMore(true);
+    setLoadMoreError(null);
+    const result = await fetchSavedAnalysesPage(
+      () => activeSession.getToken(),
+      {
+        offset: loadResult.nextOffset,
+        pageSize: SAVED_ANALYSES_PAGE_SIZE,
+      },
+    );
+
+    if (
+      requestGenerationRef.current !== requestGeneration ||
+      activeSessionIdRef.current !== activeSessionId
+    )
+      return;
+
+    setIsLoadingMore(false);
+
+    if (result.status !== "success") {
+      setLoadMoreError(
+        "Could not load more analyses. Your currently loaded analyses are still available. Try again.",
+      );
+      return;
+    }
+
+    const existingIds = new Set(
+      loadResult.analyses.map((analysis) => analysis.id),
+    );
+    const newAnalyses = result.analyses.filter(
+      (analysis) => !existingIds.has(analysis.id),
+    );
+    const mergedAnalyses = [...loadResult.analyses, ...newAnalyses];
+
+    setLoadResult({
+      ...result,
+      analyses: mergedAnalyses,
+    });
+    loadedWindowSizeRef.current = Math.max(
+      SAVED_ANALYSES_PAGE_SIZE,
+      result.nextOffset,
+    );
+
+    if (newAnalyses.length > 0) {
+      setPaginationStatus(
+        `Loaded ${newAnalyses.length} more ${pluralize(newAnalyses.length, "analysis", "analyses")}. ${mergedAnalyses.length} ${pluralize(mergedAnalyses.length, "analysis", "analyses")} loaded.${result.hasMore ? "" : " No more saved analyses to load."}`,
+      );
+      return;
+    }
+
+    if (!result.hasMore) {
+      setPaginationStatus("No more saved analyses to load.");
+      return;
+    }
+
+    setPaginationStatus(
+      `${mergedAnalyses.length} ${pluralize(mergedAnalyses.length, "analysis", "analyses")} loaded.`,
+    );
+  }
+
   function handleRetry() {
     completedFetchKeyRef.current = null;
     setRetryNonce((nonce) => nonce + 1);
@@ -639,7 +750,11 @@ function SavedAnalysesList({
             ref={deleteSelectedButtonRef}
             type="button"
             onClick={handleOpenSelectedDeleteConfirmation}
-            disabled={selectedAnalyses.length === 0 || isSelectionLocked}
+            disabled={
+              selectedAnalyses.length === 0 ||
+              isSelectionLocked ||
+              isLoadingMore
+            }
             aria-expanded={isDeleteConfirmationOpen}
             aria-controls="selected-delete-confirmation"
             className="min-h-10 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -671,6 +786,10 @@ function SavedAnalysesList({
           aria-live="polite"
         >
           {selectionStatus}
+        </p>
+        <p className="mt-2 text-xs text-zinc-600">
+          Search and filters apply to the analyses currently loaded here. Load
+          more may reveal additional matches.
         </p>
       </div>
       {selectedDeleteTargets ? (
@@ -783,10 +902,51 @@ function SavedAnalysesList({
           ))}
         </ul>
       )}
+      <div
+        className="mt-4 border-t border-zinc-200 pt-4"
+        aria-busy={isLoadingMore}
+      >
+        {hasMoreAnalyses ? (
+          <button
+            type="button"
+            onClick={() => void handleLoadMore()}
+            disabled={
+              isLoadingMore || isDeleteConfirmationOpen || isDeletingSelected
+            }
+            aria-describedby="saved-analyses-load-more-helper saved-analyses-pagination-status"
+            className="min-h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoadingMore ? "Loading more analyses…" : "Load more analyses"}
+          </button>
+        ) : (
+          <p className="text-sm text-zinc-600">
+            No more saved analyses to load.
+          </p>
+        )}
+        <p
+          id="saved-analyses-load-more-helper"
+          className="mt-2 text-xs text-zinc-600"
+        >
+          Loads the next page of up to {SAVED_ANALYSES_PAGE_SIZE} older saved
+          analyses.
+        </p>
+        {loadMoreError ? (
+          <p className="mt-2 text-sm font-medium text-red-800" role="alert">
+            {loadMoreError}
+          </p>
+        ) : null}
+        <p
+          id="saved-analyses-pagination-status"
+          className="mt-2 text-xs text-zinc-600"
+          aria-live="polite"
+        >
+          {paginationStatus}
+        </p>
+      </div>
       <div className="mt-4">
         <ExportDownloadGroup
           title="Export loaded analyses"
-          description="Exports every currently loaded analysis, regardless of selection, search, or filter."
+          description="Exports every analysis currently loaded here, including additional pages you have loaded, regardless of selection, search, or filter."
         >
           <ExportDownloadButton
             label="Loaded analyses (CSV)"
@@ -814,7 +974,7 @@ function SavedAnalysesList({
           ))}
         </div>
         <p className="text-xs text-zinc-500">
-          {loadResult.analyses.length} most recent
+          {loadResult.analyses.length} loaded
         </p>
       </div>
       {activeView === "analyses" ? (

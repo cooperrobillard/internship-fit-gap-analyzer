@@ -122,3 +122,8 @@ Before preview or production review, also run the tracked-file privacy checks do
 - No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
 - No account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion is limited to checked records in the current loaded result set.
 - Final production verdict remains pending human Vercel preview review, merge, production smoke test, screenshot evidence, and deployed-environment verification.
+
+
+## Saved-analysis load more
+
+The dashboard saved-analysis list initially loads 10 records and offers a manual **Load more analyses** button for additional pages of 10. Search, selection, selected export, loaded export, selected deletion, detail, and Compare expand across the pages currently loaded in the browser. These controls still are not account-wide: unloaded records are not selected, exported, deleted, compared, or searched until the user loads more history.

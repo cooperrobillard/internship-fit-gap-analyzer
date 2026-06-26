@@ -224,14 +224,18 @@ export default function PrivacyPage() {
             <BulletList>
               <li>Run an analysis without saving it.</li>
               <li>Clear transient browser inputs.</li>
-              <li>Review individual saved analyses.</li>
               <li>
-                Delete individual saved analyses, or delete selected currently
+                Review individual saved analyses, with older analyses available
+                through manual progressive loading.
+              </li>
+              <li>
+                Delete individual saved analyses, or delete selected checked
                 loaded saved analyses after explicit confirmation.
               </li>
               <li>Create, edit, and delete profiles.</li>
               <li>
-                Use supported exports for individual saved analyses,
+                Use supported exports for individual saved analyses, selected
+                checked loaded saved analyses, currently loaded saved analyses,
                 comparisons, and recurring-gap views where export or download
                 controls are available.
               </li>
@@ -251,10 +255,11 @@ export default function PrivacyPage() {
               </li>
               <li>Human interpretation remains necessary.</li>
               <li>
-                Selected deletion applies only to checked analyses in the
-                current loaded result set.
+                Selected deletion and selected export apply only to checked
+                analyses in the current loaded result set; unloaded records are
+                not included.
               </li>
-              <li>No account-wide export.</li>
+              <li>No account-wide export or export-all control.</li>
               <li>
                 No account-wide select-all or one-click delete-all control.
               </li>

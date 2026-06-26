@@ -268,3 +268,21 @@ Any critical workflow failure, cross-user data exposure, secret/token/private te
 - [ ] Verify Insights/list refresh once after a completed selected deletion with deleted or unavailable targets.
 - [ ] Verify no **Delete all** or account-wide wording appears.
 - [ ] Clean up any synthetic saved-analysis data used for verification.
+
+## Version 23 Step 4 — saved-analysis load-more smoke checks
+
+Use synthetic saved analyses only, then clean them up after testing.
+
+- Confirm the saved-analysis panel initially loads 10 records when the account has more than 10 saved analyses.
+- Confirm **Load more analyses** appends the next page while keeping current rows visible.
+- Confirm a partial final page appends correctly when fewer than 10 records remain.
+- Confirm the no-more state appears after the final page and no account-wide claim is shown.
+- Simulate or observe a load-more failure and confirm current rows, selection, detail, Compare, notices, and filters are preserved with an inline retryable error.
+- Search after more pages load and confirm matches can appear from any currently loaded page only.
+- Select rows across multiple loaded pages and confirm checked counts and hidden-by-filter counts stay accurate.
+- Export selected CSV across pages and confirm only checked loaded rows are included.
+- Export loaded CSV across pages and confirm all currently loaded rows are included regardless of search/filter/selection.
+- Delete selected rows across pages and confirm the confirmation snapshot, partial-failure behavior, and safe notices are preserved.
+- After individual or selected deletion, confirm refresh preserves the previously loaded depth rather than collapsing to 10.
+- Switch Clerk sessions and confirm the new session loads only its first page and stale prior-session pages do not append.
+- Delete synthetic saved analyses created for this test.

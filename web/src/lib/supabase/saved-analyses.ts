@@ -33,7 +33,7 @@ const SAVED_ANALYSIS_LIST_FIELDS =
 
 const SAVED_ANALYSIS_DETAIL_FIELDS = SAVED_ANALYSIS_LIST_FIELDS;
 
-const DEFAULT_LIST_LIMIT = 10;
+export const SAVED_ANALYSES_PAGE_SIZE = 10;
 
 export type SavedAnalysisSkill = {
   skill: string;
@@ -63,7 +63,12 @@ export type SavedAnalysisDetail = SavedCloudAnalysis & {
 };
 
 export type SavedAnalysesResult =
-  | { status: "success"; analyses: SavedCloudAnalysisListItem[] }
+  | {
+      status: "success";
+      analyses: SavedCloudAnalysisListItem[];
+      hasMore: boolean;
+      nextOffset: number;
+    }
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
@@ -96,6 +101,23 @@ type JobAnalysisListRow = SavedCloudAnalysis & {
 };
 
 type JobAnalysisDetailRow = JobAnalysisListRow;
+
+export type SavedAnalysesPageOptions = {
+  offset?: number;
+  pageSize?: number;
+};
+
+function normalizeNonnegativeInteger(value: number | undefined): number {
+  return Number.isInteger(value) && value !== undefined && value >= 0
+    ? value
+    : 0;
+}
+
+function normalizePositiveInteger(value: number | undefined): number {
+  return Number.isInteger(value) && value !== undefined && value > 0
+    ? value
+    : SAVED_ANALYSES_PAGE_SIZE;
+}
 
 /** Format a saved-analysis timestamp for display. */
 export function formatSavedAnalysisDate(iso: string): string {
@@ -141,16 +163,20 @@ function mapDetailRow(row: JobAnalysisDetailRow): SavedAnalysisDetail {
 }
 
 /**
- * Read the signed-in user's recent saved job analyses from Supabase (read-only).
- * Uses the Clerk-aware browser client from Step 4.
+ * Read one page of the signed-in user's saved job analyses from Supabase
+ * (read-only). Uses one extra row to detect whether another page may exist,
+ * without requesting an exact count.
  */
-export async function fetchRecentSavedAnalyses(
+export async function fetchSavedAnalysesPage(
   getAccessToken: AccessTokenGetter,
-  limit: number = DEFAULT_LIST_LIMIT,
+  options: SavedAnalysesPageOptions = {},
 ): Promise<SavedAnalysesResult> {
   if (!isSupabaseConfigured()) {
     return { status: "not_configured" };
   }
+
+  const offset = normalizeNonnegativeInteger(options.offset);
+  const pageSize = normalizePositiveInteger(options.pageSize);
 
   try {
     const token = await getAccessToken();
@@ -169,7 +195,8 @@ export async function fetchRecentSavedAnalyses(
       .from("job_analyses")
       .select(SAVED_ANALYSIS_LIST_FIELDS)
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .order("id", { ascending: false })
+      .range(offset, offset + pageSize);
 
     if (error) {
       return {
@@ -178,9 +205,14 @@ export async function fetchRecentSavedAnalyses(
       };
     }
 
+    const rows = (data ?? []) as JobAnalysisListRow[];
+    const pageRows = rows.slice(0, pageSize);
+
     return {
       status: "success",
-      analyses: ((data ?? []) as JobAnalysisListRow[]).map(mapListRow),
+      analyses: pageRows.map(mapListRow),
+      hasMore: rows.length > pageSize,
+      nextOffset: offset + pageRows.length,
     };
   } catch (error) {
     if (isMissingSupabaseConfigError(error)) {
@@ -199,6 +231,17 @@ export async function fetchRecentSavedAnalyses(
       }),
     };
   }
+}
+
+/**
+ * Read the signed-in user's first page of saved job analyses from Supabase.
+ * Compatibility wrapper for older callers.
+ */
+export async function fetchRecentSavedAnalyses(
+  getAccessToken: AccessTokenGetter,
+  limit: number = SAVED_ANALYSES_PAGE_SIZE,
+): Promise<SavedAnalysesResult> {
+  return fetchSavedAnalysesPage(getAccessToken, { offset: 0, pageSize: limit });
 }
 
 /**
