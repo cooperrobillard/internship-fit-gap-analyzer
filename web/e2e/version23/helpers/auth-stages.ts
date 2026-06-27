@@ -14,7 +14,10 @@ export const CLERK_SIGN_OUT_TIMEOUT_MS = 30_000;
 export type ClerkStageClient = {
   loaded: (options: { page: Page }) => Promise<void>;
   signIn: (options: { page: Page; emailAddress: string }) => Promise<void>;
-  signOut: (options: { page: Page }) => Promise<void>;
+  signOut: (options: {
+    page: Page;
+    signOutOptions?: { redirectUrl: string };
+  }) => Promise<void>;
 };
 
 export type AuthStageDeps = {
@@ -169,6 +172,68 @@ export async function waitForNoActiveClerkUser(
       `Clerk remained authenticated as User ${fromLabel} after sign-out.`,
     );
   }
+}
+
+export async function assertNotVercelSsoPage(page: Page): Promise<void> {
+  const vercelLoginVisible = await page
+    .getByRole("heading", { name: /log in to vercel/i })
+    .isVisible()
+    .catch(() => false);
+  if (vercelLoginVisible) {
+    throw new Error(
+      "Sign-out redirect reached Vercel SSO instead of the application landing page.",
+    );
+  }
+}
+
+export async function assertExpectedProductionHostname(
+  page: Page,
+  config: QaConfig,
+): Promise<void> {
+  const expectedHost = new URL(config.baseUrl).hostname;
+  const actualHost = new URL(page.url()).hostname;
+  if (actualHost !== expectedHost) {
+    throw new Error(
+      `Unexpected redirect hostname during user switch: ${actualHost}.`,
+    );
+  }
+}
+
+export async function waitForExpectedSignOutRedirect(
+  page: Page,
+  config: QaConfig,
+): Promise<void> {
+  await page.waitForURL(
+    (url) => {
+      const parsed = new URL(url);
+      return (
+        parsed.hostname === new URL(config.baseUrl).hostname &&
+        parsed.pathname === "/"
+      );
+    },
+    { timeout: LANDING_NAV_TIMEOUT_MS },
+  );
+  await assertExpectedProductionHostname(page, config);
+  await assertNotVercelSsoPage(page);
+}
+
+export async function signOutWithRedirect(
+  page: Page,
+  config: QaConfig,
+  fromLabel: "A" | "B",
+  deps: AuthStageDeps = {},
+): Promise<void> {
+  const clerkClient = deps.clerk ?? defaultClerk;
+  await withOperationTimeout(
+    clerkClient.signOut({
+      page,
+      signOutOptions: {
+        redirectUrl: `${config.baseUrl}/`,
+      },
+    }),
+    CLERK_SIGN_OUT_TIMEOUT_MS,
+    `Clerk sign-out timed out while switching from User ${fromLabel}.`,
+  );
 }
 
 export async function signOutByClerk(

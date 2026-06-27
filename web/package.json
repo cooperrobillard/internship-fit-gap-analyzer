@@ -13,6 +13,7 @@
     "qa:version23:vercel:regression": "tsx e2e/version23/scripts/vercel-regression.mjs",
     "qa:version23:auth:regression": "tsx e2e/version23/scripts/auth-regression.mjs",
     "qa:version23:user-switch:regression": "tsx e2e/version23/scripts/user-switch-regression.mjs",
+    "qa:version23:report-lifecycle:regression": "tsx e2e/version23/scripts/report-lifecycle-regression.mjs",
     "qa:version23:auth:smoke": "tsx e2e/version23/scripts/auth-smoke.mjs",
     "qa:version23:production": "tsx e2e/version23/scripts/run-production.mjs",
     "qa:version23:report": "tsx e2e/version23/scripts/report.mjs",

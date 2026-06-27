@@ -6,10 +6,18 @@ export type RouteInterceptor = {
   unroute: () => Promise<void>;
 };
 
+export type HeldRequestOutcome =
+  | "pending"
+  | "fulfilled"
+  | "aborted"
+  | "canceled-by-navigation";
+
 export type HeldRouteInterceptor = RouteInterceptor & {
   waitUntilHeld: () => Promise<void>;
   release: () => void;
   waitUntilSettled: () => Promise<void>;
+  getOutcome: () => HeldRequestOutcome;
+  finalize: () => Promise<HeldRequestOutcome>;
 };
 
 export async function interceptMatching(
@@ -61,6 +69,9 @@ export async function interceptHeldNext(
   page: Page,
   predicate: (url: string, method: string) => boolean,
 ): Promise<HeldRouteInterceptor> {
+  let outcome: HeldRequestOutcome = "pending";
+  let held = false;
+  let released = false;
   let heldResolve!: () => void;
   const heldPromise = new Promise<void>((resolve) => {
     heldResolve = resolve;
@@ -73,33 +84,74 @@ export async function interceptHeldNext(
   const settledPromise = new Promise<void>((resolve) => {
     settledResolve = resolve;
   });
-  let released = false;
+
+  const onNavigate = () => {
+    if (held && !released && outcome === "pending") {
+      outcome = "canceled-by-navigation";
+      releaseResolve();
+    }
+  };
+  page.on("framenavigated", onNavigate);
 
   const interceptor = await interceptMatching(
     page,
     predicate,
     async (route, _request, index) => {
-      if (index === 0) {
-        heldResolve();
-        await releasePromise;
+      if (index !== 0) {
         await route.continue();
-        settledResolve();
         return;
       }
-      await route.continue();
+
+      held = true;
+      heldResolve();
+
+      try {
+        await releasePromise;
+
+        if (outcome === "canceled-by-navigation") {
+          try {
+            await route.abort("aborted");
+          } catch {
+            // Route may already be detached after navigation.
+          }
+          settledResolve();
+          return;
+        }
+
+        await route.continue();
+        outcome = "fulfilled";
+        settledResolve();
+      } catch (error) {
+        if (outcome === "pending") {
+          outcome = "aborted";
+        }
+        settledResolve();
+        throw error;
+      }
     },
   );
+
+  const release = () => {
+    if (!released) {
+      released = true;
+      releaseResolve();
+    }
+  };
 
   return {
     ...interceptor,
     waitUntilHeld: () => heldPromise,
-    release: () => {
-      if (!released) {
-        released = true;
-        releaseResolve();
-      }
-    },
+    release,
     waitUntilSettled: () => settledPromise,
+    getOutcome: () => outcome,
+    finalize: async () => {
+      if (outcome === "pending" && held) {
+        release();
+      }
+      await settledPromise.catch(() => undefined);
+      page.off("framenavigated", onNavigate);
+      return outcome;
+    },
   };
 }
 

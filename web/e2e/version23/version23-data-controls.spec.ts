@@ -11,6 +11,7 @@ import {
   isSavedDelete,
   isSavedList,
   type HeldRouteInterceptor,
+  type HeldRequestOutcome,
 } from "./helpers/network";
 import {
   readManifest,
@@ -67,6 +68,7 @@ test.describe("Authentication and two-user RLS isolation", () => {
     const switchPage = await switchContext.newPage();
     let staleInterceptor: HeldRouteInterceptor | undefined;
     let loadMorePromise: Promise<void> | undefined;
+    let heldOutcome: HeldRequestOutcome | undefined;
 
     try {
       await signInQaUserOnPage(switchPage, qaConfig(), "A");
@@ -80,18 +82,24 @@ test.describe("Authentication and two-user RLS isolation", () => {
       await staleInterceptor.waitUntilHeld();
 
       await switchQaUserOnPage(switchPage, qaConfig(), "A", "B");
+      heldOutcome = await staleInterceptor.finalize();
+      await loadMorePromise.catch(() => undefined);
+
       await assertAuthenticatedApplicationState(switchPage, "B");
       await expect(switchPage.getByText("No analyses selected.")).toBeVisible();
       await expectLoadedCount(switchPage, 10);
+      await expect(switchPage.getByText(`V23 QA ${qaConfig().runId} A`)).toHaveCount(0);
+      await expectRowVisible(switchPage, `V23 QA ${qaConfig().runId} B`);
 
-      staleInterceptor.release();
-      await staleInterceptor.waitUntilSettled();
-      await loadMorePromise.catch(() => undefined);
-      await expectLoadedCount(switchPage, 10);
+      if (heldOutcome === "fulfilled") {
+        await expectLoadedCount(switchPage, 10);
+        await expect(switchPage.getByText(`V23 QA ${qaConfig().runId} A`)).toHaveCount(0);
+      }
+
       staleInterceptor.assertSeen(1);
     } finally {
       staleInterceptor?.release();
-      await staleInterceptor?.waitUntilSettled().catch(() => undefined);
+      await staleInterceptor?.finalize().catch(() => undefined);
       await loadMorePromise?.catch(() => undefined);
       await staleInterceptor?.unroute().catch(() => undefined);
       await switchContext.close().catch(() => undefined);

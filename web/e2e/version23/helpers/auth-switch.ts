@@ -10,9 +10,13 @@ import {
 } from "./auth-steps";
 import {
   CLERK_SIGN_IN_TIMEOUT_MS,
+  assertSavedAuthenticatedState,
   getActiveClerkUserId,
-  signOutByClerk,
+  navigateToSavedWorkspace,
+  signOutWithRedirect,
   verifyAuthenticatedIdentity,
+  waitForClerkOnLandingPage,
+  waitForExpectedSignOutRedirect,
   waitForNoActiveClerkUser,
   withOperationTimeout,
   type AuthStageDeps,
@@ -22,6 +26,7 @@ export type SwitchOptions = {
   qaUserIds: ClerkQaUserIds;
   deps?: AuthStageDeps;
   stepRunner?: StepRunner;
+  verifySavedUi?: boolean;
 };
 
 function switchFailureMessage(
@@ -43,6 +48,7 @@ export async function switchQaUserOnPage(
     qaUserIds,
     deps = {},
     stepRunner = playwrightStepRunner,
+    verifySavedUi = true,
   } = options;
   const clerkClient = deps.clerk ?? clerk;
   const toEmail = toLabel === "A" ? config.userAEmail : config.userBEmail;
@@ -65,7 +71,23 @@ export async function switchQaUserOnPage(
     await runAuthStep(
       `sign out User ${fromLabel}`,
       async () => {
-        await signOutByClerk(page, fromLabel, deps);
+        await signOutWithRedirect(page, config, fromLabel, deps);
+      },
+      stepRunner,
+    );
+
+    await runAuthStep(
+      "wait for sign-out redirect",
+      async () => {
+        await waitForExpectedSignOutRedirect(page, config);
+      },
+      stepRunner,
+    );
+
+    await runAuthStep(
+      "wait for Clerk after redirect",
+      async () => {
+        await waitForClerkOnLandingPage(page, toLabel, deps);
       },
       stepRunner,
     );
@@ -107,8 +129,22 @@ export async function switchQaUserOnPage(
       stepRunner,
     );
 
-    if (new URL(page.url()).pathname === "/") {
-      throw new Error("User switch navigated to the landing page.");
+    await runAuthStep(
+      "open Saved after switch",
+      async () => {
+        await navigateToSavedWorkspace(page, config);
+      },
+      stepRunner,
+    );
+
+    if (verifySavedUi) {
+      await runAuthStep(
+        `verify Saved for User ${toLabel}`,
+        async () => {
+          await assertSavedAuthenticatedState(page, toLabel, qaUserIds);
+        },
+        stepRunner,
+      );
     }
   } catch (error) {
     const detail =

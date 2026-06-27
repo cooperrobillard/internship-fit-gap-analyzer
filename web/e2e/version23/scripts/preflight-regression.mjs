@@ -87,8 +87,10 @@ function runReportRegression() {
     vercelToken: "token",
   };
 
+  mkdirSync(join(staleWebRoot, ".qa-runtime/version23"), { recursive: true });
+
   writeFileSync(
-    join(staleWebRoot, "test-results/version23-setup-results.json"),
+    join(staleWebRoot, ".qa-runtime/version23/setup-results.json"),
     JSON.stringify({
       "Automated preflight": {
         name: "Automated preflight",

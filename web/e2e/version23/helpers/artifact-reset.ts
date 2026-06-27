@@ -1,16 +1,21 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { QA_RUNTIME_DIR_RELATIVE } from "./qa-runtime";
 
 const REPORT_ARTIFACTS = [
   "test-results/version23-results.json",
-  "test-results/version23-setup-results.json",
   "test-results/version23-runtime.json",
-  "test-results/version23-playwright-run.json",
   "test-results/version23-config-summary.json",
 ] as const;
 
 export function resetQaReportArtifacts(webRoot: string): void {
   const absoluteWebRoot = resolve(webRoot);
+  const qaRuntimeDir = join(absoluteWebRoot, QA_RUNTIME_DIR_RELATIVE);
+
+  if (existsSync(qaRuntimeDir)) {
+    rmSync(qaRuntimeDir, { recursive: true, force: true });
+  }
+  mkdirSync(qaRuntimeDir, { recursive: true });
 
   for (const relativePath of REPORT_ARTIFACTS) {
     const absolutePath = join(absoluteWebRoot, relativePath);

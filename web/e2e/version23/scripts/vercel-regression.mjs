@@ -243,7 +243,7 @@ async function runSetupStageRegression() {
     assert(!seedCalled, "seed helper must not run after Vercel failure");
 
     const setup = JSON.parse(
-      readFileSync(join(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+      readFileSync(join(webRoot, ".qa-runtime/version23/setup-results.json"), "utf8"),
     );
     assert(
       setup["Vercel production commit"]?.status === "FAIL",
@@ -293,7 +293,7 @@ async function runSetupStageRegression() {
     assert(!seedCalled, "seed helper must not run after Render failure");
 
     const renderFailureSetup = JSON.parse(
-      readFileSync(join(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+      readFileSync(join(webRoot, ".qa-runtime/version23/setup-results.json"), "utf8"),
     );
     assert(
       renderFailureSetup["Vercel production commit"]?.status === "PASS",
@@ -330,7 +330,7 @@ async function runSetupStageRegression() {
     assert(seedCalled, "seed helper must run when Vercel and Render pass");
 
     const seedFailureSetup = JSON.parse(
-      readFileSync(join(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+      readFileSync(join(webRoot, ".qa-runtime/version23/setup-results.json"), "utf8"),
     );
     assert(
       seedFailureSetup["Synthetic data setup"]?.status === "FAIL",

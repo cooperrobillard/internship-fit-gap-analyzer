@@ -4,6 +4,11 @@ import os from "node:os";
 import { execFileSync } from "node:child_process";
 import type { QaConfig } from "./config";
 import { readManifest } from "./manifest";
+import {
+  PLAYWRIGHT_RUN_META_RELATIVE,
+  SETUP_RESULTS_RELATIVE,
+  qaRuntimePath,
+} from "./qa-runtime";
 
 type PlaywrightJsonReport = {
   suites?: PlaywrightSuite[];
@@ -38,8 +43,10 @@ export type QaSectionResult = {
   detail: string;
 };
 
-export const PLAYWRIGHT_RUN_META_RELATIVE =
-  "test-results/version23-playwright-run.json";
+export { PLAYWRIGHT_RUN_META_RELATIVE } from "./qa-runtime";
+
+const SETUP_RESULTS_PATH = (webRoot: string) =>
+  qaRuntimePath(SETUP_RESULTS_RELATIVE, webRoot);
 
 const SETUP_SECTIONS = [
   "Vercel production commit",
@@ -123,7 +130,7 @@ function mapPlaywrightStatus(status: string): QaSectionResult["status"] {
     return "PASS";
   }
   if (status === "skipped") {
-    return "FAIL";
+    return "NOT RUN";
   }
   if (status === "timedOut" || status === "failed" || status === "interrupted") {
     return "FAIL";
@@ -215,7 +222,7 @@ function getToolVersions(): { chromium: string; playwright: string } {
 
 function readPlaywrightRunMeta(webRoot = process.cwd()): PlaywrightRunMeta | null {
   return readJson<PlaywrightRunMeta>(
-    resolve(webRoot, PLAYWRIGHT_RUN_META_RELATIVE),
+    qaRuntimePath(PLAYWRIGHT_RUN_META_RELATIVE, webRoot),
   );
 }
 
@@ -231,7 +238,7 @@ export function markPlaywrightRunStarted(
   config: QaConfig,
   webRoot = process.cwd(),
 ): void {
-  const path = resolve(webRoot, PLAYWRIGHT_RUN_META_RELATIVE);
+  const path = qaRuntimePath(PLAYWRIGHT_RUN_META_RELATIVE, webRoot);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(
     path,
@@ -253,7 +260,7 @@ export function buildReportSections(
   webRoot = process.cwd(),
 ): QaSectionResult[] {
   const setup = readJson<Record<string, QaSectionResult>>(
-    resolve(webRoot, "test-results/version23-setup-results.json"),
+    SETUP_RESULTS_PATH(webRoot),
   );
   const playwrightIsCurrent = isCurrentPlaywrightReport(config, webRoot);
   const playwright = playwrightIsCurrent
@@ -280,12 +287,15 @@ export function buildReportSections(
         continue;
       }
       const mapped = mapPlaywrightStatus(spec.status);
+      if (mapped === "NOT RUN") {
+        continue;
+      }
       const existing = sections.get(section);
-      if (!existing || existing.status === "NOT RUN" || mapped === "FAIL") {
+      if (mapped === "FAIL" || !existing || existing.status === "NOT RUN") {
         sections.set(section, {
           name: section,
           status: mapped,
-          detail: spec.detail,
+          detail: sanitizeFailureReason(spec.detail),
         });
       }
     }
@@ -438,7 +448,7 @@ export function writeSetupResult(
   detail = "",
   webRoot = process.cwd(),
 ): void {
-  const path = resolve(webRoot, "test-results/version23-setup-results.json");
+  const path = SETUP_RESULTS_PATH(webRoot);
   const current = readJson<Record<string, QaSectionResult>>(path) ?? {};
   current[name] = { name, status, detail: sanitizeFailureReason(detail) };
   mkdirSync(dirname(path), { recursive: true });

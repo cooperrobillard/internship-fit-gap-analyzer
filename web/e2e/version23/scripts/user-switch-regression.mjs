@@ -32,26 +32,72 @@ const config = {
 
 function createSwitchPage(initialUserId = "user_a") {
   let activeUserId = initialUserId;
+  let currentUrl = "https://example.invalid/dashboard/saved";
   const navigations = [];
-  return {
-    page: {
-      url: () => "https://example.invalid/dashboard/saved",
-      goto: async (target) => {
-        navigations.push(target);
-        return { status: () => 200 };
-      },
-      waitForFunction: async () => {
-        if (activeUserId) {
-          throw new Error("still signed in");
-        }
-      },
-      evaluate: async () => activeUserId,
+  const listeners = new Map();
+
+  const page = {
+    url: () => currentUrl,
+    goto: async (target) => {
+      navigations.push(target);
+      currentUrl = target;
+      for (const listener of listeners.get("framenavigated") ?? []) {
+        listener();
+      }
+      return { status: () => 200 };
     },
+    waitForURL: async (predicate) => {
+      currentUrl = `${config.baseUrl}/`;
+      const parsed = new URL(currentUrl);
+      const ok =
+        typeof predicate === "function"
+          ? predicate(parsed)
+          : String(predicate) === currentUrl;
+      if (!ok) {
+        throw new Error("Unexpected redirect hostname during user switch.");
+      }
+    },
+    waitForFunction: async () => {
+      if (activeUserId) {
+        throw new Error("still signed in");
+      }
+    },
+    getByRole: (role, options = {}) => ({
+      isVisible: async () => {
+        const name = String(options.name ?? "");
+        if (role === "heading" && /log in to vercel/i.test(name)) {
+          return false;
+        }
+        return true;
+      },
+      toBeVisible: async () => undefined,
+      toHaveCount: async () => undefined,
+    }),
+    getByText: () => ({
+      toHaveCount: async () => undefined,
+    }),
+    evaluate: async () => activeUserId,
+    on: (event, listener) => {
+      const current = listeners.get(event) ?? [];
+      current.push(listener);
+      listeners.set(event, current);
+    },
+    off: (event, listener) => {
+      const current = (listeners.get(event) ?? []).filter((item) => item !== listener);
+      listeners.set(event, current);
+    },
+  };
+
+  return {
+    page,
     navigations,
     setActiveUserId: (value) => {
       activeUserId = value;
     },
     getActiveUserId: () => activeUserId,
+    setUrl: (value) => {
+      currentUrl = value;
+    },
   };
 }
 
@@ -60,8 +106,11 @@ function createMockClerk(pageState) {
   return {
     calls,
     clerk: {
-      signOut: async () => {
+      signOut: async ({ signOutOptions } = {}) => {
         calls.push("signOut");
+        if (signOutOptions?.redirectUrl) {
+          pageState.setUrl(signOutOptions.redirectUrl);
+        }
         pageState.setActiveUserId(null);
       },
       signIn: async () => {
@@ -84,6 +133,7 @@ async function runSwitchRegression() {
     qaUserIds,
     deps: { clerk: mock.clerk },
     stepRunner: directStepRunner,
+    verifySavedUi: false,
   });
 
   assert(
@@ -95,12 +145,59 @@ async function runSwitchRegression() {
     "User B identity must be active after switching",
   );
   assert(
-    !pageState.navigations.some((target) => new URL(target).pathname === "/"),
-    "switch must not navigate to the landing page",
+    pageState.page.url().endsWith("/dashboard/saved"),
+    "Saved must be opened after User B becomes active",
   );
   assert(
-    pageState.page.url() === "https://example.invalid/dashboard/saved",
-    "switch must retain the same page URL",
+    new URL(pageState.page.url()).pathname === "/dashboard/saved",
+    "switch must end on Saved without treating landing redirect as failure",
+  );
+
+  const redirectPage = createSwitchPage("user_a");
+  const redirectMock = createMockClerk(redirectPage);
+  await switchQaUserOnPage(redirectPage.page, config, "A", "B", {
+    qaUserIds,
+    deps: { clerk: redirectMock.clerk },
+    stepRunner: directStepRunner,
+    verifySavedUi: false,
+  });
+  assert(
+    redirectMock.calls.includes("signOut"),
+    "expected sign-out redirect to / must not fail the switch",
+  );
+
+  const badHostPage = createSwitchPage("user_a");
+  badHostPage.page.waitForURL = async () => {
+    badHostPage.setUrl("https://other.invalid/");
+    throw new Error("Unexpected redirect hostname during user switch: other.invalid.");
+  };
+  await assertRejects(
+    switchQaUserOnPage(badHostPage.page, config, "A", "B", {
+      qaUserIds,
+      deps: { clerk: createMockClerk(badHostPage).clerk },
+      stepRunner: directStepRunner,
+      verifySavedUi: false,
+    }),
+    "Unexpected redirect hostname",
+  );
+
+  const vercelPage = createSwitchPage("user_a");
+  vercelPage.page.getByRole = (role, options = {}) => ({
+    isVisible: async () =>
+      role === "heading" &&
+      /log in to vercel/i.test(String(options.name ?? "")),
+  });
+  vercelPage.page.waitForURL = async () => {
+    vercelPage.setUrl(`${config.baseUrl}/`);
+  };
+  await assertRejects(
+    switchQaUserOnPage(vercelPage.page, config, "A", "B", {
+      qaUserIds,
+      deps: { clerk: createMockClerk(vercelPage).clerk },
+      stepRunner: directStepRunner,
+      verifySavedUi: false,
+    }),
+    "Vercel SSO",
   );
 
   const signedOutPage = createSwitchPage(null);
@@ -109,61 +206,62 @@ async function runSwitchRegression() {
       qaUserIds,
       deps: { clerk: createMockClerk(signedOutPage).clerk },
       stepRunner: directStepRunner,
+      verifySavedUi: false,
     }),
     "attempted while signed out",
   );
 
   const timeoutPage = createSwitchPage("user_a");
-  const hangingSignOut = {
-    signOut: async () => {
-      throw new Error("Clerk sign-out timed out while switching from User A.");
-    },
-    signIn: async () => undefined,
-    loaded: async () => undefined,
-  };
   await assertRejects(
     switchQaUserOnPage(timeoutPage.page, config, "A", "B", {
       qaUserIds,
-      deps: { clerk: hangingSignOut },
+      deps: {
+        clerk: {
+          signOut: async () => {
+            throw new Error("Clerk sign-out timed out while switching from User A.");
+          },
+          signIn: async () => undefined,
+          loaded: async () => undefined,
+        },
+      },
       stepRunner: directStepRunner,
+      verifySavedUi: false,
     }),
     "sign-out timed out while switching from User A",
   );
 
   const signInTimeoutPage = createSwitchPage("user_a");
-  const hangingSignIn = {
-    signOut: async () => {
-      signInTimeoutPage.setActiveUserId(null);
-    },
-    signIn: async () => {
-      throw new Error("Clerk sign-in timed out while switching to User B.");
-    },
-    loaded: async () => undefined,
-  };
   await assertRejects(
     switchQaUserOnPage(signInTimeoutPage.page, config, "A", "B", {
       qaUserIds,
-      deps: { clerk: hangingSignIn },
+      deps: {
+        clerk: {
+          ...createMockClerk(signInTimeoutPage).clerk,
+          signIn: async () => {
+            throw new Error("Clerk sign-in timed out while switching to User B.");
+          },
+        },
+      },
       stepRunner: directStepRunner,
+      verifySavedUi: false,
     }),
     "sign-in timed out while switching to User B",
   );
 
   const mismatchPage = createSwitchPage("user_a");
-  const mismatchClerk = {
-    signOut: async () => {
-      mismatchPage.setActiveUserId(null);
-    },
-    signIn: async () => {
-      mismatchPage.setActiveUserId("user_wrong");
-    },
-    loaded: async () => undefined,
-  };
   await assertRejects(
     switchQaUserOnPage(mismatchPage.page, config, "A", "B", {
       qaUserIds,
-      deps: { clerk: mismatchClerk },
+      deps: {
+        clerk: {
+          ...createMockClerk(mismatchPage).clerk,
+          signIn: async () => {
+            mismatchPage.setActiveUserId("user_wrong");
+          },
+        },
+      },
       stepRunner: directStepRunner,
+      verifySavedUi: false,
     }),
     "did not match User B after switching",
   );
@@ -194,17 +292,25 @@ async function runHeldRequestRegression() {
     unroute: async () => {
       events.push("unroute");
     },
+    on: (event, listener) => {
+      page._listeners = page._listeners ?? {};
+      page._listeners[event] = listener;
+    },
+    off: () => undefined,
     _handler: null,
+    _listeners: {},
   };
 
   const interceptor = await interceptHeldNext(page, () => true);
   const held = interceptor.waitUntilHeld();
-  const settled = interceptor.waitUntilSettled();
 
   void page._handler(
     {
       continue: async () => {
         events.push("continued");
+      },
+      abort: async () => {
+        events.push("aborted");
       },
     },
     {
@@ -216,41 +322,45 @@ async function runHeldRequestRegression() {
   await held;
   events.push("held");
 
-  const pageState = createSwitchPage("user_a");
-  const mock = createMockClerk(pageState);
-  await switchQaUserOnPage(pageState.page, config, "A", "B", {
-    qaUserIds,
-    deps: { clerk: mock.clerk },
-    stepRunner: directStepRunner,
-  });
-  events.push("user-b-active");
-
-  interceptor.release();
-  await settled;
-  await interceptor.unroute();
-
+  page._listeners.framenavigated?.();
+  const canceledOutcome = await interceptor.finalize();
   assert(
-    events.indexOf("held") < events.indexOf("user-b-active"),
-    "held request must remain blocked until User B is active",
+    canceledOutcome === "canceled-by-navigation",
+    "request canceled by sign-out navigation must be handled explicitly",
   );
+
+  const pendingInterceptor = await interceptHeldNext(page, () => true);
+  void page._handler(
+    {
+      continue: async () => undefined,
+      abort: async () => undefined,
+    },
+    {
+      url: () => "https://example.invalid/list",
+      method: () => "GET",
+    },
+  );
+  await pendingInterceptor.waitUntilHeld();
+  const fulfilledOutcome = await pendingInterceptor.finalize();
   assert(
-    events.indexOf("user-b-active") < events.indexOf("continued"),
-    "stale User A response must be released only after User B becomes active",
+    fulfilledOutcome === "fulfilled",
+    "held User A request can be released when still pending",
   );
 }
 
 async function runPendingCleanupRegression() {
   let executions = 0;
-  const primary = runAuthStep(
-    "primary failure",
-    async () => {
-      executions += 1;
-      throw new Error("primary switch failure");
-    },
-    directStepRunner,
+  await assertRejects(
+    runAuthStep(
+      "primary failure",
+      async () => {
+        executions += 1;
+        throw new Error("primary switch failure");
+      },
+      directStepRunner,
+    ),
+    "primary switch failure",
   );
-
-  await assertRejects(primary, "primary switch failure");
   await runAuthStep(
     "cleanup swallow",
     async () => {
@@ -258,7 +368,7 @@ async function runPendingCleanupRegression() {
     },
     directStepRunner,
   ).catch(() => undefined);
-  assert(executions === 1, "pending cleanup must not rerun the primary failing body");
+  assert(executions === 1, "pending cleanup must not mask the primary failure");
 }
 
 try {

@@ -461,7 +461,7 @@ async function runSetupStageRegression() {
     assert(!seedCalled, "auth-smoke mode must perform no Supabase seed calls");
 
     const setup = JSON.parse(
-      readFileSync(join(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+      readFileSync(join(webRoot, ".qa-runtime/version23/setup-results.json"), "utf8"),
     );
     assert(
       setup["Clerk authentication precheck"]?.status === "FAIL",

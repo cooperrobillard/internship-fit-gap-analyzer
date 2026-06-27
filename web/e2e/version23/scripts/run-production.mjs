@@ -52,9 +52,9 @@ try {
 
 const preflightStatus = run("npx", ["tsx", "e2e/version23/scripts/preflight.mjs"], webRoot);
 if (preflightStatus !== 0) {
-  const setup = existsSync(resolve(webRoot, "test-results/version23-setup-results.json"))
+  const setup = existsSync(resolve(webRoot, ".qa-runtime/version23/setup-results.json"))
     ? JSON.parse(
-        readFileSync(resolve(webRoot, "test-results/version23-setup-results.json"), "utf8"),
+        readFileSync(resolve(webRoot, ".qa-runtime/version23/setup-results.json"), "utf8"),
       )
     : {};
   const reason =
