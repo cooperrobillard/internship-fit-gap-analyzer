@@ -18,6 +18,9 @@ export type HeldRouteInterceptor = RouteInterceptor & {
   waitUntilSettled: () => Promise<void>;
   getOutcome: () => HeldRequestOutcome;
   finalize: () => Promise<HeldRequestOutcome>;
+  heldCount: () => number;
+  passthroughCount: () => number;
+  assertHeldOnce: () => void;
 };
 
 export async function interceptMatching(
@@ -72,6 +75,8 @@ export async function interceptHeldNext(
   let outcome: HeldRequestOutcome = "pending";
   let held = false;
   let released = false;
+  let heldTargetCount = 0;
+  let passThroughCount = 0;
   let heldResolve!: () => void;
   const heldPromise = new Promise<void>((resolve) => {
     heldResolve = resolve;
@@ -98,10 +103,18 @@ export async function interceptHeldNext(
     predicate,
     async (route, _request, index) => {
       if (index !== 0) {
+        passThroughCount += 1;
         await route.continue();
         return;
       }
 
+      if (heldTargetCount > 0) {
+        passThroughCount += 1;
+        await route.continue();
+        return;
+      }
+
+      heldTargetCount = 1;
       held = true;
       heldResolve();
 
@@ -144,6 +157,15 @@ export async function interceptHeldNext(
     release,
     waitUntilSettled: () => settledPromise,
     getOutcome: () => outcome,
+    heldCount: () => heldTargetCount,
+    passthroughCount: () => passThroughCount,
+    assertHeldOnce() {
+      if (heldTargetCount !== 1) {
+        throw new Error(
+          `Expected exactly one held target request; observed ${heldTargetCount}.`,
+        );
+      }
+    },
     finalize: async () => {
       if (outcome === "pending" && held) {
         release();

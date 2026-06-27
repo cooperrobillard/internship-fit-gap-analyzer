@@ -341,11 +341,16 @@ async function runHeldRequestRegression() {
     },
   );
   await pendingInterceptor.waitUntilHeld();
+  assert(
+    pendingInterceptor.heldCount() === 1,
+    "heldCount must equal one for the held target",
+  );
   const fulfilledOutcome = await pendingInterceptor.finalize();
   assert(
     fulfilledOutcome === "fulfilled",
     "held User A request can be released when still pending",
   );
+  pendingInterceptor.assertHeldOnce();
 }
 
 async function runPendingCleanupRegression() {

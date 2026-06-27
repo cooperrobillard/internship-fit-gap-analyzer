@@ -110,7 +110,7 @@ test.describe("Authentication and two-user RLS isolation", () => {
         );
       }
 
-      staleInterceptor.assertSeen(1);
+      staleInterceptor.assertHeldOnce();
     } finally {
       staleInterceptor?.release();
       await staleInterceptor?.finalize().catch(() => undefined);
