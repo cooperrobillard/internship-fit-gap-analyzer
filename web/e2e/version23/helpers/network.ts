@@ -6,6 +6,12 @@ export type RouteInterceptor = {
   unroute: () => Promise<void>;
 };
 
+export type HeldRouteInterceptor = RouteInterceptor & {
+  waitUntilHeld: () => Promise<void>;
+  release: () => void;
+  waitUntilSettled: () => Promise<void>;
+};
+
 export async function interceptMatching(
   page: Page,
   predicate: (url: string, method: string) => boolean,
@@ -49,6 +55,52 @@ export async function interceptNext(
     }
     await route.continue();
   });
+}
+
+export async function interceptHeldNext(
+  page: Page,
+  predicate: (url: string, method: string) => boolean,
+): Promise<HeldRouteInterceptor> {
+  let heldResolve!: () => void;
+  const heldPromise = new Promise<void>((resolve) => {
+    heldResolve = resolve;
+  });
+  let releaseResolve!: () => void;
+  const releasePromise = new Promise<void>((resolve) => {
+    releaseResolve = resolve;
+  });
+  let settledResolve!: () => void;
+  const settledPromise = new Promise<void>((resolve) => {
+    settledResolve = resolve;
+  });
+  let released = false;
+
+  const interceptor = await interceptMatching(
+    page,
+    predicate,
+    async (route, _request, index) => {
+      if (index === 0) {
+        heldResolve();
+        await releasePromise;
+        await route.continue();
+        settledResolve();
+        return;
+      }
+      await route.continue();
+    },
+  );
+
+  return {
+    ...interceptor,
+    waitUntilHeld: () => heldPromise,
+    release: () => {
+      if (!released) {
+        released = true;
+        releaseResolve();
+      }
+    },
+    waitUntilSettled: () => settledPromise,
+  };
 }
 
 export const isSavedList = (url: string, method: string): boolean =>

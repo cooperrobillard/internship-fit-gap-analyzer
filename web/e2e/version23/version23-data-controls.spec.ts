@@ -1,14 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { loadQaConfig } from "./helpers/config";
-import { assertAuthenticatedApplicationState, signInQaUser, signInQaUserOnPage } from "./helpers/auth";
+import { assertAuthenticatedApplicationState, signInQaUser, signInQaUserOnPage, switchQaUserOnPage } from "./helpers/auth";
 import { assertHeader } from "./helpers/csv";
 import { expectNoHorizontalOverflow, expectNoUnsafeText } from "./helpers/assertions";
 import {
+  interceptHeldNext,
   interceptMatching,
   interceptNext,
   isSavedDelete,
   isSavedList,
+  type HeldRouteInterceptor,
 } from "./helpers/network";
 import {
   readManifest,
@@ -63,32 +65,37 @@ test.describe("Authentication and two-user RLS isolation", () => {
 
     const switchContext = await browser.newContext();
     const switchPage = await switchContext.newPage();
-    await signInQaUserOnPage(switchPage, qaConfig(), "A");
-    await gotoSavedWorkspace(switchPage, qaConfig().baseUrl);
-    await assertAuthenticatedApplicationState(switchPage, "A");
-    await rowCheckbox(switchPage, titleForUserA(qaConfig(), 0)).check();
-    await expect(switchPage.getByText("1 analysis selected")).toBeVisible();
+    let staleInterceptor: HeldRouteInterceptor | undefined;
+    let loadMorePromise: Promise<void> | undefined;
 
-    const staleInterceptor = await interceptNext(
-      switchPage,
-      isSavedList,
-      async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 1_500));
-        await route.continue();
-      },
-    );
-    const loadMorePromise = clickLoadMore(switchPage);
+    try {
+      await signInQaUserOnPage(switchPage, qaConfig(), "A");
+      await gotoSavedWorkspace(switchPage, qaConfig().baseUrl);
+      await assertAuthenticatedApplicationState(switchPage, "A");
+      await rowCheckbox(switchPage, titleForUserA(qaConfig(), 0)).check();
+      await expect(switchPage.getByText("1 analysis selected")).toBeVisible();
 
-    await signInQaUserOnPage(switchPage, qaConfig(), "B");
-    await gotoSavedWorkspace(switchPage, qaConfig().baseUrl);
-    await assertAuthenticatedApplicationState(switchPage, "B");
-    await expect(switchPage.getByText("No analyses selected.")).toBeVisible();
-    await expectLoadedCount(switchPage, 10);
-    await loadMorePromise;
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
-    await expectLoadedCount(switchPage, 10);
-    staleInterceptor.assertSeen(1);
-    await switchContext.close();
+      staleInterceptor = await interceptHeldNext(switchPage, isSavedList);
+      loadMorePromise = clickLoadMore(switchPage);
+      await staleInterceptor.waitUntilHeld();
+
+      await switchQaUserOnPage(switchPage, qaConfig(), "A", "B");
+      await assertAuthenticatedApplicationState(switchPage, "B");
+      await expect(switchPage.getByText("No analyses selected.")).toBeVisible();
+      await expectLoadedCount(switchPage, 10);
+
+      staleInterceptor.release();
+      await staleInterceptor.waitUntilSettled();
+      await loadMorePromise.catch(() => undefined);
+      await expectLoadedCount(switchPage, 10);
+      staleInterceptor.assertSeen(1);
+    } finally {
+      staleInterceptor?.release();
+      await staleInterceptor?.waitUntilSettled().catch(() => undefined);
+      await loadMorePromise?.catch(() => undefined);
+      await staleInterceptor?.unroute().catch(() => undefined);
+      await switchContext.close().catch(() => undefined);
+    }
   });
 });
 

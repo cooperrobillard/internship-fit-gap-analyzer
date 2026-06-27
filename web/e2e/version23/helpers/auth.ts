@@ -1,5 +1,5 @@
 import { clerk } from "@clerk/testing/playwright";
-import { test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import type { Browser, BrowserContext, Page } from "@playwright/test";
 import type { QaConfig } from "./config";
 import {
   loadClerkQaUserIdsFromEnv,
@@ -7,6 +7,7 @@ import {
 } from "./clerk-precheck";
 import {
   assertSavedAuthenticatedState,
+  getActiveClerkUserId,
   mapLandingNavigationError,
   mapSavedNavigationError,
   navigateToLandingPage,
@@ -16,6 +17,12 @@ import {
   waitForClerkOnLandingPage,
   type AuthStageDeps,
 } from "./auth-stages";
+import {
+  assertInitialLoginPreconditions,
+  playwrightStepRunner,
+  runAuthStep,
+  switchQaUserOnPage as performSwitchQaUserOnPage,
+} from "./auth-switch";
 
 export type SignedInQaUser = {
   context: BrowserContext;
@@ -40,20 +47,8 @@ function clerkConfigurationMessage(label: "A" | "B", detail: string): string {
   ].join(" ");
 }
 
-async function runAuthStep<T>(
-  title: string,
-  body: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await test.step(title, body);
-  } catch {
-    return body();
-  }
-}
-
 function resolveQaUserIds(options: AuthStageOptions = {}): ClerkQaUserIds {
-  const qaUserIds = options.qaUserIds ?? loadClerkQaUserIdsFromEnv();
-  return qaUserIds;
+  return options.qaUserIds ?? loadClerkQaUserIdsFromEnv();
 }
 
 async function performStagedSignIn(
@@ -74,6 +69,8 @@ async function performStagedSignIn(
       ),
     );
   }
+
+  await assertInitialLoginPreconditions(page);
 
   await runAuthStep("open landing page", async () => {
     try {
@@ -147,6 +144,22 @@ export async function signInQaUser(
   }
 }
 
+export async function switchQaUserOnPage(
+  page: Page,
+  config: QaConfig,
+  fromLabel: "A" | "B",
+  toLabel: "A" | "B",
+  options: AuthStageOptions & { stepRunner?: import("./auth-steps").StepRunner } = {},
+): Promise<void> {
+  await performSwitchQaUserOnPage(page, config, fromLabel, toLabel, {
+    qaUserIds: options.qaUserIds ?? loadClerkQaUserIdsFromEnv(),
+    deps: options.deps,
+    stepRunner: options.stepRunner ?? playwrightStepRunner,
+  });
+}
+
 export async function signOutQaUser(page: Page): Promise<void> {
   await clerk.signOut({ page });
 }
+
+export { getActiveClerkUserId };

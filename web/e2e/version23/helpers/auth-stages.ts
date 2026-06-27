@@ -9,9 +9,12 @@ export const CLERK_SIGN_IN_TIMEOUT_MS = 60_000;
 export const SAVED_NAV_TIMEOUT_MS = 45_000;
 export const SAVED_UI_TIMEOUT_MS = 60_000;
 
+export const CLERK_SIGN_OUT_TIMEOUT_MS = 30_000;
+
 export type ClerkStageClient = {
   loaded: (options: { page: Page }) => Promise<void>;
   signIn: (options: { page: Page; emailAddress: string }) => Promise<void>;
+  signOut: (options: { page: Page }) => Promise<void>;
 };
 
 export type AuthStageDeps = {
@@ -124,6 +127,61 @@ export async function waitForClerkOnLandingPage(
     const detail = safeAuthErrorDetail(error);
     throw new Error(`${detail} (${diagnostics})`);
   }
+}
+
+export async function getActiveClerkUserId(page: Page): Promise<string | null> {
+  return page.evaluate(async () => {
+    const clerkApi = (
+      window as unknown as {
+        Clerk?: {
+          loaded: Promise<void> | (() => Promise<void>);
+          user?: { id?: string } | null;
+        };
+      }
+    ).Clerk;
+    if (!clerkApi) {
+      return null;
+    }
+    await clerkApi.loaded;
+    return clerkApi.user?.id ?? null;
+  });
+}
+
+export async function waitForNoActiveClerkUser(
+  page: Page,
+  fromLabel: "A" | "B",
+): Promise<void> {
+  try {
+    await page.waitForFunction(
+      () => {
+        const clerkApi = (
+          window as unknown as {
+            Clerk?: { user?: { id?: string } | null };
+          }
+        ).Clerk;
+        return !clerkApi?.user?.id;
+      },
+      undefined,
+      { timeout: CLERK_SIGN_OUT_TIMEOUT_MS },
+    );
+  } catch {
+    throw new Error(
+      `Clerk remained authenticated as User ${fromLabel} after sign-out.`,
+    );
+  }
+}
+
+export async function signOutByClerk(
+  page: Page,
+  fromLabel: "A" | "B",
+  deps: AuthStageDeps = {},
+): Promise<void> {
+  const clerkClient = deps.clerk ?? defaultClerk;
+  await withOperationTimeout(
+    clerkClient.signOut({ page }),
+    CLERK_SIGN_OUT_TIMEOUT_MS,
+    `Clerk sign-out timed out while switching from User ${fromLabel}.`,
+  );
 }
 
 export async function signInByEmail(
