@@ -21,6 +21,8 @@ import {
 import { deleteRecordById } from "./helpers/supabase-admin";
 import { SYNTHETIC_COMPANY, syntheticJob, syntheticResume } from "./helpers/qa-data";
 import {
+  assertUserBPostSwitchIsolation,
+  captureUserBBaselineLoadedCount,
   clickLoadMore,
   expectLoadedCount,
   expectLoadMoreAbsent,
@@ -59,6 +61,7 @@ test.describe("Authentication and two-user RLS isolation", () => {
 
     const userB = await signInQaUser(browser, qaConfig(), "B");
     await gotoSavedWorkspace(userB.page, qaConfig().baseUrl);
+    const userBBaselineLoadedCount = await captureUserBBaselineLoadedCount(userB.page);
     await expectRowVisible(userB.page, `V23 QA ${qaConfig().runId} B`);
     await expect(userB.page.getByText(`V23 QA ${qaConfig().runId} A`)).toHaveCount(0);
     await userA.context.close();
@@ -86,14 +89,25 @@ test.describe("Authentication and two-user RLS isolation", () => {
       await loadMorePromise.catch(() => undefined);
 
       await assertAuthenticatedApplicationState(switchPage, "B");
-      await expect(switchPage.getByText("No analyses selected.")).toBeVisible();
-      await expectLoadedCount(switchPage, 10);
-      await expect(switchPage.getByText(`V23 QA ${qaConfig().runId} A`)).toHaveCount(0);
-      await expectRowVisible(switchPage, `V23 QA ${qaConfig().runId} B`);
+      await assertUserBPostSwitchIsolation(
+        switchPage,
+        qaConfig().runId,
+        userBBaselineLoadedCount,
+      );
 
       if (heldOutcome === "fulfilled") {
-        await expectLoadedCount(switchPage, 10);
+        await expectLoadedCount(switchPage, userBBaselineLoadedCount);
         await expect(switchPage.getByText(`V23 QA ${qaConfig().runId} A`)).toHaveCount(0);
+        await expectRowVisible(switchPage, `V23 QA ${qaConfig().runId} B`);
+      } else if (
+        heldOutcome === "aborted" ||
+        heldOutcome === "canceled-by-navigation"
+      ) {
+        await assertUserBPostSwitchIsolation(
+          switchPage,
+          qaConfig().runId,
+          userBBaselineLoadedCount,
+        );
       }
 
       staleInterceptor.assertSeen(1);

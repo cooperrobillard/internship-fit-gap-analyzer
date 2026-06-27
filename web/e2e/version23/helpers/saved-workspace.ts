@@ -1,6 +1,11 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { SYNTHETIC_COMPANY } from "./qa-data";
 
+/** Current-run seed contract: dedicated QA User B receives exactly one synthetic record. */
+export const USER_B_EXPECTED_BASELINE_LOADED_COUNT = 1;
+
+const LOADED_COUNT_STATUS_PATTERN = /^(\d+) loaded$/;
+
 export async function gotoSavedWorkspace(page: Page, baseUrl: string): Promise<void> {
   await page.goto(`${baseUrl}/dashboard/saved`);
   await expect(page.getByRole("heading", { name: "Saved analyses" })).toBeVisible({
@@ -11,10 +16,71 @@ export async function gotoSavedWorkspace(page: Page, baseUrl: string): Promise<v
   });
 }
 
+export function loadedCountStatus(page: Page): Locator {
+  return page
+    .getByLabel("Saved workspace view")
+    .locator("..")
+    .getByText(LOADED_COUNT_STATUS_PATTERN, { exact: true });
+}
+
+export function parseLoadedCountStatusText(text: string): number {
+  const normalized = text.trim();
+  const match = normalized.match(LOADED_COUNT_STATUS_PATTERN);
+  if (!match) {
+    throw new Error(`Unable to parse loaded-count status: "${normalized}".`);
+  }
+  const value = Number(match[1]);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(
+      `Loaded-count status is not a valid non-negative number: "${normalized}".`,
+    );
+  }
+  return value;
+}
+
+export function assertUserBFixtureBaseline(count: number): void {
+  if (count !== USER_B_EXPECTED_BASELINE_LOADED_COUNT) {
+    throw new Error(
+      `QA User B contains unexpected pre-existing saved analyses; use a dedicated empty QA account. Observed ${count} loaded; expected ${USER_B_EXPECTED_BASELINE_LOADED_COUNT}.`,
+    );
+  }
+}
+
+export async function readLoadedCount(page: Page): Promise<number> {
+  const status = loadedCountStatus(page);
+  await expect(status).toBeVisible({ timeout: 60_000 });
+  const matches = await status.count();
+  if (matches === 0) {
+    throw new Error("Saved workspace loaded-count status is missing.");
+  }
+  if (matches > 1) {
+    throw new Error("Multiple loaded-count statuses found in the Saved workspace.");
+  }
+  const text = (await status.textContent()) ?? "";
+  return parseLoadedCountStatusText(text);
+}
+
+export async function captureUserBBaselineLoadedCount(page: Page): Promise<number> {
+  const count = await readLoadedCount(page);
+  assertUserBFixtureBaseline(count);
+  return count;
+}
+
 export async function expectLoadedCount(page: Page, count: number): Promise<void> {
-  await expect(page.getByText(`${count} loaded`, { exact: true })).toBeVisible({
+  await expect(loadedCountStatus(page)).toHaveText(`${count} loaded`, {
     timeout: 60_000,
   });
+}
+
+export async function assertUserBPostSwitchIsolation(
+  page: Page,
+  runId: string,
+  baselineCount: number,
+): Promise<void> {
+  await expect(page.getByText("No analyses selected.")).toBeVisible();
+  await expectLoadedCount(page, baselineCount);
+  await expect(page.getByText(`V23 QA ${runId} A`)).toHaveCount(0);
+  await expectRowVisible(page, `V23 QA ${runId} B`);
 }
 
 export function escapeRegExp(value: string): string {

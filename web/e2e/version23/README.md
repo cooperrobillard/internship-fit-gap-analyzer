@@ -5,6 +5,7 @@ This folder contains the local-only Playwright production-QA checkpoint for Vers
 ## Prerequisites
 
 - Two dedicated Clerk QA users that contain only synthetic QA data.
+- QA User B must be a dedicated account with no pre-existing saved analyses before seeding. After admin seeding, User B should show exactly `1 loaded` (the current-run isolation record). The RLS isolation test captures that baseline before switching and rejects fixture pollution.
 - Vercel token with read access to inspect the production deployment for `QA_BASE_URL`.
 - Supabase elevated key for local Node-only seeding/cleanup when `QA_SEED_MODE=admin`.
 - Node dependencies installed with `npm install` and Chromium installed with `npm run qa:version23:setup`.
