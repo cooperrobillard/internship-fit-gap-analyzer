@@ -1,10 +1,8 @@
 import { clerk } from "@clerk/testing/playwright";
 import { test, type Browser, type BrowserContext, type Page } from "@playwright/test";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import type { QaConfig } from "./config";
 import {
-  CLERK_QA_USERS_RELATIVE,
+  loadClerkQaUserIdsFromEnv,
   type ClerkQaUserIds,
 } from "./clerk-precheck";
 import {
@@ -53,27 +51,8 @@ async function runAuthStep<T>(
   }
 }
 
-export function loadPersistedQaUserIds(
-  webRoot = process.cwd(),
-): ClerkQaUserIds | undefined {
-  const path = resolve(webRoot, CLERK_QA_USERS_RELATIVE);
-  if (!existsSync(path)) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(readFileSync(path, "utf8")) as ClerkQaUserIds;
-  } catch {
-    return undefined;
-  }
-}
-
 function resolveQaUserIds(options: AuthStageOptions = {}): ClerkQaUserIds {
-  const qaUserIds = options.qaUserIds ?? loadPersistedQaUserIds();
-  if (!qaUserIds) {
-    throw new Error(
-      "Clerk QA user IDs are not available. Run the Clerk authentication precheck before browser sign-in.",
-    );
-  }
+  const qaUserIds = options.qaUserIds ?? loadClerkQaUserIdsFromEnv();
   return qaUserIds;
 }
 
@@ -130,12 +109,7 @@ export async function assertAuthenticatedApplicationState(
   label: "A" | "B",
   qaUserIds?: ClerkQaUserIds,
 ): Promise<void> {
-  const resolvedUserIds = qaUserIds ?? loadPersistedQaUserIds();
-  if (!resolvedUserIds) {
-    throw new Error(
-      "Clerk QA user IDs are not available for authenticated identity verification.",
-    );
-  }
+  const resolvedUserIds = qaUserIds ?? loadClerkQaUserIdsFromEnv();
   await assertSavedAuthenticatedState(page, label, resolvedUserIds);
 }
 

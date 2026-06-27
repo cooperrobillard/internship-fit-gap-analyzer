@@ -5,12 +5,43 @@ export type ClerkQaUserIds = {
   B: string;
 };
 
-export const CLERK_QA_USERS_RELATIVE =
-  "test-results/version23-clerk-qa-users.json";
+export const QA_USER_A_CLERK_ID_ENV = "QA_USER_A_CLERK_ID";
+export const QA_USER_B_CLERK_ID_ENV = "QA_USER_B_CLERK_ID";
 
 type ClerkUserSummary = {
   id: string;
 };
+
+export function setClerkQaUserIdsInEnv(userIds: ClerkQaUserIds): void {
+  process.env[QA_USER_A_CLERK_ID_ENV] = userIds.A;
+  process.env[QA_USER_B_CLERK_ID_ENV] = userIds.B;
+}
+
+export function clearClerkQaUserIdsFromEnv(): void {
+  delete process.env[QA_USER_A_CLERK_ID_ENV];
+  delete process.env[QA_USER_B_CLERK_ID_ENV];
+}
+
+export function loadClerkQaUserIdsFromEnv(): ClerkQaUserIds {
+  const userAId = process.env[QA_USER_A_CLERK_ID_ENV]?.trim();
+  const userBId = process.env[QA_USER_B_CLERK_ID_ENV]?.trim();
+
+  if (!userAId) {
+    throw new Error(
+      "Clerk QA User A ID is not available in the test process environment.",
+    );
+  }
+  if (!userBId) {
+    throw new Error(
+      "Clerk QA User B ID is not available in the test process environment.",
+    );
+  }
+  if (userAId === userBId) {
+    throw new Error("Clerk QA User A and User B IDs must be different.");
+  }
+
+  return { A: userAId, B: userBId };
+}
 
 function clerkEnvironmentFromKey(
   key: string,

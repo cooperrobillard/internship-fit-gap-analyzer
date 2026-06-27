@@ -19,6 +19,10 @@ export default defineConfig({
       testMatch: /clerk\.setup\.ts/,
     },
     {
+      name: "auth-smoke-handoff",
+      testMatch: /auth-smoke-handoff\.spec\.ts/,
+    },
+    {
       name: "auth-smoke",
       testMatch: /auth-smoke\.spec\.ts/,
       dependencies: ["clerk-setup"],

@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  CLERK_QA_USERS_RELATIVE,
+  clearClerkQaUserIdsFromEnv,
+  QA_USER_A_CLERK_ID_ENV,
+  QA_USER_B_CLERK_ID_ENV,
   verifyClerkPrecheck,
 } from "../helpers/clerk-precheck.ts";
 import { loadQaConfig } from "../helpers/config.ts";
@@ -12,10 +13,10 @@ import { loadQaConfig } from "../helpers/config.ts";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const webRoot = resolve(scriptDir, "../../..");
 
-function run(command, args, cwd = webRoot) {
+function run(command, args, env = process.env) {
   const result = spawnSync(command, args, {
-    cwd,
-    env: process.env,
+    cwd: webRoot,
+    env,
     stdio: "inherit",
     shell: false,
   });
@@ -30,21 +31,29 @@ try {
   process.exit(1);
 }
 
+let clerkUserIds;
 try {
-  const clerkUserIds = await verifyClerkPrecheck(config);
-  mkdirSync(resolve(webRoot, "test-results"), { recursive: true });
-  writeFileSync(
-    resolve(webRoot, CLERK_QA_USERS_RELATIVE),
-    JSON.stringify(clerkUserIds, null, 2),
-  );
+  clerkUserIds = await verifyClerkPrecheck(config);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 }
 
-const status = run("npx", [
-  "playwright",
-  "test",
-  "--config=playwright.auth-smoke.config.ts",
-]);
+const childEnv = {
+  ...process.env,
+  [QA_USER_A_CLERK_ID_ENV]: clerkUserIds.A,
+  [QA_USER_B_CLERK_ID_ENV]: clerkUserIds.B,
+};
+
+let status = 1;
+try {
+  status = run(
+    "npx",
+    ["playwright", "test", "--config=playwright.auth-smoke.config.ts"],
+    childEnv,
+  );
+} finally {
+  clearClerkQaUserIdsFromEnv();
+}
+
 process.exit(status);

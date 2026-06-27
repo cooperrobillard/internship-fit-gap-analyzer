@@ -1,8 +1,17 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { verifyClerkPrecheck } from "../helpers/clerk-precheck.ts";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  clearClerkQaUserIdsFromEnv,
+  loadClerkQaUserIdsFromEnv,
+  QA_USER_A_CLERK_ID_ENV,
+  QA_USER_B_CLERK_ID_ENV,
+  setClerkQaUserIdsInEnv,
+  verifyClerkPrecheck,
+} from "../helpers/clerk-precheck.ts";
 import {
   mapLandingNavigationError,
   mapSavedNavigationError,
@@ -15,6 +24,9 @@ import {
 } from "../helpers/auth-stages.ts";
 import { runSetupStages } from "../helpers/setup-stages.ts";
 import { buildReportSections } from "../helpers/report.ts";
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const webRoot = resolve(scriptDir, "../../..");
 
 function assert(condition, message) {
   if (!condition) {
@@ -229,6 +241,177 @@ async function runAuthStageRegression() {
   );
 }
 
+async function runHandoffRegression() {
+  const previousA = process.env[QA_USER_A_CLERK_ID_ENV];
+  const previousB = process.env[QA_USER_B_CLERK_ID_ENV];
+
+  try {
+    setClerkQaUserIdsInEnv({ A: "user_a_handoff", B: "user_b_handoff" });
+    rmSync(resolve(webRoot, "test-results"), { recursive: true, force: true });
+
+    const idsAfterCleanup = loadClerkQaUserIdsFromEnv();
+    assert(
+      idsAfterCleanup.A === "user_a_handoff" && idsAfterCleanup.B === "user_b_handoff",
+      "Playwright output-directory cleanup must not delete env-based Clerk ID handoff",
+    );
+
+    clearClerkQaUserIdsFromEnv();
+    await assertRejects(
+      Promise.resolve().then(() => loadClerkQaUserIdsFromEnv()),
+      "User A ID is not available",
+    );
+
+    process.env[QA_USER_A_CLERK_ID_ENV] = "user_a_only";
+    delete process.env[QA_USER_B_CLERK_ID_ENV];
+    await assertRejects(
+      Promise.resolve().then(() => loadClerkQaUserIdsFromEnv()),
+      "User B ID is not available",
+    );
+
+    process.env[QA_USER_B_CLERK_ID_ENV] = "user_a_only";
+    await assertRejects(
+      Promise.resolve().then(() => loadClerkQaUserIdsFromEnv()),
+      "must be different",
+    );
+
+    const capturedLogs = [];
+    const originalLog = console.log;
+    console.log = (...args) => {
+      capturedLogs.push(args.join(" "));
+    };
+    try {
+      await verifyClerkPrecheck(
+        baseConfig,
+        makeFetchMock([
+          {
+            match: (url) => url === "https://api.clerk.com/v1/instance",
+            respond: async () => ({
+              ok: true,
+              async json() {
+                return { id: "ins_test" };
+              },
+            }),
+          },
+          {
+            match: (url) =>
+              url.startsWith("https://api.clerk.com/v1/users?") &&
+              url.includes(encodeURIComponent(baseConfig.userAEmail)),
+            respond: async () => ({
+              ok: true,
+              async json() {
+                return [{ id: "user_a_secret" }];
+              },
+            }),
+          },
+          {
+            match: (url) =>
+              url.startsWith("https://api.clerk.com/v1/users?") &&
+              url.includes(encodeURIComponent(baseConfig.userBEmail)),
+            respond: async () => ({
+              ok: true,
+              async json() {
+                return [{ id: "user_b_secret" }];
+              },
+            }),
+          },
+        ]),
+      );
+    } finally {
+      console.log = originalLog;
+    }
+    assert(
+      !capturedLogs.some(
+        (line) => line.includes("user_a_secret") || line.includes("user_b_secret"),
+      ),
+      "Clerk user IDs must not be printed",
+    );
+
+    const childEnv = {
+      ...process.env,
+      [QA_USER_A_CLERK_ID_ENV]: "user_a_fake",
+      [QA_USER_B_CLERK_ID_ENV]: "user_b_fake",
+    };
+    const handoffResult = spawnSync(
+      "npx",
+      [
+        "playwright",
+        "test",
+        "e2e/version23/auth-smoke-handoff.spec.ts",
+        "--config=playwright.auth-smoke.config.ts",
+        "--project=auth-smoke-handoff",
+      ],
+      {
+        cwd: webRoot,
+        env: childEnv,
+        encoding: "utf8",
+      },
+    );
+    assert(
+      handoffResult.status === 0,
+      `auth-smoke handoff Playwright spec must pass with fake IDs: ${handoffResult.stderr || handoffResult.stdout}`,
+    );
+
+    let seedCalled = false;
+    const setupConfig = {
+      baseUrl: "https://example.invalid",
+      baseHost: "example.invalid",
+      renderHealthUrl: "https://example.invalid/health",
+      expectedCommit: "deadbeef",
+      clerkPublishableKey: "pk_test",
+      clerkSecretKey: "sk_test",
+      userAEmail: "a@example.invalid",
+      userBEmail: "b@example.invalid",
+      supabaseUrl: "https://example.invalid",
+      supabaseElevatedKey: "sb_secret_test",
+      vercelToken: "token",
+      seedMode: "admin",
+      runId: "handoff-regression-run",
+      manifestPath: join(webRoot, "test-results/version23-manifest-handoff-regression-run.json"),
+      reportPath: join(tmpdir(), "version23-handoff-regression.md"),
+      resultsPath: join(webRoot, "test-results/version23-results.json"),
+      runMetaPath: join(webRoot, "test-results/version23-run-meta.json"),
+    };
+
+    clearClerkQaUserIdsFromEnv();
+    mkdirSync(join(webRoot, "test-results"), { recursive: true });
+    const previousCwd = process.cwd();
+    process.chdir(webRoot);
+    try {
+      const productionIds = await runSetupStages(setupConfig, {
+        verifyVercel: async () => ({ testedCommit: "deadbeef" }),
+        verifyRender: async () => "HTTP 200 status ok",
+        verifyClerkPrecheck: async () => ({ A: "prod_user_a", B: "prod_user_b" }),
+        seedAdminRecords: async () => {
+          seedCalled = true;
+        },
+      });
+      assert(
+        productionIds.clerkUserIds.A === "prod_user_a",
+        "production global setup must expose Clerk IDs through process.env",
+      );
+      assert(
+        process.env[QA_USER_A_CLERK_ID_ENV] === "prod_user_a",
+        "production global setup must set QA_USER_A_CLERK_ID",
+      );
+      assert(
+        process.env[QA_USER_B_CLERK_ID_ENV] === "prod_user_b",
+        "production global setup must set QA_USER_B_CLERK_ID",
+      );
+      assert(seedCalled, "production setup must still seed after Clerk precheck");
+    } finally {
+      process.chdir(previousCwd);
+    }
+  } finally {
+    clearClerkQaUserIdsFromEnv();
+    if (previousA !== undefined) {
+      process.env[QA_USER_A_CLERK_ID_ENV] = previousA;
+    }
+    if (previousB !== undefined) {
+      process.env[QA_USER_B_CLERK_ID_ENV] = previousB;
+    }
+  }
+}
+
 async function runSetupStageRegression() {
   const tempDir = mkdtempSync(join(tmpdir(), "version23-auth-setup-"));
   const webRoot = join(tempDir, "web");
@@ -304,6 +487,7 @@ async function runSetupStageRegression() {
 try {
   await runClerkPrecheckRegression();
   await runAuthStageRegression();
+  await runHandoffRegression();
   await runSetupStageRegression();
   console.log("Version 23 auth regression checks passed.");
 } catch (error) {

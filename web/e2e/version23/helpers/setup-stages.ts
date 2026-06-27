@@ -1,11 +1,10 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import type { QaConfig } from "./config";
 import {
-  CLERK_QA_USERS_RELATIVE,
+  loadClerkQaUserIdsFromEnv,
+  setClerkQaUserIdsInEnv,
   verifyClerkPrecheck,
   type ClerkQaUserIds,
 } from "./clerk-precheck";
-import type { QaConfig } from "./config";
 import { writeReport, writeSetupResult } from "./report";
 import { verifyVercel } from "./vercel";
 
@@ -32,13 +31,6 @@ export type SetupStageDeps = {
   verifyClerkPrecheck: (config: QaConfig) => Promise<ClerkQaUserIds>;
   seedAdminRecords: (config: QaConfig) => Promise<void>;
 };
-
-function persistClerkQaUserIds(userIds: ClerkQaUserIds, webRoot = process.cwd()): void {
-  writeFileSync(
-    resolve(webRoot, CLERK_QA_USERS_RELATIVE),
-    JSON.stringify(userIds, null, 2),
-  );
-}
 
 export async function runSetupStages(
   config: QaConfig,
@@ -85,7 +77,7 @@ export async function runSetupStages(
 
   try {
     const clerkUserIds = await deps.verifyClerkPrecheck(config);
-    persistClerkQaUserIds(clerkUserIds);
+    setClerkQaUserIdsInEnv(clerkUserIds);
     writeSetupResult(
       "Clerk authentication precheck",
       "PASS",
@@ -115,9 +107,7 @@ export async function runSetupStages(
     throw error;
   }
 
-  const clerkUserIds = JSON.parse(
-    readFileSync(resolve(process.cwd(), CLERK_QA_USERS_RELATIVE), "utf8"),
-  ) as ClerkQaUserIds;
+  const clerkUserIds = loadClerkQaUserIdsFromEnv();
 
   return {
     testedCommit: reportExtra.testedCommit,
