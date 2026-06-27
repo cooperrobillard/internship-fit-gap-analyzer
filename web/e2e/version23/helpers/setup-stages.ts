@@ -1,3 +1,10 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  CLERK_QA_USERS_RELATIVE,
+  verifyClerkPrecheck,
+  type ClerkQaUserIds,
+} from "./clerk-precheck";
 import type { QaConfig } from "./config";
 import { writeReport, writeSetupResult } from "./report";
 import { verifyVercel } from "./vercel";
@@ -22,13 +29,25 @@ export async function verifyRender(url: string): Promise<string> {
 export type SetupStageDeps = {
   verifyVercel: (config: QaConfig) => Promise<{ testedCommit: string }>;
   verifyRender: (url: string) => Promise<string>;
+  verifyClerkPrecheck: (config: QaConfig) => Promise<ClerkQaUserIds>;
   seedAdminRecords: (config: QaConfig) => Promise<void>;
 };
+
+function persistClerkQaUserIds(userIds: ClerkQaUserIds, webRoot = process.cwd()): void {
+  writeFileSync(
+    resolve(webRoot, CLERK_QA_USERS_RELATIVE),
+    JSON.stringify(userIds, null, 2),
+  );
+}
 
 export async function runSetupStages(
   config: QaConfig,
   deps: SetupStageDeps,
-): Promise<{ testedCommit: string; renderHealth: string }> {
+): Promise<{
+  testedCommit: string;
+  renderHealth: string;
+  clerkUserIds: ClerkQaUserIds;
+}> {
   const reportExtra: Record<string, string> = {};
 
   try {
@@ -44,6 +63,7 @@ export async function runSetupStages(
       error instanceof Error ? error.message : "unknown failure";
     writeSetupResult("Vercel production commit", "FAIL", message);
     writeSetupResult("Render health", "NOT RUN", "");
+    writeSetupResult("Clerk authentication precheck", "NOT RUN", "");
     writeSetupResult("Synthetic data setup", "NOT RUN", "");
     writeReport(config, reportExtra);
     throw error;
@@ -57,6 +77,24 @@ export async function runSetupStages(
     const message =
       error instanceof Error ? error.message : "unknown failure";
     writeSetupResult("Render health", "FAIL", message);
+    writeSetupResult("Clerk authentication precheck", "NOT RUN", "");
+    writeSetupResult("Synthetic data setup", "NOT RUN", "");
+    writeReport(config, reportExtra);
+    throw error;
+  }
+
+  try {
+    const clerkUserIds = await deps.verifyClerkPrecheck(config);
+    persistClerkQaUserIds(clerkUserIds);
+    writeSetupResult(
+      "Clerk authentication precheck",
+      "PASS",
+      "QA users verified",
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "unknown failure";
+    writeSetupResult("Clerk authentication precheck", "FAIL", message);
     writeSetupResult("Synthetic data setup", "NOT RUN", "");
     writeReport(config, reportExtra);
     throw error;
@@ -77,9 +115,14 @@ export async function runSetupStages(
     throw error;
   }
 
+  const clerkUserIds = JSON.parse(
+    readFileSync(resolve(process.cwd(), CLERK_QA_USERS_RELATIVE), "utf8"),
+  ) as ClerkQaUserIds;
+
   return {
     testedCommit: reportExtra.testedCommit,
     renderHealth: reportExtra.renderHealth,
+    clerkUserIds,
   };
 }
 
@@ -89,6 +132,7 @@ export function defaultSetupStageDeps(
   return {
     verifyVercel: (config) => verifyVercel(config),
     verifyRender,
+    verifyClerkPrecheck: (config) => verifyClerkPrecheck(config),
     seedAdminRecords,
   };
 }

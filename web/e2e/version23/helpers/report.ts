@@ -44,6 +44,7 @@ export const PLAYWRIGHT_RUN_META_RELATIVE =
 const SETUP_SECTIONS = [
   "Vercel production commit",
   "Render health",
+  "Clerk authentication precheck",
   "Synthetic data setup",
 ] as const;
 
@@ -290,13 +291,17 @@ export function buildReportSections(
     }
 
     if (playwright?.errors?.length) {
-      sections.set("Synthetic data setup", {
-        name: "Synthetic data setup",
-        status: "FAIL",
-        detail: sanitizeFailureReason(
-          playwright.errors[0]?.message ?? "Playwright runner error",
-        ),
-      });
+      const runnerError = sanitizeFailureReason(
+        playwright.errors[0]?.message ?? "Playwright runner error",
+      );
+      const authSection = sections.get("Authentication and two-user RLS isolation");
+      if (authSection?.status === "NOT RUN") {
+        sections.set("Authentication and two-user RLS isolation", {
+          name: "Authentication and two-user RLS isolation",
+          status: "FAIL",
+          detail: runnerError,
+        });
+      }
     }
   } else if (preflightFailed) {
     for (const name of SETUP_SECTIONS) {

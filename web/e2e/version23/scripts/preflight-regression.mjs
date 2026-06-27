@@ -101,6 +101,11 @@ function runReportRegression() {
         detail: "",
       },
       "Render health": { name: "Render health", status: "NOT RUN", detail: "" },
+      "Clerk authentication precheck": {
+        name: "Clerk authentication precheck",
+        status: "NOT RUN",
+        detail: "",
+      },
       "Synthetic data setup": {
         name: "Synthetic data setup",
         status: "NOT RUN",

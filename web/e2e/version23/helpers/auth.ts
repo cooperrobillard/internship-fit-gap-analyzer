@@ -1,12 +1,34 @@
 import { clerk } from "@clerk/testing/playwright";
-import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { QaConfig } from "./config";
+import {
+  CLERK_QA_USERS_RELATIVE,
+  type ClerkQaUserIds,
+} from "./clerk-precheck";
+import {
+  assertSavedAuthenticatedState,
+  mapLandingNavigationError,
+  mapSavedNavigationError,
+  navigateToLandingPage,
+  navigateToSavedWorkspace,
+  safeAuthErrorDetail,
+  signInByEmail,
+  waitForClerkOnLandingPage,
+  type AuthStageDeps,
+} from "./auth-stages";
 
 export type SignedInQaUser = {
   context: BrowserContext;
   page: Page;
   label: "A" | "B";
   email: string;
+};
+
+type AuthStageOptions = {
+  qaUserIds?: ClerkQaUserIds;
+  deps?: AuthStageDeps;
 };
 
 function clerkConfigurationMessage(label: "A" | "B", detail: string): string {
@@ -20,32 +42,52 @@ function clerkConfigurationMessage(label: "A" | "B", detail: string): string {
   ].join(" ");
 }
 
-export async function assertAuthenticatedApplicationState(
-  page: Page,
-  label: "A" | "B",
-): Promise<void> {
-  await expect(page.getByRole("button", { name: /open user menu/i })).toBeVisible({
-    timeout: 60_000,
-  });
-  await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
-  await expect(page.getByText("Sign in required")).toHaveCount(0);
-  await expect(page.getByText(/signed in as/i)).toHaveCount(0);
-  if (label !== "A" && label !== "B") {
-    throw new Error(`Unexpected QA user label: ${label}`);
+async function runAuthStep<T>(
+  title: string,
+  body: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await test.step(title, body);
+  } catch {
+    return body();
   }
 }
 
-export async function signInQaUser(
-  browser: Browser,
+export function loadPersistedQaUserIds(
+  webRoot = process.cwd(),
+): ClerkQaUserIds | undefined {
+  const path = resolve(webRoot, CLERK_QA_USERS_RELATIVE);
+  if (!existsSync(path)) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(readFileSync(path, "utf8")) as ClerkQaUserIds;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveQaUserIds(options: AuthStageOptions = {}): ClerkQaUserIds {
+  const qaUserIds = options.qaUserIds ?? loadPersistedQaUserIds();
+  if (!qaUserIds) {
+    throw new Error(
+      "Clerk QA user IDs are not available. Run the Clerk authentication precheck before browser sign-in.",
+    );
+  }
+  return qaUserIds;
+}
+
+async function performStagedSignIn(
+  page: Page,
   config: QaConfig,
   label: "A" | "B",
-): Promise<SignedInQaUser> {
+  options: AuthStageOptions = {},
+): Promise<void> {
   const email = label === "A" ? config.userAEmail : config.userBEmail;
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const qaUserIds = resolveQaUserIds(options);
+  const deps = options.deps ?? {};
 
   if (!process.env.CLERK_SECRET_KEY?.trim()) {
-    await context.close();
     throw new Error(
       clerkConfigurationMessage(
         label,
@@ -54,24 +96,83 @@ export async function signInQaUser(
     );
   }
 
-  try {
-    await page.goto(`${config.baseUrl}/`);
-    await clerk.signIn({
-      page,
-      emailAddress: email,
-    });
-  } catch (error) {
-    await context.close();
-    const detail =
-      error instanceof Error ? error.message : "Unknown Clerk sign-in error";
-    throw new Error(clerkConfigurationMessage(label, detail));
+  await runAuthStep("open landing page", async () => {
+    try {
+      await navigateToLandingPage(page, config, label);
+    } catch (error) {
+      throw mapLandingNavigationError(error, label);
+    }
+  });
+
+  await runAuthStep("wait for Clerk", async () => {
+    await waitForClerkOnLandingPage(page, label, deps);
+  });
+
+  await runAuthStep("sign in by email", async () => {
+    await signInByEmail(page, email, label, deps);
+  });
+
+  await runAuthStep("open Saved", async () => {
+    try {
+      await navigateToSavedWorkspace(page, config);
+    } catch (error) {
+      throw mapSavedNavigationError(error, label);
+    }
+  });
+
+  await runAuthStep("verify identity", async () => {
+    await assertSavedAuthenticatedState(page, label, qaUserIds);
+  });
+}
+
+export async function assertAuthenticatedApplicationState(
+  page: Page,
+  label: "A" | "B",
+  qaUserIds?: ClerkQaUserIds,
+): Promise<void> {
+  const resolvedUserIds = qaUserIds ?? loadPersistedQaUserIds();
+  if (!resolvedUserIds) {
+    throw new Error(
+      "Clerk QA user IDs are not available for authenticated identity verification.",
+    );
   }
+  await assertSavedAuthenticatedState(page, label, resolvedUserIds);
+}
 
-  await page.goto(`${config.baseUrl}/dashboard/saved`);
-  await expect(
-    page.getByRole("heading", { name: "Saved analyses" }),
-  ).toBeVisible({ timeout: 60_000 });
-  await assertAuthenticatedApplicationState(page, label);
+export async function signInQaUserOnPage(
+  page: Page,
+  config: QaConfig,
+  label: "A" | "B",
+  options: AuthStageOptions = {},
+): Promise<void> {
+  try {
+    await performStagedSignIn(page, config, label, options);
+  } catch (error) {
+    const detail = safeAuthErrorDetail(error);
+    throw new Error(clerkConfigurationMessage(label, detail), { cause: error });
+  }
+}
 
-  return { context, page, label, email };
+export async function signInQaUser(
+  browser: Browser,
+  config: QaConfig,
+  label: "A" | "B",
+  options: AuthStageOptions = {},
+): Promise<SignedInQaUser> {
+  const email = label === "A" ? config.userAEmail : config.userBEmail;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await performStagedSignIn(page, config, label, options);
+    return { context, page, label, email };
+  } catch (error) {
+    await context.close().catch(() => undefined);
+    const detail = safeAuthErrorDetail(error);
+    throw new Error(clerkConfigurationMessage(label, detail), { cause: error });
+  }
+}
+
+export async function signOutQaUser(page: Page): Promise<void> {
+  await clerk.signOut({ page });
 }

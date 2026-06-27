@@ -1,8 +1,7 @@
-import { clerk } from "@clerk/testing/playwright";
 import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { loadQaConfig } from "./helpers/config";
-import { assertAuthenticatedApplicationState, signInQaUser } from "./helpers/auth";
+import { assertAuthenticatedApplicationState, signInQaUser, signInQaUserOnPage } from "./helpers/auth";
 import { assertHeader } from "./helpers/csv";
 import { expectNoHorizontalOverflow, expectNoUnsafeText } from "./helpers/assertions";
 import {
@@ -64,8 +63,7 @@ test.describe("Authentication and two-user RLS isolation", () => {
 
     const switchContext = await browser.newContext();
     const switchPage = await switchContext.newPage();
-    await switchPage.goto(`${qaConfig().baseUrl}/`);
-    await clerk.signIn({ page: switchPage, emailAddress: qaConfig().userAEmail });
+    await signInQaUserOnPage(switchPage, qaConfig(), "A");
     await gotoSavedWorkspace(switchPage, qaConfig().baseUrl);
     await assertAuthenticatedApplicationState(switchPage, "A");
     await rowCheckbox(switchPage, titleForUserA(qaConfig(), 0)).check();
@@ -81,7 +79,7 @@ test.describe("Authentication and two-user RLS isolation", () => {
     );
     const loadMorePromise = clickLoadMore(switchPage);
 
-    await clerk.signIn({ page: switchPage, emailAddress: qaConfig().userBEmail });
+    await signInQaUserOnPage(switchPage, qaConfig(), "B");
     await gotoSavedWorkspace(switchPage, qaConfig().baseUrl);
     await assertAuthenticatedApplicationState(switchPage, "B");
     await expect(switchPage.getByText("No analyses selected.")).toBeVisible();

@@ -224,6 +224,7 @@ async function runSetupStageRegression() {
     };
 
     let seedCalled = false;
+    const mockClerkPrecheck = async () => ({ A: "user_a", B: "user_b" });
 
     await assertRejects(
       runSetupStages(qaConfig, {
@@ -231,6 +232,7 @@ async function runSetupStageRegression() {
           throw new Error("Vercel deployment lookup failed with HTTP 404");
         },
         verifyRender: async () => "HTTP 200 status ok",
+        verifyClerkPrecheck: mockClerkPrecheck,
         seedAdminRecords: async () => {
           seedCalled = true;
         },
@@ -250,6 +252,10 @@ async function runSetupStageRegression() {
     assert(
       setup["Render health"]?.status === "NOT RUN",
       "Render health must remain NOT RUN after Vercel failure",
+    );
+    assert(
+      setup["Clerk authentication precheck"]?.status === "NOT RUN",
+      "Clerk authentication precheck must remain NOT RUN after Vercel failure",
     );
     assert(
       setup["Synthetic data setup"]?.status === "NOT RUN",
@@ -277,6 +283,7 @@ async function runSetupStageRegression() {
         verifyRender: async () => {
           throw new Error("Render health failed with HTTP 503");
         },
+        verifyClerkPrecheck: mockClerkPrecheck,
         seedAdminRecords: async () => {
           seedCalled = true;
         },
@@ -297,6 +304,10 @@ async function runSetupStageRegression() {
       "Render failure must be recorded under Render health",
     );
     assert(
+      renderFailureSetup["Clerk authentication precheck"]?.status === "NOT RUN",
+      "Clerk authentication precheck must remain NOT RUN after Render failure",
+    );
+    assert(
       renderFailureSetup["Synthetic data setup"]?.status === "NOT RUN",
       "Synthetic data setup must remain NOT RUN after Render failure",
     );
@@ -308,6 +319,7 @@ async function runSetupStageRegression() {
           testedCommit: baseConfig.expectedCommit,
         }),
         verifyRender: async () => "HTTP 200 status ok",
+        verifyClerkPrecheck: mockClerkPrecheck,
         seedAdminRecords: async () => {
           seedCalled = true;
           throw new Error("Synthetic seed failed");
