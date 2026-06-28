@@ -386,12 +386,29 @@ test.describe("Selection", () => {
 
     const first = titleForUserA(config, 0);
     const eleventh = titleForUserA(config, 10);
+    const firstDetailHeading = page.getByRole("heading", {
+      level: 2,
+      name: first,
+      exact: true,
+    });
+
+    await expect(rowCheckbox(page, first)).not.toBeChecked();
+    await expect(firstDetailHeading).toHaveCount(0);
 
     await rowCheckbox(page, first).check();
-    await expect(page.getByRole("heading", { level: 2, name: first })).toHaveCount(0);
+
+    await expect(rowCheckbox(page, first)).toBeChecked();
+    await expect(firstDetailHeading).toHaveCount(0);
+
     await rowOpenButton(page, first).click();
-    await expect(page.getByRole("heading", { level: 2, name: first })).toBeVisible();
+
+    await expect(firstDetailHeading).toBeVisible();
+    await expect(rowCheckbox(page, first)).toBeChecked();
+
+    await rowCheckbox(page, first).uncheck();
+
     await expect(rowCheckbox(page, first)).not.toBeChecked();
+    await expect(firstDetailHeading).toBeVisible();
 
     await rowCheckbox(page, first).check();
     await rowCheckbox(page, eleventh).check();
@@ -414,6 +431,7 @@ test.describe("Selection", () => {
     await expect(
       page.getByText(/all account analyses|unloaded records/i),
     ).toHaveCount(0);
+    await expectNoUnsafeText(page);
     await context.close();
   });
 });

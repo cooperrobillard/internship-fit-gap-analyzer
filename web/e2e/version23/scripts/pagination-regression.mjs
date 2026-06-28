@@ -1056,6 +1056,177 @@ function runSearchFilterSourceRegression() {
   );
 }
 
+function extractSelectionBlock(specSource) {
+  const startMarker = 'test.describe("Selection"';
+  const endMarker = 'test.describe("Selected CSV"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Selection test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runSelectionSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractSelectionBlock(specSource);
+
+  const initialUncheckedIndex = block.indexOf(
+    "await expect(rowCheckbox(page, first)).not.toBeChecked();",
+  );
+  const initialAbsentDetailIndex = block.indexOf("await expect(firstDetailHeading).toHaveCount(0);");
+  const firstCheckIndex = block.indexOf("await rowCheckbox(page, first).check();");
+  const checkedDetailAbsentIndex = block.indexOf(
+    "await expect(firstDetailHeading).toHaveCount(0);",
+    firstCheckIndex + 1,
+  );
+  const openDetailIndex = block.indexOf("await rowOpenButton(page, first).click();");
+  const detailVisibleIndex = block.indexOf("await expect(firstDetailHeading).toBeVisible();");
+  const checkedAfterOpenIndex = block.indexOf(
+    "await expect(rowCheckbox(page, first)).toBeChecked();",
+    openDetailIndex,
+  );
+  const uncheckIndex = block.indexOf("await rowCheckbox(page, first).uncheck();");
+  const detailVisibleAfterUncheckIndex = block.indexOf(
+    "await expect(firstDetailHeading).toBeVisible();",
+    uncheckIndex,
+  );
+  const recheckIndex = block.indexOf(
+    "await rowCheckbox(page, first).check();",
+    uncheckIndex,
+  );
+  const eleventhCheckIndex = block.indexOf("await rowCheckbox(page, eleventh).check();");
+  const twoSelectedIndex = block.indexOf('await expect(page.getByText("2 analyses selected")).toBeVisible();');
+
+  assert(initialUncheckedIndex >= 0, "Selection test must start with an unchecked first checkbox");
+  assert(
+    initialAbsentDetailIndex > initialUncheckedIndex,
+    "Selection test must assert detail is absent before any checkbox interaction",
+  );
+  assert(
+    firstCheckIndex > initialAbsentDetailIndex,
+    "Selection test must check the first checkbox after the initial absence assertions",
+  );
+  assert(
+    checkedDetailAbsentIndex > firstCheckIndex,
+    "Selection test must assert detail remains absent after checking the checkbox",
+  );
+  assert(
+    openDetailIndex > checkedDetailAbsentIndex,
+    "Selection test must open detail only after checkbox selection is established",
+  );
+  assert(
+    detailVisibleIndex > openDetailIndex &&
+      checkedAfterOpenIndex > detailVisibleIndex,
+    "Selection test must assert detail opens and the checkbox remains checked",
+  );
+
+  const afterOpenSlice = block.slice(openDetailIndex, uncheckIndex);
+  assert(
+    !afterOpenSlice.includes("await expect(rowCheckbox(page, first)).not.toBeChecked();"),
+    "Selection test must not expect the checkbox to clear when detail opens",
+  );
+
+  assert(
+    uncheckIndex > checkedAfterOpenIndex &&
+      detailVisibleAfterUncheckIndex > uncheckIndex &&
+      recheckIndex > detailVisibleAfterUncheckIndex &&
+      eleventhCheckIndex > recheckIndex &&
+      twoSelectedIndex > eleventhCheckIndex,
+    "Selection test must preserve open detail through uncheck and restore two-row selection",
+  );
+
+  assert(
+    block.includes("1 is hidden by the current search or filter"),
+    "Selection test must verify hidden-selection status",
+  );
+  assert(
+    block.includes('getByRole("button", { name: "Clear selection" })'),
+    "Selection test must verify Clear selection",
+  );
+  assert(
+    block.includes('getByLabel("Select all visible")'),
+    "Selection test must verify Select all visible",
+  );
+  assert(
+    block.includes("23 analyses selected"),
+    "Selection test must verify twenty-three current-run selections",
+  );
+  assert(
+    block.includes("all account analyses|unloaded records") &&
+      block.includes("expectNoUnsafeText(page)"),
+    "Selection test must reject misleading account-wide claims and verify privacy",
+  );
+}
+
+async function runBrowserBackedSelectionDetailIndependenceRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const title = "First role";
+    await page.setContent(
+      `<main id="workspace">
+        <label id="row-select">
+          <input type="checkbox" id="row-check" aria-label="Select saved analysis ${title}" />
+          Select
+        </label>
+        <button type="button" id="open-detail" aria-label="Open saved analysis ${title}">
+          Open detail
+        </button>
+        <section id="detail-panel" hidden>
+          <h2>${title}</h2>
+        </section>
+        <script>
+          const checkbox = document.getElementById("row-check");
+          const openButton = document.getElementById("open-detail");
+          const detail = document.getElementById("detail-panel");
+          openButton.addEventListener("click", () => {
+            detail.hidden = false;
+          });
+        </script>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    const structure = await page.evaluate(() => {
+      const workspace = document.getElementById("workspace");
+      const selectLabel = document.getElementById("row-select");
+      const openButton = document.getElementById("open-detail");
+      return {
+        sameParent:
+          selectLabel?.parentElement === openButton?.parentElement &&
+          workspace?.contains(selectLabel) &&
+          workspace?.contains(openButton),
+        nested:
+          selectLabel?.contains(openButton) === true ||
+          openButton?.contains(selectLabel) === true,
+      };
+    });
+    assert(structure.sameParent, "checkbox and detail controls must be sibling elements");
+    assert(!structure.nested, "checkbox and detail controls must not be nested");
+
+    const checkbox = page.getByLabel(`Select saved analysis ${title}`);
+    const detailHeading = page.getByRole("heading", { level: 2, name: title, exact: true });
+
+    await expect(detailHeading).toHaveCount(0);
+    await checkbox.check();
+    await expect(checkbox).toBeChecked();
+    await expect(detailHeading).toHaveCount(0);
+
+    await page.getByRole("button", { name: `Open saved analysis ${title}` }).click();
+    await expect(detailHeading).toBeVisible();
+    await expect(checkbox).toBeChecked();
+
+    await checkbox.uncheck();
+    await expect(checkbox).not.toBeChecked();
+    await expect(detailHeading).toBeVisible();
+  } finally {
+    await browser.close();
+  }
+}
+
 async function runBrowserBackedRowSummaryRegression() {
   const { chromium } = await import("@playwright/test");
   const { readVisibleSavedRowSummaries } = await import(
@@ -1510,6 +1681,7 @@ try {
   runIncrementalFailureSourceRegression();
   runFixtureSourceRegression();
   runSearchFilterSourceRegression();
+  runSelectionSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -1520,6 +1692,7 @@ try {
   await runBrowserBackedExactLoadMoreRequestRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedRowSummaryRegression();
+  await runBrowserBackedSelectionDetailIndependenceRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");
