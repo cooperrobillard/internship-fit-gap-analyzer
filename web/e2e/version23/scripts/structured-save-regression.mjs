@@ -39,6 +39,18 @@ function assertThrows(fn, expectedMessage) {
   }
 }
 
+async function assertRejects(promise, expectedMessage) {
+  try {
+    await promise;
+    throw new Error(`Expected rejection: ${expectedMessage}`);
+  } catch (error) {
+    assert(
+      error instanceof Error && error.message.includes(expectedMessage),
+      `Expected "${expectedMessage}", got "${error instanceof Error ? error.message : error}"`,
+    );
+  }
+}
+
 function runDisclosureLogicRegression() {
   assert(
     shouldClickOptionalJobSummary(false),
@@ -294,6 +306,18 @@ function runSavedDetailFlowRegression() {
     savedDetailSource.includes("Saved Job details disclosure did not open."),
     "saved disclosure opening must fail with a bounded error",
   );
+  assert(
+    !savedDetailSource.includes('has: article.locator("summary")'),
+    "saved Job details disclosure must not use article-rooted summary locators in filter has",
+  );
+  assert(
+    savedDetailSource.includes(':scope > summary'),
+    "saved Job details disclosure must use direct-child summary locators",
+  );
+  assert(
+    savedDetailSource.includes("requireSavedJobDetailsDisclosure"),
+    "saved Job details disclosure must wait for exactly one bounded match",
+  );
 }
 
 function runScopedSkillHeadingRegression() {
@@ -393,6 +417,121 @@ function runScopedSkillHeadingRegression() {
   );
 }
 
+const ANALYSIS_TITLE = "Exact QA analysis title";
+const NOTES_TEXT = "Exact saved QA notes";
+
+function buildSavedDetailFixtureHtml() {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <details>
+      <summary>Optional job details</summary>
+    </details>
+
+    <article hidden>
+      <h2>${ANALYSIS_TITLE}</h2>
+      <details>
+        <summary>Job details · Notes included</summary>
+      </details>
+    </article>
+
+    <article>
+      <h2>${ANALYSIS_TITLE}</h2>
+      <h4>Matched skills (3)</h4>
+      <h4>Missing skills (2)</h4>
+      <details>
+        <summary>Job details · Notes included</summary>
+        <dl>
+          <dt>Notes</dt>
+          <dd><p>${NOTES_TEXT}</p></dd>
+        </dl>
+      </details>
+    </article>
+
+    <article>
+      <h2>Another saved analysis</h2>
+      <details>
+        <summary>Job details</summary>
+      </details>
+    </article>
+  </body>
+</html>`;
+}
+
+async function runBrowserBackedDomRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    openSavedAnalysisJobDetails,
+    requireSavedJobDetailsDisclosure,
+    requireVisibleSavedAnalysisDetailArticle,
+    savedJobDetailsDisclosures,
+    visibleSavedAnalysisDetailArticle,
+  } = await import("../helpers/saved-analysis-detail.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(buildSavedDetailFixtureHtml(), {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expect(
+      visibleSavedAnalysisDetailArticle(page, ANALYSIS_TITLE),
+    ).toHaveCount(1);
+    await expect(page.getByText("Optional job details", { exact: true })).toBeVisible();
+
+    const article = await requireVisibleSavedAnalysisDetailArticle(page, ANALYSIS_TITLE);
+    const disclosures = savedJobDetailsDisclosures(article);
+    await expect(disclosures).toHaveCount(1);
+    await requireSavedJobDetailsDisclosure(article);
+
+    const details = await openSavedAnalysisJobDetails(page, ANALYSIS_TITLE);
+    await expect(details).toHaveAttribute("open", "");
+    await expect(details.getByText(NOTES_TEXT, { exact: true })).toBeVisible();
+
+    await openSavedAnalysisJobDetails(page, ANALYSIS_TITLE);
+    await expect(details).toHaveAttribute("open", "");
+    await expect(details.getByText(NOTES_TEXT, { exact: true })).toBeVisible();
+
+    const plainSummaryPage = await browser.newPage();
+    await plainSummaryPage.setContent(
+      `<article><h2>${ANALYSIS_TITLE}</h2><details><summary>Job details</summary><dl><dt>Notes</dt><dd><p>${NOTES_TEXT}</p></dd></dl></details></article>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    const plainDetails = await openSavedAnalysisJobDetails(
+      plainSummaryPage,
+      ANALYSIS_TITLE,
+    );
+    await expect(plainDetails).toHaveAttribute("open", "");
+    await expect(plainDetails.getByText(NOTES_TEXT, { exact: true })).toBeVisible();
+    await plainSummaryPage.close();
+
+    const missingPage = await browser.newPage();
+    await missingPage.setContent(
+      `<article><h2>${ANALYSIS_TITLE}</h2></article>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertRejects(
+      openSavedAnalysisJobDetails(missingPage, ANALYSIS_TITLE),
+      "Saved Job details disclosure was not found.",
+    );
+    await missingPage.close();
+
+    const duplicatePage = await browser.newPage();
+    await duplicatePage.setContent(
+      `<article><h2>${ANALYSIS_TITLE}</h2><details><summary>Job details</summary></details><details><summary>Job details · Notes included</summary></details></article>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertRejects(
+      openSavedAnalysisJobDetails(duplicatePage, ANALYSIS_TITLE),
+      "Multiple saved Job details disclosures were found.",
+    );
+    await duplicatePage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
 try {
   runDisclosureLogicRegression();
   runScopedLocatorRegression();
@@ -403,6 +542,7 @@ try {
   runSavedJobDetailsRegression();
   runSavedDetailFlowRegression();
   runScopedSkillHeadingRegression();
+  await runBrowserBackedDomRegression();
   console.log("Version 23 structured-save regression checks passed.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

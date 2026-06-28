@@ -85,32 +85,56 @@ export function missingSkillsHeading(article: Locator): Locator {
   });
 }
 
-export function savedJobDetailsDisclosure(article: Locator): Locator {
+export function savedJobDetailsDisclosures(article: Locator): Locator {
+  const relativeSummary = article
+    .page()
+    .locator(":scope > summary")
+    .filter({
+      hasText: SAVED_JOB_DETAILS_SUMMARY_PATTERN,
+    });
+
   return article
     .locator("details")
     .filter({
-      has: article.locator("summary").filter({
-        hasText: SAVED_JOB_DETAILS_SUMMARY_PATTERN,
-      }),
+      has: relativeSummary,
     })
     .filter({ visible: true });
 }
+
+export function savedJobDetailsDirectSummary(disclosure: Locator): Locator {
+  return disclosure.locator(":scope > summary");
+}
+
+export async function requireSavedJobDetailsDisclosure(
+  article: Locator,
+): Promise<Locator> {
+  const disclosures = savedJobDetailsDisclosures(article);
+  try {
+    await expect(disclosures).toHaveCount(1, {
+      timeout: SAVED_JOB_DETAILS_DISCLOSURE_TIMEOUT_MS,
+    });
+  } catch {
+    validateSavedJobDetailsDisclosureCount(await disclosures.count());
+  }
+  return disclosures.first();
+}
+
+/** @deprecated Use savedJobDetailsDisclosures */
+export const savedJobDetailsDisclosure = savedJobDetailsDisclosures;
 
 export async function openSavedAnalysisJobDetails(
   page: Page,
   analysisTitle: string,
 ): Promise<Locator> {
   const article = await requireVisibleSavedAnalysisDetailArticle(page, analysisTitle);
-  const disclosures = savedJobDetailsDisclosure(article);
-  validateSavedJobDetailsDisclosureCount(await disclosures.count());
-
-  const details = disclosures.first();
+  const details = await requireSavedJobDetailsDisclosure(article);
+  const summary = savedJobDetailsDirectSummary(details);
   const isOpen = await details.evaluate(
     (element) => (element as HTMLDetailsElement).open,
   );
 
   if (shouldClickOptionalJobSummary(isOpen)) {
-    await details.locator("summary").click({
+    await summary.click({
       timeout: SAVED_JOB_DETAILS_DISCLOSURE_TIMEOUT_MS,
     });
   }
