@@ -8,7 +8,11 @@ import {
   validateOptionalJobDisclosureCount,
 } from "../helpers/analysis-form.ts";
 import {
+  MATCHED_SKILLS_HEADING_PATTERN,
+  MISSING_SKILLS_HEADING_PATTERN,
   SAVED_JOB_DETAILS_SUMMARY_PATTERN,
+  isMatchedSkillsHeading,
+  isMissingSkillsHeading,
   isSavedJobDetailsSummary,
   validateSavedJobDetailsDisclosureCount,
   validateVisibleSavedAnalysisArticleCount,
@@ -292,6 +296,103 @@ function runSavedDetailFlowRegression() {
   );
 }
 
+function runScopedSkillHeadingRegression() {
+  const flowsSource = readFileSync(join(helpersDir, "flows.ts"), "utf8");
+  const savedDetailSource = readFileSync(
+    join(helpersDir, "saved-analysis-detail.ts"),
+    "utf8",
+  );
+
+  assert(
+    flowsSource.includes("requireVisibleSavedAnalysisDetailArticle(page, uiTitle)"),
+    "saved title verification must resolve the exact visible article",
+  );
+  assert(
+    flowsSource.includes("article.getByText(SYNTHETIC_COMPANY"),
+    "company verification must be scoped to the saved-analysis article",
+  );
+  assert(
+    flowsSource.includes("matchedSkillsHeading(article)"),
+    "Matched skills must use a scoped level-four heading locator",
+  );
+  assert(
+    flowsSource.includes("missingSkillsHeading(article)"),
+    "Missing skills must use a scoped level-four heading locator",
+  );
+  assert(
+    !flowsSource.includes("page.getByText(/Matched skills/i).first()"),
+    "page-wide Matched skills locator must be removed",
+  );
+  assert(
+    !flowsSource.includes("page.getByText(/Missing skills/i).first()"),
+    "page-wide Missing skills locator must be removed",
+  );
+  assert(
+    savedDetailSource.includes('level: 4'),
+    "skill headings must use semantic level-four heading locators",
+  );
+  assert(
+    savedDetailSource.includes("MATCHED_SKILLS_HEADING_PATTERN"),
+    "Matched skills heading pattern must be anchored",
+  );
+  assert(
+    savedDetailSource.includes("MISSING_SKILLS_HEADING_PATTERN"),
+    "Missing skills heading pattern must be anchored",
+  );
+
+  assert(isMatchedSkillsHeading("Matched skills (3)"), "Matched skills count headings must match");
+  assert(isMissingSkillsHeading("Missing skills (4)"), "Missing skills count headings must match");
+  assert(
+    !isMissingSkillsHeading("Has missing skills"),
+    "filter option Has missing skills must not match Missing skills heading pattern",
+  );
+  assert(
+    !isMatchedSkillsHeading("Matched 3 · Missing 4"),
+    "summary metadata must not match Matched skills heading pattern",
+  );
+  assert(
+    !isMissingSkillsHeading("Matched 3 · Missing 4"),
+    "summary metadata must not match Missing skills heading pattern",
+  );
+  assert(
+    MATCHED_SKILLS_HEADING_PATTERN.test("Matched skills (0)"),
+    "anchored Matched skills pattern must accept numeric counts",
+  );
+  assert(
+    MISSING_SKILLS_HEADING_PATTERN.test("Missing skills (12)"),
+    "anchored Missing skills pattern must accept numeric counts",
+  );
+
+  const filterOption = "Has missing skills";
+  const articleHeading = "Missing skills (2)";
+  assert(
+    !isMissingSkillsHeading(filterOption) && isMissingSkillsHeading(articleHeading),
+    "hidden filter option text outside the article cannot satisfy the Missing skills heading pattern",
+  );
+
+  const articleMarker = flowsSource.indexOf("requireVisibleSavedAnalysisDetailArticle(page, uiTitle)");
+  const matchedMarker = flowsSource.indexOf("matchedSkillsHeading(article)");
+  const missingMarker = flowsSource.indexOf("missingSkillsHeading(article)");
+  const openSavedMarker = flowsSource.indexOf("openSavedAnalysisJobDetails(page, uiTitle)");
+  const notesMarker = flowsSource.indexOf("jobDetails.getByText(uiNotes");
+  const privacyMarker = flowsSource.indexOf('page.getByText("Demo Candidate")');
+  const manifestMarker = flowsSource.indexOf("await discoverAndAppendUiRecord");
+
+  assert(articleMarker >= 0, "article resolution must precede scoped assertions");
+  assert(matchedMarker > articleMarker, "Matched skills must be verified within the article");
+  assert(missingMarker > matchedMarker, "Missing skills must follow Matched skills verification");
+  assert(
+    openSavedMarker > missingMarker,
+    "saved Job details helper must still run after skill verification",
+  );
+  assert(notesMarker > openSavedMarker, "scoped Notes verification must follow saved Job details");
+  assert(privacyMarker > notesMarker, "privacy assertions must remain after Notes verification");
+  assert(
+    manifestMarker > privacyMarker,
+    "manifest append must remain after privacy verification",
+  );
+}
+
 try {
   runDisclosureLogicRegression();
   runScopedLocatorRegression();
@@ -301,6 +402,7 @@ try {
   runNoForceFillRegression();
   runSavedJobDetailsRegression();
   runSavedDetailFlowRegression();
+  runScopedSkillHeadingRegression();
   console.log("Version 23 structured-save regression checks passed.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

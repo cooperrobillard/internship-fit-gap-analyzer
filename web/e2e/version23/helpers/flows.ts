@@ -13,7 +13,12 @@ import {
   fillOptionalJobMetadata,
   openOptionalJobDetails,
 } from "./analysis-form";
-import { openSavedAnalysisJobDetails } from "./saved-analysis-detail";
+import {
+  matchedSkillsHeading,
+  missingSkillsHeading,
+  openSavedAnalysisJobDetails,
+  requireVisibleSavedAnalysisDetailArticle,
+} from "./saved-analysis-detail";
 import {
   clickLoadMore,
   deleteDownload,
@@ -82,10 +87,13 @@ export async function runStructuredSaveFlow(
     await gotoSavedWorkspace(page, config.baseUrl);
     await openAnalysisDetail(page, uiTitle);
 
-    await expect(page.getByRole("heading", { level: 2, name: uiTitle })).toBeVisible();
-    await expect(page.getByText(SYNTHETIC_COMPANY).first()).toBeVisible();
-    await expect(page.getByText(/Matched skills/i).first()).toBeVisible();
-    await expect(page.getByText(/Missing skills/i).first()).toBeVisible();
+    const article = await requireVisibleSavedAnalysisDetailArticle(page, uiTitle);
+    await expect(
+      article.getByRole("heading", { level: 2, name: uiTitle, exact: true }),
+    ).toBeVisible();
+    await expect(article.getByText(SYNTHETIC_COMPANY, { exact: true })).toBeVisible();
+    await expect(matchedSkillsHeading(article)).toBeVisible();
+    await expect(missingSkillsHeading(article)).toBeVisible();
 
     const jobDetails = await openSavedAnalysisJobDetails(page, uiTitle);
     await expect(jobDetails.getByText(uiNotes, { exact: true })).toBeVisible();

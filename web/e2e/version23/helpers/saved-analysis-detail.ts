@@ -2,12 +2,24 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { shouldClickOptionalJobSummary } from "./analysis-form";
 
 export const SAVED_JOB_DETAILS_DISCLOSURE_TIMEOUT_MS = 15_000;
+export const SAVED_ARTICLE_RESOLVE_TIMEOUT_MS = 15_000;
 
 export const SAVED_JOB_DETAILS_SUMMARY_PATTERN =
   /^Job details(?: · Notes included)?$/;
 
+export const MATCHED_SKILLS_HEADING_PATTERN = /^Matched skills \(\d+\)$/;
+export const MISSING_SKILLS_HEADING_PATTERN = /^Missing skills \(\d+\)$/;
+
 export function isSavedJobDetailsSummary(text: string): boolean {
   return SAVED_JOB_DETAILS_SUMMARY_PATTERN.test(text.trim());
+}
+
+export function isMatchedSkillsHeading(name: string): boolean {
+  return MATCHED_SKILLS_HEADING_PATTERN.test(name.trim());
+}
+
+export function isMissingSkillsHeading(name: string): boolean {
+  return MISSING_SKILLS_HEADING_PATTERN.test(name.trim());
 }
 
 export function validateVisibleSavedAnalysisArticleCount(count: number): void {
@@ -44,6 +56,35 @@ export function visibleSavedAnalysisDetailArticle(
     .filter({ visible: true });
 }
 
+export async function requireVisibleSavedAnalysisDetailArticle(
+  page: Page,
+  analysisTitle: string,
+): Promise<Locator> {
+  const articles = visibleSavedAnalysisDetailArticle(page, analysisTitle);
+  try {
+    await expect(articles).toHaveCount(1, {
+      timeout: SAVED_ARTICLE_RESOLVE_TIMEOUT_MS,
+    });
+  } catch {
+    validateVisibleSavedAnalysisArticleCount(await articles.count());
+  }
+  return articles.first();
+}
+
+export function matchedSkillsHeading(article: Locator): Locator {
+  return article.getByRole("heading", {
+    level: 4,
+    name: MATCHED_SKILLS_HEADING_PATTERN,
+  });
+}
+
+export function missingSkillsHeading(article: Locator): Locator {
+  return article.getByRole("heading", {
+    level: 4,
+    name: MISSING_SKILLS_HEADING_PATTERN,
+  });
+}
+
 export function savedJobDetailsDisclosure(article: Locator): Locator {
   return article
     .locator("details")
@@ -59,10 +100,7 @@ export async function openSavedAnalysisJobDetails(
   page: Page,
   analysisTitle: string,
 ): Promise<Locator> {
-  const articles = visibleSavedAnalysisDetailArticle(page, analysisTitle);
-  validateVisibleSavedAnalysisArticleCount(await articles.count());
-
-  const article = articles.first();
+  const article = await requireVisibleSavedAnalysisDetailArticle(page, analysisTitle);
   const disclosures = savedJobDetailsDisclosure(article);
   validateSavedJobDetailsDisclosureCount(await disclosures.count());
 
