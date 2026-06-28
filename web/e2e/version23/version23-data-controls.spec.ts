@@ -25,10 +25,10 @@ import {
   captureUserBBaselineLoadedCount,
   clickLoadMore,
   expectLoadedCount,
-  expectLoadMoreAbsent,
   expectRowAbsent,
   expectRowVisible,
   expectVisibleCountSummary,
+  loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
   rowCheckbox,
@@ -137,6 +137,7 @@ test.describe("Pagination", () => {
 
     const userARecords = recordsForOwner(readManifest(qaConfig().manifestPath), "A");
     expect(userARecords).toHaveLength(23);
+    expect(new Set(userARecords.map((record) => record.id)).size).toBe(23);
 
     await expectLoadedCount(page, 10);
     const beforeMore = await page
@@ -149,11 +150,12 @@ test.describe("Pagination", () => {
       );
     expect(beforeMore).toHaveLength(10);
 
-    await clickLoadMore(page);
-    await expect(page.getByText("Loaded 10 more analyses.")).toBeVisible({
-      timeout: 60_000,
+    await loadMoreAndExpectSuccess(page, {
+      beforeCount: 10,
+      expectedAddedCount: 10,
+      expectedTotalCount: 20,
+      expectMoreAvailable: true,
     });
-    await expectLoadedCount(page, 20);
     const afterFirstMore = await page
       .getByRole("button", { name: /^Open saved analysis / })
       .evaluateAll((elements) =>
@@ -167,12 +169,12 @@ test.describe("Pagination", () => {
     }
     expect(new Set(afterFirstMore).size).toBe(20);
 
-    await clickLoadMore(page);
-    await expect(page.getByText("Loaded 3 more analyses.")).toBeVisible({
-      timeout: 60_000,
+    await loadMoreAndExpectSuccess(page, {
+      beforeCount: 20,
+      expectedAddedCount: 3,
+      expectedTotalCount: 23,
+      expectMoreAvailable: false,
     });
-    await expectLoadedCount(page, 23);
-    await expectLoadMoreAbsent(page);
     await verifyPaginationOrdering(page, qaConfig());
     await context.close();
   });

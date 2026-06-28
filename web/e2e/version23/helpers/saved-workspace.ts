@@ -6,6 +6,78 @@ export const USER_B_EXPECTED_BASELINE_LOADED_COUNT = 1;
 
 const LOADED_COUNT_STATUS_PATTERN = /^(\d+) loaded$/;
 
+export const LOAD_MORE_SUCCESS_TIMEOUT_MS = 60_000;
+export const LOAD_MORE_ALERT_MESSAGE =
+  "Could not load more analyses. Your currently loaded analyses are still available. Try again.";
+
+export const PAGINATION_SUCCESS_STATUS_PATTERN =
+  /^Loaded (\d+) more (analysis|analyses)\. (\d+) (analysis|analyses) loaded\.(?: No more saved analyses to load\.)?$/;
+
+export type LoadMoreSuccessOptions = {
+  beforeCount: number;
+  expectedAddedCount: number;
+  expectedTotalCount: number;
+  expectMoreAvailable: boolean;
+};
+
+export function pluralizeAnalysisWord(count: number): "analysis" | "analyses" {
+  return count === 1 ? "analysis" : "analyses";
+}
+
+export function formatLoadedMorePhrase(addedCount: number): string {
+  return `Loaded ${addedCount} more ${pluralizeAnalysisWord(addedCount)}.`;
+}
+
+export function formatTotalLoadedPhrase(totalCount: number): string {
+  return `${totalCount} ${pluralizeAnalysisWord(totalCount)} loaded.`;
+}
+
+export function formatPaginationSuccessStatus(options: {
+  addedCount: number;
+  totalCount: number;
+  expectMoreAvailable: boolean;
+}): string {
+  const { addedCount, totalCount, expectMoreAvailable } = options;
+  const noMoreSuffix = expectMoreAvailable
+    ? ""
+    : " No more saved analyses to load.";
+  return `${formatLoadedMorePhrase(addedCount)} ${formatTotalLoadedPhrase(totalCount)}${noMoreSuffix}`;
+}
+
+export function parsePaginationSuccessStatus(text: string): {
+  addedCount: number;
+  totalCount: number;
+  hasNoMoreSuffix: boolean;
+} {
+  const normalized = text.trim();
+  const match = normalized.match(PAGINATION_SUCCESS_STATUS_PATTERN);
+  if (!match) {
+    throw new Error(`Unable to parse pagination status: "${normalized}".`);
+  }
+  return {
+    addedCount: Number(match[1]),
+    totalCount: Number(match[3]),
+    hasNoMoreSuffix: normalized.endsWith("No more saved analyses to load."),
+  };
+}
+
+export function validateUniqueSavedRowTitles(titles: string[], expectedTotalCount: number): void {
+  if (titles.length !== expectedTotalCount) {
+    throw new Error(
+      `Expected ${expectedTotalCount} visible saved rows; observed ${titles.length}.`,
+    );
+  }
+  if (new Set(titles).size !== expectedTotalCount) {
+    throw new Error(
+      `Expected ${expectedTotalCount} unique saved rows; observed duplicate titles.`,
+    );
+  }
+}
+
+export function paginationStatus(page: Page): Locator {
+  return page.locator("#saved-analyses-pagination-status");
+}
+
 export async function gotoSavedWorkspace(page: Page, baseUrl: string): Promise<void> {
   await page.goto(`${baseUrl}/dashboard/saved`);
   await expect(page.getByRole("heading", { name: "Saved analyses" })).toBeVisible({
@@ -113,6 +185,87 @@ export async function clickLoadMore(page: Page): Promise<void> {
   const button = page.getByRole("button", { name: "Load more analyses" });
   await expect(button).toBeEnabled();
   await button.click();
+}
+
+export async function loadMoreAndExpectSuccess(
+  page: Page,
+  options: LoadMoreSuccessOptions,
+): Promise<void> {
+  const {
+    beforeCount,
+    expectedAddedCount,
+    expectedTotalCount,
+    expectMoreAvailable,
+  } = options;
+
+  await expectLoadedCount(page, beforeCount);
+
+  const loadMoreButton = page.getByRole("button", { name: "Load more analyses" });
+  await expect(loadMoreButton).toHaveCount(1);
+  await expect(loadMoreButton).toBeEnabled();
+
+  const status = paginationStatus(page);
+  await expect(status).toHaveCount(1);
+  const previousStatus = ((await status.textContent()) ?? "").trim();
+
+  await loadMoreButton.click();
+
+  const loadMoreAlert = page.getByRole("alert").filter({
+    hasText: LOAD_MORE_ALERT_MESSAGE,
+  });
+
+  try {
+    await expect
+      .poll(
+        async () => {
+          if (await loadMoreAlert.isVisible().catch(() => false)) {
+            throw new Error(
+              "Load more failed with an error alert instead of completing successfully.",
+            );
+          }
+          return readLoadedCount(page);
+        },
+        { timeout: LOAD_MORE_SUCCESS_TIMEOUT_MS },
+      )
+      .toBe(expectedTotalCount);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("error alert")) {
+      throw error;
+    }
+    const currentCount = await readLoadedCount(page).catch(() => -1);
+    const statusText = ((await status.textContent()) ?? "").trim();
+    throw new Error(
+      `Load more did not reach ${expectedTotalCount} loaded. Current loaded count: ${currentCount}. Pagination status: "${statusText}".`,
+      { cause: error },
+    );
+  }
+
+  await expectLoadedCount(page, expectedTotalCount);
+
+  const titles = await readVisibleTitles(page);
+  validateUniqueSavedRowTitles(titles, expectedTotalCount);
+
+  const expectedStatusText = formatPaginationSuccessStatus({
+    addedCount: expectedAddedCount,
+    totalCount: expectedTotalCount,
+    expectMoreAvailable,
+  });
+  await expect(status).toHaveText(expectedStatusText, {
+    timeout: LOAD_MORE_SUCCESS_TIMEOUT_MS,
+  });
+
+  const currentStatus = ((await status.textContent()) ?? "").trim();
+  if (currentStatus === previousStatus) {
+    throw new Error("Pagination status did not change after a successful load more.");
+  }
+
+  if (expectMoreAvailable) {
+    await expect(loadMoreButton).toBeVisible();
+    await expect(loadMoreButton).toBeEnabled();
+  } else {
+    await expectLoadMoreAbsent(page);
+    await expect(status).toContainText("No more saved analyses to load.");
+  }
 }
 
 export async function expectLoadMoreAbsent(page: Page): Promise<void> {

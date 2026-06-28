@@ -20,10 +20,9 @@ import {
   requireVisibleSavedAnalysisDetailArticle,
 } from "./saved-analysis-detail";
 import {
-  clickLoadMore,
   deleteDownload,
   expectLoadedCount,
-  expectLoadMoreAbsent,
+  loadMoreAndExpectSuccess,
   expectRowAbsent,
   expectRowVisible,
   gotoSavedWorkspace,
@@ -112,17 +111,18 @@ export async function runStructuredSaveFlow(
 
 export async function loadAllUserARecords(page: Page): Promise<void> {
   await expectLoadedCount(page, 10);
-  await clickLoadMore(page);
-  await expect(page.getByText("Loaded 10 more analyses.")).toBeVisible({
-    timeout: 60_000,
+  await loadMoreAndExpectSuccess(page, {
+    beforeCount: 10,
+    expectedAddedCount: 10,
+    expectedTotalCount: 20,
+    expectMoreAvailable: true,
   });
-  await expectLoadedCount(page, 20);
-  await clickLoadMore(page);
-  await expect(page.getByText("Loaded 3 more analyses.")).toBeVisible({
-    timeout: 60_000,
+  await loadMoreAndExpectSuccess(page, {
+    beforeCount: 20,
+    expectedAddedCount: 3,
+    expectedTotalCount: 23,
+    expectMoreAvailable: false,
   });
-  await expectLoadedCount(page, 23);
-  await expectLoadMoreAbsent(page);
 }
 
 export async function exportSelectedCsv(page: Page) {

@@ -17,6 +17,7 @@
     "qa:version23:loaded-count:regression": "tsx e2e/version23/scripts/loaded-count-regression.mjs",
     "qa:version23:held-interceptor:regression": "tsx e2e/version23/scripts/held-interceptor-regression.mjs",
     "qa:version23:structured-save:regression": "tsx e2e/version23/scripts/structured-save-regression.mjs",
+    "qa:version23:pagination:regression": "tsx e2e/version23/scripts/pagination-regression.mjs",
     "qa:version23:auth:smoke": "tsx e2e/version23/scripts/auth-smoke.mjs",
     "qa:version23:production": "tsx e2e/version23/scripts/run-production.mjs",
     "qa:version23:report": "tsx e2e/version23/scripts/report.mjs",
