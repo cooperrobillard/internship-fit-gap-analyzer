@@ -176,15 +176,26 @@ test.describe("Pagination", () => {
 
 test.describe("Incremental failure and retry", () => {
   test("Incremental failure and retry", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
     await expectLoadedCount(page, 10);
 
-    const targetTitle = titleForUserA(qaConfig(), 5);
+    const targetTitle = titleForUserA(config, 5);
     await rowCheckbox(page, targetTitle).check();
-    await setSearchQuery(page, "pagination");
     await openAnalysisDetail(page, targetTitle);
-    await switchWorkspaceView(page, "Compare");
+    await setSearchQuery(page, targetTitle);
+
+    await expectVisibleCountSummary(page, 1, 10);
+    await expectRowVisible(page, targetTitle);
+    await expect(rowCheckbox(page, targetTitle)).toBeChecked();
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: targetTitle,
+        exact: true,
+      }),
+    ).toBeVisible();
 
     const interceptor = await interceptNext(page, isSavedList, (route) =>
       route.abort("failed"),
@@ -194,18 +205,44 @@ test.describe("Incremental failure and retry", () => {
       "Could not load more analyses. Your currently loaded analyses are still available. Try again.",
     );
     interceptor.assertSeen(1);
+    await expectLoadedCount(page, 10);
 
     await expectRowVisible(page, targetTitle);
     await expect(rowCheckbox(page, targetTitle)).toBeChecked();
     await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
-      "pagination",
+      targetTitle,
     );
-    await expect(page.getByRole("heading", { level: 2, name: targetTitle })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: targetTitle,
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Load more analyses" }),
+    ).toBeVisible();
     await expectNoUnsafeText(page);
 
     await interceptor.unroute();
     await clickLoadMore(page);
     await expectLoadedCount(page, 20);
+    await expectVisibleCountSummary(page, 1, 20);
+    await expectRowVisible(page, targetTitle);
+    await expect(rowCheckbox(page, targetTitle)).toBeChecked();
+    await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
+      targetTitle,
+    );
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: targetTitle,
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await setSearchQuery(page, "");
+    await expectVisibleCountSummary(page, 20, 20);
     const visibleCount = await savedAnalysisOpenButtons(page).count();
     expect(visibleCount).toBe(20);
     await context.close();

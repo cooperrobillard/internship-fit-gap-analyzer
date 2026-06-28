@@ -367,6 +367,90 @@ function runSourceRegression() {
   );
 }
 
+function extractIncrementalFailureBlock(specSource) {
+  const startMarker = 'test.describe("Incremental failure and retry"';
+  const endMarker = 'test.describe("Search and filters across pages"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Incremental failure and retry test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runIncrementalFailureSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractIncrementalFailureBlock(specSource);
+
+  assert(
+    block.includes("interceptNext(page, isSavedList"),
+    "incremental failure test must keep its intentional interceptor path",
+  );
+  assert(
+    block.includes("titleForUserA(config, 5)"),
+    "incremental failure test must use a currently loaded target",
+  );
+
+  const openDetailIndex = block.indexOf("openAnalysisDetail(page, targetTitle)");
+  const setSearchIndex = block.indexOf("setSearchQuery(page, targetTitle)");
+  assert(
+    openDetailIndex >= 0 && setSearchIndex > openDetailIndex,
+    "incremental failure test must open the target before applying the matching search",
+  );
+  assert(
+    !block.includes('setSearchQuery(page, "pagination")'),
+    'incremental failure test must not use "pagination" to filter the A 06 target',
+  );
+  assert(
+    !block.includes('switchWorkspaceView(page, "Compare")'),
+    "incremental failure test must not switch to Compare before Load More",
+  );
+  assert(
+    block.includes("await expectLoadedCount(page, 10)"),
+    "incremental failure test must verify the failed request leaves 10 loaded records",
+  );
+  assert(
+    block.includes("toBeChecked()"),
+    "incremental failure test must verify selection remains checked",
+  );
+  assert(
+    block.includes("toHaveValue(\n      targetTitle,") ||
+      block.includes("toHaveValue(targetTitle)"),
+    "incremental failure test must verify the search value remains",
+  );
+  assert(
+    block.includes("exact: true"),
+    "incremental failure test must verify the detail heading remains visible",
+  );
+  assert(
+    block.includes("interceptor.unroute()"),
+    "incremental failure test must unroute before retry",
+  );
+  assert(
+    block.includes("await expectLoadedCount(page, 20)"),
+    "incremental failure test must reach 20 loaded records after retry",
+  );
+  assert(
+    block.includes("expectVisibleCountSummary(page, 1, 20)"),
+    "incremental failure test must verify 1 of 20 while the unique search remains active",
+  );
+
+  const clearSearchIndex = block.indexOf('setSearchQuery(page, "")');
+  const twentyRowsIndex = block.indexOf("expect(visibleCount).toBe(20)");
+  assert(
+    clearSearchIndex >= 0 && twentyRowsIndex > clearSearchIndex,
+    "incremental failure test must clear search before asserting 20 rendered saved rows",
+  );
+  assert(
+    block.includes("expectNoUnsafeText(page)"),
+    "incremental failure test must keep privacy coverage",
+  );
+  assert(
+    !block.includes("test.setTimeout") && !block.includes("timeout:"),
+    "incremental failure test must not increase the full test timeout",
+  );
+}
+
 function buildSavedRowButtonHtml({
   title,
   company,
@@ -705,6 +789,7 @@ try {
   runParsingRegression();
   runUniquenessRegression();
   runSourceRegression();
+  runIncrementalFailureSourceRegression();
   await runBrowserBackedPaginationRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedOrderingRegression();
