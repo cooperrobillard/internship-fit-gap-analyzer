@@ -30,6 +30,7 @@ import {
   expectRowAbsent,
   expectRowVisible,
   expectVisibleCountSummary,
+  expectSelectionStatus,
   loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
@@ -602,21 +603,14 @@ test.describe("Selected-deletion cancel path", () => {
     const deleteConfirmation = page.locator("#selected-delete-confirmation");
 
     await selectRecordsByTitle(page, [visibleTarget, hiddenTarget]);
-    await expect(
-      page.getByText("2 analyses selected", { exact: true }),
-    ).toBeVisible();
+    await expectSelectionStatus(page, 2);
 
     await setListFilter(page, "Has notes");
     await expectVisibleCountSummary(page, 4, accountTotal);
     await expectRowVisible(page, visibleTarget);
     await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
     await expectRowAbsent(page, hiddenTarget);
-    await expect(
-      page.getByText(
-        "2 analyses selected; 1 is hidden by the current search or filter.",
-        { exact: true },
-      ),
-    ).toBeVisible();
+    await expectSelectionStatus(page, 2, 1);
 
     await page.getByRole("button", { name: "Delete selected", exact: true }).click();
     await expect(
@@ -664,12 +658,7 @@ test.describe("Selected-deletion cancel path", () => {
     await expectRowVisible(page, visibleTarget);
     await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
     await expectRowAbsent(page, hiddenTarget);
-    await expect(
-      page.getByText(
-        "2 analyses selected; 1 is hidden by the current search or filter.",
-        { exact: true },
-      ),
-    ).toBeVisible();
+    await expectSelectionStatus(page, 2, 1);
 
     await setListFilter(page, "Show all");
     await expectVisibleCountSummary(page, accountTotal, accountTotal);
@@ -677,9 +666,7 @@ test.describe("Selected-deletion cancel path", () => {
     await expectRowVisible(page, hiddenTarget);
     await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
     await expect(rowCheckbox(page, hiddenTarget)).toBeChecked();
-    await expect(
-      page.getByText("2 analyses selected", { exact: true }),
-    ).toBeVisible();
+    await expectSelectionStatus(page, 2);
     await expectLoadedCount(page, accountTotal);
     await expectNoUnsafeText(page);
     await context.close();

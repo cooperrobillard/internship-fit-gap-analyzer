@@ -1292,7 +1292,7 @@ async function runBrowserBackedHiddenSelectionRegression() {
     await page.setContent(
       `<main>
         <input id="search" placeholder="Search saved analyses…" value="" />
-        <p id="selection-status">2 analyses selected</p>
+        <p id="selection-status">2 analyses selected.</p>
         <label id="row-first" data-title="${firstTitle}">
           <input type="checkbox" id="check-first" aria-label="Select saved analysis ${firstTitle}" checked />
           ${firstTitle}
@@ -2027,16 +2027,14 @@ function runSelectedDeletionCancelSourceRegression() {
   const visibleTargetIndex = block.indexOf("titleForUserA(config, 2)");
   const hiddenTargetIndex = block.indexOf("titleForUserA(config, 10)");
   const selectIndex = block.indexOf("selectRecordsByTitle(page, [visibleTarget, hiddenTarget])");
-  const twoSelectedIndex = block.indexOf('"2 analyses selected", { exact: true }');
+  const twoSelectedIndex = block.indexOf("await expectSelectionStatus(page, 2);");
   const hasNotesIndex = block.indexOf('setListFilter(page, "Has notes")');
   const fourVisibleIndex = block.indexOf("expectVisibleCountSummary(page, 4, accountTotal)");
   const visibleCheckedIndex = block.indexOf(
     "await expect(rowCheckbox(page, visibleTarget)).toBeChecked();",
   );
   const hiddenAbsentIndex = block.indexOf("await expectRowAbsent(page, hiddenTarget);");
-  const hiddenStatusIndex = block.indexOf(
-    "2 analyses selected; 1 is hidden by the current search or filter.",
-  );
+  const hiddenStatusIndex = block.indexOf("await expectSelectionStatus(page, 2, 1);");
   const deleteSelectedClickIndex = block.indexOf(
     'await page.getByRole("button", { name: "Delete selected", exact: true }).click();',
   );
@@ -2062,6 +2060,7 @@ function runSelectedDeletionCancelSourceRegression() {
     'page.getByRole("button", { name: "Delete selected", exact: true }),\n    ).toBeFocused();',
   );
   const showAllIndex = block.indexOf('setListFilter(page, "Show all")');
+  const twoSelectedAfterShowAllIndex = block.lastIndexOf("await expectSelectionStatus(page, 2);");
   const loadedCountIndex = block.indexOf("await expectLoadedCount(page, accountTotal);");
   const firstHiddenVisibleIndex = block.indexOf(
     "expectRowVisible(page, hiddenTarget)",
@@ -2086,7 +2085,8 @@ function runSelectedDeletionCancelSourceRegression() {
       confirmClosedIndex > cancelClickIndex &&
       focusDeleteIndex > confirmClosedIndex &&
       showAllIndex > focusDeleteIndex &&
-      loadedCountIndex > showAllIndex,
+      twoSelectedAfterShowAllIndex > showAllIndex &&
+      loadedCountIndex > twoSelectedAfterShowAllIndex,
     "Selected-deletion cancel test must follow the one-visible/one-hidden flow in order",
   );
 
@@ -2104,6 +2104,28 @@ function runSelectedDeletionCancelSourceRegression() {
   assert(
     block.includes("expectNoUnsafeText(page)"),
     "Selected-deletion cancel test must include privacy verification",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 2);"),
+    "Selected-deletion cancel test must assert the exact no-hidden selection status with trailing period",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 2, 1);"),
+    "Selected-deletion cancel test must assert the exact one-hidden selection status",
+  );
+  assert(
+    !block.includes('"2 analyses selected", { exact: true }'),
+    "Selected-deletion cancel test must not assert selection status without trailing period",
+  );
+  assert(
+    specSource.includes(
+      "hidden by the current search or filter",
+    ) &&
+      readFileSync(
+        join(dirname(specPath), "helpers/saved-workspace.ts"),
+        "utf8",
+      ).includes("hidden by the current search or filter"),
+    "Selected-deletion cancel helper must format the one-hidden selection status with trailing period",
   );
 }
 
@@ -2123,7 +2145,7 @@ async function runBrowserBackedSelectedDeletionCancelRegression() {
           <option value="notes">Has notes</option>
         </select>
         <p id="visible-summary">2 of 2</p>
-        <p id="selection-status">2 analyses selected</p>
+        <p id="selection-status">2 analyses selected.</p>
         <label id="row-visible" data-has-notes="true">
           <input type="checkbox" id="check-visible" aria-label="Select saved analysis ${visibleTitle}" checked />
           ${visibleTitle}
@@ -2181,7 +2203,9 @@ async function runBrowserBackedSelectedDeletionCancelRegression() {
               status.textContent = hiddenStatus;
             } else {
               status.textContent =
-                selected === 1 ? "1 analysis selected" : \`\${selected} analyses selected\`;
+                selected === 1
+                  ? "1 analysis selected."
+                  : \`\${selected} analyses selected.\`;
             }
           }
 
@@ -2258,7 +2282,7 @@ async function runBrowserBackedSelectedDeletionCancelRegression() {
     await expect(page.locator("#check-visible")).toBeChecked();
     await expect(page.locator("#check-hidden")).toBeChecked();
     await expect(
-      page.getByText("2 analyses selected", { exact: true }),
+      page.getByText("2 analyses selected.", { exact: true }),
     ).toBeVisible();
   } finally {
     await browser.close();

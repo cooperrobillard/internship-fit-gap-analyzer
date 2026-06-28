@@ -513,6 +513,28 @@ export async function expectVisibleCountSummary(
   ).toBeVisible();
 }
 
+export async function expectSelectionStatus(
+  page: Page,
+  selectedCount: number,
+  hiddenCount = 0,
+): Promise<void> {
+  const selectedLabel = selectedCount === 1 ? "analysis" : "analyses";
+
+  const hiddenClause =
+    hiddenCount === 0
+      ? ""
+      : `; ${hiddenCount} ${
+          hiddenCount === 1 ? "is" : "are"
+        } hidden by the current search or filter`;
+
+  await expect(
+    page.getByText(
+      `${selectedCount} ${selectedLabel} selected${hiddenClause}.`,
+      { exact: true },
+    ),
+  ).toBeVisible();
+}
+
 export async function openAnalysisDetail(page: Page, title: string): Promise<void> {
   await rowOpenButton(page, title).click();
   await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible({
