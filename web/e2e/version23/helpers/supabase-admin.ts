@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { QaConfig } from "./config";
+import { loadClerkQaUserIdsFromEnv } from "./clerk-precheck";
 import {
   readManifest,
   saveManifest,
@@ -13,6 +14,30 @@ function adminClient(config: QaConfig) {
   return createClient(config.supabaseUrl, config.supabaseElevatedKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+export async function countSavedAnalysesForOwner(
+  config: QaConfig,
+  ownerLabel: "A" | "B",
+): Promise<number> {
+  const ownerIds = loadClerkQaUserIdsFromEnv();
+  const supabase = adminClient(config);
+  const { count, error } = await supabase
+    .from("job_analyses")
+    .select("id", { count: "exact", head: true })
+    .eq("clerk_user_id", ownerIds[ownerLabel]);
+
+  if (error) {
+    throw new Error(
+      `Unable to count saved analyses for QA User ${ownerLabel}.`,
+    );
+  }
+  if (count === null || !Number.isInteger(count) || count < 0) {
+    throw new Error(
+      `Supabase returned an invalid saved-analysis count for QA User ${ownerLabel}.`,
+    );
+  }
+  return count;
 }
 
 export async function resolveClerkUserIds(config: QaConfig): Promise<{

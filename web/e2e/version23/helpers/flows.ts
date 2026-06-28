@@ -6,7 +6,10 @@ import {
   recordsForOwner,
   titleForUserA,
 } from "./manifest";
-import { discoverAndAppendUiRecord } from "./supabase-admin";
+import {
+  countSavedAnalysesForOwner,
+  discoverAndAppendUiRecord,
+} from "./supabase-admin";
 import type { QaConfig } from "./config";
 import { SYNTHETIC_COMPANY, syntheticJob, syntheticResume } from "./qa-data";
 import {
@@ -20,14 +23,19 @@ import {
   requireVisibleSavedAnalysisDetailArticle,
 } from "./saved-analysis-detail";
 import {
+  buildLoadMorePlan,
   deleteDownload,
+  expectLoadMoreAbsent,
   expectLoadedCount,
   loadMoreAndExpectSuccess,
   expectRowAbsent,
   expectRowVisible,
   gotoSavedWorkspace,
   openAnalysisDetail,
+  readVisibleTitles,
   rowCheckbox,
+  SAVED_ANALYSES_PAGE_SIZE,
+  validateUniqueSavedRowTitles,
 } from "./saved-workspace";
 
 export const UI_SAVE_TITLE_PREFIX = "UI saved analysis";
@@ -109,20 +117,67 @@ export async function runStructuredSaveFlow(
   return uiTitle;
 }
 
-export async function loadAllUserARecords(page: Page): Promise<void> {
-  await expectLoadedCount(page, 10);
-  await loadMoreAndExpectSuccess(page, {
-    beforeCount: 10,
-    expectedAddedCount: 10,
-    expectedTotalCount: 20,
-    expectMoreAvailable: true,
-  });
-  await loadMoreAndExpectSuccess(page, {
-    beforeCount: 20,
-    expectedAddedCount: 3,
-    expectedTotalCount: 23,
-    expectMoreAvailable: false,
-  });
+export async function loadAllUserARecords(
+  page: Page,
+  config: QaConfig,
+): Promise<number> {
+  const accountTotal = await countSavedAnalysesForOwner(config, "A");
+  const initialCount = Math.min(accountTotal, SAVED_ANALYSES_PAGE_SIZE);
+  await expectLoadedCount(page, initialCount);
+
+  const plan = buildLoadMorePlan(accountTotal, SAVED_ANALYSES_PAGE_SIZE);
+  for (const step of plan) {
+    await loadMoreAndExpectSuccess(page, step);
+  }
+
+  await expectLoadedCount(page, accountTotal);
+  const titles = await readVisibleTitles(page);
+  validateUniqueSavedRowTitles(titles, accountTotal);
+  await expect(
+    page.getByRole("button", { name: /^Open saved analysis / }),
+  ).toHaveCount(accountTotal);
+
+  if (plan.length > 0) {
+    await expectLoadMoreAbsent(page);
+  } else {
+    await expect(
+      page.getByRole("button", { name: "Load more analyses" }),
+    ).toHaveCount(0);
+  }
+
+  return accountTotal;
+}
+
+export function currentRunTitlesForUserA(config: QaConfig): Set<string> {
+  return new Set(
+    recordsForOwner(readManifest(config.manifestPath), "A").map(
+      (record) => record.title,
+    ),
+  );
+}
+
+export async function verifyCurrentRunVisibleCoverage(
+  page: Page,
+  config: QaConfig,
+  preexistingCount: number,
+): Promise<void> {
+  const currentRunTitles = currentRunTitlesForUserA(config);
+  const currentRunRecordCount = currentRunTitles.size;
+  const visible = await readVisibleTitles(page);
+
+  const currentRunVisible = visible.filter((title) =>
+    currentRunTitles.has(title),
+  );
+  expect(currentRunVisible).toHaveLength(currentRunRecordCount);
+  for (const title of currentRunTitles) {
+    expect(currentRunVisible.filter((visibleTitle) => visibleTitle === title))
+      .toHaveLength(1);
+  }
+
+  const preexistingVisible = visible.filter(
+    (title) => !currentRunTitles.has(title),
+  );
+  expect(preexistingVisible).toHaveLength(preexistingCount);
 }
 
 export async function exportSelectedCsv(page: Page) {
@@ -181,22 +236,19 @@ export async function expectTitlesAbsent(page: Page, titles: string[]) {
 }
 
 export async function verifyPaginationOrdering(page: Page, config: QaConfig) {
-  const titles = recordsForOwner(readManifest(config.manifestPath), "A")
+  const currentRunTitleSet = currentRunTitlesForUserA(config);
+  const expectedOrder = recordsForOwner(readManifest(config.manifestPath), "A")
     .sort((left, right) => {
       const leftTime = Date.parse(left.created_at ?? "");
       const rightTime = Date.parse(right.created_at ?? "");
       return rightTime - leftTime || right.id.localeCompare(left.id);
     })
     .map((record) => record.title);
-  const visible = await page
-    .getByRole("button", { name: /^Open saved analysis / })
-    .evaluateAll((elements) =>
-      elements
-        .map((element) => element.getAttribute("aria-label") ?? "")
-        .map((label) => label.match(/^Open saved analysis (.+), /)?.[1] ?? "")
-        .filter(Boolean),
-    );
-  expect(visible).toEqual(titles.slice(0, visible.length));
+  const visible = await readVisibleTitles(page);
+  const currentRunVisible = visible.filter((title) =>
+    currentRunTitleSet.has(title),
+  );
+  expect(currentRunVisible).toEqual(expectedOrder);
 }
 
 export { titleForUserA, assertHeader };

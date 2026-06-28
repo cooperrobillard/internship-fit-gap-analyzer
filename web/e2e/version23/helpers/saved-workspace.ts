@@ -1,6 +1,9 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { SYNTHETIC_COMPANY } from "./qa-data";
 
+/** Matches production `SAVED_ANALYSES_PAGE_SIZE` without importing application code. */
+export const SAVED_ANALYSES_PAGE_SIZE = 10;
+
 /** Current-run seed contract: dedicated QA User B receives exactly one synthetic record. */
 export const USER_B_EXPECTED_BASELINE_LOADED_COUNT = 1;
 
@@ -19,6 +22,58 @@ export type LoadMoreSuccessOptions = {
   expectedTotalCount: number;
   expectMoreAvailable: boolean;
 };
+
+export type LoadMorePlanStep = LoadMoreSuccessOptions;
+
+export function buildLoadMorePlan(
+  totalCount: number,
+  pageSize: number = SAVED_ANALYSES_PAGE_SIZE,
+): LoadMorePlanStep[] {
+  if (!Number.isInteger(totalCount) || totalCount < 0) {
+    throw new Error(
+      `Account total must be a non-negative integer; received ${totalCount}.`,
+    );
+  }
+  if (!Number.isInteger(pageSize) || pageSize <= 0) {
+    throw new Error(
+      `Page size must be a positive integer; received ${pageSize}.`,
+    );
+  }
+
+  const steps: LoadMorePlanStep[] = [];
+  let loaded = Math.min(totalCount, pageSize);
+
+  while (loaded < totalCount) {
+    const beforeCount = loaded;
+    const remaining = totalCount - loaded;
+    const expectedAddedCount = Math.min(pageSize, remaining);
+    loaded += expectedAddedCount;
+    steps.push({
+      beforeCount,
+      expectedAddedCount,
+      expectedTotalCount: loaded,
+      expectMoreAvailable: loaded < totalCount,
+    });
+  }
+
+  if (steps.length > 0) {
+    const finalStep = steps[steps.length - 1]!;
+    if (finalStep.expectedTotalCount !== totalCount) {
+      throw new Error(
+        `Load-more plan final total ${finalStep.expectedTotalCount} does not match account total ${totalCount}.`,
+      );
+    }
+    for (const step of steps) {
+      if (step.expectedAddedCount > pageSize) {
+        throw new Error(
+          `Load-more plan added ${step.expectedAddedCount} rows, exceeding page size ${pageSize}.`,
+        );
+      }
+    }
+  }
+
+  return steps;
+}
 
 export function pluralizeAnalysisWord(count: number): "analysis" | "analyses" {
   return count === 1 ? "analysis" : "analyses";

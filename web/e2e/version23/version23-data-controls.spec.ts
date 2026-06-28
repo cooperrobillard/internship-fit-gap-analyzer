@@ -18,7 +18,7 @@ import {
   recordsForOwner,
   titleForUserA,
 } from "./helpers/manifest";
-import { deleteRecordById } from "./helpers/supabase-admin";
+import { deleteRecordById, countSavedAnalysesForOwner } from "./helpers/supabase-admin";
 import { SYNTHETIC_COMPANY, syntheticJob, syntheticResume } from "./helpers/qa-data";
 import {
   assertUserBPostSwitchIsolation,
@@ -31,11 +31,14 @@ import {
   loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
+  readVisibleTitles,
   rowCheckbox,
   rowOpenButton,
   setListFilter,
   setSearchQuery,
   switchWorkspaceView,
+  buildLoadMorePlan,
+  SAVED_ANALYSES_PAGE_SIZE,
 } from "./helpers/saved-workspace";
 import {
   exportLoadedCsv,
@@ -43,6 +46,7 @@ import {
   loadAllUserARecords,
   runStructuredSaveFlow,
   selectRecordsByTitle,
+  verifyCurrentRunVisibleCoverage,
   verifyPaginationOrdering,
 } from "./helpers/flows";
 
@@ -132,50 +136,39 @@ test.describe("Structured save and detail", () => {
 
 test.describe("Pagination", () => {
   test("Pagination", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
 
-    const userARecords = recordsForOwner(readManifest(qaConfig().manifestPath), "A");
-    expect(userARecords).toHaveLength(23);
+    const userARecords = recordsForOwner(readManifest(config.manifestPath), "A");
+    const currentRunRecordCount = userARecords.length;
+    expect(currentRunRecordCount).toBe(23);
     expect(new Set(userARecords.map((record) => record.id)).size).toBe(23);
 
-    await expectLoadedCount(page, 10);
-    const beforeMore = await page
-      .getByRole("button", { name: /^Open saved analysis / })
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => element.getAttribute("aria-label") ?? "")
-          .map((label) => label.match(/^Open saved analysis (.+), /)?.[1] ?? "")
-          .filter(Boolean),
-      );
-    expect(beforeMore).toHaveLength(10);
+    const accountTotal = await countSavedAnalysesForOwner(config, "A");
+    expect(accountTotal).toBeGreaterThanOrEqual(currentRunRecordCount);
+    const preexistingCount = accountTotal - currentRunRecordCount;
 
-    await loadMoreAndExpectSuccess(page, {
-      beforeCount: 10,
-      expectedAddedCount: 10,
-      expectedTotalCount: 20,
-      expectMoreAvailable: true,
-    });
-    const afterFirstMore = await page
-      .getByRole("button", { name: /^Open saved analysis / })
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => element.getAttribute("aria-label") ?? "")
-          .map((label) => label.match(/^Open saved analysis (.+), /)?.[1] ?? "")
-          .filter(Boolean),
-      );
-    for (const title of beforeMore) {
-      expect(afterFirstMore).toContain(title);
+    const initialCount = Math.min(accountTotal, SAVED_ANALYSES_PAGE_SIZE);
+    await expectLoadedCount(page, initialCount);
+    const initialTitles = await readVisibleTitles(page);
+    expect(initialTitles).toHaveLength(initialCount);
+
+    const plan = buildLoadMorePlan(accountTotal, SAVED_ANALYSES_PAGE_SIZE);
+    for (let index = 0; index < plan.length; index += 1) {
+      const step = plan[index]!;
+      await loadMoreAndExpectSuccess(page, step);
+      if (index === 0) {
+        const afterFirstMore = await readVisibleTitles(page);
+        for (const title of initialTitles) {
+          expect(afterFirstMore).toContain(title);
+        }
+        expect(new Set(afterFirstMore).size).toBe(step.expectedTotalCount);
+      }
     }
-    expect(new Set(afterFirstMore).size).toBe(20);
 
-    await loadMoreAndExpectSuccess(page, {
-      beforeCount: 20,
-      expectedAddedCount: 3,
-      expectedTotalCount: 23,
-      expectMoreAvailable: false,
-    });
-    await verifyPaginationOrdering(page, qaConfig());
+    await verifyCurrentRunVisibleCoverage(page, config, preexistingCount);
+    await verifyPaginationOrdering(page, config);
     await context.close();
   });
 });
@@ -260,12 +253,13 @@ test.describe("Search and filters across pages", () => {
 
 test.describe("Selection", () => {
   test("Selection", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    const accountTotal = await loadAllUserARecords(page, config);
 
-    const first = titleForUserA(qaConfig(), 0);
-    const eleventh = titleForUserA(qaConfig(), 10);
+    const first = titleForUserA(config, 0);
+    const eleventh = titleForUserA(config, 10);
 
     await rowCheckbox(page, first).check();
     await expect(page.getByRole("heading", { level: 2, name: first })).toHaveCount(0);
@@ -283,7 +277,8 @@ test.describe("Selection", () => {
     await page.getByRole("button", { name: "Clear selection" }).click();
     await expect(page.getByText("No analyses selected.")).toBeVisible();
 
-    await setSearchQuery(page, "");
+    await setSearchQuery(page, `V23 QA ${config.runId}`);
+    await expectVisibleCountSummary(page, 23, accountTotal);
     await page.getByLabel("Select all visible").check();
     await expect(page.getByText("23 analyses selected")).toBeVisible();
     await rowCheckbox(page, first).uncheck();
@@ -301,7 +296,7 @@ test.describe("Selected CSV", () => {
   test("Selected CSV", async ({ browser }) => {
     const { context, page } = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    await loadAllUserARecords(page, qaConfig());
 
     await expect(
       page.getByRole("button", { name: "Export selected (CSV)" }),
@@ -338,14 +333,24 @@ test.describe("Selected CSV", () => {
 
 test.describe("Loaded CSV", () => {
   test("Loaded CSV", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
-    await rowCheckbox(page, titleForUserA(qaConfig(), 0)).check();
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    const accountTotal = await loadAllUserARecords(page, config);
+    await rowCheckbox(page, titleForUserA(config, 0)).check();
+
+    const currentRunTitles = recordsForOwner(
+      readManifest(config.manifestPath),
+      "A",
+    ).map((record) => record.title);
 
     const { text, rows } = await exportLoadedCsv(page);
     assertHeader(text);
-    expect(rows).toHaveLength(23);
+    expect(rows).toHaveLength(accountTotal);
+    for (const title of currentRunTitles) {
+      expect(rows.filter((row) => row.job_title === title)).toHaveLength(1);
+    }
+    expect(new Set(rows.map((row) => row.job_title)).size).toBe(rows.length);
     expect(text).not.toContain(syntheticResume);
     expect(text).not.toContain(syntheticJob);
     await context.close();
@@ -354,11 +359,12 @@ test.describe("Loaded CSV", () => {
 
 test.describe("Keyboard accessibility", () => {
   test("Keyboard accessibility", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    const accountTotal = await loadAllUserARecords(page, config);
 
-    const target = titleForUserA(qaConfig(), 7);
+    const target = titleForUserA(config, 7);
     const checkbox = rowCheckbox(page, target);
     await checkbox.focus();
     await page.keyboard.press("Space");
@@ -372,6 +378,9 @@ test.describe("Keyboard accessibility", () => {
     await expect(checkbox).not.toBeChecked();
 
     await checkbox.check();
+    await setSearchQuery(page, `V23 QA ${config.runId}`);
+    await expectVisibleCountSummary(page, 23, accountTotal);
+    await expectRowVisible(page, target);
     await page.getByLabel("Select all visible").focus();
     await page.keyboard.press("Space");
     await page.getByRole("button", { name: "Clear selection" }).focus();
@@ -423,7 +432,7 @@ test.describe("Selected-deletion cancel path", () => {
   test("Selected-deletion cancel path", async ({ browser }) => {
     const { context, page } = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    await loadAllUserARecords(page, qaConfig());
 
     const first = titleForUserA(qaConfig(), 0);
     const eleventh = titleForUserA(qaConfig(), 10);
@@ -446,13 +455,14 @@ test.describe("Selected-deletion cancel path", () => {
 
 test.describe("Selected-deletion success path", () => {
   test("Selected-deletion success path", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    const accountTotalBefore = await loadAllUserARecords(page, config);
 
-    const deleteA = titleForUserA(qaConfig(), 20);
-    const deleteB = titleForUserA(qaConfig(), 21);
-    const keep = titleForUserA(qaConfig(), 22);
+    const deleteA = titleForUserA(config, 20);
+    const deleteB = titleForUserA(config, 21);
+    const keep = titleForUserA(config, 22);
     await selectRecordsByTitle(page, [deleteA, deleteB]);
     await setListFilter(page, "Show all");
     await page.getByRole("button", { name: "Delete selected" }).click();
@@ -463,7 +473,7 @@ test.describe("Selected-deletion success path", () => {
     await expectRowAbsent(page, deleteA);
     await expectRowAbsent(page, deleteB);
     await expectRowVisible(page, keep);
-    await expectLoadedCount(page, 21);
+    await expectLoadedCount(page, accountTotalBefore - 2);
     await switchWorkspaceView(page, "Insights");
     await switchWorkspaceView(page, "Compare");
     await context.close();
@@ -475,7 +485,7 @@ test.describe("Already-unavailable target", () => {
     const contextA = await signInQaUser(browser, qaConfig(), "A");
     const contextB = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(contextA.page, qaConfig().baseUrl);
-    await loadAllUserARecords(contextA.page);
+    await loadAllUserARecords(contextA.page, qaConfig());
 
     const targetA = titleForUserA(qaConfig(), 18);
     const targetB = titleForUserA(qaConfig(), 19);
@@ -505,7 +515,7 @@ test.describe("Complete deletion failure", () => {
   test("Complete deletion failure", async ({ browser }) => {
     const { context, page } = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    await loadAllUserARecords(page, qaConfig());
 
     const first = titleForUserA(qaConfig(), 1);
     const second = titleForUserA(qaConfig(), 2);
@@ -538,7 +548,7 @@ test.describe("True partial deletion failure", () => {
   test("True partial deletion failure", async ({ browser }) => {
     const { context, page } = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    await loadAllUserARecords(page, qaConfig());
 
     const first = titleForUserA(qaConfig(), 3);
     const second = titleForUserA(qaConfig(), 4);
@@ -580,7 +590,7 @@ test.describe("Individual deletion regression", () => {
   test("Individual deletion regression", async ({ browser }) => {
     const { context, page } = await signInQaUser(browser, qaConfig(), "A");
     await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page);
+    await loadAllUserARecords(page, qaConfig());
 
     const target = titleForUserA(qaConfig(), 6);
     await openAnalysisDetail(page, target);
