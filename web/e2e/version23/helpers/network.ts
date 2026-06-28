@@ -182,6 +182,33 @@ export const isSavedList = (url: string, method: string): boolean =>
   url.includes("/rest/v1/job_analyses") &&
   url.includes("select=");
 
+export function isSavedListPageRequest(
+  url: string,
+  method: string,
+  options: {
+    offset: number;
+    pageSize: number;
+  },
+): boolean {
+  if (method !== "GET") {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    return (
+      parsed.pathname.endsWith("/rest/v1/job_analyses") &&
+      parsed.searchParams.has("select") &&
+      parsed.searchParams.get("offset") === String(options.offset) &&
+      parsed.searchParams.get("limit") === String(options.pageSize + 1) &&
+      !parsed.searchParams.has("id")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const isSavedDelete = (url: string, method: string): boolean =>
   method === "DELETE" && url.includes("/rest/v1/job_analyses");
 

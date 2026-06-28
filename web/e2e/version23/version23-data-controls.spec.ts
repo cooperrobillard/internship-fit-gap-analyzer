@@ -11,6 +11,7 @@ import {
   interceptNext,
   isSavedDelete,
   isSavedList,
+  isSavedListPageRequest,
   type HeldRouteInterceptor,
   type HeldRequestOutcome,
 } from "./helpers/network";
@@ -199,18 +200,24 @@ test.describe("Incremental failure and retry", () => {
       }),
     ).toBeVisible();
 
+    const isFirstLoadMoreRequest = (url: string, method: string) =>
+      isSavedListPageRequest(url, method, {
+        offset: SAVED_ANALYSES_PAGE_SIZE,
+        pageSize: SAVED_ANALYSES_PAGE_SIZE,
+      });
+
     const interceptor = await interceptNext(
       page,
-      isSavedList,
+      isFirstLoadMoreRequest,
       fulfillSyntheticPostgrestFailure,
     );
     try {
+      expect(interceptor.seen()).toBe(0);
       await clickLoadMore(page);
       await expect
         .poll(() => interceptor.seen(), {
           timeout: 10_000,
-          message:
-            "Expected the synthetic saved-list failure request to be intercepted.",
+          message: "Expected the first Load More request to be intercepted.",
         })
         .toBe(1);
       interceptor.assertSeen(1);

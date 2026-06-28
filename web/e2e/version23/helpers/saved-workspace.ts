@@ -138,15 +138,53 @@ export function loadMoreFailureAlert(page: Page): Locator {
   return page.getByRole("alert").filter({ hasText: LOAD_MORE_ALERT_MESSAGE });
 }
 
+export async function describeLoadMoreFailureUiState(page: Page): Promise<string> {
+  const loadedCount = await readLoadedCount(page).catch(() => -1);
+  const loadMoreButton = page.getByRole("button", { name: "Load more analyses" });
+  const loadMoreMatches = await loadMoreButton.count();
+  const loadMoreText =
+    loadMoreMatches === 1
+      ? ((await loadMoreButton.textContent()) ?? "").trim() || "(empty)"
+      : "(absent)";
+  const loadMoreDisabled =
+    loadMoreMatches === 1 ? await loadMoreButton.isDisabled() : "(absent)";
+  const incrementalAlertCount = await loadMoreFailureAlert(page).count();
+  const initialListErrorCount = await page
+    .getByRole("alert")
+    .filter({ hasText: "Could not load saved analyses" })
+    .count();
+  const detailErrorCount = await page
+    .getByRole("alert")
+    .filter({ hasText: "Could not load analysis detail" })
+    .count();
+
+  return (
+    `loaded count=${loadedCount}; ` +
+    `load more button text="${loadMoreText}"; ` +
+    `load more disabled=${loadMoreDisabled}; ` +
+    `incremental error alerts=${incrementalAlertCount}; ` +
+    `initial-list error alerts=${initialListErrorCount}; ` +
+    `detail error alerts=${detailErrorCount}`
+  );
+}
+
 export async function expectLoadMoreFailureAlert(page: Page): Promise<void> {
   const alert = loadMoreFailureAlert(page);
 
-  await expect(alert).toHaveCount(1, {
-    timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
-  });
-  await expect(alert).toHaveText(LOAD_MORE_ALERT_MESSAGE, {
-    timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
-  });
+  try {
+    await expect(alert).toHaveCount(1, {
+      timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
+    });
+    await expect(alert).toHaveText(LOAD_MORE_ALERT_MESSAGE, {
+      timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
+    });
+  } catch (error) {
+    const diagnostics = await describeLoadMoreFailureUiState(page);
+    throw new Error(
+      `Expected exactly one load-more failure alert. Diagnostics: ${diagnostics}`,
+      { cause: error },
+    );
+  }
 }
 
 export async function gotoSavedWorkspace(page: Page, baseUrl: string): Promise<void> {

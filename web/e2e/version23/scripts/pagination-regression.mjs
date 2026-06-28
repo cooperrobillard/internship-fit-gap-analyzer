@@ -10,6 +10,7 @@ import {
   pluralizeAnalysisWord,
   validateUniqueSavedRowTitles,
 } from "../helpers/saved-workspace.ts";
+import { isSavedListPageRequest } from "../helpers/network.ts";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const helpersDir = join(scriptDir, "../helpers");
@@ -333,7 +334,7 @@ function runSourceRegression() {
   );
   assert(
     specSource.includes("interceptNext(") &&
-      specSource.includes("isSavedList") &&
+      specSource.includes("isSavedListPageRequest") &&
       specSource.includes("fulfillSyntheticPostgrestFailure"),
     "Incremental failure and retry must keep its intentional interceptor path",
   );
@@ -384,8 +385,21 @@ function runIncrementalFailureSourceRegression() {
   const block = extractIncrementalFailureBlock(specSource);
 
   assert(
-    block.includes("interceptNext(") && block.includes("isSavedList"),
-    "incremental failure test must keep its intentional interceptor path",
+    block.includes("interceptNext(") && block.includes("isSavedListPageRequest"),
+    "incremental failure test must use the exact saved-list page matcher",
+  );
+  assert(
+    !block.includes("isSavedList,") && !block.includes("isSavedList\n"),
+    "incremental failure test must not use the broad isSavedList matcher",
+  );
+  assert(
+    block.includes("offset: SAVED_ANALYSES_PAGE_SIZE") &&
+      block.includes("pageSize: SAVED_ANALYSES_PAGE_SIZE"),
+    "incremental failure test must derive offset and pageSize from SAVED_ANALYSES_PAGE_SIZE",
+  );
+  assert(
+    block.includes("expect(interceptor.seen()).toBe(0)"),
+    "incremental failure test must prove no request matched before clicking Load More",
   );
   assert(
     block.includes("titleForUserA(config, 5)"),
@@ -490,6 +504,70 @@ function runIncrementalFailureSourceRegression() {
   );
 }
 
+function runSavedListPageRequestRegression() {
+  const pageSize = SAVED_ANALYSES_PAGE_SIZE;
+  const offset = SAVED_ANALYSES_PAGE_SIZE;
+  const base = "https://qa-local.invalid/rest/v1/job_analyses";
+  const options = { offset, pageSize };
+
+  assert(
+    isSavedListPageRequest(`${base}?select=id&offset=10&limit=11`, "GET", options),
+    "predicate must accept the first Load More list page request",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=0&limit=11`, "GET", options),
+    "predicate must reject the initial list page request",
+  );
+  assert(
+    !isSavedListPageRequest(
+      `${base}?select=id&id=eq.synthetic-id`,
+      "GET",
+      options,
+    ),
+    "predicate must reject detail requests with an id filter",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=20&limit=11`, "GET", options),
+    "predicate must reject the wrong offset",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=10&limit=10`, "GET", options),
+    "predicate must reject the wrong limit",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=10&limit=11`, "POST", options),
+    "predicate must reject POST requests",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=10&limit=11`, "DELETE", options),
+    "predicate must reject DELETE requests",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?select=id&offset=10&limit=11`, "HEAD", options),
+    "predicate must reject HEAD requests",
+  );
+  assert(
+    !isSavedListPageRequest(
+      "https://qa-local.invalid/rest/v1/other_table?select=id&offset=10&limit=11",
+      "GET",
+      options,
+    ),
+    "predicate must reject another table",
+  );
+  assert(
+    !isSavedListPageRequest(`${base}?offset=10&limit=11`, "GET", options),
+    "predicate must reject URLs without select",
+  );
+  assert(
+    !isSavedListPageRequest("not-a-url", "GET", options),
+    "predicate must safely reject malformed URLs",
+  );
+  assert(
+    isSavedListPageRequest(`${base}?offset=10&select=id&limit=11`, "GET", options),
+    "predicate must not depend on query-parameter ordering",
+  );
+}
+
 function runLoadMoreFailureAlertSourceRegression() {
   const workspaceSource = readFileSync(join(helpersDir, "saved-workspace.ts"), "utf8");
 
@@ -538,6 +616,10 @@ function runLoadMoreFailureAlertSourceRegression() {
     workspaceSource.includes("loadMoreFailureAlert(page)") &&
       workspaceSource.includes("loadMoreAndExpectSuccess"),
     "loadMoreAndExpectSuccess must reuse the central load-more failure alert locator",
+  );
+  assert(
+    workspaceSource.includes("describeLoadMoreFailureUiState"),
+    "load-more failure diagnostics must be available for bounded alert failures",
   );
 }
 
@@ -635,6 +717,81 @@ async function runBrowserBackedSyntheticPostgrestFailureRegression() {
   }
 }
 
+async function runBrowserBackedExactLoadMoreRequestRegression() {
+  const { chromium } = await import("@playwright/test");
+  const {
+    fulfillSyntheticPostgrestFailure,
+    isSavedListPageRequest,
+  } = await import("../helpers/network.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent("<main>ready</main>", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const pageSize = SAVED_ANALYSES_PAGE_SIZE;
+    const paginationUrl =
+      "https://qa-local.invalid/rest/v1/job_analyses?select=id&offset=10&limit=11";
+    const detailUrl =
+      "https://qa-local.invalid/rest/v1/job_analyses?select=id&id=eq.synthetic-id";
+    let paginationIntercepted = false;
+    let detailIntercepted = false;
+
+    const handler = async (route, request) => {
+      const url = request.url();
+      const method = request.method();
+      if (
+        isSavedListPageRequest(url, method, {
+          offset: pageSize,
+          pageSize,
+        })
+      ) {
+        paginationIntercepted = true;
+        await fulfillSyntheticPostgrestFailure(route);
+        return;
+      }
+      if (method === "GET" && url.includes("id=eq.synthetic-id")) {
+        detailIntercepted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: "[]",
+        });
+        return;
+      }
+      await route.continue();
+    };
+
+    await page.route("**/*", handler);
+    try {
+      const detailStatus = await page.evaluate(async (url) => {
+        const response = await fetch(url);
+        return response.status;
+      }, detailUrl);
+      assert(detailStatus === 200, "detail request must not receive synthetic failure");
+      assert(detailIntercepted, "detail request must be handled locally");
+      assert(!paginationIntercepted, "detail request must not match pagination matcher");
+
+      const paginationStatus = await page.evaluate(async (url) => {
+        const response = await fetch(url);
+        return response.status;
+      }, paginationUrl);
+
+      assert(paginationIntercepted, "pagination request must match the exact matcher");
+      assert(
+        paginationStatus === 503,
+        "pagination request must receive the synthetic failure response",
+      );
+    } finally {
+      await page.unroute("**/*", handler);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 function buildSavedRowButtonHtml({
   title,
   company,
@@ -697,7 +854,7 @@ async function runBrowserBackedLoadMoreFailureAlertRegression() {
     );
     await assertThrowsAsync(
       () => expectLoadMoreFailureAlert(missingAlertPage),
-      "toHaveCount",
+      "Expected exactly one load-more failure alert",
     );
     await missingAlertPage.close();
 
@@ -711,7 +868,7 @@ async function runBrowserBackedLoadMoreFailureAlertRegression() {
     );
     await assertThrowsAsync(
       () => expectLoadMoreFailureAlert(duplicateAlertPage),
-      "toHaveCount",
+      "Expected exactly one load-more failure alert",
     );
     await duplicateAlertPage.close();
   } finally {
@@ -1022,11 +1179,13 @@ try {
   runUniquenessRegression();
   runSourceRegression();
   runIncrementalFailureSourceRegression();
+  runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
   await runBrowserBackedPaginationRegression();
   await runBrowserBackedLoadMoreFailureAlertRegression();
   await runBrowserBackedSyntheticPostgrestFailureRegression();
+  await runBrowserBackedExactLoadMoreRequestRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
