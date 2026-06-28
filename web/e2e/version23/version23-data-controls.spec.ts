@@ -494,6 +494,13 @@ test.describe("Loaded CSV", () => {
     const accountTotal = await loadAllUserARecords(page, config);
     await rowCheckbox(page, titleForUserA(config, 0)).check();
 
+    await expect(
+      page.getByRole("button", {
+        name: "Loaded analyses (CSV)",
+        exact: true,
+      }),
+    ).not.toBeVisible();
+
     const currentRunTitles = recordsForOwner(
       readManifest(config.manifestPath),
       "A",

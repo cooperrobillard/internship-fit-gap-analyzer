@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { assertHeader, parseCsv } from "./csv";
 import { expectNoUnsafeText } from "./assertions";
 import {
@@ -40,6 +40,96 @@ import {
 } from "./saved-workspace";
 
 export const UI_SAVE_TITLE_PREFIX = "UI saved analysis";
+export const LOADED_EXPORT_DISCLOSURE_TIMEOUT_MS = 10_000;
+export const LOADED_EXPORT_DOWNLOAD_TIMEOUT_MS = 20_000;
+export const LOADED_EXPORT_FILENAME_PATTERN =
+  /^saved-analyses-summary-\d{4}-\d{2}-\d{2}\.csv$/;
+
+export function loadedExportDisclosure(page: Page): Locator {
+  return page.locator("details").filter({
+    has: page.locator("summary", {
+      hasText: "Export loaded analyses",
+    }),
+  });
+}
+
+async function describeLoadedExportUiState(page: Page): Promise<{
+  disclosureCount: number;
+  isOpen: boolean;
+  buttonCount: number;
+  buttonVisible: boolean;
+  buttonEnabled: boolean;
+}> {
+  const disclosure = loadedExportDisclosure(page);
+  const button = disclosure.getByRole("button", {
+    name: "Loaded analyses (CSV)",
+    exact: true,
+  });
+  const disclosureCount = await disclosure.count();
+  let isOpen = false;
+  if (disclosureCount === 1) {
+    isOpen = await disclosure.evaluate(
+      (element) => (element as HTMLDetailsElement).open,
+    );
+  }
+  const buttonCount = await button.count();
+  const buttonVisible =
+    buttonCount === 1 ? await button.isVisible().catch(() => false) : false;
+  const buttonEnabled =
+    buttonCount === 1 ? await button.isEnabled().catch(() => false) : false;
+
+  return {
+    disclosureCount,
+    isOpen,
+    buttonCount,
+    buttonVisible,
+    buttonEnabled,
+  };
+}
+
+export async function openLoadedExportDisclosure(page: Page): Promise<Locator> {
+  const disclosure = loadedExportDisclosure(page);
+  const summary = disclosure.locator("summary").filter({
+    hasText: "Export loaded analyses",
+  });
+  const button = disclosure.getByRole("button", {
+    name: "Loaded analyses (CSV)",
+    exact: true,
+  });
+
+  try {
+    await expect(disclosure).toHaveCount(1, {
+      timeout: LOADED_EXPORT_DISCLOSURE_TIMEOUT_MS,
+    });
+    await expect(summary).toHaveCount(1);
+
+    if (
+      !(await disclosure.evaluate(
+        (element) => (element as HTMLDetailsElement).open,
+      ))
+    ) {
+      await summary.click();
+    }
+
+    await expect(button).toBeVisible({
+      timeout: LOADED_EXPORT_DISCLOSURE_TIMEOUT_MS,
+    });
+    await expect(button).toBeEnabled();
+
+    return button;
+  } catch (error) {
+    const state = await describeLoadedExportUiState(page);
+    throw new Error(
+      `Loaded CSV export disclosure did not open. ` +
+        `Disclosure count=${state.disclosureCount}; ` +
+        `open=${state.isOpen}; ` +
+        `button count=${state.buttonCount}; ` +
+        `visible=${state.buttonVisible}; ` +
+        `enabled=${state.buttonEnabled}.`,
+      { cause: error },
+    );
+  }
+}
 
 export async function runStructuredSaveFlow(
   page: Page,
@@ -194,15 +284,35 @@ export async function exportSelectedCsv(page: Page) {
 }
 
 export async function exportLoadedCsv(page: Page) {
-  const [download] = await Promise.all([
-    page.waitForEvent("download"),
-    page.getByRole("button", { name: "Loaded analyses (CSV)" }).click(),
-  ]);
-  const path = await download.path();
-  expect(path).toBeTruthy();
-  const text = await (await import("node:fs/promises")).readFile(path!, "utf8");
-  await deleteDownload(path);
-  return { text, rows: parseCsv(text) as Array<Record<string, string>> };
+  const button = await openLoadedExportDisclosure(page);
+
+  try {
+    const [download] = await Promise.all([
+      page.waitForEvent("download", {
+        timeout: LOADED_EXPORT_DOWNLOAD_TIMEOUT_MS,
+      }),
+      button.click(),
+    ]);
+
+    expect(download.suggestedFilename()).toMatch(LOADED_EXPORT_FILENAME_PATTERN);
+
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    const text = await (await import("node:fs/promises")).readFile(path!, "utf8");
+    await deleteDownload(path);
+    return { text, rows: parseCsv(text) as Array<Record<string, string>> };
+  } catch (error) {
+    const state = await describeLoadedExportUiState(page);
+    throw new Error(
+      `Loaded CSV export did not start. ` +
+        `Disclosure count=${state.disclosureCount}; ` +
+        `open=${state.isOpen}; ` +
+        `button count=${state.buttonCount}; ` +
+        `visible=${state.buttonVisible}; ` +
+        `enabled=${state.buttonEnabled}.`,
+      { cause: error },
+    );
+  }
 }
 
 export function newestFirstIds(config: QaConfig): string[] {

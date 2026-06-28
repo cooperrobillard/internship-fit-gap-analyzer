@@ -1823,6 +1823,181 @@ async function runSelectAllScopingRegression() {
   }
 }
 
+function extractLoadedCsvBlock(specSource) {
+  const startMarker = 'test.describe("Loaded CSV"';
+  const endMarker = 'test.describe("Keyboard accessibility"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Loaded CSV test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runLoadedExportSourceRegression() {
+  const flowsSource = readFileSync(join(helpersDir, "flows.ts"), "utf8");
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractLoadedCsvBlock(specSource);
+
+  const disclosureHelperStart = flowsSource.indexOf(
+    "export function loadedExportDisclosure",
+  );
+  const disclosureHelperEnd = flowsSource.indexOf(
+    "export async function runStructuredSaveFlow",
+  );
+  const loadedExportStart = flowsSource.indexOf(
+    "export async function exportLoadedCsv",
+  );
+  const loadedExportEnd = flowsSource.indexOf("export function newestFirstIds");
+  assert(
+    disclosureHelperStart >= 0 &&
+      disclosureHelperEnd > disclosureHelperStart &&
+      loadedExportStart >= 0 &&
+      loadedExportEnd > loadedExportStart,
+    "Loaded CSV export helpers must exist in flows.ts",
+  );
+  const disclosureHelperSource = flowsSource.slice(
+    disclosureHelperStart,
+    disclosureHelperEnd,
+  );
+  const loadedExportSource = flowsSource.slice(
+    loadedExportStart,
+    loadedExportEnd,
+  );
+
+  assert(
+    disclosureHelperSource.includes("Export loaded analyses") &&
+      disclosureHelperSource.includes("loadedExportDisclosure"),
+    "Loaded CSV helper must scope the Export loaded analyses disclosure",
+  );
+  assert(
+    disclosureHelperSource.includes('name: "Loaded analyses (CSV)"') &&
+      disclosureHelperSource.includes("exact: true") &&
+      disclosureHelperSource.includes("openLoadedExportDisclosure"),
+    "Loaded CSV helper must open the scoped CSV button inside the disclosure",
+  );
+  assert(
+    loadedExportSource.includes("LOADED_EXPORT_DOWNLOAD_TIMEOUT_MS") &&
+      loadedExportSource.includes('waitForEvent("download"') &&
+      loadedExportSource.includes("timeout: LOADED_EXPORT_DOWNLOAD_TIMEOUT_MS"),
+    "Loaded CSV download wait must use an explicit bounded timeout",
+  );
+  assert(
+    loadedExportSource.includes("LOADED_EXPORT_FILENAME_PATTERN") &&
+      loadedExportSource.includes("suggestedFilename()"),
+    "Loaded CSV helper must verify the safe suggested filename pattern",
+  );
+  assert(
+    disclosureHelperSource.includes("Disclosure count=") &&
+      loadedExportSource.includes("button count=") &&
+      !disclosureHelperSource.includes("console.log") &&
+      !loadedExportSource.includes("console.log") &&
+      !disclosureHelperSource.includes("authorization") &&
+      !loadedExportSource.includes("request.url"),
+    "Loaded CSV helper diagnostics must stay safe and must not log private data",
+  );
+  assert(
+    !disclosureHelperSource.includes(".first()") &&
+      !disclosureHelperSource.includes(".last()") &&
+      !loadedExportSource.includes(".first()") &&
+      !loadedExportSource.includes(".last()"),
+    "Loaded CSV export helpers must not use positional locators",
+  );
+
+  assert(
+    block.includes("not.toBeVisible()") &&
+      block.includes('"Loaded analyses (CSV)"') &&
+      block.includes("exportLoadedCsv(page)"),
+    "Loaded CSV test must prove the button starts hidden before export",
+  );
+  assert(
+    block.includes("expect(rows).toHaveLength(accountTotal)"),
+    "Loaded CSV test must still verify the dynamic account total",
+  );
+  assert(
+    block.includes("rows.filter((row) => row.job_title === title)"),
+    "Loaded CSV test must still verify each current-run title exactly once",
+  );
+  assert(
+    block.includes("new Set(rows.map((row) => row.job_title)).size"),
+    "Loaded CSV test must still verify exported title uniqueness",
+  );
+  assert(
+    block.includes("syntheticResume") && block.includes("syntheticJob"),
+    "Loaded CSV test must still verify privacy exclusions",
+  );
+}
+
+async function runBrowserBackedLoadedExportDisclosureRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    LOADED_EXPORT_FILENAME_PATTERN,
+    openLoadedExportDisclosure,
+  } = await import("../helpers/flows.ts");
+  const { deleteDownload } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(
+      `<main>
+        <details id="export-result">
+          <summary>Export result</summary>
+          <button type="button">Result CSV</button>
+        </details>
+        <details id="export-loaded">
+          <summary>Export loaded analyses</summary>
+          <button type="button" id="loaded-csv">Loaded analyses (CSV)</button>
+        </details>
+        <script>
+          document.getElementById("loaded-csv").addEventListener("click", () => {
+            const blob = new Blob(["job_title,company\\nFixture,Acme"], {
+              type: "text/csv",
+            });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "saved-analyses-summary-2026-06-28.csv";
+            anchor.click();
+            URL.revokeObjectURL(url);
+          });
+        </script>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    const loadedButton = page.getByRole("button", {
+      name: "Loaded analyses (CSV)",
+      exact: true,
+    });
+    await expect(loadedButton).not.toBeVisible();
+
+    const button = await openLoadedExportDisclosure(page);
+    await expect(button).toBeVisible();
+    await expect(button).toBeEnabled();
+
+    const exportResultOpen = await page
+      .locator("#export-result")
+      .evaluate((element) => element.open);
+    const exportLoadedOpen = await page
+      .locator("#export-loaded")
+      .evaluate((element) => element.open);
+    assert(!exportResultOpen, "Export result disclosure must remain closed");
+    assert(exportLoadedOpen, "Export loaded analyses disclosure must open");
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 20_000 }),
+      button.click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(LOADED_EXPORT_FILENAME_PATTERN);
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    await deleteDownload(path);
+  } finally {
+    await browser.close();
+  }
+}
+
 try {
   runLoadMorePlanRegression();
   runPaginationMathRegression();
@@ -1834,6 +2009,7 @@ try {
   runFixtureSourceRegression();
   runSearchFilterSourceRegression();
   runSelectionSourceRegression();
+  runLoadedExportSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -1846,6 +2022,7 @@ try {
   await runBrowserBackedRowSummaryRegression();
   await runBrowserBackedSelectionDetailIndependenceRegression();
   await runBrowserBackedHiddenSelectionRegression();
+  await runBrowserBackedLoadedExportDisclosureRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");
