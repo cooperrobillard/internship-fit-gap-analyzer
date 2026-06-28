@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  LOAD_MORE_ALERT_MESSAGE,
   SAVED_ANALYSES_PAGE_SIZE,
   buildLoadMorePlan,
   formatPaginationSuccessStatus,
@@ -449,6 +448,69 @@ function runIncrementalFailureSourceRegression() {
     !block.includes("test.setTimeout") && !block.includes("timeout:"),
     "incremental failure test must not increase the full test timeout",
   );
+  assert(
+    block.includes("expectLoadMoreFailureAlert(page)"),
+    "incremental failure test must call the dedicated load-more failure alert helper",
+  );
+  assert(
+    !block.includes('expect(page.getByRole("alert")).toContainText('),
+    "incremental failure test must not use the broad page-wide alert assertion",
+  );
+  assert(
+    block.includes("interceptor.assertSeen(1)"),
+    "incremental failure test must keep interceptor verification",
+  );
+}
+
+function runLoadMoreFailureAlertSourceRegression() {
+  const workspaceSource = readFileSync(join(helpersDir, "saved-workspace.ts"), "utf8");
+
+  assert(
+    workspaceSource.includes("export const LOAD_MORE_ALERT_MESSAGE"),
+    "LOAD_MORE_ALERT_MESSAGE must remain the central message constant",
+  );
+  assert(
+    workspaceSource.includes("export function loadMoreFailureAlert"),
+    "a dedicated load-more failure alert locator must exist",
+  );
+  assert(
+    workspaceSource.includes('getByRole("alert")') &&
+      workspaceSource.includes("filter({ hasText: LOAD_MORE_ALERT_MESSAGE })"),
+    "the locator must filter semantic alerts using LOAD_MORE_ALERT_MESSAGE",
+  );
+  assert(
+    !workspaceSource.includes("loadMoreFailureAlert(page).first()") &&
+      !workspaceSource.includes("loadMoreFailureAlert(page).last()") &&
+      !workspaceSource.includes('.getByRole("alert").first()') &&
+      !workspaceSource.includes('.getByRole("alert").last()'),
+    "the load-more failure alert locator must not use positional selection",
+  );
+  assert(
+    !workspaceSource.includes("__next-route-announcer__"),
+    "the locator must not target the Next.js route announcer directly",
+  );
+  assert(
+    workspaceSource.includes("export async function expectLoadMoreFailureAlert"),
+    "a bounded load-more failure alert assertion helper must exist",
+  );
+  assert(
+    workspaceSource.includes("toHaveCount(1") &&
+      workspaceSource.includes("toHaveText(LOAD_MORE_ALERT_MESSAGE"),
+    "the assertion must require exactly one alert with the exact message",
+  );
+  assert(
+    workspaceSource.includes("LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS"),
+    "the assertion must use a bounded timeout constant",
+  );
+  assert(
+    workspaceSource.includes("15_000"),
+    "the bounded timeout must be approximately 10-15 seconds",
+  );
+  assert(
+    workspaceSource.includes("loadMoreFailureAlert(page)") &&
+      workspaceSource.includes("loadMoreAndExpectSuccess"),
+    "loadMoreAndExpectSuccess must reuse the central load-more failure alert locator",
+  );
 }
 
 function buildSavedRowButtonHtml({
@@ -477,6 +539,64 @@ function greedyAriaLabelTitle(label) {
   return match?.[1] ?? "";
 }
 
+async function runBrowserBackedLoadMoreFailureAlertRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    LOAD_MORE_ALERT_MESSAGE: alertMessage,
+    expectLoadMoreFailureAlert,
+    loadMoreFailureAlert,
+  } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(
+      `<main>
+        <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>
+        <p role="alert">${alertMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    assert(
+      (await page.getByRole("alert").count()) === 2,
+      "fixture must contain both the route announcer and application alert",
+    );
+
+    const alert = loadMoreFailureAlert(page);
+    await expect(alert).toHaveCount(1);
+    await expect(alert).toHaveText(alertMessage);
+    await expectLoadMoreFailureAlert(page);
+
+    const missingAlertPage = await browser.newPage();
+    await missingAlertPage.setContent(
+      `<main><div role="alert" aria-live="assertive" id="__next-route-announcer__"></div></main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => expectLoadMoreFailureAlert(missingAlertPage),
+      "toHaveCount",
+    );
+    await missingAlertPage.close();
+
+    const duplicateAlertPage = await browser.newPage();
+    await duplicateAlertPage.setContent(
+      `<main>
+        <p role="alert">${alertMessage}</p>
+        <p role="alert">${alertMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => expectLoadMoreFailureAlert(duplicateAlertPage),
+      "toHaveCount",
+    );
+    await duplicateAlertPage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
 async function runBrowserBackedPaginationRegression() {
   const { chromium, expect } = await import("@playwright/test");
   const { paginationStatus } = await import("../helpers/saved-workspace.ts");
@@ -495,16 +615,6 @@ async function runBrowserBackedPaginationRegression() {
     );
     await expect(paginationStatus(page)).toHaveText(finalStatus);
     await expect(paginationStatus(page)).toHaveCount(1);
-
-    const alertPage = await browser.newPage();
-    await alertPage.setContent(
-      `<div role="alert">${LOAD_MORE_ALERT_MESSAGE}</div>`,
-      { waitUntil: "domcontentloaded" },
-    );
-    await expect(
-      alertPage.getByRole("alert").filter({ hasText: LOAD_MORE_ALERT_MESSAGE }),
-    ).toBeVisible();
-    await alertPage.close();
   } finally {
     await browser.close();
   }
@@ -790,7 +900,9 @@ try {
   runUniquenessRegression();
   runSourceRegression();
   runIncrementalFailureSourceRegression();
+  runLoadMoreFailureAlertSourceRegression();
   await runBrowserBackedPaginationRegression();
+  await runBrowserBackedLoadMoreFailureAlertRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();

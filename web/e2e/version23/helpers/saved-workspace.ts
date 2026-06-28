@@ -10,6 +10,7 @@ export const USER_B_EXPECTED_BASELINE_LOADED_COUNT = 1;
 const LOADED_COUNT_STATUS_PATTERN = /^(\d+) loaded$/;
 
 export const LOAD_MORE_SUCCESS_TIMEOUT_MS = 60_000;
+export const LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS = 15_000;
 export const LOAD_MORE_ALERT_MESSAGE =
   "Could not load more analyses. Your currently loaded analyses are still available. Try again.";
 
@@ -131,6 +132,21 @@ export function validateUniqueSavedRowTitles(titles: string[], expectedTotalCoun
 
 export function paginationStatus(page: Page): Locator {
   return page.locator("#saved-analyses-pagination-status");
+}
+
+export function loadMoreFailureAlert(page: Page): Locator {
+  return page.getByRole("alert").filter({ hasText: LOAD_MORE_ALERT_MESSAGE });
+}
+
+export async function expectLoadMoreFailureAlert(page: Page): Promise<void> {
+  const alert = loadMoreFailureAlert(page);
+
+  await expect(alert).toHaveCount(1, {
+    timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
+  });
+  await expect(alert).toHaveText(LOAD_MORE_ALERT_MESSAGE, {
+    timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
+  });
 }
 
 export async function gotoSavedWorkspace(page: Page, baseUrl: string): Promise<void> {
@@ -291,9 +307,7 @@ export async function loadMoreAndExpectSuccess(
 
   await loadMoreButton.click();
 
-  const loadMoreAlert = page.getByRole("alert").filter({
-    hasText: LOAD_MORE_ALERT_MESSAGE,
-  });
+  const loadMoreAlert = loadMoreFailureAlert(page);
 
   try {
     await expect

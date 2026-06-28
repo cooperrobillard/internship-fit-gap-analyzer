@@ -24,6 +24,7 @@ import {
   assertUserBPostSwitchIsolation,
   captureUserBBaselineLoadedCount,
   clickLoadMore,
+  expectLoadMoreFailureAlert,
   expectLoadedCount,
   expectRowAbsent,
   expectRowVisible,
@@ -201,9 +202,7 @@ test.describe("Incremental failure and retry", () => {
       route.abort("failed"),
     );
     await clickLoadMore(page);
-    await expect(page.getByRole("alert")).toContainText(
-      "Could not load more analyses. Your currently loaded analyses are still available. Try again.",
-    );
+    await expectLoadMoreFailureAlert(page);
     interceptor.assertSeen(1);
     await expectLoadedCount(page, 10);
 
