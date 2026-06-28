@@ -13,6 +13,7 @@ import {
   fillOptionalJobMetadata,
   openOptionalJobDetails,
 } from "./analysis-form";
+import { openSavedAnalysisJobDetails } from "./saved-analysis-detail";
 import {
   clickLoadMore,
   deleteDownload,
@@ -83,9 +84,12 @@ export async function runStructuredSaveFlow(
 
     await expect(page.getByRole("heading", { level: 2, name: uiTitle })).toBeVisible();
     await expect(page.getByText(SYNTHETIC_COMPANY).first()).toBeVisible();
-    await expect(page.getByText(uiNotes)).toBeVisible();
     await expect(page.getByText(/Matched skills/i).first()).toBeVisible();
     await expect(page.getByText(/Missing skills/i).first()).toBeVisible();
+
+    const jobDetails = await openSavedAnalysisJobDetails(page, uiTitle);
+    await expect(jobDetails.getByText(uiNotes, { exact: true })).toBeVisible();
+
     await expect(page.getByText("Demo Candidate")).toHaveCount(0);
     await expect(page.getByText("Northstar Distribution")).toHaveCount(0);
     await expect(page.getByText(syntheticResume)).toHaveCount(0);
