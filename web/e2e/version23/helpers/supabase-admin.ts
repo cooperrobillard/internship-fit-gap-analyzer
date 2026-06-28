@@ -72,7 +72,7 @@ export async function resolveClerkUserIds(config: QaConfig): Promise<{
 function buildUserARecordTitle(
   config: QaConfig,
   index: number,
-): { title: string; notes: string; missing: number } {
+): { title: string; notes: string | null; missing: number } {
   const number = String(index + 1).padStart(2, "0");
   const suffix =
     index === 15 ? " older-pagination-search-target" : ` A ${number}`;
@@ -84,7 +84,7 @@ function buildUserARecordTitle(
         ? 'Contact said "review next week"'
         : index === 4
           ? "Has notes"
-          : "no notes";
+          : null;
   const missing = index % 2 === 0 ? 2 : 0;
   return { title, notes, missing };
 }
@@ -139,7 +139,7 @@ async function insertStructuredRecord(input: {
   ownerLabel: "A" | "B";
   config: QaConfig;
   title: string;
-  notes: string;
+  notes: string | null;
   missingCount: number;
   createdAt: string;
   sourceSuffix: string;

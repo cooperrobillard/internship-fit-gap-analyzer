@@ -33,6 +33,7 @@ import {
   loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
+  readVisibleSavedRowSummaries,
   readVisibleTitles,
   rowCheckbox,
   rowOpenButton,
@@ -48,6 +49,7 @@ import {
   exportSelectedCsv,
   loadAllUserARecords,
   runStructuredSaveFlow,
+  UI_SAVE_TITLE_PREFIX,
   selectRecordsByTitle,
   verifyCurrentRunVisibleCoverage,
   verifyPaginationOrdering,
@@ -279,10 +281,11 @@ test.describe("Incremental failure and retry", () => {
 
 test.describe("Search and filters across pages", () => {
   test("Search and filters across pages", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
     await expectLoadedCount(page, 10);
-    const searchTarget = titleForUserA(qaConfig(), 15);
+    const searchTarget = titleForUserA(config, 15);
     await expectRowAbsent(page, searchTarget);
 
     await setSearchQuery(page, "older-pagination-search-target");
@@ -297,20 +300,79 @@ test.describe("Search and filters across pages", () => {
     await expectVisibleCountSummary(page, 1, 20);
 
     await setSearchQuery(page, "");
+    await setListFilter(page, "Show all");
+    await expectVisibleCountSummary(page, 20, 20);
+
+    const baselineRows = await readVisibleSavedRowSummaries(page);
+    expect(baselineRows).toHaveLength(20);
+
+    const expectedHasMissing = baselineRows.filter(
+      (row) => row.missingCount > 0,
+    ).length;
+    const expectedNoMissing = baselineRows.filter(
+      (row) => row.missingCount === 0,
+    ).length;
+    expect(expectedHasMissing).toBeGreaterThan(0);
+    expect(expectedNoMissing).toBeGreaterThan(0);
+    expect(expectedHasMissing + expectedNoMissing).toBe(20);
+
     await setListFilter(page, "Has missing skills");
-    await expectVisibleCountSummary(page, 5, 20);
+    await expectVisibleCountSummary(page, expectedHasMissing, 20);
+    const hasMissingRows = await readVisibleSavedRowSummaries(page);
+    expect(hasMissingRows).toHaveLength(expectedHasMissing);
+    for (const row of hasMissingRows) {
+      expect(row.missingCount).toBeGreaterThan(0);
+    }
+    for (const row of baselineRows) {
+      if (row.missingCount > 0) {
+        await expectRowVisible(page, row.title);
+      } else {
+        await expectRowAbsent(page, row.title);
+      }
+    }
 
     await setListFilter(page, "No missing skills");
-    await expectVisibleCountSummary(page, 5, 20);
+    await expectVisibleCountSummary(page, expectedNoMissing, 20);
+    const noMissingRows = await readVisibleSavedRowSummaries(page);
+    expect(noMissingRows).toHaveLength(expectedNoMissing);
+    for (const row of noMissingRows) {
+      expect(row.missingCount).toBe(0);
+    }
+    for (const row of baselineRows) {
+      if (row.missingCount === 0) {
+        await expectRowVisible(page, row.title);
+      } else {
+        await expectRowAbsent(page, row.title);
+      }
+    }
+
+    const expectedNoteTitles = [
+      `V23 QA ${config.runId} ${UI_SAVE_TITLE_PREFIX}`,
+      titleForUserA(config, 2),
+      titleForUserA(config, 3),
+      titleForUserA(config, 4),
+    ];
+    for (const title of expectedNoteTitles) {
+      expect(baselineRows.some((row) => row.title === title)).toBe(true);
+    }
 
     await setListFilter(page, "Has notes");
-    await expectVisibleCountSummary(page, 3, 20);
+    await expectVisibleCountSummary(page, expectedNoteTitles.length, 20);
+    for (const title of expectedNoteTitles) {
+      await expectRowVisible(page, title);
+    }
+    await expectRowAbsent(page, titleForUserA(config, 5));
+    const notesVisibleTitles = await readVisibleTitles(page);
+    expect(new Set(notesVisibleTitles)).toEqual(new Set(expectedNoteTitles));
+    expect(notesVisibleTitles).toHaveLength(expectedNoteTitles.length);
 
     await setSearchQuery(page, "zzzz-no-loaded-match-zzzz");
+    await expectVisibleCountSummary(page, 0, 20);
     await expect(page.getByText("No saved analyses match this search.")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Load more analyses" }),
     ).toBeVisible();
+    await expectNoUnsafeText(page);
     await context.close();
   });
 });

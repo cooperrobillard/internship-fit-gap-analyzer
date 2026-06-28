@@ -301,6 +301,13 @@ export function savedAnalysisOpenButtons(page: Page): Locator {
   });
 }
 
+export type VisibleSavedRowSummary = {
+  title: string;
+  missingCount: number;
+};
+
+const MISSING_COUNT_PATTERN = /^Missing (\d+)$/;
+
 async function readRenderedTitleFromButton(
   button: Locator,
   rowIndex: number,
@@ -319,6 +326,66 @@ async function readRenderedTitleFromButton(
     );
   }
   return text;
+}
+
+async function readRenderedMissingCountFromButton(
+  button: Locator,
+  rowIndex: number,
+): Promise<number> {
+  const spans = button.locator("span");
+  const spanCount = await spans.count();
+  let missingMatches = 0;
+  let parsedCount: number | null = null;
+
+  for (let index = 0; index < spanCount; index += 1) {
+    const text = ((await spans.nth(index).textContent()) ?? "").trim();
+    const match = text.match(MISSING_COUNT_PATTERN);
+    if (match) {
+      missingMatches += 1;
+      parsedCount = Number(match[1]);
+    }
+  }
+
+  if (missingMatches === 0) {
+    throw new Error(
+      `Saved-analysis row ${rowIndex + 1} did not contain a readable Missing count.`,
+    );
+  }
+  if (missingMatches > 1) {
+    throw new Error(
+      `Saved-analysis row ${rowIndex + 1} contained multiple Missing counts.`,
+    );
+  }
+
+  const value = parsedCount!;
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new Error(
+      `Saved-analysis row ${rowIndex + 1} Missing count is not a valid non-negative integer.`,
+    );
+  }
+  return value;
+}
+
+export async function readVisibleSavedRowSummaries(
+  page: Page,
+): Promise<VisibleSavedRowSummary[]> {
+  const buttons = savedAnalysisOpenButtons(page);
+  const count = await buttons.count();
+  const summaries: VisibleSavedRowSummary[] = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const button = buttons.nth(index);
+    const title = await readRenderedTitleFromButton(button, index);
+    const missingCount = await readRenderedMissingCountFromButton(button, index);
+    summaries.push({ title, missingCount });
+  }
+
+  validateUniqueSavedRowTitles(
+    summaries.map((row) => row.title),
+    summaries.length,
+  );
+
+  return summaries;
 }
 
 export async function expectRowVisible(page: Page, title: string): Promise<void> {

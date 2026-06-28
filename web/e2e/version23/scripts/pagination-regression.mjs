@@ -931,6 +931,7 @@ function buildSavedRowButtonHtml({
   title,
   company,
   savedDate,
+  missingCount = 1,
 }) {
   return `<button
     type="button"
@@ -943,9 +944,202 @@ function buildSavedRowButtonHtml({
     <div>
       <span>${company}</span>
       <span>Matched 2</span>
-      <span>Missing 1</span>
+      <span>Missing ${missingCount}</span>
     </div>
   </button>`;
+}
+
+function extractSearchFilterBlock(specSource) {
+  const startMarker = 'test.describe("Search and filters across pages"';
+  const endMarker = 'test.describe("Selection"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Search and filters across pages test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runFixtureSourceRegression() {
+  const supabaseSource = readFileSync(
+    join(helpersDir, "supabase-admin.ts"),
+    "utf8",
+  );
+
+  assert(
+    supabaseSource.includes("notes: string | null"),
+    "seed builder and insert helper must accept null notes",
+  );
+  assert(
+    supabaseSource.includes(": null;") &&
+      !supabaseSource.includes('"no notes"'),
+    "default seed notes must be null and must not use the literal no-notes phrase",
+  );
+  assert(
+    supabaseSource.includes('"Follow up, high priority"') &&
+      supabaseSource.includes('Contact said "review next week"') &&
+      supabaseSource.includes('"Has notes"'),
+    "indices 2, 3, and 4 must retain their intentional note values",
+  );
+  assert(
+    supabaseSource.includes("index % 2 === 0 ? 2 : 0"),
+    "missing-count alternation must remain intact",
+  );
+}
+
+function runSearchFilterSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractSearchFilterBlock(specSource);
+
+  assert(
+    !block.includes("5, 20") && !block.includes("3, 20"),
+    "search/filter test must not hard-code stale missing or notes counts",
+  );
+  assert(
+    block.includes("const config = qaConfig();"),
+    "search/filter test must resolve config once",
+  );
+  assert(
+    block.includes("readVisibleSavedRowSummaries(page)") &&
+      block.includes("toHaveLength(20)"),
+    "search/filter test must read the twenty-row unfiltered baseline",
+  );
+  assert(
+    block.includes("missingCount > 0") && block.includes("missingCount === 0"),
+    "missing-filter counts must be derived from rendered Missing metadata",
+  );
+  assert(
+    block.includes("toBeGreaterThan(0)") &&
+      block.includes("(expectedHasMissing + expectedNoMissing).toBe(20)"),
+    "both missing categories must be required to be nonempty",
+  );
+  assert(
+    block.includes('setListFilter(page, "Has missing skills")') &&
+      block.includes("for (const row of hasMissingRows)") &&
+      block.includes("for (const row of baselineRows)"),
+    "Has-missing rows must be verified individually against the baseline",
+  );
+  assert(
+    block.includes('setListFilter(page, "No missing skills")') &&
+      block.includes("for (const row of noMissingRows)"),
+    "No-missing rows must be verified individually against the baseline",
+  );
+  assert(
+    block.includes("UI_SAVE_TITLE_PREFIX") &&
+      block.includes("titleForUserA(config, 2)") &&
+      block.includes("titleForUserA(config, 3)") &&
+      block.includes("titleForUserA(config, 4)"),
+    "expected note titles must include the UI-saved record and indices 2, 3, and 4",
+  );
+  assert(
+    block.includes("new Set(notesVisibleTitles)") &&
+      block.includes("new Set(expectedNoteTitles)"),
+    "notes-filter visible titles must be checked exactly",
+  );
+  assert(
+    block.includes("titleForUserA(config, 5)") &&
+      block.includes("expectRowAbsent"),
+    "a known null-notes title must be verified absent under Has notes",
+  );
+  assert(
+    block.includes("older-pagination-search-target"),
+    "cross-page search target must remain in the test",
+  );
+  assert(
+    block.includes("zzzz-no-loaded-match-zzzz") &&
+      block.includes("No saved analyses match this search."),
+    "final zero-match search/filter check must remain",
+  );
+  assert(
+    block.includes("expectNoUnsafeText(page)"),
+    "search/filter test must include privacy verification",
+  );
+}
+
+async function runBrowserBackedRowSummaryRegression() {
+  const { chromium } = await import("@playwright/test");
+  const { readVisibleSavedRowSummaries } = await import(
+    "../helpers/saved-workspace.ts"
+  );
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const orderedRows = [
+      { title: "Alpha role", missingCount: 0 },
+      { title: "Beta role", missingCount: 1 },
+      { title: "Gamma role", missingCount: 2 },
+    ];
+    const fixtureRows = orderedRows
+      .map((row, index) =>
+        buildSavedRowButtonHtml({
+          title: row.title,
+          company: "Acme Corp",
+          savedDate: `6/${index + 1}/2026`,
+          missingCount: row.missingCount,
+        }),
+      )
+      .join("");
+    await page.setContent(`<main>${fixtureRows}</main>`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    const summaries = await readVisibleSavedRowSummaries(page);
+    assert(summaries.length === 3, "row-summary helper must return all visible rows");
+    assert(
+      summaries.map((row) => row.title).join("|") ===
+        orderedRows.map((row) => row.title).join("|"),
+      "row-summary helper must preserve row ordering",
+    );
+    assert(
+      summaries.every(
+        (row, index) => row.missingCount === orderedRows[index].missingCount,
+      ),
+      "row-summary helper must parse Missing counts correctly",
+    );
+
+    const malformedPage = await browser.newPage();
+    await malformedPage.setContent(
+      `<main>${buildSavedRowButtonHtml({
+        title: "Broken row",
+        company: "Acme Corp",
+        savedDate: "6/1/2026",
+        missingCount: 1,
+      }).replace("Missing 1", "Missing")}</main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => readVisibleSavedRowSummaries(malformedPage),
+      "did not contain a readable Missing count",
+    );
+    await malformedPage.close();
+
+    const duplicatePage = await browser.newPage();
+    await duplicatePage.setContent(
+      `<main>${[
+        buildSavedRowButtonHtml({
+          title: "Duplicate title",
+          company: "Acme Corp",
+          savedDate: "6/1/2026",
+          missingCount: 0,
+        }),
+        buildSavedRowButtonHtml({
+          title: "Duplicate title",
+          company: "Acme Corp",
+          savedDate: "6/2/2026",
+          missingCount: 2,
+        }),
+      ].join("")}</main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => readVisibleSavedRowSummaries(duplicatePage),
+      "duplicate titles",
+    );
+    await duplicatePage.close();
+  } finally {
+    await browser.close();
+  }
 }
 
 function greedyAriaLabelTitle(label) {
@@ -1314,6 +1508,8 @@ try {
   runUniquenessRegression();
   runSourceRegression();
   runIncrementalFailureSourceRegression();
+  runFixtureSourceRegression();
+  runSearchFilterSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -1323,6 +1519,7 @@ try {
   await runBrowserBackedPersistentPaginationInterceptorRegression();
   await runBrowserBackedExactLoadMoreRequestRegression();
   await runBrowserBackedTitleReadingRegression();
+  await runBrowserBackedRowSummaryRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");
