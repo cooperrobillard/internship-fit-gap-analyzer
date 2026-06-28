@@ -1136,9 +1136,63 @@ function runSelectionSourceRegression() {
     "Selection test must preserve open detail through uncheck and restore two-row selection",
   );
 
+  const hiddenSearchIndex = block.indexOf("await setSearchQuery(page, eleventh);");
+  const filteredSummaryIndex = block.indexOf(
+    "await expectVisibleCountSummary(page, 1, accountTotal);",
+  );
+  const eleventhVisibleIndex = block.indexOf("await expectRowVisible(page, eleventh);");
+  const eleventhCheckedIndex = block.indexOf(
+    "await expect(rowCheckbox(page, eleventh)).toBeChecked();",
+  );
+  const firstAbsentIndex = block.indexOf("await expectRowAbsent(page, first);");
+  const hiddenStatusIndex = block.indexOf(
+    "2 analyses selected; 1 is hidden by the current search or filter.",
+  );
+  const clearSelectionIndex = block.indexOf(
+    'await page.getByRole("button", { name: "Clear selection" }).click();',
+  );
+  const noSelectionIndex = block.indexOf(
+    'await expect(page.getByText("No analyses selected.")).toBeVisible();',
+  );
+  const eleventhUncheckedIndex = block.indexOf(
+    "await expect(rowCheckbox(page, eleventh)).not.toBeChecked();",
+  );
+  const currentRunSearchIndex = block.indexOf(
+    "await setSearchQuery(page, `V23 QA ${config.runId}`);",
+  );
+  const firstUncheckedAfterRestoreIndex = block.indexOf(
+    "await expect(rowCheckbox(page, first)).not.toBeChecked();",
+    currentRunSearchIndex,
+  );
+
   assert(
-    block.includes("1 is hidden by the current search or filter"),
-    "Selection test must verify hidden-selection status",
+    hiddenSearchIndex > twoSelectedIndex &&
+      filteredSummaryIndex > hiddenSearchIndex &&
+      eleventhVisibleIndex > filteredSummaryIndex &&
+      eleventhCheckedIndex > eleventhVisibleIndex &&
+      firstAbsentIndex > eleventhCheckedIndex &&
+      hiddenStatusIndex > firstAbsentIndex &&
+      clearSelectionIndex > hiddenStatusIndex &&
+      noSelectionIndex > clearSelectionIndex &&
+      eleventhUncheckedIndex > noSelectionIndex &&
+      currentRunSearchIndex > eleventhUncheckedIndex &&
+      firstUncheckedAfterRestoreIndex > currentRunSearchIndex,
+    "Selection test must verify one visible and one hidden selected row before clearing",
+  );
+
+  assert(
+    !block.includes("older-pagination-search-target"),
+    "Selection test must not reuse the cross-page pagination search target",
+  );
+  assert(
+    !block.includes("2 is hidden by the current search or filter"),
+    "Selection test must not expect two hidden selected rows",
+  );
+  assert(
+    block.includes(
+      "2 analyses selected; 1 is hidden by the current search or filter.",
+    ),
+    "Selection test must assert the exact singular hidden-selection status",
   );
   assert(
     block.includes('getByRole("button", { name: "Clear selection" })'),
@@ -1222,6 +1276,104 @@ async function runBrowserBackedSelectionDetailIndependenceRegression() {
     await checkbox.uncheck();
     await expect(checkbox).not.toBeChecked();
     await expect(detailHeading).toBeVisible();
+  } finally {
+    await browser.close();
+  }
+}
+
+async function runBrowserBackedHiddenSelectionRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const firstTitle = "V23 QA run A 01";
+    const eleventhTitle = "V23 QA run A 11";
+    await page.setContent(
+      `<main>
+        <input id="search" placeholder="Search saved analyses…" value="" />
+        <p id="selection-status">2 analyses selected</p>
+        <label id="row-first" data-title="${firstTitle}">
+          <input type="checkbox" id="check-first" aria-label="Select saved analysis ${firstTitle}" checked />
+          ${firstTitle}
+        </label>
+        <label id="row-eleventh" data-title="${eleventhTitle}">
+          <input type="checkbox" id="check-eleventh" aria-label="Select saved analysis ${eleventhTitle}" checked />
+          ${eleventhTitle}
+        </label>
+        <button type="button" id="clear-selection">Clear selection</button>
+        <script>
+          const search = document.getElementById("search");
+          const status = document.getElementById("selection-status");
+          const rowFirst = document.getElementById("row-first");
+          const rowEleventh = document.getElementById("row-eleventh");
+          const checkFirst = document.getElementById("check-first");
+          const checkEleventh = document.getElementById("check-eleventh");
+          const clearButton = document.getElementById("clear-selection");
+          const hiddenStatus =
+            "2 analyses selected; 1 is hidden by the current search or filter.";
+
+          function updateVisibility() {
+            const query = search.value.trim().toLowerCase();
+            const firstVisible = !query || rowFirst.dataset.title.toLowerCase().includes(query);
+            const eleventhVisible =
+              !query || rowEleventh.dataset.title.toLowerCase().includes(query);
+            rowFirst.hidden = !firstVisible;
+            rowEleventh.hidden = !eleventhVisible;
+
+            const selectedCount =
+              Number(checkFirst.checked) + Number(checkEleventh.checked);
+            const hiddenSelectedCount =
+              Number(checkFirst.checked && !firstVisible) +
+              Number(checkEleventh.checked && !eleventhVisible);
+
+            if (selectedCount === 0) {
+              status.textContent = "No analyses selected.";
+              return;
+            }
+            if (hiddenSelectedCount === 1) {
+              status.textContent = hiddenStatus;
+              return;
+            }
+            status.textContent =
+              selectedCount === 1
+                ? "1 analysis selected"
+                : \`\${selectedCount} analyses selected\`;
+          }
+
+          search.addEventListener("input", updateVisibility);
+          checkFirst.addEventListener("change", updateVisibility);
+          checkEleventh.addEventListener("change", updateVisibility);
+          clearButton.addEventListener("click", () => {
+            checkFirst.checked = false;
+            checkEleventh.checked = false;
+            updateVisibility();
+          });
+
+          updateVisibility();
+        </script>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    await page.locator("#search").fill(eleventhTitle);
+    await expect(page.locator("#row-first")).toBeHidden();
+    await expect(page.locator("#row-eleventh")).toBeVisible();
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await page.locator("#clear-selection").click();
+    await expect(page.getByText("No analyses selected.", { exact: true })).toBeVisible();
+    await expect(page.locator("#check-eleventh")).not.toBeChecked();
+
+    await page.locator("#search").fill("");
+    await expect(page.locator("#row-first")).toBeVisible();
+    await expect(page.locator("#check-first")).not.toBeChecked();
+    await expect(page.locator("#check-eleventh")).not.toBeChecked();
   } finally {
     await browser.close();
   }
@@ -1693,6 +1845,7 @@ try {
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedRowSummaryRegression();
   await runBrowserBackedSelectionDetailIndependenceRegression();
+  await runBrowserBackedHiddenSelectionRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");

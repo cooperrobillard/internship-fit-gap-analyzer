@@ -414,14 +414,25 @@ test.describe("Selection", () => {
     await rowCheckbox(page, eleventh).check();
     await expect(page.getByText("2 analyses selected")).toBeVisible();
 
-    await setSearchQuery(page, "older-pagination-search-target");
-    await expect(page.getByText(/1 is hidden by the current search or filter/)).toBeVisible();
+    await setSearchQuery(page, eleventh);
+    await expectVisibleCountSummary(page, 1, accountTotal);
+    await expectRowVisible(page, eleventh);
+    await expect(rowCheckbox(page, eleventh)).toBeChecked();
+    await expectRowAbsent(page, first);
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Clear selection" }).click();
     await expect(page.getByText("No analyses selected.")).toBeVisible();
+    await expect(rowCheckbox(page, eleventh)).not.toBeChecked();
 
     await setSearchQuery(page, `V23 QA ${config.runId}`);
     await expectVisibleCountSummary(page, 23, accountTotal);
+    await expect(rowCheckbox(page, first)).not.toBeChecked();
     await page.getByLabel("Select all visible").check();
     await expect(page.getByText("23 analyses selected")).toBeVisible();
     await rowCheckbox(page, first).uncheck();
