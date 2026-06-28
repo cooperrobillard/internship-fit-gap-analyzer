@@ -34,6 +34,18 @@ function assertThrows(fn, expectedMessage) {
   }
 }
 
+async function assertThrowsAsync(fn, expectedMessage) {
+  try {
+    await fn();
+    throw new Error(`Expected failure containing "${expectedMessage}"`);
+  } catch (error) {
+    assert(
+      error instanceof Error && error.message.includes(expectedMessage),
+      `Expected "${expectedMessage}", got "${error instanceof Error ? error.message : error}"`,
+    );
+  }
+}
+
 function assertPlanTotals(totalCount, pageSize, expectedSteps) {
   const plan = buildLoadMorePlan(totalCount, pageSize);
   assert(plan.length === expectedSteps.length, `total ${totalCount} must produce ${expectedSteps.length} load-more step(s)`);
@@ -328,6 +340,57 @@ function runSourceRegression() {
     specSource.includes("verifyPaginationOrdering(page, config)"),
     "pagination ordering verification must remain after all records load",
   );
+  assert(
+    !workspaceSource.includes('getAttribute("aria-label")'),
+    "readVisibleTitles must not parse aria-label attributes for titles",
+  );
+  assert(
+    !workspaceSource.includes("/^Open saved analysis (.+), /"),
+    "greedy aria-label title regex must be absent from title extraction",
+  );
+  assert(
+    workspaceSource.includes("savedAnalysisOpenButtons"),
+    "savedAnalysisOpenButtons must centralize saved-row open button location",
+  );
+  assert(
+    workspaceSource.includes('name: /^Open saved analysis /'),
+    "savedAnalysisOpenButtons must keep the accessible button name",
+  );
+  assert(
+    flowsSource.includes("readVisibleTitles(page)"),
+    "verifyCurrentRunVisibleCoverage must use readVisibleTitles",
+  );
+  assert(
+    flowsSource.includes("readVisibleTitles(page)") &&
+      flowsSource.includes("verifyPaginationOrdering"),
+    "verifyPaginationOrdering must use readVisibleTitles",
+  );
+}
+
+function buildSavedRowButtonHtml({
+  title,
+  company,
+  savedDate,
+}) {
+  return `<button
+    type="button"
+    aria-label="Open saved analysis ${title}, ${company}, saved ${savedDate}"
+  >
+    <div>
+      <p>${title}</p>
+      <p>${savedDate}</p>
+    </div>
+    <div>
+      <span>${company}</span>
+      <span>Matched 2</span>
+      <span>Missing 1</span>
+    </div>
+  </button>`;
+}
+
+function greedyAriaLabelTitle(label) {
+  const match = label.match(/^Open saved analysis (.+), /);
+  return match?.[1] ?? "";
 }
 
 async function runBrowserBackedPaginationRegression() {
@@ -358,6 +421,219 @@ async function runBrowserBackedPaginationRegression() {
       alertPage.getByRole("alert").filter({ hasText: LOAD_MORE_ALERT_MESSAGE }),
     ).toBeVisible();
     await alertPage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
+async function runBrowserBackedTitleReadingRegression() {
+  const { chromium } = await import("@playwright/test");
+  const {
+    readVisibleTitles,
+    savedAnalysisOpenButtons,
+  } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const runId = "regression-run";
+    const commaTitle = "Platform Engineer, Inc.";
+    const commaCompany = "Northstar, LLC";
+    const commaDate = "6/28/2026, 2:44:11 AM";
+    const simpleTitle = "Software Intern";
+    const currentRunTitle = `V23 QA ${runId} A 01`;
+    const orderedRows = [
+      {
+        title: commaTitle,
+        company: commaCompany,
+        savedDate: commaDate,
+      },
+      {
+        title: simpleTitle,
+        company: "Acme Corp",
+        savedDate: "6/27/2026, 9:15:00 AM",
+      },
+      {
+        title: currentRunTitle,
+        company: "Version 23 QA Company",
+        savedDate: "6/26/2026, 1:00:00 PM",
+      },
+      {
+        title: "Baseline record 01",
+        company: "Legacy Org",
+        savedDate: "1/2/2025, 8:00:00 AM",
+      },
+    ];
+
+    const fixtureRows = orderedRows
+      .map((row) => buildSavedRowButtonHtml(row))
+      .join("");
+    await page.setContent(`<main>${fixtureRows}</main>`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    const titles = await readVisibleTitles(page);
+    assert(titles.length === orderedRows.length, "title count must equal open-button count");
+    assert(
+      (await savedAnalysisOpenButtons(page).count()) === orderedRows.length,
+      "returned title count must equal open-button count",
+    );
+    assert(
+      titles[0] === commaTitle,
+      "readVisibleTitles must return the exact comma-containing title text",
+    );
+    assert(
+      titles[1] === simpleTitle,
+      "readVisibleTitles must return a normal title without commas",
+    );
+    assert(
+      !titles.includes(commaCompany),
+      "company text must not be returned as a title",
+    );
+    assert(
+      !titles.some((title) => title.includes("Matched") || title.includes("Missing")),
+      "Matched/Missing text must not be returned as a title",
+    );
+    assert(
+      !titles.some((title) => title.includes(commaDate)),
+      "saved-date text must not be returned as a title",
+    );
+    assert(
+      titles.join("|") === orderedRows.map((row) => row.title).join("|"),
+      "row order must be preserved",
+    );
+
+    const commaAriaLabel = `Open saved analysis ${commaTitle}, ${commaCompany}, saved ${commaDate}`;
+    const greedyParsed = greedyAriaLabelTitle(commaAriaLabel);
+    assert(
+      greedyParsed !== commaTitle,
+      "the old greedy aria-label regex must fail the comma fixture",
+    );
+    assert(
+      titles[0] === commaTitle && greedyParsed !== commaTitle,
+      "rendered-title reader must succeed where greedy aria-label parsing fails",
+    );
+    assert(
+      !titles.some((title) => title === commaAriaLabel),
+      "the complete aria label must never be returned as a title",
+    );
+
+    const currentRunTitles = new Set([currentRunTitle]);
+    const currentRunVisible = titles.filter((title) => currentRunTitles.has(title));
+    const preexistingVisible = titles.filter((title) => !currentRunTitles.has(title));
+    assert(currentRunVisible.length === 1, "current-run fixture must match one visible title");
+    assert(preexistingVisible.length === 3, "pre-existing fixture rows must remain separate");
+
+    const missingTitlePage = await browser.newPage();
+    await missingTitlePage.setContent(
+      `<main>${buildSavedRowButtonHtml({
+        title: "Valid title",
+        company: "Acme Corp",
+        savedDate: "6/1/2026",
+      }).replace("<p>Valid title</p>", "")}</main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => readVisibleTitles(missingTitlePage),
+      "Saved-analysis row 1 did not contain a readable title.",
+    );
+    await missingTitlePage.close();
+
+    const emptyTitlePage = await browser.newPage();
+    await emptyTitlePage.setContent(
+      `<main>${buildSavedRowButtonHtml({
+        title: "   ",
+        company: "Acme Corp",
+        savedDate: "6/1/2026",
+      })}</main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => readVisibleTitles(emptyTitlePage),
+      "Saved-analysis row 1 did not contain a readable title.",
+    );
+    await emptyTitlePage.close();
+
+    const coveragePage = await browser.newPage();
+    const currentRunTitlesList = Array.from({ length: 23 }, (_, index) => {
+      const number = String(index + 1).padStart(2, "0");
+      return `V23 QA ${runId} A ${number}`;
+    });
+    const preexistingTitlesList = Array.from({ length: 4 }, (_, index) => {
+      const number = String(index + 1).padStart(2, "0");
+      return `Baseline record ${number}`;
+    });
+    const coverageRows = [...currentRunTitlesList, ...preexistingTitlesList].map(
+      (title, index) =>
+        buildSavedRowButtonHtml({
+          title,
+          company: title.startsWith("V23 QA")
+            ? "Version 23 QA Company"
+            : "Legacy Org",
+          savedDate: `6/${(index % 28) + 1}/2026, 12:00:00 PM`,
+        }),
+    );
+    await coveragePage.setContent(`<main>${coverageRows.join("")}</main>`, {
+      waitUntil: "domcontentloaded",
+    });
+    const coverageTitles = await readVisibleTitles(coveragePage);
+    const currentRunSet = new Set(currentRunTitlesList);
+    const coverageCurrentRun = coverageTitles.filter((title) => currentRunSet.has(title));
+    const coveragePreexisting = coverageTitles.filter((title) => !currentRunSet.has(title));
+    assert(coverageCurrentRun.length === 23, "27-row fixture must yield 23 current-run matches");
+    assert(coveragePreexisting.length === 4, "27-row fixture must keep pre-existing count at 4");
+    await coveragePage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
+async function runBrowserBackedOrderingRegression() {
+  const { chromium } = await import("@playwright/test");
+  const { readVisibleTitles } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const runId = "regression-run";
+    const currentRunTitles = [
+      `V23 QA ${runId} newest`,
+      `V23 QA ${runId} middle`,
+      `V23 QA ${runId} oldest`,
+    ];
+    const rows = [
+      buildSavedRowButtonHtml({
+        title: currentRunTitles[0],
+        company: "Version 23 QA Company",
+        savedDate: "6/28/2026",
+      }),
+      buildSavedRowButtonHtml({
+        title: "Baseline record 01",
+        company: "Legacy Org",
+        savedDate: "1/1/2025",
+      }),
+      buildSavedRowButtonHtml({
+        title: currentRunTitles[1],
+        company: "Version 23 QA Company",
+        savedDate: "6/27/2026",
+      }),
+      buildSavedRowButtonHtml({
+        title: currentRunTitles[2],
+        company: "Version 23 QA Company",
+        savedDate: "6/26/2026",
+      }),
+    ];
+    await page.setContent(`<main>${rows.join("")}</main>`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    const visible = await readVisibleTitles(page);
+    const currentRunSet = new Set(currentRunTitles);
+    const filtered = visible.filter((title) => currentRunSet.has(title));
+    assert(
+      filtered.join("|") === currentRunTitles.join("|"),
+      "current-run ordering must ignore pre-existing rows",
+    );
   } finally {
     await browser.close();
   }
@@ -430,6 +706,8 @@ try {
   runUniquenessRegression();
   runSourceRegression();
   await runBrowserBackedPaginationRegression();
+  await runBrowserBackedTitleReadingRegression();
+  await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");
 } catch (error) {

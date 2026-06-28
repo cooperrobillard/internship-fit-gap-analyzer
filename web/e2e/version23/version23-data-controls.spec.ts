@@ -34,6 +34,7 @@ import {
   readVisibleTitles,
   rowCheckbox,
   rowOpenButton,
+  savedAnalysisOpenButtons,
   setListFilter,
   setSearchQuery,
   switchWorkspaceView,
@@ -205,9 +206,7 @@ test.describe("Incremental failure and retry", () => {
     await interceptor.unroute();
     await clickLoadMore(page);
     await expectLoadedCount(page, 20);
-    const visibleCount = await page
-      .getByRole("button", { name: /^Open saved analysis / })
-      .count();
+    const visibleCount = await savedAnalysisOpenButtons(page).count();
     expect(visibleCount).toBe(20);
     await context.close();
   });

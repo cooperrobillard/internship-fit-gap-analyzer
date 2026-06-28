@@ -35,6 +35,7 @@ import {
   readVisibleTitles,
   rowCheckbox,
   SAVED_ANALYSES_PAGE_SIZE,
+  savedAnalysisOpenButtons,
   validateUniqueSavedRowTitles,
 } from "./saved-workspace";
 
@@ -134,7 +135,7 @@ export async function loadAllUserARecords(
   const titles = await readVisibleTitles(page);
   validateUniqueSavedRowTitles(titles, accountTotal);
   await expect(
-    page.getByRole("button", { name: /^Open saved analysis / }),
+    savedAnalysisOpenButtons(page),
   ).toHaveCount(accountTotal);
 
   if (plan.length > 0) {

@@ -226,6 +226,32 @@ export function rowOpenButton(page: Page, title: string): Locator {
   });
 }
 
+export function savedAnalysisOpenButtons(page: Page): Locator {
+  return page.getByRole("button", {
+    name: /^Open saved analysis /,
+  });
+}
+
+async function readRenderedTitleFromButton(
+  button: Locator,
+  rowIndex: number,
+): Promise<string> {
+  const titleParagraphs = button.locator("p");
+  const paragraphCount = await titleParagraphs.count();
+  if (paragraphCount === 0) {
+    throw new Error(
+      `Saved-analysis row ${rowIndex + 1} did not contain a readable title.`,
+    );
+  }
+  const text = ((await titleParagraphs.first().textContent()) ?? "").trim();
+  if (!text) {
+    throw new Error(
+      `Saved-analysis row ${rowIndex + 1} did not contain a readable title.`,
+    );
+  }
+  return text;
+}
+
 export async function expectRowVisible(page: Page, title: string): Promise<void> {
   await expect(page.getByText(title, { exact: true }).first()).toBeVisible({
     timeout: 60_000,
@@ -378,18 +404,11 @@ export async function expectSyntheticCompanyVisible(page: Page): Promise<void> {
 }
 
 export async function readVisibleTitles(page: Page): Promise<string[]> {
-  const buttons = page.getByRole("button", { name: /^Open saved analysis / });
+  const buttons = savedAnalysisOpenButtons(page);
   const count = await buttons.count();
   const titles: string[] = [];
   for (let index = 0; index < count; index += 1) {
-    const label = await buttons.nth(index).getAttribute("aria-label");
-    if (!label) {
-      continue;
-    }
-    const match = label.match(/^Open saved analysis (.+), /);
-    if (match?.[1]) {
-      titles.push(match[1]);
-    }
+    titles.push(await readRenderedTitleFromButton(buttons.nth(index), index));
   }
   return titles;
 }
