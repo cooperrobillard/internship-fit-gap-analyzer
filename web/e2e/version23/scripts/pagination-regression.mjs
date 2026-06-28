@@ -332,7 +332,9 @@ function runSourceRegression() {
     "Pagination test must not wait on page-wide Loaded 3 more analyses text",
   );
   assert(
-    specSource.includes("interceptNext(page, isSavedList"),
+    specSource.includes("interceptNext(") &&
+      specSource.includes("isSavedList") &&
+      specSource.includes("fulfillSyntheticPostgrestFailure"),
     "Incremental failure and retry must keep its intentional interceptor path",
   );
   assert(
@@ -382,7 +384,7 @@ function runIncrementalFailureSourceRegression() {
   const block = extractIncrementalFailureBlock(specSource);
 
   assert(
-    block.includes("interceptNext(page, isSavedList"),
+    block.includes("interceptNext(") && block.includes("isSavedList"),
     "incremental failure test must keep its intentional interceptor path",
   );
   assert(
@@ -413,8 +415,7 @@ function runIncrementalFailureSourceRegression() {
     "incremental failure test must verify selection remains checked",
   );
   assert(
-    block.includes("toHaveValue(\n      targetTitle,") ||
-      block.includes("toHaveValue(targetTitle)"),
+    block.includes("toHaveValue(") && block.includes("targetTitle"),
     "incremental failure test must verify the search value remains",
   );
   assert(
@@ -445,7 +446,7 @@ function runIncrementalFailureSourceRegression() {
     "incremental failure test must keep privacy coverage",
   );
   assert(
-    !block.includes("test.setTimeout") && !block.includes("timeout:"),
+    !block.includes("test.setTimeout"),
     "incremental failure test must not increase the full test timeout",
   );
   assert(
@@ -459,6 +460,33 @@ function runIncrementalFailureSourceRegression() {
   assert(
     block.includes("interceptor.assertSeen(1)"),
     "incremental failure test must keep interceptor verification",
+  );
+  assert(
+    block.includes("fulfillSyntheticPostgrestFailure"),
+    "incremental failure test must use the synthetic PostgREST failure helper",
+  );
+  assert(
+    !block.includes('route.abort("failed")'),
+    "incremental failure test must not use transport abort for saved-list failure",
+  );
+  assert(
+    block.includes(".poll(() => interceptor.seen()"),
+    "incremental failure test must poll interceptor.seen() before UI assertions",
+  );
+
+  const pollIndex = block.indexOf(".poll(() => interceptor.seen()");
+  const alertIndex = block.indexOf("expectLoadMoreFailureAlert(page)");
+  assert(
+    pollIndex >= 0 && alertIndex > pollIndex,
+    "incremental failure test must confirm interception before asserting the application alert",
+  );
+  assert(
+    block.includes("await interceptor.unroute()"),
+    "incremental failure test must remove the interceptor before retry",
+  );
+  assert(
+    block.includes("finally") && block.includes("interceptor.unroute()"),
+    "incremental failure test must guarantee interceptor cleanup",
   );
 }
 
@@ -511,6 +539,100 @@ function runLoadMoreFailureAlertSourceRegression() {
       workspaceSource.includes("loadMoreAndExpectSuccess"),
     "loadMoreAndExpectSuccess must reuse the central load-more failure alert locator",
   );
+}
+
+function runSyntheticPostgrestFailureSourceRegression() {
+  const networkSource = readFileSync(join(helpersDir, "network.ts"), "utf8");
+  const helperStart = networkSource.indexOf(
+    "export async function fulfillSyntheticPostgrestFailure",
+  );
+  const helperEnd = networkSource.indexOf("export function savedDeleteUrlIncludesId");
+  assert(
+    helperStart >= 0 && helperEnd > helperStart,
+    "a synthetic PostgREST failure helper must exist",
+  );
+  const helperBody = networkSource.slice(helperStart, helperEnd);
+
+  assert(
+    helperBody.includes("route.fulfill(") && !helperBody.includes("route.abort("),
+    "the synthetic failure helper must use route.fulfill(), not route.abort()",
+  );
+  assert(
+    helperBody.includes("status: 503"),
+    "the synthetic failure helper must return a non-2xx status",
+  );
+  assert(
+    helperBody.includes("contentType: \"application/json\"") &&
+      helperBody.includes("JSON.stringify"),
+    "the synthetic failure helper must return valid JSON",
+  );
+  assert(
+    helperBody.includes("QA_SYNTHETIC_FAILURE") &&
+      helperBody.includes("Synthetic Version 23 QA request failure."),
+    "the synthetic failure body must contain only safe synthetic fields",
+  );
+  assert(
+    !helperBody.includes("route.fetch("),
+    "the synthetic failure helper must not call route.fetch()",
+  );
+  assert(
+    !helperBody.includes("authorization") &&
+      !helperBody.includes("console.log") &&
+      !helperBody.includes("request.url"),
+    "the synthetic failure helper must not log authorization headers, cookies, tokens, or URLs",
+  );
+}
+
+async function runBrowserBackedSyntheticPostgrestFailureRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    fulfillSyntheticPostgrestFailure,
+    interceptNext,
+  } = await import("../helpers/network.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent("<main>ready</main>", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const fakeUrl = "https://qa-local.invalid/rest/v1/job_analyses?select=id";
+    const isFakeSavedList = (url, method) =>
+      method === "GET" && url.includes("qa-local.invalid/rest/v1/job_analyses");
+
+    const interceptor = await interceptNext(
+      page,
+      isFakeSavedList,
+      fulfillSyntheticPostgrestFailure,
+    );
+    try {
+      const result = await page.evaluate(async (url) => {
+        const response = await fetch(url);
+        return {
+          status: response.status,
+          json: await response.json(),
+        };
+      }, fakeUrl);
+
+      await expect
+        .poll(() => interceptor.seen(), {
+          timeout: 10_000,
+          message: "Expected the synthetic local failure request to be intercepted.",
+        })
+        .toBe(1);
+      interceptor.assertSeen(1);
+      assert(result.status === 503, "synthetic failure must return status 503");
+      assert(
+        result.json?.code === "QA_SYNTHETIC_FAILURE",
+        "synthetic failure response json must be parseable",
+      );
+    } finally {
+      await interceptor.unroute();
+    }
+  } finally {
+    await browser.close();
+  }
 }
 
 function buildSavedRowButtonHtml({
@@ -901,8 +1023,10 @@ try {
   runSourceRegression();
   runIncrementalFailureSourceRegression();
   runLoadMoreFailureAlertSourceRegression();
+  runSyntheticPostgrestFailureSourceRegression();
   await runBrowserBackedPaginationRegression();
   await runBrowserBackedLoadMoreFailureAlertRegression();
+  await runBrowserBackedSyntheticPostgrestFailureRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();

@@ -185,6 +185,24 @@ export const isSavedList = (url: string, method: string): boolean =>
 export const isSavedDelete = (url: string, method: string): boolean =>
   method === "DELETE" && url.includes("/rest/v1/job_analyses");
 
+export async function fulfillSyntheticPostgrestFailure(
+  route: Route,
+): Promise<void> {
+  await route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    headers: {
+      "cache-control": "no-store",
+    },
+    body: JSON.stringify({
+      code: "QA_SYNTHETIC_FAILURE",
+      message: "Synthetic Version 23 QA request failure.",
+      details: null,
+      hint: null,
+    }),
+  });
+}
+
 export function savedDeleteUrlIncludesId(url: string, id: string): boolean {
   return url.includes(`/rest/v1/job_analyses?id=eq.${encodeURIComponent(id)}`);
 }

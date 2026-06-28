@@ -5,6 +5,7 @@ import { assertAuthenticatedApplicationState, signInQaUser, signInQaUserOnPage, 
 import { assertHeader } from "./helpers/csv";
 import { expectNoHorizontalOverflow, expectNoUnsafeText } from "./helpers/assertions";
 import {
+  fulfillSyntheticPostgrestFailure,
   interceptHeldNext,
   interceptMatching,
   interceptNext,
@@ -198,52 +199,65 @@ test.describe("Incremental failure and retry", () => {
       }),
     ).toBeVisible();
 
-    const interceptor = await interceptNext(page, isSavedList, (route) =>
-      route.abort("failed"),
+    const interceptor = await interceptNext(
+      page,
+      isSavedList,
+      fulfillSyntheticPostgrestFailure,
     );
-    await clickLoadMore(page);
-    await expectLoadMoreFailureAlert(page);
-    interceptor.assertSeen(1);
-    await expectLoadedCount(page, 10);
+    try {
+      await clickLoadMore(page);
+      await expect
+        .poll(() => interceptor.seen(), {
+          timeout: 10_000,
+          message:
+            "Expected the synthetic saved-list failure request to be intercepted.",
+        })
+        .toBe(1);
+      interceptor.assertSeen(1);
+      await expectLoadMoreFailureAlert(page);
+      await expectLoadedCount(page, 10);
 
-    await expectRowVisible(page, targetTitle);
-    await expect(rowCheckbox(page, targetTitle)).toBeChecked();
-    await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
-      targetTitle,
-    );
-    await expect(
-      page.getByRole("heading", {
-        level: 2,
-        name: targetTitle,
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Load more analyses" }),
-    ).toBeVisible();
-    await expectNoUnsafeText(page);
+      await expectRowVisible(page, targetTitle);
+      await expect(rowCheckbox(page, targetTitle)).toBeChecked();
+      await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
+        targetTitle,
+      );
+      await expect(
+        page.getByRole("heading", {
+          level: 2,
+          name: targetTitle,
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Load more analyses" }),
+      ).toBeVisible();
+      await expectNoUnsafeText(page);
 
-    await interceptor.unroute();
-    await clickLoadMore(page);
-    await expectLoadedCount(page, 20);
-    await expectVisibleCountSummary(page, 1, 20);
-    await expectRowVisible(page, targetTitle);
-    await expect(rowCheckbox(page, targetTitle)).toBeChecked();
-    await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
-      targetTitle,
-    );
-    await expect(
-      page.getByRole("heading", {
-        level: 2,
-        name: targetTitle,
-        exact: true,
-      }),
-    ).toBeVisible();
+      await interceptor.unroute();
+      await clickLoadMore(page);
+      await expectLoadedCount(page, 20);
+      await expectVisibleCountSummary(page, 1, 20);
+      await expectRowVisible(page, targetTitle);
+      await expect(rowCheckbox(page, targetTitle)).toBeChecked();
+      await expect(page.getByPlaceholder("Search saved analyses…")).toHaveValue(
+        targetTitle,
+      );
+      await expect(
+        page.getByRole("heading", {
+          level: 2,
+          name: targetTitle,
+          exact: true,
+        }),
+      ).toBeVisible();
 
-    await setSearchQuery(page, "");
-    await expectVisibleCountSummary(page, 20, 20);
-    const visibleCount = await savedAnalysisOpenButtons(page).count();
-    expect(visibleCount).toBe(20);
+      await setSearchQuery(page, "");
+      await expectVisibleCountSummary(page, 20, 20);
+      const visibleCount = await savedAnalysisOpenButtons(page).count();
+      expect(visibleCount).toBe(20);
+    } finally {
+      await interceptor.unroute().catch(() => undefined);
+    }
     await context.close();
   });
 });
