@@ -138,7 +138,14 @@ export function loadMoreFailureAlert(page: Page): Locator {
   return page.getByRole("alert").filter({ hasText: LOAD_MORE_ALERT_MESSAGE });
 }
 
-export async function describeLoadMoreFailureUiState(page: Page): Promise<string> {
+export type LoadMoreFailureDiagnosticsOptions = {
+  matchingLoadMoreAttempts?: number;
+};
+
+export async function describeLoadMoreFailureUiState(
+  page: Page,
+  options: LoadMoreFailureDiagnosticsOptions = {},
+): Promise<string> {
   const loadedCount = await readLoadedCount(page).catch(() => -1);
   const loadMoreButton = page.getByRole("button", { name: "Load more analyses" });
   const loadMoreMatches = await loadMoreButton.count();
@@ -157,8 +164,13 @@ export async function describeLoadMoreFailureUiState(page: Page): Promise<string
     .getByRole("alert")
     .filter({ hasText: "Could not load analysis detail" })
     .count();
+  const attemptSuffix =
+    options.matchingLoadMoreAttempts === undefined
+      ? ""
+      : `matching load-more attempts=${options.matchingLoadMoreAttempts}; `;
 
   return (
+    attemptSuffix +
     `loaded count=${loadedCount}; ` +
     `load more button text="${loadMoreText}"; ` +
     `load more disabled=${loadMoreDisabled}; ` +
@@ -168,7 +180,10 @@ export async function describeLoadMoreFailureUiState(page: Page): Promise<string
   );
 }
 
-export async function expectLoadMoreFailureAlert(page: Page): Promise<void> {
+export async function expectLoadMoreFailureAlert(
+  page: Page,
+  options: LoadMoreFailureDiagnosticsOptions = {},
+): Promise<void> {
   const alert = loadMoreFailureAlert(page);
 
   try {
@@ -179,7 +194,7 @@ export async function expectLoadMoreFailureAlert(page: Page): Promise<void> {
       timeout: LOAD_MORE_FAILURE_ALERT_TIMEOUT_MS,
     });
   } catch (error) {
-    const diagnostics = await describeLoadMoreFailureUiState(page);
+    const diagnostics = await describeLoadMoreFailureUiState(page, options);
     throw new Error(
       `Expected exactly one load-more failure alert. Diagnostics: ${diagnostics}`,
       { cause: error },

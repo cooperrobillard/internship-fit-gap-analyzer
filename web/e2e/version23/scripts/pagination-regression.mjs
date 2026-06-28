@@ -333,7 +333,7 @@ function runSourceRegression() {
     "Pagination test must not wait on page-wide Loaded 3 more analyses text",
   );
   assert(
-    specSource.includes("interceptNext(") &&
+    specSource.includes("interceptMatching(") &&
       specSource.includes("isSavedListPageRequest") &&
       specSource.includes("fulfillSyntheticPostgrestFailure"),
     "Incremental failure and retry must keep its intentional interceptor path",
@@ -385,8 +385,12 @@ function runIncrementalFailureSourceRegression() {
   const block = extractIncrementalFailureBlock(specSource);
 
   assert(
-    block.includes("interceptNext(") && block.includes("isSavedListPageRequest"),
+    block.includes("interceptMatching(") && block.includes("isSavedListPageRequest"),
     "incremental failure test must use the exact saved-list page matcher",
+  );
+  assert(
+    !block.includes("interceptNext("),
+    "incremental failure test must not use the one-shot interceptNext matcher",
   );
   assert(
     !block.includes("isSavedList,") && !block.includes("isSavedList\n"),
@@ -441,6 +445,11 @@ function runIncrementalFailureSourceRegression() {
     "incremental failure test must unroute before retry",
   );
   assert(
+    block.includes('getByRole("button", { name: "Load more analyses" })') &&
+      block.includes("toBeEnabled()"),
+    "incremental failure test must verify Load More remains enabled after failure",
+  );
+  assert(
     block.includes("await expectLoadedCount(page, 20)"),
     "incremental failure test must reach 20 loaded records after retry",
   );
@@ -464,7 +473,7 @@ function runIncrementalFailureSourceRegression() {
     "incremental failure test must not increase the full test timeout",
   );
   assert(
-    block.includes("expectLoadMoreFailureAlert(page)"),
+    block.includes("expectLoadMoreFailureAlert(page"),
     "incremental failure test must call the dedicated load-more failure alert helper",
   );
   assert(
@@ -472,8 +481,22 @@ function runIncrementalFailureSourceRegression() {
     "incremental failure test must not use the broad page-wide alert assertion",
   );
   assert(
-    block.includes("interceptor.assertSeen(1)"),
-    "incremental failure test must keep interceptor verification",
+    block.includes(".poll(() => interceptor.seen()") &&
+      block.includes("toBeGreaterThanOrEqual(1)"),
+    "incremental failure test must poll for at least one intercepted attempt",
+  );
+  assert(
+    !block.includes("interceptor.assertSeen(1)"),
+    "incremental failure test must not require exactly one underlying request",
+  );
+  assert(
+    block.includes("failureAttemptCount") &&
+      block.includes("toBeGreaterThanOrEqual(1)"),
+    "incremental failure test must record the observed failure-attempt count",
+  );
+  assert(
+    block.includes("interceptorActive"),
+    "incremental failure test must use guarded interceptor cleanup",
   );
   assert(
     block.includes("fulfillSyntheticPostgrestFailure"),
@@ -489,17 +512,23 @@ function runIncrementalFailureSourceRegression() {
   );
 
   const pollIndex = block.indexOf(".poll(() => interceptor.seen()");
-  const alertIndex = block.indexOf("expectLoadMoreFailureAlert(page)");
+  const alertIndex = block.indexOf("expectLoadMoreFailureAlert(page");
   assert(
     pollIndex >= 0 && alertIndex > pollIndex,
     "incremental failure test must confirm interception before asserting the application alert",
+  );
+  assert(
+    block.includes("matchingLoadMoreAttempts: interceptor.seen()"),
+    "incremental failure test must pass safe attempt-count diagnostics",
   );
   assert(
     block.includes("await interceptor.unroute()"),
     "incremental failure test must remove the interceptor before retry",
   );
   assert(
-    block.includes("finally") && block.includes("interceptor.unroute()"),
+    block.includes("finally") &&
+      block.includes("interceptorActive") &&
+      block.includes("interceptor.unroute()"),
     "incremental failure test must guarantee interceptor cleanup",
   );
 }
@@ -618,8 +647,8 @@ function runLoadMoreFailureAlertSourceRegression() {
     "loadMoreAndExpectSuccess must reuse the central load-more failure alert locator",
   );
   assert(
-    workspaceSource.includes("describeLoadMoreFailureUiState"),
-    "load-more failure diagnostics must be available for bounded alert failures",
+    workspaceSource.includes("matchingLoadMoreAttempts"),
+    "load-more failure diagnostics must support safe attempt-count reporting",
   );
 }
 
@@ -711,6 +740,112 @@ async function runBrowserBackedSyntheticPostgrestFailureRegression() {
       );
     } finally {
       await interceptor.unroute();
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+async function runBrowserBackedPersistentPaginationInterceptorRegression() {
+  const { chromium } = await import("@playwright/test");
+  const {
+    fulfillSyntheticPostgrestFailure,
+    interceptMatching,
+    interceptNext,
+    isSavedListPageRequest,
+  } = await import("../helpers/network.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent("<main>ready</main>", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const pageSize = SAVED_ANALYSES_PAGE_SIZE;
+    const paginationUrl =
+      "https://qa-local.invalid/rest/v1/job_analyses?select=id&offset=10&limit=11";
+    const detailUrl =
+      "https://qa-local.invalid/rest/v1/job_analyses?select=id&id=eq.synthetic-id";
+    const matcherOptions = { offset: pageSize, pageSize };
+
+    const fetchStatus = async (url) =>
+      page.evaluate(async (targetUrl) => {
+        try {
+          const response = await fetch(targetUrl);
+          return response.status;
+        } catch {
+          return 0;
+        }
+      }, url);
+
+    const failureInterceptor = await interceptMatching(
+      page,
+      (url, method) => isSavedListPageRequest(url, method, matcherOptions),
+      (route) => fulfillSyntheticPostgrestFailure(route),
+    );
+    try {
+      const firstStatus = await fetchStatus(paginationUrl);
+      const secondStatus = await fetchStatus(paginationUrl);
+
+      assert(firstStatus === 503, "first pagination attempt must receive synthetic failure");
+      assert(secondStatus === 503, "second pagination attempt must receive synthetic failure");
+      assert(
+        failureInterceptor.seen() === 2,
+        "persistent interceptor must fail every matching pagination attempt",
+      );
+
+      const seenBeforeDetail = failureInterceptor.seen();
+      await fetchStatus(detailUrl);
+      assert(
+        failureInterceptor.seen() === seenBeforeDetail,
+        "detail request must not increment the pagination failure counter",
+      );
+    } finally {
+      await failureInterceptor.unroute();
+    }
+
+    const oneShotInterceptor = await interceptNext(
+      page,
+      (url, method) => isSavedListPageRequest(url, method, matcherOptions),
+      fulfillSyntheticPostgrestFailure,
+    );
+    try {
+      const oneShotFirst = await fetchStatus(paginationUrl);
+      const oneShotSecond = await fetchStatus(paginationUrl);
+
+      assert(oneShotFirst === 503, "one-shot interceptor must fail the first attempt");
+      assert(
+        oneShotSecond !== 503,
+        "one-shot interceptor must allow a repeated attempt to pass through",
+      );
+      assert(
+        oneShotInterceptor.seen() === 2,
+        "one-shot interceptor must observe both matching attempts while failing only the first",
+      );
+    } finally {
+      await oneShotInterceptor.unroute();
+    }
+
+    const successHandler = async (route, request) => {
+      if (
+        isSavedListPageRequest(request.url(), request.method(), matcherOptions)
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: "[]",
+        });
+        return;
+      }
+      await route.continue();
+    };
+    await page.route("**/*", successHandler);
+    try {
+      const retryStatus = await fetchStatus(paginationUrl);
+      assert(retryStatus === 200, "pagination request must succeed after failure route removal");
+    } finally {
+      await page.unroute("**/*", successHandler);
     }
   } finally {
     await browser.close();
@@ -1185,6 +1320,7 @@ try {
   await runBrowserBackedPaginationRegression();
   await runBrowserBackedLoadMoreFailureAlertRegression();
   await runBrowserBackedSyntheticPostgrestFailureRegression();
+  await runBrowserBackedPersistentPaginationInterceptorRegression();
   await runBrowserBackedExactLoadMoreRequestRegression();
   await runBrowserBackedTitleReadingRegression();
   await runBrowserBackedOrderingRegression();

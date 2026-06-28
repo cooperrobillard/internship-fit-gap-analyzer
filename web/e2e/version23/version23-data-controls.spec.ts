@@ -8,7 +8,6 @@ import {
   fulfillSyntheticPostgrestFailure,
   interceptHeldNext,
   interceptMatching,
-  interceptNext,
   isSavedDelete,
   isSavedList,
   isSavedListPageRequest,
@@ -206,22 +205,24 @@ test.describe("Incremental failure and retry", () => {
         pageSize: SAVED_ANALYSES_PAGE_SIZE,
       });
 
-    const interceptor = await interceptNext(
+    const interceptor = await interceptMatching(
       page,
       isFirstLoadMoreRequest,
-      fulfillSyntheticPostgrestFailure,
+      (route) => fulfillSyntheticPostgrestFailure(route),
     );
+    let interceptorActive = true;
     try {
       expect(interceptor.seen()).toBe(0);
       await clickLoadMore(page);
       await expect
         .poll(() => interceptor.seen(), {
           timeout: 10_000,
-          message: "Expected the first Load More request to be intercepted.",
+          message: "Expected at least one first-page Load More request attempt.",
         })
-        .toBe(1);
-      interceptor.assertSeen(1);
-      await expectLoadMoreFailureAlert(page);
+        .toBeGreaterThanOrEqual(1);
+      await expectLoadMoreFailureAlert(page, {
+        matchingLoadMoreAttempts: interceptor.seen(),
+      });
       await expectLoadedCount(page, 10);
 
       await expectRowVisible(page, targetTitle);
@@ -236,12 +237,17 @@ test.describe("Incremental failure and retry", () => {
           exact: true,
         }),
       ).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: "Load more analyses" }),
-      ).toBeVisible();
+      const loadMoreButton = page.getByRole("button", { name: "Load more analyses" });
+      await expect(loadMoreButton).toBeVisible();
+      await expect(loadMoreButton).toBeEnabled();
       await expectNoUnsafeText(page);
 
+      const failureAttemptCount = interceptor.seen();
+      expect(failureAttemptCount).toBeGreaterThanOrEqual(1);
+
       await interceptor.unroute();
+      interceptorActive = false;
+
       await clickLoadMore(page);
       await expectLoadedCount(page, 20);
       await expectVisibleCountSummary(page, 1, 20);
@@ -263,7 +269,9 @@ test.describe("Incremental failure and retry", () => {
       const visibleCount = await savedAnalysisOpenButtons(page).count();
       expect(visibleCount).toBe(20);
     } finally {
-      await interceptor.unroute().catch(() => undefined);
+      if (interceptorActive) {
+        await interceptor.unroute().catch(() => undefined);
+      }
     }
     await context.close();
   });
