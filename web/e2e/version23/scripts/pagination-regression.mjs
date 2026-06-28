@@ -1998,6 +1998,273 @@ async function runBrowserBackedLoadedExportDisclosureRegression() {
   }
 }
 
+function extractSelectedDeletionCancelBlock(specSource) {
+  const startMarker = 'test.describe("Selected-deletion cancel path"';
+  const endMarker = 'test.describe("Selected-deletion success path"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Selected-deletion cancel path test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runSelectedDeletionCancelSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractSelectedDeletionCancelBlock(specSource);
+
+  assert(
+    block.includes("const config = qaConfig();") &&
+      !block.includes("qaConfig(), 0)") &&
+      !block.includes("qaConfig(), 10)"),
+    "Selected-deletion cancel test must resolve config once",
+  );
+  assert(
+    block.includes("const accountTotal = await loadAllUserARecords(page, config);"),
+    "Selected-deletion cancel test must capture the dynamic account total",
+  );
+
+  const visibleTargetIndex = block.indexOf("titleForUserA(config, 2)");
+  const hiddenTargetIndex = block.indexOf("titleForUserA(config, 10)");
+  const selectIndex = block.indexOf("selectRecordsByTitle(page, [visibleTarget, hiddenTarget])");
+  const twoSelectedIndex = block.indexOf('"2 analyses selected", { exact: true }');
+  const hasNotesIndex = block.indexOf('setListFilter(page, "Has notes")');
+  const fourVisibleIndex = block.indexOf("expectVisibleCountSummary(page, 4, accountTotal)");
+  const visibleCheckedIndex = block.indexOf(
+    "await expect(rowCheckbox(page, visibleTarget)).toBeChecked();",
+  );
+  const hiddenAbsentIndex = block.indexOf("await expectRowAbsent(page, hiddenTarget);");
+  const hiddenStatusIndex = block.indexOf(
+    "2 analyses selected; 1 is hidden by the current search or filter.",
+  );
+  const deleteSelectedClickIndex = block.indexOf(
+    'await page.getByRole("button", { name: "Delete selected", exact: true }).click();',
+  );
+  const confirmHeadingFocusedIndex = block.indexOf(
+    'name: "Delete 2 selected analyses?",\n        exact: true,\n      }),\n    ).toBeFocused();',
+  );
+  const visibleLabelIndex = block.indexOf(
+    "deleteConfirmation.getByText(`${visibleTarget} — ${SYNTHETIC_COMPANY}`",
+  );
+  const hiddenLabelIndex = block.indexOf(
+    "deleteConfirmation.getByText(`${hiddenTarget} — ${SYNTHETIC_COMPANY}`",
+  );
+  const disabledCheckboxIndex = block.indexOf(
+    "await expect(rowCheckbox(page, visibleTarget)).toBeDisabled();",
+  );
+  const cancelClickIndex = block.indexOf(
+    'await deleteConfirmation\n      .getByRole("button", { name: "Cancel", exact: true })\n      .click();',
+  );
+  const confirmClosedIndex = block.indexOf(
+    'name: "Delete 2 selected analyses?",\n        exact: true,\n      }),\n    ).toHaveCount(0);',
+  );
+  const focusDeleteIndex = block.indexOf(
+    'page.getByRole("button", { name: "Delete selected", exact: true }),\n    ).toBeFocused();',
+  );
+  const showAllIndex = block.indexOf('setListFilter(page, "Show all")');
+  const loadedCountIndex = block.indexOf("await expectLoadedCount(page, accountTotal);");
+  const firstHiddenVisibleIndex = block.indexOf(
+    "expectRowVisible(page, hiddenTarget)",
+  );
+
+  assert(
+    visibleTargetIndex >= 0 &&
+      hiddenTargetIndex >= 0 &&
+      selectIndex > hiddenTargetIndex &&
+      twoSelectedIndex > selectIndex &&
+      hasNotesIndex > twoSelectedIndex &&
+      fourVisibleIndex > hasNotesIndex &&
+      visibleCheckedIndex > fourVisibleIndex &&
+      hiddenAbsentIndex > visibleCheckedIndex &&
+      hiddenStatusIndex > hiddenAbsentIndex &&
+      deleteSelectedClickIndex > hiddenStatusIndex &&
+      confirmHeadingFocusedIndex > deleteSelectedClickIndex &&
+      visibleLabelIndex > confirmHeadingFocusedIndex &&
+      hiddenLabelIndex > visibleLabelIndex &&
+      disabledCheckboxIndex > hiddenLabelIndex &&
+      cancelClickIndex > disabledCheckboxIndex &&
+      confirmClosedIndex > cancelClickIndex &&
+      focusDeleteIndex > confirmClosedIndex &&
+      showAllIndex > focusDeleteIndex &&
+      loadedCountIndex > showAllIndex,
+    "Selected-deletion cancel test must follow the one-visible/one-hidden flow in order",
+  );
+
+  assert(
+    !block.includes("titleForUserA(config, 0)") &&
+      !block.includes("const first = titleForUserA") &&
+      !block.includes("const eleventh = titleForUserA") &&
+      !block.includes("older-pagination-search-target"),
+    "Selected-deletion cancel test must not use stale null-note target pairs",
+  );
+  assert(
+    firstHiddenVisibleIndex === -1 || firstHiddenVisibleIndex > showAllIndex,
+    "Selected-deletion cancel test must not expect the hidden target visible under Has notes",
+  );
+  assert(
+    block.includes("expectNoUnsafeText(page)"),
+    "Selected-deletion cancel test must include privacy verification",
+  );
+}
+
+async function runBrowserBackedSelectedDeletionCancelRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const visibleTitle = "V23 QA local A 02";
+    const hiddenTitle = "V23 QA local A 11";
+    const company = "Version 23 QA Company";
+    await page.setContent(
+      `<main>
+        <select id="filter" aria-label="Filter saved analyses">
+          <option value="all">Show all</option>
+          <option value="notes">Has notes</option>
+        </select>
+        <p id="visible-summary">2 of 2</p>
+        <p id="selection-status">2 analyses selected</p>
+        <label id="row-visible" data-has-notes="true">
+          <input type="checkbox" id="check-visible" aria-label="Select saved analysis ${visibleTitle}" checked />
+          ${visibleTitle}
+        </label>
+        <label id="row-hidden" data-has-notes="false">
+          <input type="checkbox" id="check-hidden" aria-label="Select saved analysis ${hiddenTitle}" checked />
+          ${hiddenTitle}
+        </label>
+        <button type="button" id="delete-selected">Delete selected</button>
+        <button type="button" id="clear-selection">Clear selection</button>
+        <label><input type="checkbox" id="select-all" aria-label="Select all visible" checked />Select all visible</label>
+        <section id="selected-delete-confirmation" hidden>
+          <h3 id="confirm-heading" tabindex="-1">Delete 2 selected analyses?</h3>
+          <ul id="confirm-labels">
+            <li>${visibleTitle} — ${company}</li>
+            <li>${hiddenTitle} — ${company}</li>
+          </ul>
+          <button type="button" id="cancel-delete">Cancel</button>
+        </section>
+        <script>
+          const filter = document.getElementById("filter");
+          const summary = document.getElementById("visible-summary");
+          const status = document.getElementById("selection-status");
+          const rowVisible = document.getElementById("row-visible");
+          const rowHidden = document.getElementById("row-hidden");
+          const checkVisible = document.getElementById("check-visible");
+          const checkHidden = document.getElementById("check-hidden");
+          const deleteSelected = document.getElementById("delete-selected");
+          const clearSelection = document.getElementById("clear-selection");
+          const selectAll = document.getElementById("select-all");
+          const confirmation = document.getElementById("selected-delete-confirmation");
+          const confirmHeading = document.getElementById("confirm-heading");
+          const cancelDelete = document.getElementById("cancel-delete");
+          const hiddenStatus =
+            "2 analyses selected; 1 is hidden by the current search or filter.";
+
+          function selectedCount() {
+            return Number(checkVisible.checked) + Number(checkHidden.checked);
+          }
+
+          function updateFilter() {
+            const notesOnly = filter.value === "notes";
+            rowVisible.hidden = notesOnly ? false : false;
+            rowHidden.hidden = notesOnly;
+            const visibleRows = Number(!rowVisible.hidden) + Number(!rowHidden.hidden);
+            summary.textContent = \`\${visibleRows} of 2\`;
+
+            const selected = selectedCount();
+            const hiddenSelected =
+              Number(checkVisible.checked && rowVisible.hidden) +
+              Number(checkHidden.checked && rowHidden.hidden);
+            if (selected === 0) {
+              status.textContent = "No analyses selected.";
+            } else if (hiddenSelected === 1) {
+              status.textContent = hiddenStatus;
+            } else {
+              status.textContent =
+                selected === 1 ? "1 analysis selected" : \`\${selected} analyses selected\`;
+            }
+          }
+
+          function setSelectionControlsDisabled(disabled) {
+            checkVisible.disabled = disabled;
+            selectAll.disabled = disabled;
+            clearSelection.disabled = disabled;
+            deleteSelected.disabled = disabled;
+          }
+
+          filter.addEventListener("change", updateFilter);
+          checkVisible.addEventListener("change", updateFilter);
+          checkHidden.addEventListener("change", updateFilter);
+          deleteSelected.addEventListener("click", () => {
+            confirmation.hidden = false;
+            confirmHeading.focus();
+            setSelectionControlsDisabled(true);
+          });
+          cancelDelete.addEventListener("click", () => {
+            confirmation.hidden = true;
+            setSelectionControlsDisabled(false);
+            deleteSelected.focus();
+          });
+
+          updateFilter();
+        </script>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    await page.locator("#filter").selectOption({ label: "Has notes" });
+    await expect(page.locator("#row-visible")).toBeVisible();
+    await expect(page.locator("#row-hidden")).toBeHidden();
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await page.locator("#delete-selected").click();
+    const confirmation = page.locator("#selected-delete-confirmation");
+    await expect(confirmation).toBeVisible();
+    await expect(
+      confirmation.getByText(`${visibleTitle} — ${company}`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      confirmation.getByText(`${hiddenTitle} — ${company}`, { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("#check-visible")).toBeDisabled();
+    await expect(page.locator("#select-all")).toBeDisabled();
+    await expect(page.locator("#clear-selection")).toBeDisabled();
+    await expect(page.locator("#delete-selected")).toBeDisabled();
+
+    await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(confirmation).toBeHidden();
+    await expect(page.locator("#delete-selected")).toBeFocused();
+    await expect(page.locator("#row-hidden")).toBeHidden();
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(page.locator("#check-visible")).toBeChecked();
+    const hiddenChecked = await page.evaluate(
+      () => document.getElementById("check-hidden").checked,
+    );
+    assert(hiddenChecked, "hidden selected row must remain checked after cancel");
+
+    await page.locator("#filter").selectOption({ label: "Show all" });
+    await expect(page.locator("#row-visible")).toBeVisible();
+    await expect(page.locator("#row-hidden")).toBeVisible();
+    await expect(page.locator("#check-visible")).toBeChecked();
+    await expect(page.locator("#check-hidden")).toBeChecked();
+    await expect(
+      page.getByText("2 analyses selected", { exact: true }),
+    ).toBeVisible();
+  } finally {
+    await browser.close();
+  }
+}
+
 try {
   runLoadMorePlanRegression();
   runPaginationMathRegression();
@@ -2010,6 +2277,7 @@ try {
   runSearchFilterSourceRegression();
   runSelectionSourceRegression();
   runLoadedExportSourceRegression();
+  runSelectedDeletionCancelSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -2023,6 +2291,7 @@ try {
   await runBrowserBackedSelectionDetailIndependenceRegression();
   await runBrowserBackedHiddenSelectionRegression();
   await runBrowserBackedLoadedExportDisclosureRegression();
+  await runBrowserBackedSelectedDeletionCancelRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");

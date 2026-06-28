@@ -592,25 +592,96 @@ test.describe("Responsive", () => {
 
 test.describe("Selected-deletion cancel path", () => {
   test("Selected-deletion cancel path", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page, qaConfig());
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    const accountTotal = await loadAllUserARecords(page, config);
 
-    const first = titleForUserA(qaConfig(), 0);
-    const eleventh = titleForUserA(qaConfig(), 10);
-    await selectRecordsByTitle(page, [first, eleventh]);
-    await setListFilter(page, "Has notes");
-    await page.getByRole("button", { name: "Delete selected" }).click();
+    const visibleTarget = titleForUserA(config, 2);
+    const hiddenTarget = titleForUserA(config, 10);
+    const deleteConfirmation = page.locator("#selected-delete-confirmation");
+
+    await selectRecordsByTitle(page, [visibleTarget, hiddenTarget]);
     await expect(
-      page.getByRole("heading", { name: "Delete 2 selected analyses?" }),
+      page.getByText("2 analyses selected", { exact: true }),
+    ).toBeVisible();
+
+    await setListFilter(page, "Has notes");
+    await expectVisibleCountSummary(page, 4, accountTotal);
+    await expectRowVisible(page, visibleTarget);
+    await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
+    await expectRowAbsent(page, hiddenTarget);
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete selected", exact: true }).click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Delete 2 selected analyses?",
+        exact: true,
+      }),
     ).toBeFocused();
-    await expect(page.getByText(`${first} — ${SYNTHETIC_COMPANY}`)).toBeVisible();
-    await expect(page.getByText(`${eleventh} — ${SYNTHETIC_COMPANY}`)).toBeVisible();
-    await expectRowVisible(page, first);
-    await page.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByRole("button", { name: "Delete selected" })).toBeFocused();
-    await expectRowVisible(page, first);
-    await expectRowVisible(page, eleventh);
+    await expect(
+      deleteConfirmation.getByText(`${visibleTarget} — ${SYNTHETIC_COMPANY}`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      deleteConfirmation.getByText(`${hiddenTarget} — ${SYNTHETIC_COMPANY}`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expectRowVisible(page, visibleTarget);
+    await expectRowAbsent(page, hiddenTarget);
+
+    await expect(rowCheckbox(page, visibleTarget)).toBeDisabled();
+    await expect(page.getByLabel("Select all visible")).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Clear selection", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Delete selected", exact: true }),
+    ).toBeDisabled();
+
+    await deleteConfirmation
+      .getByRole("button", { name: "Cancel", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Delete 2 selected analyses?",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Delete selected", exact: true }),
+    ).toBeFocused();
+
+    await expectVisibleCountSummary(page, 4, accountTotal);
+    await expectRowVisible(page, visibleTarget);
+    await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
+    await expectRowAbsent(page, hiddenTarget);
+    await expect(
+      page.getByText(
+        "2 analyses selected; 1 is hidden by the current search or filter.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await setListFilter(page, "Show all");
+    await expectVisibleCountSummary(page, accountTotal, accountTotal);
+    await expectRowVisible(page, visibleTarget);
+    await expectRowVisible(page, hiddenTarget);
+    await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
+    await expect(rowCheckbox(page, hiddenTarget)).toBeChecked();
+    await expect(
+      page.getByText("2 analyses selected", { exact: true }),
+    ).toBeVisible();
+    await expectLoadedCount(page, accountTotal);
+    await expectNoUnsafeText(page);
     await context.close();
   });
 });
