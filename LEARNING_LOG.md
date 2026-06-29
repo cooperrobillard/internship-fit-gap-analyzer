@@ -3864,3 +3864,10 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Confirmed the supplied evidence covered two-user RLS isolation, pagination and incremental failure/retry, selection, selected CSV export, loaded CSV export, selected-deletion success, unavailable-target reconciliation, partial-failure and complete-failure paths, keyboard behavior, responsive behavior, and successful current-run synthetic-data cleanup.
 - Reconciled documentation to close Version 23 without changing runtime behavior, frontend/backend code, database schema/RLS, auth, exports, deletion, pagination, dependencies, telemetry, provider configuration, environment variables, workflows, or domain settings.
 - Selected privacy-safe production observability as Version 24 before custom-domain launch work, with custom-domain and public-launch configuration deferred to Version 25.
+
+## 2026-06-29 — Version 24 Step 1: observability requirements and provider decision
+
+- Documented observability as a privacy and data-governance decision before it is an SDK decision.
+- Selected the minimum initial direction of native Vercel/Render/Supabase/Clerk logs and dashboards, future manually configured server-only Sentry, and future UptimeRobot external uptime checks.
+- Recorded the Sentry FastAPI request-data risk: default issue context can include request metadata and payload details, so `send_default_pii=False` is not sufficient without explicit stripping and sentinel redaction tests.
+- Deliberately deferred browser monitoring, session replay, tracing, external log aggregation, OpenTelemetry, provider AI-debugging, provider accounts, alerts, and production configuration until later approved Version 24 steps.
