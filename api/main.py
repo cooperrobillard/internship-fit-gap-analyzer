@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 
 from api.analysis_service import analyze_request
 from api.models import AnalyzeRequest, AnalyzeResponse
+from api.sentry_telemetry import capture_safe_failure_to_sentry
 from api.observability import (
     REQUEST_ID_HEADER,
     create_safe_analysis_event,
@@ -171,20 +172,22 @@ async def request_correlation_middleware(request: Request, call_next):
     except Exception:
         if not is_analyze_post:
             raise
-        emit_safe_event(
-            logger,
-            create_safe_analysis_event(
-                request_id=request_id,
-                service="fastapi_analysis_service",
-                outcome="failure",
-                severity="error",
-                route_template="/analyze",
-                http_method="POST",
-                http_status=500,
-                duration_ms=duration_ms_from_monotonic(started_at),
-                failure_class="backend.unhandled_exception",
-            ),
+        event = create_safe_analysis_event(
+            request_id=request_id,
+            service="fastapi_analysis_service",
+            outcome="failure",
+            severity="error",
+            route_template="/analyze",
+            http_method="POST",
+            http_status=500,
+            duration_ms=duration_ms_from_monotonic(started_at),
+            failure_class="backend.unhandled_exception",
         )
+        emit_safe_event(logger, event)
+        try:
+            capture_safe_failure_to_sentry(event)
+        except Exception:
+            pass
         response = JSONResponse(
             status_code=500,
             content={

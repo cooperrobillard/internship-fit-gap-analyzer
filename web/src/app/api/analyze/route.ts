@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { captureSafeFailureToSentry } from "@/lib/observability/sentry-server";
+
 import {
   REQUEST_ID_HEADER,
   createSafeAnalysisEvent,
@@ -11,6 +13,8 @@ import {
   type FailureClass,
   type SafeSeverity,
 } from "@/lib/observability/safe-events";
+
+export const runtime = "nodejs";
 
 const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
 /** Hosted Render cold starts can be slow; allow time for the backend to wake up. */
@@ -92,6 +96,7 @@ export type AnalyzeRouteTestDeps = {
   protect?: () => Promise<void>;
   fetchImpl?: typeof fetch;
   generateRequestIdImpl?: () => string;
+  captureSafeFailureToSentryImpl?: typeof captureSafeFailureToSentry;
 };
 
 let analyzeRouteTestDeps: AnalyzeRouteTestDeps | undefined;
@@ -111,7 +116,7 @@ function emitAnalysisFailureEvent(options: {
   bodyByteLength?: number;
 }): void {
   try {
-    emitSafeEvent(createSafeAnalysisEvent({
+    const event = createSafeAnalysisEvent({
       request_id: options.requestId,
       service: "nextjs_analysis_proxy",
       outcome: "failure",
@@ -124,7 +129,9 @@ function emitAnalysisFailureEvent(options: {
       upstream_status_class: options.upstreamStatusClass,
       payload_size_bucket: payloadSizeBucket(options.bodyByteLength),
       environment: process.env.NODE_ENV,
-    }));
+    });
+    emitSafeEvent(event);
+    (analyzeRouteTestDeps?.captureSafeFailureToSentryImpl ?? captureSafeFailureToSentry)(event);
   } catch {
     // Best effort only. Observability must never affect application behavior.
   }

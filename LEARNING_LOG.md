@@ -3884,3 +3884,10 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Narrowed FastAPI request-correlation middleware so only unexpected `POST /analyze` exceptions receive the safe generic 500 body and `backend.unhandled_exception` event; other routes re-raise.
 - Added explicit upstream `429` handling in the Next.js proxy without operational failure events.
 - Added focused `route.test.ts` coverage for request-ID trust boundary, failure classification, sentinel redaction, and timeout cleanup.
+
+
+## Version 24 Step 3A — disabled safe Sentry telemetry
+
+- Added a server-only, disabled-by-default Sentry telemetry adapter for Next.js and FastAPI that accepts only runtime-validated safe analysis failure events.
+- Preserved native sanitized JSON logging and added strict provider-event reconstruction/redaction tests with fictional sentinel values.
+- Documented that provider accounts, DSNs, alerts, uptime monitors, production delivery, browser monitoring, tracing, profiling, source maps, database/RLS changes, and custom-domain work remain deferred to Step 3B.

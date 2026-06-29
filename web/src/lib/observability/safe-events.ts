@@ -81,6 +81,15 @@ const FAILURE_CLASS_SET = new Set<string>(FAILURE_CLASSES);
 const SAFE_EVENT_KEY_SET = new Set<string>(SAFE_EVENT_KEYS);
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const MAX_DURATION_MS = 3_600_000;
+const SAFE_SERVICES = new Set(["nextjs_analysis_proxy", "fastapi_analysis_service"]);
+const SAFE_OUTCOMES = new Set(["success", "failure"]);
+const SAFE_SEVERITIES = new Set(["info", "warning", "error", "critical"]);
+const SAFE_ROUTES = new Set(["/api/analyze", "/analyze"]);
+const SAFE_METHODS = new Set(["POST"]);
+const UPSTREAM_STATUS_CLASSES = new Set(["4xx", "5xx", "unknown"]);
+const RATE_LIMIT_RESULTS = new Set(["allowed", "limited", "unknown"]);
+const PAYLOAD_SIZE_BUCKETS = new Set(["under_10kb", "10kb_to_100kb", "100kb_to_500kb", "500kb_to_1mb", "over_1mb", "unknown"]);
+const SENTINEL_PATTERN = /SENSITIVE_[A-Z_]+_SENTINEL_DO_NOT_CAPTURE/;
 
 export type SafeAnalysisEventInput = {
   request_id: string;
@@ -154,7 +163,7 @@ function safeHttpStatus(value: number): number {
   return value;
 }
 
-function optionalSafeToken(value: string | undefined): string | undefined {
+export function optionalSafeToken(value: string | undefined): string | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -248,4 +257,63 @@ export function emitSafeEvent(event: SafeAnalysisEvent): void {
 
 export function assertSafeEventKeys(value: Record<string, unknown>): boolean {
   return Object.keys(value).every((key) => SAFE_EVENT_KEY_SET.has(key));
+}
+
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasSentinel(value: unknown): boolean {
+  if (typeof value === "string") return SENTINEL_PATTERN.test(value);
+  return false;
+}
+
+function safeString(value: unknown, allowed?: Set<string>): string | undefined {
+  if (typeof value !== "string" || hasSentinel(value)) return undefined;
+  if (allowed && !allowed.has(value)) return undefined;
+  return value;
+}
+
+function safeInteger(value: unknown, min: number, max: number): number | undefined {
+  if (!Number.isSafeInteger(value) || (value as number) < min || (value as number) > max) return undefined;
+  return value as number;
+}
+
+export function validateSafeAnalysisEvent(value: unknown): SafeAnalysisEvent | null {
+  if (!isPlainObject(value) || !assertSafeEventKeys(value)) return null;
+  if (Object.values(value).some(hasSentinel)) return null;
+  if (value.schema_version !== SAFE_EVENT_SCHEMA_VERSION || value.event_name !== ANALYSIS_EVENT_NAME) return null;
+  if (!isCanonicalUuidV4(value.event_id) || !isCanonicalUuidV4(value.request_id)) return null;
+  const service = safeString(value.service, SAFE_SERVICES) as SafeService | undefined;
+  const outcome = safeString(value.outcome, SAFE_OUTCOMES) as SafeOutcome | undefined;
+  const severity = safeString(value.severity, SAFE_SEVERITIES) as SafeSeverity | undefined;
+  const route = safeString(value.route_template, SAFE_ROUTES) as "/api/analyze" | "/analyze" | undefined;
+  const method = safeString(value.http_method, SAFE_METHODS) as "POST" | undefined;
+  const status = safeInteger(value.http_status, 100, 599);
+  const duration = safeInteger(value.duration_ms, 0, MAX_DURATION_MS);
+  if (!service || !outcome || !severity || !route || !method || status === undefined || duration === undefined) return null;
+  if (value.operation !== ANALYZE_OPERATION) return null;
+  if (typeof value.timestamp !== "string" || Number.isNaN(Date.parse(value.timestamp)) || hasSentinel(value.timestamp)) return null;
+  const failureClass = value.failure_class;
+  if (outcome === "success" && failureClass !== undefined) return null;
+  if (outcome === "failure" && !isRecognizedFailureClass(failureClass)) return null;
+
+  const rebuilt: SafeAnalysisEvent = {
+    schema_version: "1", event_name: "analysis_request", event_id: value.event_id, request_id: value.request_id,
+    timestamp: value.timestamp, service, operation: "analyze", outcome, severity, route_template: route, http_method: method,
+    http_status: status, duration_ms: duration,
+  };
+  if (outcome === "failure") rebuilt.failure_class = failureClass as FailureClass;
+  if (value.upstream_status_class !== undefined) {
+    const v = safeString(value.upstream_status_class, UPSTREAM_STATUS_CLASSES) as "4xx" | "5xx" | "unknown" | undefined;
+    if (!v) return null; rebuilt.upstream_status_class = v;
+  }
+  if (value.retry_count !== undefined) { const v = safeInteger(value.retry_count, 0, 10); if (v === undefined) return null; rebuilt.retry_count = v; }
+  if (value.rate_limit_result !== undefined) { const v = safeString(value.rate_limit_result, RATE_LIMIT_RESULTS) as "allowed" | "limited" | "unknown" | undefined; if (!v) return null; rebuilt.rate_limit_result = v; }
+  if (value.payload_size_bucket !== undefined) { const v = safeString(value.payload_size_bucket, PAYLOAD_SIZE_BUCKETS) as PayloadSizeBucket | undefined; if (!v) return null; rebuilt.payload_size_bucket = v; }
+  for (const key of ["environment", "release", "runtime_name", "runtime_version"] as const) {
+    if (value[key] !== undefined) { const v = optionalSafeToken(value[key] as string | undefined); if (!v) return null; (rebuilt as Record<string, unknown>)[key] = v; }
+  }
+  return rebuilt;
 }
