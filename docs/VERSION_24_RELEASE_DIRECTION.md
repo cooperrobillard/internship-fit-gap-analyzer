@@ -4,9 +4,9 @@
 
 ## Rationale
 
-A custom domain improves branding and discoverability, but it does not detect outages, request failures, elevated errors, broken provider integrations, or deployment regressions. The repository does not yet have a complete product-defined observability, log-retention, alerting, and PII-redaction policy. Broader public launch should not proceed blind.
+A custom domain improves branding and discoverability, but it does not detect outages, request failures, elevated errors, broken provider integrations, or deployment regressions. An observability, log-retention, alerting, and PII-redaction policy is now documented through Version 24 Step 1, but it is not yet implemented, configured, or production-verified. Broader public launch should not proceed blind.
 
-Observability must be designed before a vendor or instrumentation is selected. The next release should define the minimum operational foundation and privacy boundaries first; custom-domain launch work belongs after that foundation exists.
+Version 24 Step 1 defined the minimum operational foundation, privacy boundaries, and a provisional provider direction. Custom-domain launch work still belongs after that foundation is implemented and verified.
 
 ## Decision matrix
 

@@ -61,19 +61,19 @@ Expected incremental cost: **$0/month**, assuming current platform plans and fre
 
 | Provider/tool | Officially documented relevant capability | Decision |
 | --- | --- | --- |
-| Vercel | Observability, tracked request/function/external API events, logs, alerts, notifications | Use native dashboards/logs/notifications; do not add Vercel Analytics/Speed Insights for this step |
+| Vercel | Observability, tracked request/function/external API events, logs, and notifications; configurable Alerts are a separate paid-plan product | Use native dashboards/logs/observability/notifications; do not assume Hobby-plan configurable Alerts; do not add Vercel Analytics/Speed Insights for this step |
 | Render | Health checks and notifications | Use native health/deploy signals for backend diagnosis; external monitor still needed |
 | Supabase | Logs Explorer/log querying and metrics | Use native diagnosis only; no third-party browser telemetry initially |
 | Clerk | Dashboard and environment variable separation | Use dashboard for auth diagnosis; do not capture Clerk identifiers in telemetry |
 | Sentry | Next.js and FastAPI SDKs, server-side scrubbing, Developer pricing | Defer integration; later allow only manually configured server-side errors if redaction tests pass |
-| UptimeRobot | Free plan with monitors and 5-minute interval described in pricing FAQ | Use for independent external checks after human account setup |
-| Better Stack | Free tier includes uptime, exceptions, logs/traces/metrics/web events/session replay allowances | Defer because it bundles broader surfaces than needed initially |
+| UptimeRobot | Free plan with monitors and 5-minute interval described in pricing comparison table | Use for independent external checks after human account setup |
+| Better Stack | Free tier includes uptime, exceptions, logs, metrics, web events, and session replay allowances | Defer because it bundles broader surfaces than needed initially |
 | Axiom | Free personal tier with ingest/storage/query allowances and 30-day retention | Defer because external log/event aggregation is not needed initially |
 | OpenTelemetry | Node.js setup uses SDK and auto-instrumentations in getting-started flow | Defer because collector/auto-instrumentation/tracing is too broad for current privacy scope |
 
 ## 4. Existing native provider capabilities
 
-- Vercel remains the first place to inspect frontend deployments, runtime logs, framework-aware observability, alerts, and notifications.
+- Vercel remains the first place to inspect frontend deployments, runtime logs, framework-aware observability, and notifications. Configurable Vercel Alerts are distinct from native logs, observability, and notifications; they require an eligible paid plan and must not be assumed available on Hobby.
 - Render remains the first place to inspect backend deploys, service logs, and health-check behavior.
 - Supabase Logs Explorer and metrics remain the first place to diagnose database/API/auth-storage provider behavior.
 - Clerk dashboard remains the first place to diagnose authentication and environment/key configuration.
@@ -102,7 +102,7 @@ Therefore future Sentry setup must:
 
 ## 7. UptimeRobot analysis
 
-UptimeRobot Free is sufficient for the initial external monitor layer because the official pricing page describes a $0/month free option and 50 monitors, and its FAQ states Free includes 5-minute intervals. This project initially needs only two simple external checks:
+UptimeRobot Free is sufficient for the initial external monitor layer because the official pricing page describes a $0/month free option and 50 monitors, and its pricing comparison table states Free includes 5-minute intervals. This project initially needs only two simple external checks:
 
 - public Vercel frontend URL;
 - Render `/health` endpoint expecting `{"status":"ok"}` behavior.
@@ -111,7 +111,7 @@ The UptimeRobot account, monitor creation, alert contacts, MFA, retention review
 
 ## 8. Better Stack alternative
 
-Better Stack's official pricing page lists a free personal-project tier with uptime/heartbeats, email/Slack alerts, exceptions, session replays, logs, traces, metrics, and web events. That breadth is useful for larger operations, but it is too broad for the initial privacy-minimal scope. It also risks encouraging external log aggregation or replay before the redaction model is implemented.
+Better Stack's official pricing page lists a free personal-project tier with uptime/heartbeats, email/Slack alerts, exceptions, session replays, logs, metrics, and web events. That breadth is useful for larger operations, but it is too broad for the initial privacy-minimal scope. It also risks encouraging external log aggregation or replay before the redaction model is implemented.
 
 Decision: defer.
 

@@ -256,7 +256,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 ### Version 24 — Privacy-safe production observability
 
-Version 24 is the next release track. It will define privacy-safe production observability before selecting or integrating telemetry tooling. See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
+**Step 1 complete (documented).** Version 24 Step 1 has already documented the production observability requirements and selected a provisional provider direction in [`VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md`](VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md) and [`OBSERVABILITY_PROVIDER_DECISION.md`](OBSERVABILITY_PROVIDER_DECISION.md). No monitoring or telemetry is active yet. **Step 2 — vendor-neutral request correlation and failure classification — remains the exact next step.** See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
 
 ### Version 25 — Custom domain and broader public-launch configuration
 
