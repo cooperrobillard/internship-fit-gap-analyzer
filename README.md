@@ -11,11 +11,11 @@ This is a **portfolio and learning project** and limited public-beta product—n
 | Surface | Status |
 |---------|--------|
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
-| **Hosted web app** | Dev 21/Version 22 limited-public-beta foundation — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS, polished routes, and validated curated cross-domain taxonomy; final production verification still pending |
+| **Hosted web app** | Version 23 limited-public-beta foundation — Next.js on Vercel, FastAPI on Render, Clerk auth, Supabase with RLS, validated curated cross-domain taxonomy, and completed saved-analysis data-control workflow; not mature production SaaS |
 
 The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/`.txt` inputs, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
 
-Dev 19 privacy/RLS/abuse hardening, Dev 20 application-shell and launch polish, Dev 21 route redesign/visual QA, and Version 22 curated cross-domain taxonomy validation are complete in the repository. Final production launch verification remains pending until human preview, merge, production smoke test, screenshots, and deployed-environment verification are completed. This is still limited public beta/portfolio software, not mature production SaaS. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md).
+Dev 19 privacy/RLS/abuse hardening, Dev 20 application-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, and Version 23 saved-analysis data controls are complete in the repository. Version 23 production data-control QA passed against commit `5a6293eb3103cf2b73eb7c60fad5524b2bd4aee2`; this is scoped evidence for the saved-analysis data-control feature set, not a final public-launch declaration or a mature production SaaS/security-certification claim. Version 24 is privacy-safe production observability, and custom-domain launch work follows in Version 25. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`docs/VERSION_23_CHECKPOINT.md`](docs/VERSION_23_CHECKPOINT.md), [`docs/VERSION_23_DATA_CONTROL_QA.md`](docs/VERSION_23_DATA_CONTROL_QA.md), and [`docs/VERSION_24_RELEASE_DIRECTION.md`](docs/VERSION_24_RELEASE_DIRECTION.md).
 
 ## Architecture (hosted web app)
 
@@ -55,7 +55,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/`.txt` inputs
 - Supabase **Save structured results** / read / individual delete of analyses with per-user RLS
 - Structured resume-profile create/edit/delete and explicit saved-profile analysis handoff
-- Recurring gap stats, saved-analysis detail, search/filter, compare, export/download, privacy/data-control page (`/privacy`), metadata labels
+- Recurring gap stats, saved-analysis detail, progressive saved-history loading in pages of ten, row multi-selection, **Select all visible**, selected CSV export, loaded CSV export, selected deletion with explicit confirmation and partial-failure handling, search/filter, compare, export/download, privacy/data-control page (`/privacy`), metadata labels
 - Safe API validation/errors, safe loading states, safe `413` proxy request-size handling, safe `429` retry/cooldown handling, and active Vercel rate limiting
 - CI-oriented privacy/backend/lint/build checks documented for change review
 - Human two-user RLS verification passed on June 22, 2026
@@ -67,7 +67,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 - PDF/DOCX parsing in the web app
 - Full application tracking or billing
 - Formal legal privacy policy, penetration test, or comprehensive security audit
-- Account-wide export, one-click delete-all, restore/undo, automated retention, or account deletion data-cleanup integration
+- Account-wide select-all, one-click account-wide export, account-wide delete-all, restore/undo, automated retention, or account deletion data-cleanup integration
 - Raw resume or job-body persistence in the cloud save path (intentionally omitted)
 
 
@@ -81,10 +81,10 @@ Be honest about what this is today:
 
 - **Rule-based matching only** — curated keywords and aliases across multiple professional domains, not meaning or evidence strength
 - **No semantic/AI matching** — the curated cross-domain taxonomy is broad but not exhaustive and does not infer unstated skills, proficiency, or evidence strength
-- **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, and rate limiting are in place, but there is no formal security audit or penetration test
+- **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, rate limiting, and Version 23 production data-control QA are in place, but there is no formal security audit or penetration test
 - **Do not paste unusually sensitive resume or job text** into the hosted dashboard—use generic sample text for demos when possible
 - **No raw resume or job-body persistence** in the application save path
-- **No account-wide export/delete or automated retention**
+- **No account-wide controls** — saved-analysis selection, selected export, loaded export, deletion, search/filter, detail, and comparison operate only over records currently loaded in the browser
 - **Local Streamlit** does not replace the hosted stack; both coexist for different workflows
 
 More detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md), [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
@@ -248,7 +248,10 @@ Do not pass `--jobs` and `--job-file` together. Outputs: `data/outputs/gap_repor
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | Limitations and privacy notes |
 | [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md) | Historical pre-hosting checklist; see Dev 19 checkpoint for current readiness |
 | [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md) | Dev 19 privacy/data-control/readiness checkpoint |
-| [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) | Dev 20 release-candidate readiness record; final production verdict pending |
+| [`docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md) | Dev 20 release-candidate readiness record |
+| [`docs/VERSION_23_CHECKPOINT.md`](docs/VERSION_23_CHECKPOINT.md) | Version 23 saved-analysis data-control closure |
+| [`docs/VERSION_23_DATA_CONTROL_QA.md`](docs/VERSION_23_DATA_CONTROL_QA.md) | Accepted production Playwright QA evidence for Version 23 data controls |
+| [`docs/VERSION_24_RELEASE_DIRECTION.md`](docs/VERSION_24_RELEASE_DIRECTION.md) | Decision to do privacy-safe production observability before custom-domain launch |
 | [`docs/TAXONOMY_MAINTENANCE.md`](docs/TAXONOMY_MAINTENANCE.md) | Maintenance rules for canonical skills, aliases, fixtures, integrity checks, and review boundaries |
 | [`docs/VERSION_22_CHECKPOINT.md`](docs/VERSION_22_CHECKPOINT.md) | Version 22 cross-domain taxonomy expansion, validation evidence, copy reconciliation, and preserved limitations |
 | [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) | Milestones and future direction |
