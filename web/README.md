@@ -2,7 +2,7 @@
 
 This folder contains the Next.js 16 frontend for the hosted **Job Fit & Skill-Gap Analyzer**. The repository remains named `internship-fit-gap-analyzer`. The web app runs on Vercel with Clerk authentication, a Next.js `/api/analyze` proxy, Render FastAPI analysis, and Supabase structured saved data protected by RLS.
 
-The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, and Version 22 curated cross-domain taxonomy validation are complete in the repository. Final production launch verification has not been declared complete.
+The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, and Version 23 saved-analysis data controls are complete in the repository. Production Playwright QA passed for the bounded Version 23 data-control feature set; final public launch, formal accessibility certification, and security certification have not been declared complete.
 
 ## Current frontend surfaces
 
@@ -15,7 +15,7 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 - Structured resume profiles with profile metadata and skill lists.
 - Saved-profile analysis handoff that constructs temporary analysis input from selected profile metadata and skills.
 - **Save structured results** for matched/missing skills, categories, counts, timestamps, job metadata, and notes.
-- Saved-analysis history, detail view, search/filter, comparison, recurring-gap statistics, export/download controls where supported, individual deletion, and selected deletion for checked currently loaded analyses after confirmation.
+- Saved-analysis history with progressive pages of ten, manual **Load more analyses**, detail view, search/filter across loaded pages, comparison, recurring-gap statistics, loaded CSV export, row multi-selection, **Select all visible**, selected CSV export, individual deletion, and selected deletion for checked currently loaded analyses after confirmation with partial-failure handling.
 - Privacy page explaining transient inputs, structured saves, structured profiles, current controls, providers, and limitations.
 - Safe loading, validation, error, retry, `413 Payload Too Large`, and `429` cooldown handling.
 
@@ -44,6 +44,9 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 Supporting records:
 
 - [`../docs/VERSION_22_CHECKPOINT.md`](../docs/VERSION_22_CHECKPOINT.md)
+- [`../docs/VERSION_23_CHECKPOINT.md`](../docs/VERSION_23_CHECKPOINT.md)
+- [`../docs/VERSION_23_DATA_CONTROL_QA.md`](../docs/VERSION_23_DATA_CONTROL_QA.md)
+- [`../docs/VERSION_24_RELEASE_DIRECTION.md`](../docs/VERSION_24_RELEASE_DIRECTION.md)
 - [`../docs/TAXONOMY_MAINTENANCE.md`](../docs/TAXONOMY_MAINTENANCE.md)
 
 - [`../docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](../docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md)
@@ -120,9 +123,13 @@ Before preview or production review, also run the tracked-file privacy checks do
 
 - Limited public beta/portfolio software, not mature production SaaS.
 - No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
-- No account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion is limited to checked records in the current loaded result set.
-- Final production verdict remains pending human Vercel preview review, merge, production smoke test, screenshot evidence, and deployed-environment verification.
+- No account-wide select-all, account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion and exports are limited to records currently loaded in the browser.
+- Observability is not yet implemented as a complete product-defined centralized error-monitoring, uptime-alerting, incident-response, log-retention, and PII-redaction foundation. Version 24 addresses observability before custom-domain launch work.
+- Custom-domain launch is later Version 25 work. Final public launch, formal accessibility certification, and security certification are not complete.
 
+## Version 23 production QA status
+
+Version 23 saved-analysis data-control production Playwright end-to-end QA passed against production commit `5a6293eb3103cf2b73eb7c60fad5524b2bd4aee2` on `internship-fit-gap-analyzer.vercel.app`, with Render health returning HTTP 200 status `ok`. The accepted run covered two-user RLS isolation, structured save/detail, pagination and incremental failure/retry, search/filter across loaded pages, selection, selected CSV, loaded CSV, selected-deletion cancel/success/unavailable/partial-failure/complete-failure paths, individual deletion regression, keyboard behavior, responsive behavior, and cleanup. The evidence is scoped to Version 23 data controls and is not a formal security audit, penetration test, or accessibility certification.
 
 ## Saved-analysis load more
 

@@ -6,6 +6,37 @@ Related: [`DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](DEV20_LIMITED_PUBLIC_
 
 The final limited-public-beta status cannot be selected until production verification is complete.
 
+## Version 23 saved-analysis data-control release checks
+
+Historical record: the June 29, 2026 production Playwright end-to-end QA run passed against production commit `5a6293eb3103cf2b73eb7c60fad5524b2bd4aee2` on `internship-fit-gap-analyzer.vercel.app`. See [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md). That historical PASS does not make the reusable checklist below permanently complete for future deployments.
+
+For each future deployment, re-run the relevant release checks with synthetic data only:
+
+- [ ] First saved-analysis page loads ten records where enough records exist.
+- [ ] **Load more analyses** appends the next page.
+- [ ] Partial final page is handled correctly.
+- [ ] No-more state appears after the final page.
+- [ ] Incremental load-more error preserves existing rows and retry can recover.
+- [ ] Search/filter operate across currently loaded pages.
+- [ ] Row checkbox controls remain independent from detail-opening controls.
+- [ ] **Select all visible** checks only currently visible loaded rows.
+- [ ] Select-all state can become indeterminate.
+- [ ] Hidden selected count appears when checked rows are hidden by search/filter.
+- [ ] Selected CSV includes checked loaded rows and excludes unchecked rows.
+- [ ] Loaded CSV includes loaded rows without claiming account-wide export.
+- [ ] Selected-delete cancel path leaves records unchanged.
+- [ ] Selected-delete success path removes only selected loaded records.
+- [ ] Already-unavailable selected target is reconciled safely.
+- [ ] Complete deletion failure leaves failed records selected.
+- [ ] Partial deletion failure reports the partial result and keeps failed records selected.
+- [ ] Individual deletion regression still works.
+- [ ] Loaded-depth preservation remains after refresh or deletion.
+- [ ] Two-user RLS isolation prevents cross-account saved-analysis visibility and actions.
+- [ ] Clerk session reset does not leak prior-user state.
+- [ ] Keyboard behavior covers selection, details, exports, loading more, and deletion confirmation.
+- [ ] Responsive behavior remains usable at the release target sizes.
+- [ ] Synthetic-data cleanup removes current-run synthetic records.
+
 ## 1. Pre-flight repo checks
 
 ```bash

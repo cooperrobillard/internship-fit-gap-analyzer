@@ -3857,3 +3857,10 @@ Implemented selected deletion for checked currently loaded saved analyses with a
 ## Version 23 Step 4 — Saved-analysis load more
 
 Added manual saved-analysis pagination in pages of ten so users can progressively load older saved records without introducing account-wide select/export/delete behavior. The implementation uses stable newest-first ordering, an extra-row `hasMore` check without exact counts, append de-duplication, preserved refresh depth after deletion, and stale-request/session protection. Documentation and privacy copy now clarify that actions apply only to currently loaded browser records.
+
+## Version 23 Step 5 — Production data-control QA and checkpoint closure
+
+- Recorded accepted production Playwright end-to-end QA for Version 23 saved-analysis data controls against exact production commit `5a6293eb3103cf2b73eb7c60fad5524b2bd4aee2`, with final verdict PASS.
+- Confirmed the supplied evidence covered two-user RLS isolation, pagination and incremental failure/retry, selection, selected CSV export, loaded CSV export, selected-deletion success, unavailable-target reconciliation, partial-failure and complete-failure paths, keyboard behavior, responsive behavior, and successful current-run synthetic-data cleanup.
+- Reconciled documentation to close Version 23 without changing runtime behavior, frontend/backend code, database schema/RLS, auth, exports, deletion, pagination, dependencies, telemetry, provider configuration, environment variables, workflows, or domain settings.
+- Selected privacy-safe production observability as Version 24 before custom-domain launch work, with custom-domain and public-launch configuration deferred to Version 25.

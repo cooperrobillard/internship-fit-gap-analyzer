@@ -254,32 +254,41 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 **Complete** — see [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md). The analyzer now uses a validated curated cross-domain taxonomy with reviewed aliases while remaining deterministic, non-semantic, and non-AI.
 
-### Future — Domain and broader public launch
+### Version 24 — Privacy-safe production observability
+
+Version 24 is the next release track. It will define privacy-safe production observability before selecting or integrating telemetry tooling. See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
+
+### Version 25 — Custom domain and broader public-launch configuration
 
 - Custom domain on Vercel
-- Launch checklist + portfolio writeup
-- Post-launch smoke test in CI or runbook
+- Vercel DNS/domain verification
+- Clerk production-domain callback and redirect review
+- Canonical metadata and URL updates
+- Allowed-origin and provider configuration review
+- Production smoke test
+- Portfolio/public-launch update
 
 ---
 
 ## 9. Recommended next implementation step
 
-**Version 23 — Bulk saved-analysis management** is the current implementation track.
+**Version 23 — Bulk saved-analysis management** is complete for its bounded saved-analysis data-control scope. See [`VERSION_23_CHECKPOINT.md`](VERSION_23_CHECKPOINT.md) and [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md).
 
 - [x] Step 1 — Accessible saved-analysis multi-selection foundation with native row checkboxes, **Select all visible**, indeterminate state, selected/hidden counts, Clear selection, and session/refresh/delete cleanup. See [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md).
 - [x] Step 2 — Selected CSV export for checked loaded saved analyses, including checked rows hidden by search/filter, using the existing structured CSV schema. See [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md).
 - [x] Step 3 — Carefully scoped selected deletion for checked loaded saved analyses. See [`VERSION_23_STEP_3_SELECTED_DELETION.md`](VERSION_23_STEP_3_SELECTED_DELETION.md).
 - [x] Step 4 — Manual progressive Load more pagination in pages of ten so saved-history controls can reach older loaded records. See [`VERSION_23_STEP_4_LOAD_MORE.md`](VERSION_23_STEP_4_LOAD_MORE.md).
-- [ ] Step 5 — Version 23 checkpoint and end-to-end data-control QA.
+- [x] Step 5 — Version 23 checkpoint and production Playwright end-to-end data-control QA. See [`VERSION_23_CHECKPOINT.md`](VERSION_23_CHECKPOINT.md) and [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md).
+- [x] Version 23 complete — bounded saved-analysis data controls closed with a PASS verdict for production commit `5a6293eb3103cf2b73eb7c60fad5524b2bd4aee2`.
 - [ ] Later — Account-wide management controls. Account-wide export/delete claims remain unimplemented until an explicit future step builds and verifies them.
 
-Version 23 must preserve RLS, avoid raw resume/job text storage, avoid analyzer/taxonomy changes unless separately approved, and keep account-wide controls honest until implemented. Step 1 multi-selection, Step 2 selected CSV export, Step 3 selected deletion, and Step 4 progressive loading are complete. Progressive loading now reaches older saved-analysis records in the browser, while account-wide one-click select-all, export-all, and delete-all controls remain unimplemented. Version 23 Step 5 is the checkpoint and end-to-end data-control QA pass.
+Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Still later:** custom domain, observability, mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, and formal security/legal certification.
+**Next:** Version 24 is privacy-safe production observability, followed by Version 25 custom-domain and public-launch configuration. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
-See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
+See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md), [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md), [`VERSION_23_STEP_3_SELECTED_DELETION.md`](VERSION_23_STEP_3_SELECTED_DELETION.md), [`VERSION_23_STEP_4_LOAD_MORE.md`](VERSION_23_STEP_4_LOAD_MORE.md), [`VERSION_23_CHECKPOINT.md`](VERSION_23_CHECKPOINT.md), [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md), [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
 ---
 
