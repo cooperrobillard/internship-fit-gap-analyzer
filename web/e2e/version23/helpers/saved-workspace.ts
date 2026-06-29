@@ -518,6 +518,11 @@ export async function expectSelectionStatus(
   selectedCount: number,
   hiddenCount = 0,
 ): Promise<void> {
+  if (selectedCount === 0) {
+    await expect(page.getByText("No analyses selected.", { exact: true })).toBeVisible();
+    return;
+  }
+
   const selectedLabel = selectedCount === 1 ? "analysis" : "analyses";
 
   const hiddenClause =
@@ -533,6 +538,47 @@ export async function expectSelectionStatus(
       { exact: true },
     ),
   ).toBeVisible();
+}
+
+export const COMPLETE_DELETION_FAILURE_ALERT_TIMEOUT_MS = 30_000;
+
+export function formatCompleteDeletionFailureMessage(
+  targetCount: number,
+): string {
+  if (!Number.isInteger(targetCount) || targetCount <= 0) {
+    throw new Error(
+      `Complete deletion failure target count must be a positive integer; received ${targetCount}.`,
+    );
+  }
+
+  const noun = targetCount === 1 ? "analysis" : "analyses";
+  const remaining = targetCount === 1 ? "It remains" : "They remain";
+
+  return `Could not delete the ${targetCount} selected ${noun}. ${remaining} selected. Try again.`;
+}
+
+export function completeDeletionFailureAlert(
+  page: Page,
+  targetCount: number,
+): Locator {
+  const expectedMessage = formatCompleteDeletionFailureMessage(targetCount);
+
+  return page.getByRole("alert").filter({ hasText: expectedMessage });
+}
+
+export async function expectCompleteDeletionFailureAlert(
+  page: Page,
+  targetCount: number,
+): Promise<void> {
+  const expectedMessage = formatCompleteDeletionFailureMessage(targetCount);
+  const alert = completeDeletionFailureAlert(page, targetCount);
+
+  await expect(alert).toHaveCount(1, {
+    timeout: COMPLETE_DELETION_FAILURE_ALERT_TIMEOUT_MS,
+  });
+  await expect(alert).toHaveText(expectedMessage, {
+    timeout: COMPLETE_DELETION_FAILURE_ALERT_TIMEOUT_MS,
+  });
 }
 
 export async function openAnalysisDetail(page: Page, title: string): Promise<void> {

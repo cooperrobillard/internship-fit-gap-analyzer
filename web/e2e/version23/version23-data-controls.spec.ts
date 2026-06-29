@@ -31,6 +31,7 @@ import {
   expectRowVisible,
   expectVisibleCountSummary,
   expectSelectionStatus,
+  expectCompleteDeletionFailureAlert,
   loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
@@ -733,33 +734,47 @@ test.describe("Already-unavailable target", () => {
 
 test.describe("Complete deletion failure", () => {
   test("Complete deletion failure", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page, qaConfig());
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    await loadAllUserARecords(page, config);
 
-    const first = titleForUserA(qaConfig(), 1);
-    const second = titleForUserA(qaConfig(), 2);
+    const first = titleForUserA(config, 1);
+    const second = titleForUserA(config, 2);
     await selectRecordsByTitle(page, [first, second]);
     const interceptor = await interceptMatching(page, isSavedDelete, (route) =>
       route.abort("failed"),
     );
-    await page.getByRole("button", { name: "Delete selected" }).click();
-    await page.getByRole("button", { name: "Delete 2 analyses" }).click();
-    await expect(page.getByRole("alert")).toContainText(
-      "Could not delete the 2 selected analyses.",
-    );
+    await page.getByRole("button", { name: "Delete selected", exact: true }).click();
+    await page.getByRole("button", { name: "Delete 2 analyses", exact: true }).click();
+    await expectCompleteDeletionFailureAlert(page, 2);
+    await expect(page.locator("#__next-route-announcer__")).toHaveCount(1);
+    await expect(page.locator("#__next-route-announcer__")).toHaveText("");
     interceptor.assertSeen(2);
     await expectRowVisible(page, first);
     await expectRowVisible(page, second);
+    await expect(rowCheckbox(page, first)).toBeChecked();
+    await expect(rowCheckbox(page, second)).toBeChecked();
+    await expectSelectionStatus(page, 2);
     await expect(
-      page.getByRole("button", { name: "Export selected (CSV)" }),
+      page.getByRole("button", { name: "Export selected (CSV)", exact: true }),
     ).toBeEnabled();
+    await expect(
+      page.getByRole("heading", {
+        name: "Delete 2 selected analyses?",
+        exact: true,
+      }),
+    ).toHaveCount(0);
     await interceptor.unroute();
-    await page.getByRole("button", { name: "Delete selected" }).click();
-    await page.getByRole("button", { name: "Delete 2 analyses" }).click();
-    await expect(page.getByText("2 selected analyses were deleted.")).toBeVisible({
-      timeout: 60_000,
-    });
+    await page.getByRole("button", { name: "Delete selected", exact: true }).click();
+    await page.getByRole("button", { name: "Delete 2 analyses", exact: true }).click();
+    await expect(
+      page.getByText("2 selected analyses were deleted.", { exact: true }),
+    ).toBeVisible({ timeout: 60_000 });
+    await expectRowAbsent(page, first);
+    await expectRowAbsent(page, second);
+    await expectSelectionStatus(page, 0);
+    await expectNoUnsafeText(page);
     await context.close();
   });
 });

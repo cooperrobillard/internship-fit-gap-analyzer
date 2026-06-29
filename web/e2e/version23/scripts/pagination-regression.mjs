@@ -2362,6 +2362,234 @@ async function runBrowserBackedSelectedDeletionCancelRegression() {
   }
 }
 
+function extractCompleteDeletionFailureBlock(specSource) {
+  const startMarker = 'test.describe("Complete deletion failure"';
+  const endMarker = 'test.describe("True partial deletion failure"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate Complete deletion failure test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runCompleteDeletionFailureSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractCompleteDeletionFailureBlock(specSource);
+  const workspaceSource = readFileSync(join(helpersDir, "saved-workspace.ts"), "utf8");
+
+  assert(
+    block.includes("const config = qaConfig();") &&
+      block.includes("titleForUserA(config, 1)") &&
+      block.includes("titleForUserA(config, 2)"),
+    "Complete deletion failure test must resolve config once and use two targets",
+  );
+  assert(
+    block.includes("interceptMatching(page, isSavedDelete") &&
+      block.includes('route.abort("failed")'),
+    "Complete deletion failure test must abort all matching delete attempts",
+  );
+  assert(
+    block.includes('name: "Delete 2 analyses", exact: true'),
+    "Complete deletion failure test must submit the confirmation",
+  );
+  assert(
+    block.includes("await expectCompleteDeletionFailureAlert(page, 2);"),
+    "Complete deletion failure test must use the scoped complete-failure alert helper",
+  );
+  assert(
+    !block.includes('page.getByRole("alert")'),
+    "Complete deletion failure test must not use a bare page-wide role alert locator",
+  );
+  assert(
+    block.includes("interceptor.assertSeen(2);"),
+    "Complete deletion failure test must require exactly two intercepted delete attempts",
+  );
+  assert(
+    block.includes("await expectRowVisible(page, first);") &&
+      block.includes("await expectRowVisible(page, second);"),
+    "Complete deletion failure test must keep both rows visible after failure",
+  );
+  assert(
+    block.includes("await expect(rowCheckbox(page, first)).toBeChecked();") &&
+      block.includes("await expect(rowCheckbox(page, second)).toBeChecked();"),
+    "Complete deletion failure test must keep both row checkboxes checked",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 2);"),
+    "Complete deletion failure test must keep the two-selected status",
+  );
+  assert(
+    block.includes(
+      'name: "Export selected (CSV)", exact: true',
+    ),
+    "Complete deletion failure test must keep selected export enabled",
+  );
+  assert(
+    block.includes('name: "Delete 2 selected analyses?",\n        exact: true,\n      }),\n    ).toHaveCount(0);'),
+    "Complete deletion failure test must close the confirmation after failure",
+  );
+  assert(
+    block.includes("await interceptor.unroute();"),
+    "Complete deletion failure test must remove the interceptor before retry",
+  );
+  assert(
+    block.includes('"2 selected analyses were deleted.", { exact: true }'),
+    "Complete deletion failure test must assert the exact retry success notice",
+  );
+  assert(
+    block.includes("await expectRowAbsent(page, first);") &&
+      block.includes("await expectRowAbsent(page, second);"),
+    "Complete deletion failure test must remove both rows after retry success",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 0);"),
+    "Complete deletion failure test must clear selection after retry success",
+  );
+  assert(
+    block.includes("expectNoUnsafeText(page)"),
+    "Complete deletion failure test must include privacy verification",
+  );
+  assert(
+    block.includes('page.locator("#__next-route-announcer__")'),
+    "Complete deletion failure test must verify the route announcer separately",
+  );
+
+  assert(
+    workspaceSource.includes("export function formatCompleteDeletionFailureMessage"),
+    "a complete deletion failure message formatter must exist",
+  );
+  assert(
+    workspaceSource.includes('targetCount === 1 ? "analysis" : "analyses"') &&
+      workspaceSource.includes('targetCount === 1 ? "It remains" : "They remain"'),
+    "the formatter must handle singular and plural grammar",
+  );
+  assert(
+    workspaceSource.includes("export function completeDeletionFailureAlert"),
+    "a scoped complete deletion failure alert locator must exist",
+  );
+  assert(
+    workspaceSource.includes('getByRole("alert")') &&
+      workspaceSource.includes("filter({ hasText: expectedMessage })"),
+    "the locator must filter semantic alerts by the expected message",
+  );
+  assert(
+    !workspaceSource.includes("completeDeletionFailureAlert(page, targetCount).first()") &&
+      !workspaceSource.includes("completeDeletionFailureAlert(page, targetCount).last()") &&
+      !workspaceSource.includes("completeDeletionFailureAlert(page, targetCount).nth("),
+    "the complete deletion failure alert locator must not use positional selection",
+  );
+  assert(
+    workspaceSource.includes("export async function expectCompleteDeletionFailureAlert"),
+    "a bounded complete deletion failure alert assertion helper must exist",
+  );
+  assert(
+    workspaceSource.includes("toHaveCount(1") &&
+      workspaceSource.includes("toHaveText(expectedMessage"),
+    "the assertion must require exactly one alert with the exact message",
+  );
+  assert(
+    workspaceSource.includes("COMPLETE_DELETION_FAILURE_ALERT_TIMEOUT_MS"),
+    "the assertion must use a bounded timeout constant",
+  );
+}
+
+async function runBrowserBackedCompleteDeletionFailureAlertRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    completeDeletionFailureAlert,
+    expectCompleteDeletionFailureAlert,
+    formatCompleteDeletionFailureMessage,
+  } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const pluralMessage = formatCompleteDeletionFailureMessage(2);
+    const page = await browser.newPage();
+    await page.setContent(
+      `<main>
+        <div
+          id="__next-route-announcer__"
+          role="alert"
+          aria-live="assertive"
+        ></div>
+        <p role="alert">${pluralMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    assert(
+      (await page.getByRole("alert").count()) === 2,
+      "fixture must contain both the route announcer and application alert",
+    );
+
+    const alert = completeDeletionFailureAlert(page, 2);
+    await expect(alert).toHaveCount(1);
+    await expect(alert).toHaveText(pluralMessage);
+    await expect(page.locator("#__next-route-announcer__")).not.toHaveText(
+      pluralMessage,
+    );
+    await expectCompleteDeletionFailureAlert(page, 2);
+
+    const singularMessage = formatCompleteDeletionFailureMessage(1);
+    assert(
+      singularMessage ===
+        "Could not delete the 1 selected analysis. It remains selected. Try again.",
+      "singular complete deletion failure message must use exact grammar",
+    );
+
+    const singularPage = await browser.newPage();
+    await singularPage.setContent(
+      `<main>
+        <div
+          id="__next-route-announcer__"
+          role="alert"
+          aria-live="assertive"
+        ></div>
+        <p role="alert">${singularMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await expect(completeDeletionFailureAlert(singularPage, 1)).toHaveText(
+      singularMessage,
+    );
+    await singularPage.close();
+
+    const missingAlertPage = await browser.newPage();
+    await missingAlertPage.setContent(
+      `<main>
+        <div
+          id="__next-route-announcer__"
+          role="alert"
+          aria-live="assertive"
+        ></div>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => expectCompleteDeletionFailureAlert(missingAlertPage, 2),
+      "Received: 0",
+    );
+    await missingAlertPage.close();
+
+    const duplicateAlertPage = await browser.newPage();
+    await duplicateAlertPage.setContent(
+      `<main>
+        <p role="alert">${pluralMessage}</p>
+        <p role="alert">${pluralMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () => expectCompleteDeletionFailureAlert(duplicateAlertPage, 2),
+      "Received: 2",
+    );
+    await duplicateAlertPage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
 try {
   runLoadMorePlanRegression();
   runPaginationMathRegression();
@@ -2375,6 +2603,7 @@ try {
   runSelectionSourceRegression();
   runLoadedExportSourceRegression();
   runSelectedDeletionCancelSourceRegression();
+  runCompleteDeletionFailureSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -2389,6 +2618,7 @@ try {
   await runBrowserBackedHiddenSelectionRegression();
   await runBrowserBackedLoadedExportDisclosureRegression();
   await runBrowserBackedSelectedDeletionCancelRegression();
+  await runBrowserBackedCompleteDeletionFailureAlertRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");
