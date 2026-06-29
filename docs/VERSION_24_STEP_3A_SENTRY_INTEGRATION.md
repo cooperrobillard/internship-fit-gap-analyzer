@@ -77,7 +77,21 @@ Tests use fictional sentinel values for resume, job, note, token, header, cookie
 
 ## Provider failure isolation
 
-Initialization and capture failures are swallowed. Analysis responses, status codes, headers, and generic error bodies do not depend on telemetry status.
+Initialization, capture, and flush failures are swallowed. Analysis responses, status codes, headers, and generic error bodies do not depend on telemetry status.
+
+## Vercel serverless delivery (Step 3B canary follow-up)
+
+Version 24 Step 3B preview verification showed that native sanitized JSON logging worked for eligible proxy failures, but no outbound Sentry request occurred from the Vercel Node.js serverless route. The likely causes were dynamic `createRequire` SDK loading that Next.js/Vercel bundling may not trace reliably, and missing bounded transport draining before the function returned.
+
+The follow-up fix:
+
+- statically imports `@sentry/node` for a traceable server bundle;
+- still initializes only when `OBSERVABILITY_TELEMETRY_ENABLED=true` and `SENTRY_DSN` is nonblank;
+- calls the public SDK `flush()` API with a 2000 ms bounded timeout after each eligible `captureEvent`;
+- awaits that flush on eligible failure paths in the analysis route;
+- swallows flush timeout, false results, and SDK errors through the existing adapter status contract.
+
+All Step 3A privacy, redaction, kill-switch, and failure-isolation guarantees remain unchanged. Production telemetry remains disabled until the Step 3B canary is repeated successfully.
 
 ## Exact changed files
 

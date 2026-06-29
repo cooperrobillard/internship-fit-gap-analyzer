@@ -106,7 +106,7 @@ export function __setAnalyzeRouteTestDeps(deps: AnalyzeRouteTestDeps | undefined
   analyzeRouteTestDeps = deps;
 }
 
-function emitAnalysisFailureEvent(options: {
+async function emitAnalysisFailureEvent(options: {
   requestId: string;
   startedAtMs: number;
   httpStatus: number;
@@ -114,7 +114,7 @@ function emitAnalysisFailureEvent(options: {
   severity: SafeSeverity;
   upstreamStatusClass?: "4xx" | "5xx" | "unknown";
   bodyByteLength?: number;
-}): void {
+}): Promise<void> {
   try {
     const event = createSafeAnalysisEvent({
       request_id: options.requestId,
@@ -131,7 +131,7 @@ function emitAnalysisFailureEvent(options: {
       environment: process.env.NODE_ENV,
     });
     emitSafeEvent(event);
-    (analyzeRouteTestDeps?.captureSafeFailureToSentryImpl ?? captureSafeFailureToSentry)(event);
+    await (analyzeRouteTestDeps?.captureSafeFailureToSentryImpl ?? captureSafeFailureToSentry)(event);
   } catch {
     // Best effort only. Observability must never affect application behavior.
   }
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
 
   const baseUrl = resolveBackendBaseUrl();
   if (!baseUrl) {
-    emitAnalysisFailureEvent({
+    await emitAnalysisFailureEvent({
       requestId,
       startedAtMs,
       httpStatus: 500,
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
     try {
       payload = responseText ? JSON.parse(responseText) : null;
     } catch {
-      emitAnalysisFailureEvent({
+      await emitAnalysisFailureEvent({
         requestId,
         startedAtMs,
         httpStatus: 502,
@@ -254,11 +254,11 @@ export async function POST(request: Request) {
 
     const clientStatus = clientStatusForBackendError(response.status);
     if (response.status === 401 || response.status === 403) {
-      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "config.shared_secret_rejected", severity: "critical", upstreamStatusClass: "4xx", bodyByteLength });
+      await emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "config.shared_secret_rejected", severity: "critical", upstreamStatusClass: "4xx", bodyByteLength });
     } else if (response.status >= 500) {
-      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_5xx", severity: "error", upstreamStatusClass: "5xx", bodyByteLength });
+      await emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_5xx", severity: "error", upstreamStatusClass: "5xx", bodyByteLength });
     } else if (response.status !== 422) {
-      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_invalid_response", severity: "error", upstreamStatusClass: "4xx", bodyByteLength });
+      await emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_invalid_response", severity: "error", upstreamStatusClass: "4xx", bodyByteLength });
     }
     return jsonError(
       safeBackendErrorMessage(response.status),
@@ -267,7 +267,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 504, failureClass: "proxy.upstream_timeout", severity: "warning", bodyByteLength });
+      await emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 504, failureClass: "proxy.upstream_timeout", severity: "warning", bodyByteLength });
       return jsonError(
         "The analysis service is taking longer than expected. Please try again shortly.",
         504,
@@ -275,7 +275,7 @@ export async function POST(request: Request) {
       );
     }
 
-    emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 503, failureClass: "proxy.upstream_unreachable", severity: "error", bodyByteLength });
+    await emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 503, failureClass: "proxy.upstream_unreachable", severity: "error", bodyByteLength });
     return jsonError(
       "This feature is temporarily unavailable. Please try again shortly.",
       503,

@@ -2,13 +2,18 @@ if (process.env.NODE_ENV !== "test" && process.env.NEXT_RUNTIME) {
   void import("server-only");
 }
 
-import { createRequire } from "node:module";
+import * as sentryNode from "@sentry/node";
 
 import { optionalSafeToken, validateSafeAnalysisEvent, type SafeAnalysisEvent } from "./safe-events";
 
-const loadSdk = createRequire(import.meta.url);
+const DEFAULT_FLUSH_TIMEOUT_MS = 2000;
 
-type Sdk = { init: (options: Record<string, unknown>) => void; captureEvent: (event: Record<string, unknown>) => unknown; captureException?: unknown };
+type Sdk = {
+  init: (options: Record<string, unknown>) => void;
+  captureEvent: (event: Record<string, unknown>) => unknown;
+  flush: (timeout?: number) => Promise<boolean>;
+  captureException?: unknown;
+};
 type Config = Record<string, string | undefined>;
 export type CaptureStatus = "disabled" | "dropped" | "queued" | "failed";
 
@@ -63,6 +68,10 @@ export function reconstructSentryEvent(incoming: Record<string, unknown>): Recor
   return event;
 }
 
+function defaultSdk(): Sdk {
+  return sentryNode as unknown as Sdk;
+}
+
 function initIfNeeded(config: Config, sdk: Sdk): boolean {
   if (!isEnabled(config)) return false;
   if (initialized) return !initFailed;
@@ -86,15 +95,24 @@ function initIfNeeded(config: Config, sdk: Sdk): boolean {
   } catch { initialized = true; initFailed = true; return false; }
 }
 
-export function captureSafeFailureToSentry(event: SafeAnalysisEvent, deps?: { sdk?: Sdk; config?: Config }): CaptureStatus {
+async function drainEventQueue(sdk: Sdk): Promise<void> {
+  try {
+    await sdk.flush(DEFAULT_FLUSH_TIMEOUT_MS);
+  } catch {
+    // Flush failures must not affect callers.
+  }
+}
+
+export async function captureSafeFailureToSentry(event: SafeAnalysisEvent, deps?: { sdk?: Sdk; config?: Config }): Promise<CaptureStatus> {
   try {
     const safe = validateSafeAnalysisEvent(event);
     if (!safe || safe.outcome !== "failure" || !safe.failure_class) return "dropped";
     const config = deps?.config ?? process.env;
     if (!isEnabled(config)) return "disabled";
-    const sdk = deps?.sdk ?? (loadSdk("@sentry/node") as Sdk);
+    const sdk = deps?.sdk ?? defaultSdk();
     if (!initIfNeeded(config, sdk)) return "disabled";
     (activeSdk ?? sdk).captureEvent({ extra: { safe_event: safe } } as never);
+    await drainEventQueue(activeSdk ?? sdk);
     return "queued";
   } catch { return "failed"; }
 }

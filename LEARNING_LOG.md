@@ -3891,3 +3891,10 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Added a server-only, disabled-by-default Sentry telemetry adapter for Next.js and FastAPI that accepts only runtime-validated safe analysis failure events.
 - Preserved native sanitized JSON logging and added strict provider-event reconstruction/redaction tests with fictional sentinel values.
 - Documented that provider accounts, DSNs, alerts, uptime monitors, production delivery, browser monitoring, tracing, profiling, source maps, database/RLS changes, and custom-domain work remain deferred to Step 3B.
+
+## Version 24 Step 3B canary — Vercel Sentry delivery fix
+
+- Step 3B preview verification confirmed native sanitized logging for eligible proxy failures, but Vercel showed no outbound Sentry request and the proxy project received no event.
+- Replaced dynamic `createRequire` SDK loading with a static server-only `@sentry/node` import so the Vercel bundle can trace the adapter.
+- Added bounded `flush(2000)` after eligible `captureEvent` calls and awaited that drain on analysis-route failure paths.
+- Preserved kill-switch gating, safe-event reconstruction, sentinel tests, and failure isolation; production telemetry remains disabled until the canary is repeated successfully.

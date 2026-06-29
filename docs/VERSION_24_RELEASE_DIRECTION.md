@@ -26,7 +26,7 @@ Version 24 Step 1 defined the minimum operational foundation, privacy boundaries
 2. Vendor-neutral request correlation and failure classification. **Implemented in [`VERSION_24_STEP_2_REQUEST_CORRELATION.md`](VERSION_24_STEP_2_REQUEST_CORRELATION.md) with native server-log emission only; no external provider delivery is active.**
 3. Minimum production telemetry and alerting, split into:
    - Step 3A: bounded code integration PR. **Implemented as a disabled-by-default server-only Sentry adapter with strict safe-event reconstruction; no provider account, DSN, delivery, alert, uptime monitor, or production configuration is active.**
-   - Step 3B: human provider configuration and verification.
+   - Step 3B: human provider configuration and verification. **A preview canary confirmed native sanitized logging but exposed a Vercel serverless Sentry delivery defect; bounded SDK flushing and static server import were added, but production telemetry remains disabled until the canary is repeated successfully.**
 4. Production verification and incident-response runbook.
 5. Production observability checkpoint.
 
