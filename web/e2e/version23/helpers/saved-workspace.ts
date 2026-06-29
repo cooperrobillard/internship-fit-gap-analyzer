@@ -581,6 +581,79 @@ export async function expectCompleteDeletionFailureAlert(
   });
 }
 
+export type PartialDeletionFailureCounts = {
+  targetCount: number;
+  removedCount: number;
+  failureCount: number;
+};
+
+export function formatPartialDeletionFailureMessage(
+  options: PartialDeletionFailureCounts,
+): string {
+  const { targetCount, removedCount, failureCount } = options;
+
+  if (!Number.isInteger(targetCount) || targetCount <= 0) {
+    throw new Error(
+      `Partial deletion target count must be a positive integer; received ${targetCount}.`,
+    );
+  }
+
+  if (!Number.isInteger(removedCount) || removedCount <= 0) {
+    throw new Error(
+      `Partial deletion removed count must be a positive integer; received ${removedCount}.`,
+    );
+  }
+
+  if (!Number.isInteger(failureCount) || failureCount <= 0) {
+    throw new Error(
+      `Partial deletion failure count must be a positive integer; received ${failureCount}.`,
+    );
+  }
+
+  if (removedCount + failureCount !== targetCount) {
+    throw new Error(
+      `Partial deletion counts must sum to the target count; received target=${targetCount}, removed=${removedCount}, failures=${failureCount}.`,
+    );
+  }
+
+  const targetNoun = targetCount === 1 ? "analysis" : "analyses";
+  const removedVerb = removedCount === 1 ? "was" : "were";
+  const failureVerb = failureCount === 1 ? "remains" : "remain";
+
+  return (
+    `${removedCount} of ${targetCount} selected ${targetNoun} ` +
+    `${removedVerb} deleted or already unavailable. ` +
+    `${failureCount} could not be deleted and ${failureVerb} selected. ` +
+    `Try again.`
+  );
+}
+
+export function partialDeletionFailureStatus(
+  page: Page,
+  options: PartialDeletionFailureCounts,
+): Locator {
+  const expectedMessage = formatPartialDeletionFailureMessage(options);
+
+  return page.getByRole("status").filter({ hasText: expectedMessage });
+}
+
+export const PARTIAL_DELETION_FAILURE_STATUS_TIMEOUT_MS = 30_000;
+
+export async function expectPartialDeletionFailureStatus(
+  page: Page,
+  options: PartialDeletionFailureCounts,
+): Promise<void> {
+  const expectedMessage = formatPartialDeletionFailureMessage(options);
+  const status = partialDeletionFailureStatus(page, options);
+
+  await expect(status).toHaveCount(1, {
+    timeout: PARTIAL_DELETION_FAILURE_STATUS_TIMEOUT_MS,
+  });
+  await expect(status).toHaveText(expectedMessage, {
+    timeout: PARTIAL_DELETION_FAILURE_STATUS_TIMEOUT_MS,
+  });
+}
+
 export async function openAnalysisDetail(page: Page, title: string): Promise<void> {
   await rowOpenButton(page, title).click();
   await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible({

@@ -2590,6 +2590,266 @@ async function runBrowserBackedCompleteDeletionFailureAlertRegression() {
   }
 }
 
+function extractTruePartialDeletionFailureBlock(specSource) {
+  const startMarker = 'test.describe("True partial deletion failure"';
+  const endMarker = 'test.describe("Individual deletion regression"';
+  const start = specSource.indexOf(startMarker);
+  const end = specSource.indexOf(endMarker);
+  if (start < 0 || end <= start) {
+    throw new Error("Unable to locate True partial deletion failure test block.");
+  }
+  return specSource.slice(start, end);
+}
+
+function runTruePartialDeletionFailureSourceRegression() {
+  const specSource = readFileSync(specPath, "utf8");
+  const block = extractTruePartialDeletionFailureBlock(specSource);
+  const workspaceSource = readFileSync(join(helpersDir, "saved-workspace.ts"), "utf8");
+
+  assert(
+    block.includes("const config = qaConfig();") &&
+      block.includes("titleForUserA(config, 3)") &&
+      block.includes("titleForUserA(config, 4)"),
+    "True partial deletion failure test must resolve config once and use indices 3 and 4",
+  );
+  assert(
+    block.includes("interceptMatching(") &&
+      block.includes("isSavedDelete") &&
+      block.includes("route.continue()") &&
+      block.includes('route.abort("failed")'),
+    "True partial deletion failure test must continue the first delete and abort the second",
+  );
+  assert(
+    block.includes('name: "Delete 2 analyses", exact: true'),
+    "True partial deletion failure test must submit the confirmation",
+  );
+  assert(
+    block.includes("await expectPartialDeletionFailureStatus(page, {") &&
+      block.includes("targetCount: 2,") &&
+      block.includes("removedCount: 1,") &&
+      block.includes("failureCount: 1,"),
+    "True partial deletion failure test must use the scoped partial-warning status helper",
+  );
+  assert(
+    !block.includes("were deleted or already unavailable") &&
+      !block.includes("/1 of 2 selected analyses"),
+    "True partial deletion failure test must not use the stale plural were-deleted regex",
+  );
+  assert(
+    block.includes("interceptor.assertSeen(2);"),
+    "True partial deletion failure test must require exactly two intercepted delete attempts",
+  );
+  assert(
+    block.includes("await expectRowAbsent(page, first);") &&
+      block.includes("await expectRowVisible(page, second);"),
+    "True partial deletion failure test must keep the first target absent and second visible",
+  );
+  assert(
+    block.includes("await expect(rowCheckbox(page, second)).toBeChecked();"),
+    "True partial deletion failure test must keep the failed target checked",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 1);"),
+    "True partial deletion failure test must keep one selected record",
+  );
+  assert(
+    block.includes('name: "Export selected (CSV)", exact: true'),
+    "True partial deletion failure test must keep selected export enabled",
+  );
+  assert(
+    block.includes('name: "Delete 2 selected analyses?",\n        exact: true,\n      }),\n    ).toHaveCount(0);'),
+    "True partial deletion failure test must close the confirmation after the operation",
+  );
+  assert(
+    block.includes("formatPartialDeletionFailureMessage") &&
+      block.includes('getByRole("alert")'),
+    "True partial deletion failure test must verify the partial warning is not an alert",
+  );
+  assert(
+    block.includes("await interceptor.unroute();"),
+    "True partial deletion failure test must remove the interceptor before retry",
+  );
+  assert(
+    block.includes('name: "Delete 1 analysis", exact: true'),
+    "True partial deletion failure test must retry with the singular confirmation label",
+  );
+  assert(
+    block.includes('"1 selected analysis was deleted.", { exact: true }'),
+    "True partial deletion failure test must assert the exact singular success notice",
+  );
+  assert(
+    block.includes("await expectRowAbsent(page, second);"),
+    "True partial deletion failure test must remove the second target after retry success",
+  );
+  assert(
+    block.includes("await expectSelectionStatus(page, 0);"),
+    "True partial deletion failure test must clear selection after retry success",
+  );
+  assert(
+    block.includes("expectNoUnsafeText(page)"),
+    "True partial deletion failure test must include privacy verification",
+  );
+
+  assert(
+    workspaceSource.includes("export function formatPartialDeletionFailureMessage"),
+    "a partial deletion failure message formatter must exist",
+  );
+  assert(
+    workspaceSource.includes("removedCount + failureCount !== targetCount"),
+    "the formatter must validate that removed plus failures equals target count",
+  );
+  assert(
+    workspaceSource.includes('removedCount === 1 ? "was" : "were"') &&
+      workspaceSource.includes('failureCount === 1 ? "remains" : "remain"'),
+    "the formatter must handle singular and plural removed and failure grammar",
+  );
+  assert(
+    workspaceSource.includes("Try again."),
+    "the formatter must include the full Try again suffix",
+  );
+  assert(
+    workspaceSource.includes("export function partialDeletionFailureStatus"),
+    "a scoped partial deletion failure status locator must exist",
+  );
+  assert(
+    workspaceSource.includes('getByRole("status")') &&
+      workspaceSource.includes("filter({ hasText: expectedMessage })"),
+    "the locator must filter status elements by the expected message",
+  );
+  assert(
+    !workspaceSource.includes("partialDeletionFailureStatus(page, options).first()") &&
+      !workspaceSource.includes("partialDeletionFailureStatus(page, options).last()") &&
+      !workspaceSource.includes("partialDeletionFailureStatus(page, options).nth("),
+    "the partial deletion failure status locator must not use positional selection",
+  );
+  assert(
+    workspaceSource.includes("export async function expectPartialDeletionFailureStatus"),
+    "a bounded partial deletion failure status assertion helper must exist",
+  );
+  assert(
+    workspaceSource.includes("PARTIAL_DELETION_FAILURE_STATUS_TIMEOUT_MS"),
+    "the assertion must use a bounded timeout constant",
+  );
+}
+
+async function runBrowserBackedPartialDeletionFailureStatusRegression() {
+  const { chromium, expect } = await import("@playwright/test");
+  const {
+    expectPartialDeletionFailureStatus,
+    formatPartialDeletionFailureMessage,
+    partialDeletionFailureStatus,
+  } = await import("../helpers/saved-workspace.ts");
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const partialMessage = formatPartialDeletionFailureMessage({
+      targetCount: 2,
+      removedCount: 1,
+      failureCount: 1,
+    });
+    const page = await browser.newPage();
+    await page.setContent(
+      `<main>
+        <p role="status">2 analyses selected.</p>
+        <p role="status" id="saved-analyses-pagination-status">10 analyses loaded.</p>
+        <p role="status">${partialMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+
+    assert(
+      (await page.getByRole("status").count()) === 3,
+      "fixture must contain selection, pagination, and partial-warning statuses",
+    );
+
+    const status = partialDeletionFailureStatus(page, {
+      targetCount: 2,
+      removedCount: 1,
+      failureCount: 1,
+    });
+    await expect(status).toHaveCount(1);
+    await expect(status).toHaveText(partialMessage);
+    await expect(page.getByRole("status").filter({ hasText: "2 analyses selected." })).toHaveCount(1);
+    await expect(
+      page.getByRole("status").filter({ hasText: "10 analyses loaded." }),
+    ).toHaveCount(1);
+    await expectPartialDeletionFailureStatus(page, {
+      targetCount: 2,
+      removedCount: 1,
+      failureCount: 1,
+    });
+
+    assert(
+      formatPartialDeletionFailureMessage({
+        targetCount: 3,
+        removedCount: 2,
+        failureCount: 1,
+      }) ===
+        "2 of 3 selected analyses were deleted or already unavailable. 1 could not be deleted and remains selected. Try again.",
+      "formatter must use plural removed verb and singular failure verb",
+    );
+    assert(
+      formatPartialDeletionFailureMessage({
+        targetCount: 3,
+        removedCount: 1,
+        failureCount: 2,
+      }) ===
+        "1 of 3 selected analyses was deleted or already unavailable. 2 could not be deleted and remain selected. Try again.",
+      "formatter must use singular removed verb and plural failure verb",
+    );
+
+    assertThrows(
+      () =>
+        formatPartialDeletionFailureMessage({
+          targetCount: 2,
+          removedCount: 1,
+          failureCount: 2,
+        }),
+      "must sum to the target count",
+    );
+
+    const missingStatusPage = await browser.newPage();
+    await missingStatusPage.setContent(
+      `<main>
+        <p role="status">2 analyses selected.</p>
+        <p role="status">10 analyses loaded.</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () =>
+        expectPartialDeletionFailureStatus(missingStatusPage, {
+          targetCount: 2,
+          removedCount: 1,
+          failureCount: 1,
+        }),
+      "Received: 0",
+    );
+    await missingStatusPage.close();
+
+    const duplicateStatusPage = await browser.newPage();
+    await duplicateStatusPage.setContent(
+      `<main>
+        <p role="status">${partialMessage}</p>
+        <p role="status">${partialMessage}</p>
+      </main>`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await assertThrowsAsync(
+      () =>
+        expectPartialDeletionFailureStatus(duplicateStatusPage, {
+          targetCount: 2,
+          removedCount: 1,
+          failureCount: 1,
+        }),
+      "Received: 2",
+    );
+    await duplicateStatusPage.close();
+  } finally {
+    await browser.close();
+  }
+}
+
 try {
   runLoadMorePlanRegression();
   runPaginationMathRegression();
@@ -2604,6 +2864,7 @@ try {
   runLoadedExportSourceRegression();
   runSelectedDeletionCancelSourceRegression();
   runCompleteDeletionFailureSourceRegression();
+  runTruePartialDeletionFailureSourceRegression();
   runSavedListPageRequestRegression();
   runLoadMoreFailureAlertSourceRegression();
   runSyntheticPostgrestFailureSourceRegression();
@@ -2619,6 +2880,7 @@ try {
   await runBrowserBackedLoadedExportDisclosureRegression();
   await runBrowserBackedSelectedDeletionCancelRegression();
   await runBrowserBackedCompleteDeletionFailureAlertRegression();
+  await runBrowserBackedPartialDeletionFailureStatusRegression();
   await runBrowserBackedOrderingRegression();
   await runSelectAllScopingRegression();
   console.log("Version 23 pagination regression checks passed.");

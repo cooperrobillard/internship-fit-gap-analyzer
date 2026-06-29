@@ -32,6 +32,8 @@ import {
   expectVisibleCountSummary,
   expectSelectionStatus,
   expectCompleteDeletionFailureAlert,
+  expectPartialDeletionFailureStatus,
+  formatPartialDeletionFailureMessage,
   loadMoreAndExpectSuccess,
   gotoSavedWorkspace,
   openAnalysisDetail,
@@ -781,12 +783,13 @@ test.describe("Complete deletion failure", () => {
 
 test.describe("True partial deletion failure", () => {
   test("True partial deletion failure", async ({ browser }) => {
-    const { context, page } = await signInQaUser(browser, qaConfig(), "A");
-    await gotoSavedWorkspace(page, qaConfig().baseUrl);
-    await loadAllUserARecords(page, qaConfig());
+    const config = qaConfig();
+    const { context, page } = await signInQaUser(browser, config, "A");
+    await gotoSavedWorkspace(page, config.baseUrl);
+    await loadAllUserARecords(page, config);
 
-    const first = titleForUserA(qaConfig(), 3);
-    const second = titleForUserA(qaConfig(), 4);
+    const first = titleForUserA(config, 3);
+    const second = titleForUserA(config, 4);
     await selectRecordsByTitle(page, [first, second]);
 
     let observedDeletes = 0;
@@ -803,20 +806,46 @@ test.describe("True partial deletion failure", () => {
       },
     );
 
-    await page.getByRole("button", { name: "Delete selected" }).click();
-    await page.getByRole("button", { name: "Delete 2 analyses" }).click();
-    await expect(
-      page.getByText(/1 of 2 selected analyses were deleted or already unavailable/i),
-    ).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("button", { name: "Delete selected", exact: true }).click();
+    await page.getByRole("button", { name: "Delete 2 analyses", exact: true }).click();
+    await expectPartialDeletionFailureStatus(page, {
+      targetCount: 2,
+      removedCount: 1,
+      failureCount: 1,
+    });
+    interceptor.assertSeen(2);
     await expectRowAbsent(page, first);
     await expectRowVisible(page, second);
     await expect(rowCheckbox(page, second)).toBeChecked();
-    interceptor.assertSeen(2);
+    await expectSelectionStatus(page, 1);
+    await expect(
+      page.getByRole("button", { name: "Export selected (CSV)", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("heading", {
+        name: "Delete 2 selected analyses?",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("alert").filter({
+        hasText: formatPartialDeletionFailureMessage({
+          targetCount: 2,
+          removedCount: 1,
+          failureCount: 1,
+        }),
+      }),
+    ).toHaveCount(0);
 
     await interceptor.unroute();
-    await page.getByRole("button", { name: "Delete selected" }).click();
-    await page.getByRole("button", { name: "Delete 1 analysis" }).click();
+    await page.getByRole("button", { name: "Delete selected", exact: true }).click();
+    await page.getByRole("button", { name: "Delete 1 analysis", exact: true }).click();
+    await expect(
+      page.getByText("1 selected analysis was deleted.", { exact: true }),
+    ).toBeVisible({ timeout: 60_000 });
     await expectRowAbsent(page, second);
+    await expectSelectionStatus(page, 0);
+    await expectNoUnsafeText(page);
     await context.close();
   });
 });
