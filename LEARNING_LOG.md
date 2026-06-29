@@ -3878,3 +3878,9 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Added centralized allowlist-only safe event helpers in TypeScript and Python with stable Version 24 failure classes and native server-log emission only.
 - Added focused redaction, request-ID, classification, and regression tests; no provider SDK, DSN, alert, uptime monitor, environment variable, database/RLS change, or custom-domain change was made.
 - Exact next step remains: Version 24 Step 3A — integrate minimum server-side Sentry telemetry behind a disabled-by-default kill switch and strict SDK-side redaction, without enabling production provider delivery.
+
+## Version 24 Step 2 — Review follow-up corrections
+
+- Narrowed FastAPI request-correlation middleware so only unexpected `POST /analyze` exceptions receive the safe generic 500 body and `backend.unhandled_exception` event; other routes re-raise.
+- Added explicit upstream `429` handling in the Next.js proxy without operational failure events.
+- Added focused `route.test.ts` coverage for request-ID trust boundary, failure classification, sentinel redaction, and timeout cleanup.

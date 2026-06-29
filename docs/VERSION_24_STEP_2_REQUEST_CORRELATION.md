@@ -27,7 +27,7 @@ Clerk/platform/WAF responses generated before application route control may not 
 
 ## Render validation behavior
 
-FastAPI accepts an incoming `X-Request-ID` only when it is a canonical lowercase UUIDv4. Missing, malformed, oversized, uppercase/noncanonical, or non-v4 values are replaced with a fresh UUIDv4. The resolved ID is stored on `request.state.request_id` and attached to all FastAPI responses, including `/health`, validation 422 responses, shared-secret 401 responses, successful `/analyze` responses, and generic unexpected-exception 500 responses.
+FastAPI accepts an incoming `X-Request-ID` only when it is a canonical lowercase UUIDv4. Missing, malformed, oversized, uppercase/noncanonical, or non-v4 values are replaced with a fresh UUIDv4. The resolved ID is stored on `request.state.request_id` and attached to all FastAPI responses, including `/health`, validation 422 responses, shared-secret 401 responses, successful `/analyze` responses, and generic unexpected-exception 500 responses on `POST /analyze` only. Unexpected exceptions on other routes are re-raised so normal FastAPI/ASGI behavior is preserved.
 
 The request ID is never used for authentication, authorization, RLS, persistence, saved records, or user identity.
 
@@ -80,7 +80,7 @@ A successful analysis emits one sanitized JSON event from Next.js and one saniti
 
 ## Failure-event behavior
 
-Next.js emits sanitized application failure events for missing backend URL, upstream shared-secret rejection, timeout, network/connectivity failure, malformed/unparsable upstream response, Render 5xx, and unexpected non-422 upstream contract violations.
+Next.js emits sanitized application failure events for missing backend URL, upstream shared-secret rejection, timeout, network/connectivity failure, malformed/unparsable upstream response, Render 5xx, and unexpected non-422 upstream contract violations. Upstream `429` responses are returned with the safe rate-limit client message and `X-Request-ID`, but do not emit structured failure events.
 
 FastAPI emits `backend.unhandled_exception` only for unexpected `/analyze` exceptions and returns the existing generic 500 response body exactly:
 

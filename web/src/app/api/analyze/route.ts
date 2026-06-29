@@ -49,6 +49,9 @@ function safeBackendErrorMessage(status: number): string {
   if (status === 422) {
     return "Resume text and job description text are required.";
   }
+  if (status === 429) {
+    return "You have run several analyses in a short period. Wait about a minute and try again.";
+  }
   if (status >= 500) {
     return "This feature is temporarily unavailable. Please try again shortly.";
   }
@@ -73,6 +76,9 @@ function clientStatusForBackendError(status: number): number {
   if (status === 422) {
     return 422;
   }
+  if (status === 429) {
+    return 429;
+  }
   if (status === 401 || status === 403) {
     return 502;
   }
@@ -80,6 +86,19 @@ function clientStatusForBackendError(status: number): number {
     return 503;
   }
   return 502;
+}
+
+export type AnalyzeRouteTestDeps = {
+  protect?: () => Promise<void>;
+  fetchImpl?: typeof fetch;
+  generateRequestIdImpl?: () => string;
+};
+
+let analyzeRouteTestDeps: AnalyzeRouteTestDeps | undefined;
+
+/** Test-only seam; production POST ignores this when unset. */
+export function __setAnalyzeRouteTestDeps(deps: AnalyzeRouteTestDeps | undefined): void {
+  analyzeRouteTestDeps = deps;
 }
 
 function emitAnalysisFailureEvent(options: {
@@ -131,8 +150,9 @@ function emitAnalysisSuccessEvent(requestId: string, startedAtMs: number, bodyBy
 }
 
 export async function POST(request: Request) {
-  await auth.protect();
-  const requestId = generateRequestId();
+  const protectSession = analyzeRouteTestDeps?.protect ?? (async () => auth.protect());
+  await protectSession();
+  const requestId = (analyzeRouteTestDeps?.generateRequestIdImpl ?? generateRequestId)();
   const startedAtMs = Date.now();
   if (contentLengthExceedsLimit(request)) {
     return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413, requestId);
@@ -187,7 +207,8 @@ export async function POST(request: Request) {
   const timeoutId = setTimeout(() => controller.abort(), BACKEND_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${baseUrl}/analyze`, {
+    const fetchImpl = analyzeRouteTestDeps?.fetchImpl ?? fetch;
+    const response = await fetchImpl(`${baseUrl}/analyze`, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
@@ -218,6 +239,10 @@ export async function POST(request: Request) {
 
     if (response.status === 422 && payload !== null) {
       return withRequestId(NextResponse.json(payload, { status: 422 }), requestId);
+    }
+
+    if (response.status === 429) {
+      return jsonError(safeBackendErrorMessage(429), 429, requestId);
     }
 
     const clientStatus = clientStatusForBackendError(response.status);

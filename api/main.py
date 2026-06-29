@@ -155,30 +155,36 @@ app.add_middleware(
 )
 
 
+def _is_analyze_post(request: Request) -> bool:
+    return request.method == "POST" and request.url.path == "/analyze"
+
+
 @app.middleware("http")
 async def request_correlation_middleware(request: Request, call_next):
     request_id = resolve_request_id(request.headers.get(REQUEST_ID_HEADER))
     request.state.request_id = request_id
     started_at = monotonic()
+    is_analyze_post = _is_analyze_post(request)
 
     try:
         response = await call_next(request)
     except Exception:
-        if request.method == "POST" and request.url.path == "/analyze":
-            emit_safe_event(
-                logger,
-                create_safe_analysis_event(
-                    request_id=request_id,
-                    service="fastapi_analysis_service",
-                    outcome="failure",
-                    severity="error",
-                    route_template="/analyze",
-                    http_method="POST",
-                    http_status=500,
-                    duration_ms=duration_ms_from_monotonic(started_at),
-                    failure_class="backend.unhandled_exception",
-                ),
-            )
+        if not is_analyze_post:
+            raise
+        emit_safe_event(
+            logger,
+            create_safe_analysis_event(
+                request_id=request_id,
+                service="fastapi_analysis_service",
+                outcome="failure",
+                severity="error",
+                route_template="/analyze",
+                http_method="POST",
+                http_status=500,
+                duration_ms=duration_ms_from_monotonic(started_at),
+                failure_class="backend.unhandled_exception",
+            ),
+        )
         response = JSONResponse(
             status_code=500,
             content={
@@ -188,11 +194,7 @@ async def request_correlation_middleware(request: Request, call_next):
 
     response.headers[REQUEST_ID_HEADER] = request_id
 
-    if (
-        request.method == "POST"
-        and request.url.path == "/analyze"
-        and 200 <= response.status_code < 300
-    ):
+    if is_analyze_post and 200 <= response.status_code < 300:
         emit_safe_event(
             logger,
             create_safe_analysis_event(

@@ -372,6 +372,39 @@ def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
         assert marker not in log_output
 
 
+def test_non_analyze_exception_is_not_converted_to_analysis_response():
+    path = "/_test_observability_non_analyze_throw"
+
+    @app.get(path)
+    def _throw_non_analyze() -> None:
+        raise RuntimeError("non-analyze failure")
+
+    log_stream = StringIO()
+    handler = logging.StreamHandler(log_stream)
+    api_logger = logging.getLogger("api.main")
+    original_level = api_logger.level
+    api_logger.addHandler(handler)
+    api_logger.setLevel(logging.INFO)
+    safe_client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        response = safe_client.get(path)
+    finally:
+        api_logger.removeHandler(handler)
+        api_logger.setLevel(original_level)
+        app.router.routes = [
+            route for route in app.router.routes if getattr(route, "path", None) != path
+        ]
+
+    assert response.status_code == 500
+    assert response.text != '{"detail":"The analysis could not be completed. Please try again."}'
+    assert "The analysis could not be completed" not in response.text
+    events = _captured_json_events(log_stream.getvalue())
+    assert not any(
+        event.get("failure_class") == "backend.unhandled_exception" for event in events
+    )
+
+
 def test_analyze_matched_and_missing_skills_are_disjoint():
     resume_text = "Python SQL Git data analysis"
     job_text = (
@@ -734,6 +767,7 @@ if __name__ == "__main__":
     test_analyze_rejects_job_text_over_explicit_limit()
     test_validation_response_does_not_echo_private_marker_strings()
     test_analyze_unexpected_exception_returns_generic_500_and_safe_logs()
+    test_non_analyze_exception_is_not_converted_to_analysis_response()
     test_analyze_matched_and_missing_skills_are_disjoint()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_cross_domain_finance_accounting_taxonomy()
