@@ -148,7 +148,7 @@ function installTestDeps(fetchImpl: typeof fetch): void {
     protect: async () => {},
     fetchImpl,
     generateRequestIdImpl: () => FIXED_REQUEST_ID,
-    captureSafeFailureToSentryImpl: (event) => {
+    captureSafeFailureToSentryImpl: async (event) => {
       sentryEvents.push(event);
       if (sentryShouldThrow) throw new Error("adapter failed");
       return "queued";
