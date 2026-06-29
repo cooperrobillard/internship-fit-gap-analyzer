@@ -188,3 +188,98 @@ def emit_safe_event(logger: logging.Logger, event: SafeAnalysisEvent) -> None:
         logger.info(serialize_safe_event(event))
     except Exception:
         pass
+
+_SAFE_SERVICES = {"nextjs_analysis_proxy", "fastapi_analysis_service"}
+_SAFE_OUTCOMES = {"success", "failure"}
+_SAFE_SEVERITIES = {"info", "warning", "error", "critical"}
+_SAFE_ROUTES = {"/api/analyze", "/analyze"}
+_SAFE_METHODS = {"POST"}
+_UPSTREAM_STATUS_CLASSES = {"4xx", "5xx", "unknown"}
+_RATE_LIMIT_RESULTS = {"allowed", "limited", "unknown"}
+_PAYLOAD_SIZE_BUCKETS = {"under_10kb", "10kb_to_100kb", "100kb_to_500kb", "500kb_to_1mb", "over_1mb", "unknown"}
+
+
+def optional_safe_token(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    trimmed = value.strip()
+    import re
+    if re.fullmatch(r"[A-Za-z0-9._:-]{1,80}", trimmed) is None:
+        return None
+    return trimmed
+
+
+def _contains_sentinel(value: object) -> bool:
+    return isinstance(value, str) and "SENSITIVE_" in value and "_SENTINEL_DO_NOT_CAPTURE" in value
+
+
+def _safe_int(value: object, minimum: int, maximum: int) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < minimum or value > maximum:
+        return None
+    return value
+
+
+def validate_safe_analysis_event(value: object) -> SafeAnalysisEvent | None:
+    if not isinstance(value, dict):
+        return None
+    if not set(value).issubset(set(SAFE_EVENT_KEYS)):
+        return None
+    if any(_contains_sentinel(v) for v in value.values()):
+        return None
+    if value.get("schema_version") != SAFE_EVENT_SCHEMA_VERSION or value.get("event_name") != ANALYSIS_EVENT_NAME:
+        return None
+    if not is_canonical_uuid4(value.get("event_id")) or not is_canonical_uuid4(value.get("request_id")):
+        return None
+    if value.get("operation") != ANALYZE_OPERATION:
+        return None
+    service = value.get("service")
+    outcome = value.get("outcome")
+    severity = value.get("severity")
+    route = value.get("route_template")
+    method = value.get("http_method")
+    status = _safe_int(value.get("http_status"), 100, 599)
+    duration = _safe_int(value.get("duration_ms"), 0, MAX_DURATION_MS)
+    timestamp = value.get("timestamp")
+    if service not in _SAFE_SERVICES or outcome not in _SAFE_OUTCOMES or severity not in _SAFE_SEVERITIES or route not in _SAFE_ROUTES or method not in _SAFE_METHODS or status is None or duration is None or not isinstance(timestamp, str) or _contains_sentinel(timestamp):
+        return None
+    failure_class = value.get("failure_class")
+    if outcome == "success" and failure_class is not None:
+        return None
+    if outcome == "failure" and failure_class not in FAILURE_CLASSES:
+        return None
+    rebuilt: SafeAnalysisEvent = {
+        "schema_version": "1",
+        "event_name": "analysis_request",
+        "event_id": value["event_id"],
+        "request_id": value["request_id"],
+        "timestamp": timestamp,
+        "service": service,  # type: ignore[typeddict-item]
+        "operation": "analyze",
+        "outcome": outcome,  # type: ignore[typeddict-item]
+        "severity": severity,  # type: ignore[typeddict-item]
+        "route_template": route,
+        "http_method": method,
+        "http_status": status,
+        "duration_ms": duration,
+    }
+    if outcome == "failure":
+        rebuilt["failure_class"] = str(failure_class)
+    if "upstream_status_class" in value:
+        if value["upstream_status_class"] not in _UPSTREAM_STATUS_CLASSES: return None
+        rebuilt["upstream_status_class"] = value["upstream_status_class"]
+    if "retry_count" in value:
+        retry = _safe_int(value["retry_count"], 0, 10)
+        if retry is None: return None
+        rebuilt["retry_count"] = retry
+    if "rate_limit_result" in value:
+        if value["rate_limit_result"] not in _RATE_LIMIT_RESULTS: return None
+        rebuilt["rate_limit_result"] = value["rate_limit_result"]
+    if "payload_size_bucket" in value:
+        if value["payload_size_bucket"] not in _PAYLOAD_SIZE_BUCKETS: return None
+        rebuilt["payload_size_bucket"] = value["payload_size_bucket"]
+    for key in ("environment", "release", "runtime_name", "runtime_version"):
+        if key in value:
+            token = optional_safe_token(value[key])
+            if token is None: return None
+            rebuilt[key] = token
+    return rebuilt

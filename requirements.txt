@@ -3,3 +3,5 @@ streamlit
 fastapi
 uvicorn
 httpx
+
+sentry-sdk==2.54.0

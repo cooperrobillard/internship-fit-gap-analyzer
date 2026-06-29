@@ -45,11 +45,15 @@ let stderrLines: string[] = [];
 let originalStderrWrite: typeof process.stderr.write;
 let originalEnv: NodeJS.ProcessEnv;
 let clearedTimeoutIds: ReturnType<typeof setTimeout>[];
+let sentryEvents: unknown[] = [];
+let sentryShouldThrow = false;
 
 function resetCapturedEvents(): void {
   capturedFetches = [];
   stderrLines = [];
   clearedTimeoutIds = [];
+  sentryEvents = [];
+  sentryShouldThrow = false;
 }
 
 function installStderrCapture(): void {
@@ -144,6 +148,11 @@ function installTestDeps(fetchImpl: typeof fetch): void {
     protect: async () => {},
     fetchImpl,
     generateRequestIdImpl: () => FIXED_REQUEST_ID,
+    captureSafeFailureToSentryImpl: (event) => {
+      sentryEvents.push(event);
+      if (sentryShouldThrow) throw new Error("adapter failed");
+      return "queued";
+    },
   });
 }
 
@@ -197,6 +206,7 @@ test("successful response returns 200, header, upstream ID, and success event", 
   assert.equal(isCanonicalUuidV4(FIXED_REQUEST_ID), true);
   assert.equal(events.length, 1);
   assert.equal(events[0]?.outcome, "success");
+  assert.equal(sentryEvents.length, 0);
   assert.equal(events[0]?.request_id, FIXED_REQUEST_ID);
   assert.equal("failure_class" in events[0], false);
   assertSentinelsAbsentFromEvents(events);
@@ -242,6 +252,7 @@ test("upstream 422 returns 422 with header and no operational failure event", as
   assert.equal(response.headers.get(REQUEST_ID_HEADER), FIXED_REQUEST_ID);
   assertNoOperationalFailureEvents(events);
   assert.equal(events.length, 0);
+  assert.equal(sentryEvents.length, 0);
 });
 
 test("upstream 429 returns safe rate-limit response with header and no operational failure event", async () => {
@@ -260,6 +271,7 @@ test("upstream 429 returns safe rate-limit response with header and no operation
   assert.match(payload.detail, /short period/i);
   assertNoOperationalFailureEvents(events);
   assert.equal(events.length, 0);
+  assert.equal(sentryEvents.length, 0);
 });
 
 test("upstream 401 maps to config.shared_secret_rejected", async () => {
@@ -272,6 +284,8 @@ test("upstream 401 maps to config.shared_secret_rejected", async () => {
   assert.equal(response.headers.get(REQUEST_ID_HEADER), FIXED_REQUEST_ID);
   assertFailureClass(events, "config.shared_secret_rejected");
   assertSentinelsAbsentFromEvents(events);
+  assert.equal(sentryEvents.length, 1);
+  assert.deepEqual(sentryEvents[0], events[0]);
 });
 
 test("upstream 403 maps to config.shared_secret_rejected", async () => {
@@ -331,6 +345,8 @@ test("network failure maps to proxy.upstream_unreachable", async () => {
   assert.equal(response.status, 503);
   assertFailureClass(events, "proxy.upstream_unreachable");
   assert.equal(JSON.stringify(events).includes("fetch failed"), false);
+  assert.equal(sentryEvents.length, 1);
+  assert.equal(JSON.stringify(sentryEvents).includes("fetch failed"), false);
 });
 
 test("missing backend configuration maps to config.backend_url_missing", async () => {
@@ -367,4 +383,17 @@ test("timeout cleanup clears abort timer after completion", async () => {
   await POST(createAnalyzeRequest());
 
   assert.ok(clearedTimeoutIds.length >= 1);
+});
+
+
+test("Sentry adapter failure does not change proxy response", async () => {
+  sentryShouldThrow = true;
+  installTestDeps(createMockFetch({ status: 503, ok: false, body: "SENSITIVE_JOB_SENTINEL_DO_NOT_CAPTURE" }));
+  const response = await POST(createAnalyzeRequest());
+  const payload = await response.json() as { detail: string };
+  assert.equal(response.status, 502);
+  assert.equal(response.headers.get(REQUEST_ID_HEADER), FIXED_REQUEST_ID);
+  assert.match(payload.detail, /temporarily unavailable/i);
+  assert.equal(sentryEvents.length, 1);
+  assert.equal(JSON.stringify(sentryEvents).includes("SENSITIVE_JOB_SENTINEL_DO_NOT_CAPTURE"), false);
 });

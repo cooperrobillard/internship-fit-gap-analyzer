@@ -324,8 +324,9 @@ def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
     api_logger.setLevel(logging.INFO)
     safe_client = TestClient(app, raise_server_exceptions=False)
 
+    sentry_events = []
     try:
-        with patch(
+        with patch("api.main.capture_safe_failure_to_sentry", side_effect=lambda event: sentry_events.append(event) or "queued") as sentry_mock, patch(
             "api.main.analyze_request",
             side_effect=RuntimeError(private_exception_message),
         ):
@@ -356,6 +357,9 @@ def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
     assert event["failure_class"] == "backend.unhandled_exception"
     assert event["severity"] == "error"
     assert event["http_status"] == 500
+    assert len(sentry_events) == 1
+    assert sentry_events[0] == event
+    assert private_exception_message not in str(sentry_events)
     assert private_exception_message not in log_output
     for marker in [
         "SENSITIVE_RESUME_SENTINEL_DO_NOT_CAPTURE",
@@ -748,6 +752,31 @@ def test_analyze_does_not_create_tracked_generated_files():
     assert before_db_files == after_db_files
 
 
+def test_sentry_adapter_not_invoked_for_success_validation_auth_or_health():
+    calls = []
+    with patch("api.main.capture_safe_failure_to_sentry", side_effect=lambda event: calls.append(event) or "queued"):
+        assert client.get("/health").status_code == 200
+        assert client.post("/analyze", json=_analyze_payload()).status_code == 200
+        assert client.post("/analyze", json={"resumeText": SAMPLE_RESUME}).status_code == 422
+        original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+        os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+        try:
+            assert client.post("/analyze", json=_analyze_payload()).status_code == 401
+        finally:
+            if original is None: os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+            else: os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+    assert calls == []
+
+def test_sentry_adapter_failure_does_not_change_unexpected_exception_response():
+    safe_client = TestClient(app, raise_server_exceptions=False)
+    with patch("api.main.capture_safe_failure_to_sentry", side_effect=RuntimeError("SENSITIVE_EXCEPTION_SENTINEL_DO_NOT_CAPTURE")):
+        with patch("api.main.analyze_request", side_effect=RuntimeError("private boom")):
+            response = safe_client.post("/analyze", json=_analyze_payload())
+    assert response.status_code == 500
+    assert response.json() == {"detail": "The analysis could not be completed. Please try again."}
+    assert "private boom" not in response.text
+
+
 if __name__ == "__main__":
     test_health_returns_ok()
     test_analyze_success_returns_and_emits_safe_request_id()
@@ -784,4 +813,6 @@ if __name__ == "__main__":
     test_analyze_succeeds_when_shared_secret_set_and_header_matches()
     test_health_works_when_shared_secret_set()
     test_analyze_does_not_create_tracked_generated_files()
+    test_sentry_adapter_not_invoked_for_success_validation_auth_or_health()
+    test_sentry_adapter_failure_does_not_change_unexpected_exception_response()
     print("All API service tests passed.")

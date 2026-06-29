@@ -36,9 +36,10 @@ jobs:
 
       - name: Run backend tests
         run: |
+          python3 tests/test_sentry_telemetry.py
           python3 tests/test_api_service.py
           python3 run_tests.py
-          python3 -m py_compile api/main.py api/models.py tests/test_api_service.py run_tests.py streamlit_app.py
+          python3 -m py_compile api/main.py api/models.py api/analysis_service.py api/observability.py api/sentry_telemetry.py tests/test_sentry_telemetry.py tests/test_api_service.py run_tests.py streamlit_app.py
 
   frontend-lint:
     name: frontend-lint
@@ -57,6 +58,14 @@ jobs:
       - name: Install frontend dependencies
         working-directory: web
         run: npm ci
+
+      - name: Run frontend observability tests
+        working-directory: web
+        run: |
+          ./node_modules/.bin/tsx --test \
+            src/lib/observability/safe-events.test.ts \
+            src/lib/observability/sentry-server.test.ts \
+            src/app/api/analyze/route.test.ts
 
       - name: Run frontend lint
         working-directory: web
