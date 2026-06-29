@@ -22,3 +22,12 @@ data/outputs/*.csv
 # Private local inputs (use --resume and --jobs to point at these)
 data/resume/resume.txt
 data/jobs/*.txt
+.env.qa.local
+web/.env.qa.local
+playwright-report/
+test-results/
+blob-report/
+*.zip
+playwright/.auth/
+.playwright-auth/
+version23-data-control-qa.md
