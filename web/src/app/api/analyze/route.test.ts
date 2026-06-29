@@ -349,7 +349,7 @@ test("network failure maps to proxy.upstream_unreachable", async () => {
   assert.equal(JSON.stringify(sentryEvents).includes("fetch failed"), false);
 });
 
-test("missing backend configuration maps to config.backend_url_missing", async () => {
+test("missing backend configuration maps to proxy.configuration_failure", async () => {
   delete (process.env as Record<string, string | undefined>).ANALYSIS_API_URL;
 
   const response = await POST(createAnalyzeRequest());
@@ -357,9 +357,10 @@ test("missing backend configuration maps to config.backend_url_missing", async (
 
   assert.equal(response.status, 500);
   assert.equal(response.headers.get(REQUEST_ID_HEADER), FIXED_REQUEST_ID);
-  assertFailureClass(events, "config.backend_url_missing");
-  assert.equal(events[0]?.severity, "critical");
+  assertFailureClass(events, "proxy.configuration_failure");
+  assert.equal(events[0]?.severity, "error");
   assert.equal(capturedFetches.length, 0);
+  assert.equal(sentryEvents.length, 1);
 });
 
 test("content-length oversize returns 413 with header before upstream fetch", async () => {

@@ -190,8 +190,8 @@ export async function POST(request: Request) {
       requestId,
       startedAtMs,
       httpStatus: 500,
-      failureClass: "config.backend_url_missing",
-      severity: "critical",
+      failureClass: "proxy.configuration_failure",
+      severity: "error",
       bodyByteLength,
     });
     return jsonError(
