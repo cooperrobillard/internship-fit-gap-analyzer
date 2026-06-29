@@ -1,8 +1,10 @@
 # Tests for the local FastAPI analysis service prototype in api/.
 import importlib
+import json
 import os
 import logging
 import sys
+from uuid import UUID, uuid4
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
@@ -16,6 +18,7 @@ from fastapi.testclient import TestClient
 import api.main as api_main_module
 from api.main import app, get_allowed_origins, parse_allowed_origins
 from api.models import MAX_ANALYSIS_TEXT_LENGTH
+from api.observability import FAILURE_CLASSES, REQUEST_ID_HEADER, SAFE_EVENT_KEYS
 
 client = TestClient(app)
 
@@ -38,6 +41,32 @@ SENSITIVE_ERROR_MARKERS = [
     TEST_SHARED_SECRET,
 ]
 
+
+
+
+def _is_uuid4(value: str) -> bool:
+    parsed = UUID(value)
+    return parsed.version == 4 and str(parsed) == value
+
+
+def _captured_json_events(log_output: str) -> list[dict]:
+    events = []
+    for line in log_output.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        events.append(json.loads(line))
+    return events
+
+
+def _assert_safe_event(event: dict) -> None:
+    assert set(event).issubset(set(SAFE_EVENT_KEYS))
+    assert _is_uuid4(event["event_id"])
+    assert _is_uuid4(event["request_id"])
+    if event["outcome"] == "success":
+        assert "failure_class" not in event
+    if event["outcome"] == "failure":
+        assert event["failure_class"] in FAILURE_CLASSES
 
 def _assert_safe_error_response(response, expected_status: int = 422) -> dict:
     assert response.status_code == expected_status
@@ -71,7 +100,78 @@ def test_health_returns_ok():
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+    assert _is_uuid4(response.headers[REQUEST_ID_HEADER])
 
+
+
+
+def test_analyze_success_returns_and_emits_safe_request_id():
+    request_id = str(uuid4())
+    log_stream = StringIO()
+    handler = logging.StreamHandler(log_stream)
+    api_logger = logging.getLogger("api.main")
+    original_level = api_logger.level
+    api_logger.addHandler(handler)
+    api_logger.setLevel(logging.INFO)
+
+    try:
+        response = client.post(
+            "/analyze",
+            json=_analyze_payload(),
+            headers={REQUEST_ID_HEADER: request_id},
+        )
+    finally:
+        api_logger.removeHandler(handler)
+        api_logger.setLevel(original_level)
+
+    assert response.status_code == 200
+    assert response.headers[REQUEST_ID_HEADER] == request_id
+    events = _captured_json_events(log_stream.getvalue())
+    assert len(events) == 1
+    event = events[0]
+    _assert_safe_event(event)
+    assert event["request_id"] == request_id
+    assert event["service"] == "fastapi_analysis_service"
+    assert event["route_template"] == "/analyze"
+    assert event["http_method"] == "POST"
+    assert event["outcome"] == "success"
+    assert event["http_status"] == 200
+
+
+def test_request_id_missing_invalid_and_malicious_values_are_replaced():
+    missing = client.get("/health").headers[REQUEST_ID_HEADER]
+    assert _is_uuid4(missing)
+
+    for supplied in [
+        "not-a-uuid",
+        f"{uuid4()}{'a' * 100}",
+        str(uuid4()).upper(),
+        "123e4567-e89b-12d3-a456-426614174000",
+        "SENSITIVE_TOKEN_SENTINEL_DO_NOT_CAPTURE secret /workspace/path",
+    ]:
+        response = client.get("/health", headers={REQUEST_ID_HEADER: supplied})
+        resolved = response.headers[REQUEST_ID_HEADER]
+        assert _is_uuid4(resolved)
+        assert resolved != supplied
+
+
+def test_validation_and_shared_secret_errors_include_safe_request_id():
+    validation_response = client.post("/analyze", json={"resumeText": SAMPLE_RESUME})
+    assert validation_response.status_code == 422
+    assert _is_uuid4(validation_response.headers[REQUEST_ID_HEADER])
+
+    original = os.environ.get("ANALYSIS_API_SHARED_SECRET")
+    os.environ["ANALYSIS_API_SHARED_SECRET"] = TEST_SHARED_SECRET
+    try:
+        unauthorized_response = client.post("/analyze", json=_analyze_payload())
+    finally:
+        if original is None:
+            os.environ.pop("ANALYSIS_API_SHARED_SECRET", None)
+        else:
+            os.environ["ANALYSIS_API_SHARED_SECRET"] = original
+
+    assert unauthorized_response.status_code == 401
+    assert _is_uuid4(unauthorized_response.headers[REQUEST_ID_HEADER])
 
 def test_analyze_rejects_blank_resume_text():
     response = client.post(
@@ -212,14 +312,16 @@ def test_validation_response_does_not_echo_private_marker_strings():
 
 def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
     private_exception_message = (
-        f"boom {PRIVATE_RESUME_MARKER} {PRIVATE_JOB_MARKER} token secret /workspace/private.py"
+        "boom SENSITIVE_RESUME_SENTINEL_DO_NOT_CAPTURE "
+        "SENSITIVE_JOB_SENTINEL_DO_NOT_CAPTURE token secret /workspace/private.py"
     )
+    request_id = str(uuid4())
     log_stream = StringIO()
     handler = logging.StreamHandler(log_stream)
     api_logger = logging.getLogger("api.main")
     original_level = api_logger.level
     api_logger.addHandler(handler)
-    api_logger.setLevel(logging.ERROR)
+    api_logger.setLevel(logging.INFO)
     safe_client = TestClient(app, raise_server_exceptions=False)
 
     try:
@@ -230,9 +332,10 @@ def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
             response = safe_client.post(
                 "/analyze",
                 json={
-                    "resumeText": PRIVATE_RESUME_MARKER,
-                    "jobText": PRIVATE_JOB_MARKER,
+                    "resumeText": "SENSITIVE_RESUME_SENTINEL_DO_NOT_CAPTURE",
+                    "jobText": "SENSITIVE_JOB_SENTINEL_DO_NOT_CAPTURE",
                 },
+                headers={REQUEST_ID_HEADER: request_id},
             )
     finally:
         api_logger.removeHandler(handler)
@@ -242,13 +345,64 @@ def test_analyze_unexpected_exception_returns_generic_500_and_safe_logs():
     assert payload == {
         "detail": "The analysis could not be completed. Please try again."
     }
+    assert response.headers[REQUEST_ID_HEADER] == request_id
     log_output = log_stream.getvalue()
-    assert "RuntimeError" in log_output
+    events = _captured_json_events(log_output)
+    assert len(events) == 1
+    event = events[0]
+    _assert_safe_event(event)
+    assert event["request_id"] == request_id
+    assert event["outcome"] == "failure"
+    assert event["failure_class"] == "backend.unhandled_exception"
+    assert event["severity"] == "error"
+    assert event["http_status"] == 500
     assert private_exception_message not in log_output
-    assert PRIVATE_RESUME_MARKER not in log_output
-    assert PRIVATE_JOB_MARKER not in log_output
-    assert "token" not in log_output
-    assert "secret" not in log_output
+    for marker in [
+        "SENSITIVE_RESUME_SENTINEL_DO_NOT_CAPTURE",
+        "SENSITIVE_JOB_SENTINEL_DO_NOT_CAPTURE",
+        "SENSITIVE_NOTE_SENTINEL_DO_NOT_CAPTURE",
+        "SENSITIVE_TOKEN_SENTINEL_DO_NOT_CAPTURE",
+        "token",
+        "secret",
+        "/workspace/",
+        "headers",
+        "body",
+        "input",
+    ]:
+        assert marker not in log_output
+
+
+def test_non_analyze_exception_is_not_converted_to_analysis_response():
+    path = "/_test_observability_non_analyze_throw"
+
+    @app.get(path)
+    def _throw_non_analyze() -> None:
+        raise RuntimeError("non-analyze failure")
+
+    log_stream = StringIO()
+    handler = logging.StreamHandler(log_stream)
+    api_logger = logging.getLogger("api.main")
+    original_level = api_logger.level
+    api_logger.addHandler(handler)
+    api_logger.setLevel(logging.INFO)
+    safe_client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        response = safe_client.get(path)
+    finally:
+        api_logger.removeHandler(handler)
+        api_logger.setLevel(original_level)
+        app.router.routes = [
+            route for route in app.router.routes if getattr(route, "path", None) != path
+        ]
+
+    assert response.status_code == 500
+    assert response.text != '{"detail":"The analysis could not be completed. Please try again."}'
+    assert "The analysis could not be completed" not in response.text
+    events = _captured_json_events(log_stream.getvalue())
+    assert not any(
+        event.get("failure_class") == "backend.unhandled_exception" for event in events
+    )
 
 
 def test_analyze_matched_and_missing_skills_are_disjoint():
@@ -596,6 +750,9 @@ def test_analyze_does_not_create_tracked_generated_files():
 
 if __name__ == "__main__":
     test_health_returns_ok()
+    test_analyze_success_returns_and_emits_safe_request_id()
+    test_request_id_missing_invalid_and_malicious_values_are_replaced()
+    test_validation_and_shared_secret_errors_include_safe_request_id()
     test_analyze_rejects_blank_resume_text()
     test_analyze_rejects_blank_job_text()
     test_analyze_rejects_missing_body()
@@ -610,6 +767,7 @@ if __name__ == "__main__":
     test_analyze_rejects_job_text_over_explicit_limit()
     test_validation_response_does_not_echo_private_marker_strings()
     test_analyze_unexpected_exception_returns_generic_500_and_safe_logs()
+    test_non_analyze_exception_is_not_converted_to_analysis_response()
     test_analyze_matched_and_missing_skills_are_disjoint()
     test_analyze_returns_matched_and_missing_skills()
     test_analyze_cross_domain_finance_accounting_taxonomy()

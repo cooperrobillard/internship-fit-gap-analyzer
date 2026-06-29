@@ -23,7 +23,7 @@ Version 24 Step 1 defined the minimum operational foundation, privacy boundaries
 ## Proposed Version 24 sequence
 
 1. Observability requirements and provider decision. **Designed/documented in [`VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md`](VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md) and [`OBSERVABILITY_PROVIDER_DECISION.md`](OBSERVABILITY_PROVIDER_DECISION.md); no telemetry provider is integrated yet.**
-2. Vendor-neutral request correlation and failure classification. **This remains the exact next step.**
+2. Vendor-neutral request correlation and failure classification. **Implemented in [`VERSION_24_STEP_2_REQUEST_CORRELATION.md`](VERSION_24_STEP_2_REQUEST_CORRELATION.md) with native server-log emission only; no external provider delivery is active.**
 3. Minimum production telemetry and alerting, split into:
    - Step 3A: bounded code integration PR;
    - Step 3B: human provider configuration and verification.
@@ -63,7 +63,7 @@ Prefer narrowly scoped fields such as:
 - rate-limit result; and
 - payload-size category rather than body contents.
 
-Version 24 Step 1 now selects a minimum direction of native Vercel/Render/Supabase/Clerk dashboards and logs, manually configured server-only Sentry Developer if redaction tests pass, and UptimeRobot Free external checks. Actual telemetry implementation, provider accounts, alerts, uptime monitors, environment variables, deployments, and production configuration remain future work; none are active yet.
+Version 24 Step 2 now adds transient request IDs, safe `X-Request-ID` propagation, stable failure classes, and sanitized server-native JSON events for the analysis path. No SDK, telemetry provider, alert, uptime monitor, environment variable, database change, RLS change, or custom-domain work is active. Version 24 Step 1 also selects a minimum direction of native Vercel/Render/Supabase/Clerk dashboards and logs, manually configured server-only Sentry Developer if redaction tests pass, and UptimeRobot Free external checks. Actual telemetry implementation, provider accounts, alerts, uptime monitors, environment variables, deployments, and production configuration remain future work; none are active yet.
 
 ## Proposed Version 25 sequence
 
