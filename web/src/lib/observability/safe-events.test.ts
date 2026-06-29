@@ -147,6 +147,7 @@ test("failure mappings are stable", () => {
     "auth.authorization_denied_unexpected",
     "proxy.upstream_timeout",
     "proxy.upstream_unreachable",
+    "proxy.configuration_failure",
     "proxy.upstream_invalid_response",
     "proxy.upstream_5xx",
     "backend.unhandled_exception",
