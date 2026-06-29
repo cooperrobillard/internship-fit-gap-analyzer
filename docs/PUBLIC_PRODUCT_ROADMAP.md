@@ -112,7 +112,7 @@ Browser → Vercel (Next.js) → Clerk
 - [x] Compare two saved analyses
 - [x] Export/download of supported user-owned structured saved-analysis and derived report data
 - [x] Transient resume/job `.txt` upload on web with explicit privacy copy
-- [ ] Basic monitoring (Vercel/Render/Supabase dashboards + alerts)
+- [ ] Basic monitoring (Version 24 Step 1 requirements/provider decision documented; no telemetry provider, alert, uptime monitor, provider account, or production configuration is active yet)
 - [ ] Custom domain decision
 
 ### Can wait until later
@@ -140,7 +140,7 @@ Use before calling the app “public”:
 | **User controls** | Delete own analyses; export summary data |
 | **API security** | Shared secret + plan for rate limits; no public unauthenticated `/analyze` abuse |
 | **Validation** | Input limits on paste size; safe API errors |
-| **Monitoring** | Know where to read Vercel/Render/Supabase logs; basic alert path |
+| **Monitoring** | Version 24 Step 1 documents native logs + server-only Sentry + external uptime as the minimum direction; later steps still need request correlation, implementation, human provider configuration, alerts, and verification |
 | **Smoke test** | [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md) green |
 | **Backup** | Supabase backup/PITR awareness; no single-point “hope” |
 | **Launch** | Domain, support contact, honest “rule-based prototype → public v1” messaging |
@@ -256,7 +256,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 ### Version 24 — Privacy-safe production observability
 
-Version 24 is the next release track. It will define privacy-safe production observability before selecting or integrating telemetry tooling. See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
+**Step 1 complete (documented).** Version 24 Step 1 has already documented the production observability requirements and selected a provisional provider direction in [`VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md`](VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md) and [`OBSERVABILITY_PROVIDER_DECISION.md`](OBSERVABILITY_PROVIDER_DECISION.md). No monitoring or telemetry is active yet. **Step 2 — vendor-neutral request correlation and failure classification — remains the exact next step.** See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
 
 ### Version 25 — Custom domain and broader public-launch configuration
 
