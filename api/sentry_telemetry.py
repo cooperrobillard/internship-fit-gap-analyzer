@@ -20,9 +20,18 @@ def _level(severity: str) -> str | None:
     return {"warning": "warning", "error": "error", "critical": "fatal"}.get(severity)
 
 
-def reconstruct_sentry_event(incoming: Mapping[str, Any]) -> dict[str, Any] | None:
+def _safe_event_candidate(incoming: Mapping[str, Any], hint: Mapping[str, Any] | None) -> object:
+    if isinstance(hint, Mapping) and "safe_event" in hint:
+        return hint["safe_event"]
     extra = incoming.get("extra") if isinstance(incoming.get("extra"), Mapping) else {}
-    safe = validate_safe_analysis_event(extra.get("safe_event"))
+    return extra.get("safe_event")
+
+
+def reconstruct_sentry_event(
+    incoming: Mapping[str, Any],
+    hint: Mapping[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    safe = validate_safe_analysis_event(_safe_event_candidate(incoming, hint))
     if not safe or safe.get("outcome") != "failure" or not safe.get("failure_class"):
         return None
     level = _level(str(safe.get("severity")))
@@ -42,6 +51,11 @@ def reconstruct_sentry_event(incoming: Mapping[str, Any]) -> dict[str, Any] | No
     if isinstance(incoming.get("timestamp"), (int, float)):
         event["timestamp"] = incoming["timestamp"]
     return event
+
+
+def _before_send(event: Mapping[str, Any], hint: Any = None) -> dict[str, Any] | None:
+    hint_mapping = hint if isinstance(hint, Mapping) else None
+    return reconstruct_sentry_event(event, hint_mapping)
 
 
 def _init_if_needed(config: Mapping[str, str | None], sdk: Any) -> bool:
@@ -68,7 +82,7 @@ def _init_if_needed(config: Mapping[str, str | None], sdk: Any) -> bool:
             auto_session_tracking=False,
             send_client_reports=False,
             before_breadcrumb=lambda breadcrumb, hint=None: None,
-            before_send=lambda event, hint=None: reconstruct_sentry_event(event),
+            before_send=_before_send,
         )
         _initialized = True; _active_sdk = sdk; return True
     except Exception:
@@ -86,7 +100,9 @@ def capture_safe_failure_to_sentry(event: SafeAnalysisEvent, *, sdk: Any | None 
             config = os.environ
         if not _init_if_needed(config, sdk):
             return "disabled"
-        (_active_sdk or sdk).capture_event({"extra": {"safe_event": safe}})
+        event_id = (_active_sdk or sdk).capture_event({}, hint={"safe_event": safe})
+        if not event_id:
+            return "dropped"
         return "queued"
     except Exception:
         return "failed"
