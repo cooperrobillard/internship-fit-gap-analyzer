@@ -605,8 +605,8 @@ test.describe("Selected-deletion cancel path", () => {
     await selectRecordsByTitle(page, [visibleTarget, hiddenTarget]);
     await expectSelectionStatus(page, 2);
 
-    await setListFilter(page, "Has notes");
-    await expectVisibleCountSummary(page, 4, accountTotal);
+    await setSearchQuery(page, visibleTarget);
+    await expectVisibleCountSummary(page, 1, accountTotal);
     await expectRowVisible(page, visibleTarget);
     await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
     await expectRowAbsent(page, hiddenTarget);
@@ -654,13 +654,13 @@ test.describe("Selected-deletion cancel path", () => {
       page.getByRole("button", { name: "Delete selected", exact: true }),
     ).toBeFocused();
 
-    await expectVisibleCountSummary(page, 4, accountTotal);
+    await expectVisibleCountSummary(page, 1, accountTotal);
     await expectRowVisible(page, visibleTarget);
     await expect(rowCheckbox(page, visibleTarget)).toBeChecked();
     await expectRowAbsent(page, hiddenTarget);
     await expectSelectionStatus(page, 2, 1);
 
-    await setListFilter(page, "Show all");
+    await setSearchQuery(page, "");
     await expectVisibleCountSummary(page, accountTotal, accountTotal);
     await expectRowVisible(page, visibleTarget);
     await expectRowVisible(page, hiddenTarget);
