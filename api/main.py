@@ -9,6 +9,7 @@ Local FastAPI prototype for the rule-based Python analyzer.
 import logging
 import os
 import secrets
+from time import monotonic
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -17,6 +18,13 @@ from fastapi.responses import JSONResponse
 
 from api.analysis_service import analyze_request
 from api.models import AnalyzeRequest, AnalyzeResponse
+from api.observability import (
+    REQUEST_ID_HEADER,
+    create_safe_analysis_event,
+    duration_ms_from_monotonic,
+    emit_safe_event,
+    resolve_request_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,8 +151,64 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Analysis-Api-Key"],
+    allow_headers=["Content-Type", "X-Analysis-Api-Key", REQUEST_ID_HEADER],
 )
+
+
+@app.middleware("http")
+async def request_correlation_middleware(request: Request, call_next):
+    request_id = resolve_request_id(request.headers.get(REQUEST_ID_HEADER))
+    request.state.request_id = request_id
+    started_at = monotonic()
+
+    try:
+        response = await call_next(request)
+    except Exception:
+        if request.method == "POST" and request.url.path == "/analyze":
+            emit_safe_event(
+                logger,
+                create_safe_analysis_event(
+                    request_id=request_id,
+                    service="fastapi_analysis_service",
+                    outcome="failure",
+                    severity="error",
+                    route_template="/analyze",
+                    http_method="POST",
+                    http_status=500,
+                    duration_ms=duration_ms_from_monotonic(started_at),
+                    failure_class="backend.unhandled_exception",
+                ),
+            )
+        response = JSONResponse(
+            status_code=500,
+            content={
+                "detail": "The analysis could not be completed. Please try again."
+            },
+        )
+
+    response.headers[REQUEST_ID_HEADER] = request_id
+
+    if (
+        request.method == "POST"
+        and request.url.path == "/analyze"
+        and 200 <= response.status_code < 300
+    ):
+        emit_safe_event(
+            logger,
+            create_safe_analysis_event(
+                request_id=request_id,
+                service="fastapi_analysis_service",
+                outcome="success",
+                severity="info",
+                route_template="/analyze",
+                http_method="POST",
+                http_status=response.status_code,
+                duration_ms=duration_ms_from_monotonic(started_at),
+            ),
+        )
+
+    return response
+
 
 
 @app.exception_handler(RequestValidationError)
@@ -176,16 +240,4 @@ def analyze(
     Returns matched/missing skills and optional metadata echo only.
     Raw resumeText and jobText are not included in the response.
     """
-    try:
-        return analyze_request(request)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error(
-            "Unexpected analysis failure occurred: %s",
-            exc.__class__.__name__,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail="The analysis could not be completed. Please try again.",
-        ) from None
+    return analyze_request(request)

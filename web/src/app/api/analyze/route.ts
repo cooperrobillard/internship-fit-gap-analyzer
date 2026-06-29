@@ -1,6 +1,17 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import {
+  REQUEST_ID_HEADER,
+  createSafeAnalysisEvent,
+  emitSafeEvent,
+  generateRequestId,
+  payloadSizeBucket,
+  safeDurationMs,
+  type FailureClass,
+  type SafeSeverity,
+} from "@/lib/observability/safe-events";
+
 const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
 /** Hosted Render cold starts can be slow; allow time for the backend to wake up. */
 const BACKEND_REQUEST_TIMEOUT_MS = 25_000;
@@ -11,8 +22,13 @@ type ErrorBody = { detail: string };
 const REQUEST_TOO_LARGE_MESSAGE =
   "The analysis request is too large. Shorten the resume or job description and try again.";
 
-function jsonError(detail: string, status: number): NextResponse<ErrorBody> {
-  return NextResponse.json({ detail }, { status });
+function withRequestId<T>(response: NextResponse<T>, requestId: string): NextResponse<T> {
+  response.headers.set(REQUEST_ID_HEADER, requestId);
+  return response;
+}
+
+function jsonError(detail: string, status: number, requestId: string): NextResponse<ErrorBody> {
+  return withRequestId(NextResponse.json({ detail }, { status }), requestId);
 }
 
 function resolveBackendBaseUrl(): string | null {
@@ -66,41 +82,101 @@ function clientStatusForBackendError(status: number): number {
   return 502;
 }
 
+function emitAnalysisFailureEvent(options: {
+  requestId: string;
+  startedAtMs: number;
+  httpStatus: number;
+  failureClass: FailureClass;
+  severity: SafeSeverity;
+  upstreamStatusClass?: "4xx" | "5xx" | "unknown";
+  bodyByteLength?: number;
+}): void {
+  try {
+    emitSafeEvent(createSafeAnalysisEvent({
+      request_id: options.requestId,
+      service: "nextjs_analysis_proxy",
+      outcome: "failure",
+      severity: options.severity,
+      route_template: "/api/analyze",
+      http_method: "POST",
+      http_status: options.httpStatus,
+      duration_ms: safeDurationMs(options.startedAtMs),
+      failure_class: options.failureClass,
+      upstream_status_class: options.upstreamStatusClass,
+      payload_size_bucket: payloadSizeBucket(options.bodyByteLength),
+      environment: process.env.NODE_ENV,
+    }));
+  } catch {
+    // Best effort only. Observability must never affect application behavior.
+  }
+}
+
+function emitAnalysisSuccessEvent(requestId: string, startedAtMs: number, bodyByteLength: number): void {
+  try {
+    emitSafeEvent(createSafeAnalysisEvent({
+      request_id: requestId,
+      service: "nextjs_analysis_proxy",
+      outcome: "success",
+      severity: "info",
+      route_template: "/api/analyze",
+      http_method: "POST",
+      http_status: 200,
+      duration_ms: safeDurationMs(startedAtMs),
+      payload_size_bucket: payloadSizeBucket(bodyByteLength),
+      environment: process.env.NODE_ENV,
+    }));
+  } catch {
+    // Best effort only. Observability must never affect application behavior.
+  }
+}
+
 export async function POST(request: Request) {
   await auth.protect();
-
+  const requestId = generateRequestId();
+  const startedAtMs = Date.now();
   if (contentLengthExceedsLimit(request)) {
-    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413);
+    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413, requestId);
   }
 
   let requestText: string;
   try {
     requestText = await request.text();
   } catch {
-    return jsonError("The request could not be read. Check the inputs and try again.", 400);
+    return jsonError("The request could not be read. Check the inputs and try again.", 400, requestId);
   }
 
-  if (new TextEncoder().encode(requestText).length > MAX_ANALYSIS_REQUEST_BODY_BYTES) {
-    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413);
+  const bodyByteLength = new TextEncoder().encode(requestText).length;
+  if (bodyByteLength > MAX_ANALYSIS_REQUEST_BODY_BYTES) {
+    return jsonError(REQUEST_TOO_LARGE_MESSAGE, 413, requestId);
   }
 
   let body: unknown;
   try {
     body = JSON.parse(requestText);
   } catch {
-    return jsonError("The request could not be read. Check the inputs and try again.", 400);
+    return jsonError("The request could not be read. Check the inputs and try again.", 400, requestId);
   }
 
   const baseUrl = resolveBackendBaseUrl();
   if (!baseUrl) {
+    emitAnalysisFailureEvent({
+      requestId,
+      startedAtMs,
+      httpStatus: 500,
+      failureClass: "config.backend_url_missing",
+      severity: "critical",
+      bodyByteLength,
+    });
     return jsonError(
       "This feature is temporarily unavailable. Please try again shortly.",
       500,
+      requestId,
     );
   }
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    [REQUEST_ID_HEADER]: requestId,
   };
   const sharedSecret = process.env.ANALYSIS_API_SHARED_SECRET?.trim();
   if (sharedSecret) {
@@ -123,32 +199,55 @@ export async function POST(request: Request) {
     try {
       payload = responseText ? JSON.parse(responseText) : null;
     } catch {
-      return jsonError("This feature is temporarily unavailable. Please try again shortly.", 502);
+      emitAnalysisFailureEvent({
+        requestId,
+        startedAtMs,
+        httpStatus: 502,
+        failureClass: "proxy.upstream_invalid_response",
+        severity: "error",
+        upstreamStatusClass: "unknown",
+        bodyByteLength,
+      });
+      return jsonError("This feature is temporarily unavailable. Please try again shortly.", 502, requestId);
     }
 
     if (response.ok) {
-      return NextResponse.json(payload, { status: response.status });
+      emitAnalysisSuccessEvent(requestId, startedAtMs, bodyByteLength ?? 0);
+      return withRequestId(NextResponse.json(payload, { status: response.status }), requestId);
     }
 
     if (response.status === 422 && payload !== null) {
-      return NextResponse.json(payload, { status: 422 });
+      return withRequestId(NextResponse.json(payload, { status: 422 }), requestId);
     }
 
+    const clientStatus = clientStatusForBackendError(response.status);
+    if (response.status === 401 || response.status === 403) {
+      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "config.shared_secret_rejected", severity: "critical", upstreamStatusClass: "4xx", bodyByteLength });
+    } else if (response.status >= 500) {
+      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_5xx", severity: "error", upstreamStatusClass: "5xx", bodyByteLength });
+    } else if (response.status !== 422) {
+      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: clientStatus, failureClass: "proxy.upstream_invalid_response", severity: "error", upstreamStatusClass: "4xx", bodyByteLength });
+    }
     return jsonError(
       safeBackendErrorMessage(response.status),
-      clientStatusForBackendError(response.status),
+      clientStatus,
+      requestId,
     );
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
+      emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 504, failureClass: "proxy.upstream_timeout", severity: "warning", bodyByteLength });
       return jsonError(
         "The analysis service is taking longer than expected. Please try again shortly.",
         504,
+        requestId,
       );
     }
 
+    emitAnalysisFailureEvent({ requestId, startedAtMs, httpStatus: 503, failureClass: "proxy.upstream_unreachable", severity: "error", bodyByteLength });
     return jsonError(
       "This feature is temporarily unavailable. Please try again shortly.",
       503,
+      requestId,
     );
   } finally {
     clearTimeout(timeoutId);

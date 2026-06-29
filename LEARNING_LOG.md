@@ -3871,3 +3871,10 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Selected the minimum initial direction of native Vercel/Render/Supabase/Clerk logs and dashboards, future manually configured server-only Sentry, and future UptimeRobot external uptime checks.
 - Recorded the Sentry FastAPI request-data risk: default issue context can include request metadata and payload details, so `send_default_pii=False` is not sufficient without explicit stripping and sentinel redaction tests.
 - Deliberately deferred browser monitoring, session replay, tracing, external log aggregation, OpenTelemetry, provider AI-debugging, provider accounts, alerts, and production configuration until later approved Version 24 steps.
+
+## Version 24 Step 2 — Safe request correlation
+
+- Added transient `X-Request-ID` correlation for the analysis path with a Vercel-generated UUIDv4 forwarded to FastAPI and echoed by both services.
+- Added centralized allowlist-only safe event helpers in TypeScript and Python with stable Version 24 failure classes and native server-log emission only.
+- Added focused redaction, request-ID, classification, and regression tests; no provider SDK, DSN, alert, uptime monitor, environment variable, database/RLS change, or custom-domain change was made.
+- Exact next step remains: Version 24 Step 3A — integrate minimum server-side Sentry telemetry behind a disabled-by-default kill switch and strict SDK-side redaction, without enabling production provider delivery.
