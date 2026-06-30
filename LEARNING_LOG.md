@@ -3906,3 +3906,11 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Recorded PASS results for the branch-specific Vercel Preview proxy synthetic `nextjs_analysis_proxy:proxy.upstream_unreachable` canary before production enablement, local FastAPI synthetic `fastapi_analysis_service:backend.unhandled_exception` event against the real API project, redaction/context absence checks, Sentry alert/email tests, UptimeRobot frontend/backend monitors, and temporary DOWN/UP notification tests.
 - Preserved the limitation that the hosted Render backend failure path was not deliberately triggered because the free Render service tier has no shell/SSH access and no unsafe debug endpoint was introduced.
 - No runtime code, dependency, workflow, environment-variable value, provider credential, database, RLS, Clerk, Supabase, or custom-domain change was made. Exact next step: Version 24 Step 4 — complete production observability verification and create the incident-response runbook.
+
+## Version 24 Step 4 — production observability verification and incident runbook
+
+- Documented the completed June 30, 2026 production observability verification with final verdict PASS.
+- Recorded the initial Render `/health` HTTP 503 honestly as an unconfirmed, non-sustained external-check anomaly classified SEV-4 with no confirmed user impact and no corrective production action required.
+- Added a project-specific production incident-response runbook covering severity definitions, request-ID correlation, Vercel/Render/Sentry/UptimeRobot investigation, sensitive-data-in-Sentry handling, telemetry kill switches, rollback readiness, and sanitized incident records.
+- Preserved the privacy boundary: no raw Sentry events, provider logs, request/response bodies, headers, cookies, secrets, credentials, private text, provider IDs, Clerk IDs, Supabase identifiers, runtime code, dependencies, workflows, provider configuration, database, RLS, Clerk, Supabase, or custom-domain changes were made.
+- Exact next step: Version 24 Step 5 — complete the production observability checkpoint and authorize Version 25 custom-domain launch preparation.
