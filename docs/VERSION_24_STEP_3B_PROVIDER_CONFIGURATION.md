@@ -66,31 +66,41 @@ The telemetry kill switch remains the required control point: telemetry initiali
 
 Human enablement was completed against deployed commit `a272b760d97258ceb6eb3edef8852b5dcf005bd9`:
 
-1. Configure the Sentry proxy project for the Next.js server-side proxy boundary.
-2. Enter the server-side proxy DSN and approved telemetry variables in Vercel production environment settings without exposing values in the repo.
-3. Deploy/confirm Vercel production telemetry enablement.
-4. Run the proxy canary and inspect the Sentry proxy project.
-5. Configure the Sentry API project for the FastAPI backend boundary.
-6. Enter the server-side API DSN and approved telemetry variables in Render production environment settings without exposing values in the repo.
-7. Deploy/confirm Render production telemetry enablement.
-8. Run the backend synthetic exception verification using the real Sentry API project through a local synthetic FastAPI exception path.
-9. Confirm normal hosted analysis after enablement still succeeds and does not produce a Sentry issue.
+1. Configure both Sentry projects and privacy defenses.
+2. Run the temporary branch-specific Vercel Preview proxy canary.
+3. Run the local FastAPI synthetic exception against the real API Sentry project.
+4. Configure production variables with telemetry disabled first.
+5. Verify normal Vercel and Render behavior while disabled.
+6. Enable Vercel production telemetry and redeploy.
+7. Confirm a normal fictional analysis succeeds and creates no Sentry issue.
+8. Enable Render production telemetry and deploy.
+9. Confirm `/health` and a normal hosted analysis succeed.
+10. Preserve the known limitation that the hosted Render exception path was not deliberately triggered.
 
 Results:
 
+- Branch-specific Preview proxy canary: **PASS**.
+- Local FastAPI synthetic API event: **PASS**.
+- Production variables configured with telemetry disabled first: **PASS**.
+- Normal behavior while disabled: **PASS**.
 - Vercel production telemetry enabled: **PASS**.
+- Normal fictional analysis produced no Sentry issue: **PASS**.
 - Render production telemetry enabled: **PASS**.
-- Normal hosted analysis after enablement: **PASS**.
-- Successful analysis correctly produced no Sentry issue: **PASS**.
+- `/health` and normal hosted analysis after Render enablement: **PASS**.
 
 ## Proxy canary procedure and result
 
+The proxy redaction canary used a temporary branch-specific Vercel Preview deployment before production telemetry was enabled. No deliberate production proxy failure was triggered.
+
 Procedure:
 
-1. Use the hosted Next.js production analysis proxy with telemetry enabled.
-2. Trigger the approved synthetic proxy failure path for an upstream-unreachable condition.
-3. Confirm the event appears in the Sentry proxy project only as the sanitized message event.
-4. Inspect the provider-side event view for forbidden sentinel strings and disallowed request/user/exception context.
+1. Create a temporary Vercel Preview deployment from a branch-specific configuration.
+2. Enable telemetry and the proxy Sentry project only for that branch-specific Preview environment.
+3. Trigger a fictional synthetic upstream-unreachable failure.
+4. Confirm the event appears in the Sentry proxy project only as the sanitized message event.
+5. Inspect the provider-side event view for forbidden sentinel strings and disallowed request/user/exception context.
+6. Remove the temporary Preview configuration and branch after verification.
+7. Enable production telemetry only after the canary passed.
 
 Expected proxy message:
 
@@ -171,10 +181,12 @@ If telemetry or uptime monitoring behaves unsafely or causes operational confusi
 1. Disable `OBSERVABILITY_TELEMETRY_ENABLED` for the affected Vercel and/or Render production environment.
 2. Redeploy/restart the affected service if the provider requires it for environment changes to take effect.
 3. Confirm successful analysis still works without Sentry delivery.
-4. Pause or delete the affected Sentry alert rule if it is noisy or unsafe.
-5. Pause the affected UptimeRobot monitor if it is producing false availability notifications.
-6. Preserve sanitized incident notes without copying raw provider JSON, secrets, screenshots, emails, account IDs, Clerk IDs, Supabase identifiers, or résumé/job text into the repo.
-7. Rotate any exposed credential if a secret is ever suspected of being disclosed.
+4. Preserve sanitized incident notes without copying raw Sentry JSON, secrets, screenshots, emails, account IDs, Clerk IDs, Supabase identifiers, or résumé/job text into GitHub.
+5. Delete an affected Sentry issue when sensitive content was ingested.
+6. Consider recreating the affected Sentry project if exposure was widespread.
+7. Rotate any actually exposed credential.
+8. Pause or delete the affected Sentry alert rule if it is noisy or unsafe.
+9. Pause a misconfigured UptimeRobot monitor rather than changing application behavior merely to satisfy it.
 
 Rollback must not disable RLS, change database schema, expose service-role keys, add debug endpoints, or commit environment values.
 
