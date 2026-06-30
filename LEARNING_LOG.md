@@ -3898,3 +3898,11 @@ Added manual saved-analysis pagination in pages of ten so users can progressivel
 - Replaced dynamic `createRequire` SDK loading with a static server-only `@sentry/node` import so the Vercel bundle can trace the adapter.
 - Added bounded `flush(2000)` after eligible `captureEvent` calls and awaited that drain on analysis-route failure paths.
 - Preserved kill-switch gating, safe-event reconstruction, sentinel tests, and failure isolation; production telemetry remains disabled until the canary is repeated successfully.
+
+## Version 24 Step 3B — human-controlled provider configuration reconciliation
+
+- Documented the completed Sentry and UptimeRobot production configuration and sanitized verification evidence for deployed commit `a272b760d97258ceb6eb3edef8852b5dcf005bd9`.
+- Recorded the two-project Sentry architecture (`job-fit-analyzer-proxy` and `job-fit-analyzer-api`), Sentry account/MFA/data-region posture, provider-side scrubbing, disabled IP storage, kill-switch variable names without values, and uncommitted provider-managed DSNs.
+- Recorded PASS results for the branch-specific Vercel Preview proxy synthetic `nextjs_analysis_proxy:proxy.upstream_unreachable` canary before production enablement, local FastAPI synthetic `fastapi_analysis_service:backend.unhandled_exception` event against the real API project, redaction/context absence checks, Sentry alert/email tests, UptimeRobot frontend/backend monitors, and temporary DOWN/UP notification tests.
+- Preserved the limitation that the hosted Render backend failure path was not deliberately triggered because the free Render service tier has no shell/SSH access and no unsafe debug endpoint was introduced.
+- No runtime code, dependency, workflow, environment-variable value, provider credential, database, RLS, Clerk, Supabase, or custom-domain change was made. Exact next step: Version 24 Step 4 — complete production observability verification and create the incident-response runbook.
