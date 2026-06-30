@@ -112,7 +112,7 @@ Browser → Vercel (Next.js) → Clerk
 - [x] Compare two saved analyses
 - [x] Export/download of supported user-owned structured saved-analysis and derived report data
 - [x] Transient resume/job `.txt` upload on web with explicit privacy copy
-- [ ] Basic monitoring (Version 24 Step 1 requirements/provider decision documented; no telemetry provider, alert, uptime monitor, provider account, or production configuration is active yet)
+- [x] Basic monitoring for the bounded current scope (Version 24 complete; server-only sanitized Sentry failure events, Sentry alerts, UptimeRobot frontend/backend monitors, request correlation, rollback readiness, and incident-response runbook documented in [`VERSION_24_CHECKPOINT.md`](VERSION_24_CHECKPOINT.md))
 - [ ] Custom domain decision
 
 ### Can wait until later
@@ -140,7 +140,7 @@ Use before calling the app “public”:
 | **User controls** | Delete own analyses; export summary data |
 | **API security** | Shared secret + plan for rate limits; no public unauthenticated `/analyze` abuse |
 | **Validation** | Input limits on paste size; safe API errors |
-| **Monitoring** | Version 24 Step 1 documents native logs + server-only Sentry + external uptime as the minimum direction; later steps still need request correlation, implementation, human provider configuration, alerts, and verification |
+| **Monitoring** | Version 24 is complete for the bounded current scope: native provider logs, transient request correlation, sanitized server-only Sentry failure events, Sentry alerts, UptimeRobot frontend/backend monitors, rollback readiness, and incident-response runbook; no browser monitoring, replay, tracing, profiling, external log aggregation, or formal audit |
 | **Smoke test** | [`HOSTED_PROTOTYPE_SMOKE_TEST.md`](HOSTED_PROTOTYPE_SMOKE_TEST.md) green |
 | **Backup** | Supabase backup/PITR awareness; no single-point “hope” |
 | **Launch** | Domain, support contact, honest “rule-based prototype → public v1” messaging |
@@ -254,11 +254,11 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 **Complete** — see [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md). The analyzer now uses a validated curated cross-domain taxonomy with reviewed aliases while remaining deterministic, non-semantic, and non-AI.
 
-### Version 24 — Privacy-safe production observability
+### Version 24 — Privacy-safe production observability ✅
 
-**Step 1 complete (documented).** Version 24 Step 1 has already documented the production observability requirements and selected a provisional provider direction in [`VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md`](VERSION_24_STEP_1_OBSERVABILITY_REQUIREMENTS.md) and [`OBSERVABILITY_PROVIDER_DECISION.md`](OBSERVABILITY_PROVIDER_DECISION.md). No monitoring or telemetry is active yet. **Step 2 — vendor-neutral request correlation and failure classification — remains the exact next step.** See [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md).
+**Complete for its bounded current scope.** Version 24 established requirements, request correlation, sanitized server logs, server-only Sentry failure delivery, Sentry alerts, UptimeRobot frontend/backend monitors, rollback readiness, and the production incident-response runbook. See [`VERSION_24_CHECKPOINT.md`](VERSION_24_CHECKPOINT.md), [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md), and [`PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md`](PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md).
 
-### Version 25 — Custom domain and broader public-launch configuration
+### Version 25 — Custom domain and broader public-launch configuration (current next release)
 
 - Custom domain on Vercel
 - Vercel DNS/domain verification
@@ -284,7 +284,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Next:** Version 24 is privacy-safe production observability, followed by Version 25 custom-domain and public-launch configuration. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
+**Next:** Version 25 Step 1 — choose and document the production custom-domain target, inventory every hostname-dependent Vercel, Clerk, FastAPI/CORS, Sentry, UptimeRobot, metadata, privacy, portfolio, and rollback change, and produce the human configuration plan without changing DNS yet. Version 24 is complete for its bounded observability scope; custom-domain work remains unstarted until Version 25 Step 1. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
