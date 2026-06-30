@@ -4,7 +4,7 @@
 
 ## Rationale
 
-A custom domain improves branding and discoverability, but it does not detect outages, request failures, elevated errors, broken provider integrations, or deployment regressions. An observability, log-retention, alerting, and PII-redaction policy is now documented through Version 24 Step 1, request correlation and server-only Sentry integration exist from Steps 2 and 3A, and human-controlled Sentry/UptimeRobot provider configuration passed Step 3B verification. Broader public launch should still wait for the Step 4 production observability verification and incident-response runbook.
+A custom domain improves branding and discoverability, but it does not detect outages, request failures, elevated errors, broken provider integrations, or deployment regressions. An observability, log-retention, alerting, and PII-redaction policy is now documented through Version 24 Step 1, request correlation and server-only Sentry integration exist from Steps 2 and 3A, and human-controlled Sentry/UptimeRobot provider configuration passed Step 3B verification. Version 24 Step 4 production observability verification and the incident-response runbook are now complete with a PASS verdict. Broader public launch should still wait for the Step 5 production observability checkpoint.
 
 Version 24 Step 1 defined the minimum operational foundation, privacy boundaries, and a provisional provider direction. Custom-domain launch work still belongs after that foundation is implemented and verified.
 
@@ -27,8 +27,8 @@ Version 24 Step 1 defined the minimum operational foundation, privacy boundaries
 3. Minimum production telemetry and alerting, split into:
    - Step 3A: bounded code integration PR. **Implemented as a disabled-by-default server-only Sentry adapter with strict safe-event reconstruction; no provider account, DSN, delivery, alert, uptime monitor, or production configuration is active.**
    - Step 3B: human provider configuration and verification. **Completed and documented in [`VERSION_24_STEP_3B_PROVIDER_CONFIGURATION.md`](VERSION_24_STEP_3B_PROVIDER_CONFIGURATION.md): Sentry proxy/API projects, provider-side scrubbing, IP storage disablement, branch-specific Preview proxy canary before production enablement, local FastAPI synthetic verification, Vercel/Render production enablement, alert rules, UptimeRobot frontend/backend monitors, and notification tests passed against deployed commit `a272b760d97258ceb6eb3edef8852b5dcf005bd9`.**
-4. Production verification and incident-response runbook. **Next: Version 24 Step 4.**
-5. Production observability checkpoint.
+4. Production verification and incident-response runbook. **Completed in [`VERSION_24_STEP_4_PRODUCTION_VERIFICATION.md`](VERSION_24_STEP_4_PRODUCTION_VERIFICATION.md) with final verdict PASS. A single external preflight path initially received HTTP 503 from Render `/health`, but the condition was not sustained, root cause was not confirmed, UptimeRobot and Sentry showed no sustained/user-impacting incident, and six later health checks returned HTTP 200. The production incident-response runbook is now documented in [`PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md`](PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md).**
+5. Production observability checkpoint. **Next: Version 24 Step 5.**
 
 ## Observability privacy boundaries
 
@@ -63,7 +63,11 @@ Prefer narrowly scoped fields such as:
 - rate-limit result; and
 - payload-size category rather than body contents.
 
-Version 24 Step 2 adds transient request IDs, safe `X-Request-ID` propagation, stable failure classes, and sanitized server-native JSON events for the analysis path. Version 24 Step 3A adds a server-only Sentry SDK adapter behind an explicit kill switch. Version 24 Step 3B documents completed human-controlled provider configuration: Sentry delivery for the approved server-side proxy/API failure messages, Sentry alert rules, provider-side redaction checks, UptimeRobot frontend/backend monitors, and notification tests passed against deployed commit `a272b760d97258ceb6eb3edef8852b5dcf005bd9`. The next step is still production observability verification and an incident-response runbook; Step 3B does not claim full observability completion, formal security audit, database/RLS changes, Clerk/Supabase changes, workflow changes, dependency changes, or custom-domain work.
+Version 24 Step 2 adds transient request IDs, safe `X-Request-ID` propagation, stable failure classes, and sanitized server-native JSON events for the analysis path. Version 24 Step 3A adds a server-only Sentry SDK adapter behind an explicit kill switch. Version 24 Step 3B documents completed human-controlled provider configuration: Sentry delivery for the approved server-side proxy/API failure messages, Sentry alert rules, provider-side redaction checks, UptimeRobot frontend/backend monitors, and notification tests passed against deployed commit `a272b760d97258ceb6eb3edef8852b5dcf005bd9`. Version 24 Step 4 documents production observability verification and the incident-response runbook with final verdict PASS. The next step is Version 24 Step 5, the production observability checkpoint; Steps 3B and 4 do not claim formal security audit, database/RLS changes, Clerk/Supabase changes, workflow changes, dependency changes, or custom-domain work.
+
+## Version 25 deferral
+
+Version 25 custom-domain work remains deferred until Version 24 Step 5 authorizes custom-domain launch preparation.
 
 ## Proposed Version 25 sequence
 
