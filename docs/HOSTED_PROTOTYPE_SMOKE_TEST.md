@@ -317,3 +317,19 @@ Use synthetic saved analyses only, then clean them up after testing.
 - After individual or selected deletion, confirm refresh preserves the previously loaded depth rather than collapsing to 10.
 - Switch Clerk sessions and confirm the new session loads only its first page and stale prior-session pages do not append.
 - Delete synthetic saved analyses created for this test.
+
+## Current Production target and canonical metadata checks
+
+Canonical Production base URL: https://jobfit.cooperrobillard.com
+
+- [ ] `/` has the correct canonical.
+- [ ] `/privacy` has the correct canonical.
+- [ ] Old Vercel-host HTML points canonically to the custom host.
+- [ ] Open Graph title, description, URL, and image are present.
+- [ ] Twitter card, title, description, and image are present.
+- [ ] `/sitemap.xml` contains only `/` and `/privacy`.
+- [ ] `/robots.txt` references the canonical sitemap.
+- [ ] Robots disallow dashboard, API, sign-in, sign-up, and Clerk infrastructure paths.
+- [ ] Dashboard, sign-in, and sign-up output no-index metadata.
+- [ ] Share-image URLs return HTTP 200 with an image content type.
+- [ ] No metadata advertises AI, semantic matching, formal certification, legal compliance, or mature SaaS readiness.

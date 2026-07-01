@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Create account",
   description:
     "Create an account for Job Fit & Skill-Gap Analyzer to use the limited-beta dashboard and structured saved results.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
 };
 
 const clerkAppearance = {

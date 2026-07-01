@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { absoluteSiteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Privacy & data controls",
   description:
     "Current data-handling summary, user controls, and limitations for the rule-based job-fit analyzer public beta.",
+  alternates: {
+    canonical: absoluteSiteUrl("/privacy"),
+  },
+  openGraph: {
+    url: absoluteSiteUrl("/privacy"),
+  },
 };
 
 const navItems = [

@@ -84,3 +84,9 @@ Do not commit Clerk, Supabase, Vercel, session, storage-state, CSV download, scr
 - Vercel team scope: set `VERCEL_TEAM_ID` when the deployment belongs to a team scope.
 - Font fetch-only build failures: record the failure honestly; do not alter fonts or app code merely to hide an environment-only Geist fetch issue.
 - Request matcher does not fire: inspect the actual network request and narrow the matcher to the saved-analysis list or delete request only; the test fails rather than silently passing if an expected matcher is never observed.
+
+## Current reusable QA target
+
+For current reusable QA runs, set `QA_BASE_URL` to the canonical custom hostname, `https://jobfit.cooperrobillard.com`. Set `QA_EXPECTED_COMMIT` to the exact current Production deployment commit for each run rather than reusing the historical Version 23 commit.
+
+The historical accepted Version 23 run remains documented separately and should not be rewritten. This suite uses synthetic data only, and no QA credentials are committed.
