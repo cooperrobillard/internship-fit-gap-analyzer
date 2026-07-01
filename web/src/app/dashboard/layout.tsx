@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { DashboardWorkspaceNav } from "@/components/dashboard-workspace-nav";
+
+export const metadata: Metadata = {
+  title: "Workspace",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (

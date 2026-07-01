@@ -82,7 +82,7 @@ Browser → Vercel (Next.js) → Clerk
 | Different resume per analysis | Yes (implicit paste) | Yes (paste) | Yes | P1 | Profiles would formalize this |
 | Public privacy / data controls | Partial | Yes | Yes | P0 | Privacy/data-control copy reconciled; account-wide controls remain open |
 | UI polish / final design | Local OK | Prototype | Yes | P1 | Copy polish done; full redesign later |
-| Custom domain | No | No | Later | P2 | Vercel default URL today |
+| Custom domain | N/A | Yes | Yes | P0 | Canonical custom hostname is active; final verification remains in Version 25 |
 | Semantic / AI matching | No | No | Later | P3 | Explicitly out of v1 scope |
 | Rate limiting / abuse protection | No | Basic | Yes | P0 | Active Vercel IP-based limit plus safe 413/429 handling; not comprehensive abuse prevention |
 | Error monitoring / logging | Minimal | Minimal | Yes | P1 | Calm UI errors; no full observability |
@@ -113,7 +113,8 @@ Browser → Vercel (Next.js) → Clerk
 - [x] Export/download of supported user-owned structured saved-analysis and derived report data
 - [x] Transient resume/job `.txt` upload on web with explicit privacy copy
 - [x] Basic monitoring for the bounded current scope (Version 24 complete; server-only sanitized Sentry failure events, Sentry alerts, UptimeRobot frontend/backend monitors, request correlation, rollback readiness, and incident-response runbook documented in [`VERSION_24_CHECKPOINT.md`](VERSION_24_CHECKPOINT.md))
-- [ ] Custom domain decision
+- [x] Custom domain decision
+- [x] Canonical metadata and URL updates — Version 25 Step 4
 
 ### Can wait until later
 
@@ -260,13 +261,13 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 ### Version 25 — Custom domain and broader public-launch configuration (current next release)
 
-- Custom domain on Vercel
-- Vercel DNS/domain verification
+- Custom domain on Vercel — **Complete in Version 25 Steps 1–2**
+- Vercel DNS/domain verification — **Complete in Version 25 Step 2**
 - Clerk production-domain callback and redirect review — **Complete in Version 25 Step 3**; see [`VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md`](VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md)
-- Canonical metadata and URL updates
-- Allowed-origin and provider configuration review
-- Production smoke test
-- Portfolio/public-launch update
+- Canonical metadata and URL updates — **Complete in Version 25 Step 4**; see [`VERSION_25_STEP_4_CANONICAL_METADATA.md`](VERSION_25_STEP_4_CANONICAL_METADATA.md)
+- Step 5 — provider and integration reconciliation
+- Step 6 — complete Production verification
+- Step 7 — portfolio publication, public links, launch checkpoint
 
 ---
 
@@ -284,7 +285,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Next:** Continue the remaining Version 25 launch-configuration work after the completed custom-domain, Vercel DNS, and Clerk Production migration steps. Canonical metadata/public-link updates, broader public-launch polish, and any future provider changes remain separately scoped. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
+**Next:** Version 25 Step 5 — provider and integration reconciliation. Step 6 is complete Production verification. Step 7 is portfolio publication, public links, and launch checkpoint. Final public launch is not complete. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
@@ -302,3 +303,12 @@ Update this file when hosted parity changes or public v1 scope shifts. Do not ma
 - Step 3 selected deletion is complete for checked saved analyses in the current loaded result set, with an explicit confirmation snapshot, sequential non-transactional processing, existing RLS-scoped single-delete helper reuse, partial-failure handling, failed-selection retention, and one dependent refresh.
 - Account-wide controls remain unimplemented: no Delete all, account-wide select-all, account-wide deletion, or query deletion was added in Step 3.
 - Version 23 Step 4 added accessible Load more pagination for records beyond the previous recent loaded set.
+
+
+## Version 25 remaining sequence
+
+Canonical metadata and URL updates are complete in Version 25 Step 4. Version 25 and final public launch are not complete. Remaining sequence:
+
+1. Step 5 — provider and integration reconciliation
+2. Step 6 — complete Production verification
+3. Step 7 — portfolio publication, public links, launch checkpoint

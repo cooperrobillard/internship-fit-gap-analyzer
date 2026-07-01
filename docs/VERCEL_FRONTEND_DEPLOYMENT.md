@@ -130,3 +130,26 @@ Use **generic sample text** only for analysis smoke tests—not real private res
 ## Next steps
 
 Confirm end-to-end flow against [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md). Keep raw resume/job text out of cloud storage—the prototype save path stores structured skills and metadata only.
+
+## Version 25 Step 4 canonical public metadata
+
+Canonical frontend: https://jobfit.cooperrobillard.com
+
+Noncanonical deployment alias: https://internship-fit-gap-analyzer.vercel.app
+
+Backend: https://internship-fit-gap-analyzer.onrender.com
+
+New public links should use the custom hostname. The old Vercel alias remains attached for deployment inspection and rollback, but it is not a second authenticated Clerk application and must not be used as the canonical public reference. Application metadata always identifies the custom hostname, including when a request reaches a Vercel alias, Preview deployment, or localhost. Historical documents that correctly record earlier testing on the Vercel alias should not be rewritten.
+
+No CORS change is required solely because the browser uses the same-origin `/api/analyze` proxy before the Next.js server calls the backend. Preserve the existing Clerk, Supabase, and same-origin proxy guidance unless a future provider reconciliation step explicitly changes those assumptions.
+
+Hosted metadata verification checks after deployment:
+
+```bash
+curl -fsS https://jobfit.cooperrobillard.com/robots.txt
+curl -fsS https://jobfit.cooperrobillard.com/sitemap.xml
+curl -fsS https://jobfit.cooperrobillard.com/ | tr '>' '>\n' | grep -E 'canonical|og:|twitter:'
+curl -fsS https://jobfit.cooperrobillard.com/privacy | tr '>' '>\n' | grep -E 'canonical|og:|twitter:'
+curl -fsSI https://jobfit.cooperrobillard.com/opengraph-image
+curl -fsSI https://jobfit.cooperrobillard.com/twitter-image
+```

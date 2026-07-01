@@ -2,7 +2,9 @@
 
 This folder contains the Next.js 16 frontend for the hosted **Job Fit & Skill-Gap Analyzer**. The repository remains named `internship-fit-gap-analyzer`. The web app runs on Vercel with Clerk authentication, a Next.js `/api/analyze` proxy, Render FastAPI analysis, and Supabase structured saved data protected by RLS.
 
-The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, and Version 23 saved-analysis data controls are complete in the repository. Production Playwright QA passed for the bounded Version 23 data-control feature set; final public launch, formal accessibility certification, and security certification have not been declared complete.
+Canonical Production URL: https://jobfit.cooperrobillard.com
+
+The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 observability are complete in the repository. Version 25 custom-domain work is complete through the Clerk Production migration; canonical metadata, sitemap, robots, and social-share metadata are implemented by the current PR. Production Playwright QA passed for the bounded Version 23 data-control feature set on the old Vercel hostname; final Production verification, portfolio launch, formal accessibility certification, and security certification have not been declared complete.
 
 ## Current frontend surfaces
 
@@ -80,6 +82,18 @@ chmod +x scripts/run_local_full_stack_demo.sh
 ```
 
 The local dashboard is available at `http://localhost:3000/dashboard`; the browser calls `/api/analyze`, and Next.js forwards to the configured FastAPI service.
+
+## Route discovery and search status
+
+| Route | Search status |
+| --- | --- |
+| `/` | Canonical and indexable |
+| `/privacy` | Canonical and indexable |
+| `/sign-in` | No-index |
+| `/sign-up` | No-index |
+| `/dashboard` | Protected and no-index |
+| `/robots.txt` | Public metadata route |
+| `/sitemap.xml` | Public metadata route |
 
 ## Routes
 

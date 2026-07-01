@@ -1,7 +1,30 @@
+import type { Metadata } from "next";
 import { Show } from "@clerk/nextjs";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LandingAnalysisPreview } from "@/components/landing-analysis-preview";
+import { absoluteSiteUrl, SITE_NAME } from "@/lib/site-config";
+
+
+const homeDescription =
+  "Compare résumé skills with job descriptions, review explicit matched and missing skills, and save structured results in a rule-based career planning workspace.";
+
+export const metadata: Metadata = {
+  title: { absolute: SITE_NAME },
+  description: homeDescription,
+  alternates: {
+    canonical: absoluteSiteUrl("/"),
+  },
+  openGraph: {
+    title: SITE_NAME,
+    description: homeDescription,
+    url: absoluteSiteUrl("/"),
+  },
+  twitter: {
+    title: SITE_NAME,
+    description: homeDescription,
+  },
+};
 
 const benefits = [
   {
