@@ -262,7 +262,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 - Custom domain on Vercel
 - Vercel DNS/domain verification
-- Clerk production-domain callback and redirect review
+- Clerk production-domain callback and redirect review — **Complete in Version 25 Step 3**; see [`VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md`](VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md)
 - Canonical metadata and URL updates
 - Allowed-origin and provider configuration review
 - Production smoke test
@@ -284,11 +284,11 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Next:** Version 25 Step 1 — choose and document the production custom-domain target, inventory every hostname-dependent Vercel, Clerk, FastAPI/CORS, Sentry, UptimeRobot, metadata, privacy, portfolio, and rollback change, and produce the human configuration plan without changing DNS yet. Version 24 is complete for its bounded observability scope; custom-domain work remains unstarted until Version 25 Step 1. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
+**Next:** Continue the remaining Version 25 launch-configuration work after the completed custom-domain, Vercel DNS, and Clerk Production migration steps. Canonical metadata/public-link updates, broader public-launch polish, and any future provider changes remain separately scoped. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
-See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md), [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md), [`VERSION_23_STEP_3_SELECTED_DELETION.md`](VERSION_23_STEP_3_SELECTED_DELETION.md), [`VERSION_23_STEP_4_LOAD_MORE.md`](VERSION_23_STEP_4_LOAD_MORE.md), [`VERSION_23_CHECKPOINT.md`](VERSION_23_CHECKPOINT.md), [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md), [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
+See [`VERSION_22_CHECKPOINT.md`](VERSION_22_CHECKPOINT.md), [`VERSION_23_STEP_1_MULTI_SELECTION.md`](VERSION_23_STEP_1_MULTI_SELECTION.md), [`VERSION_23_STEP_2_SELECTED_EXPORT.md`](VERSION_23_STEP_2_SELECTED_EXPORT.md), [`VERSION_23_STEP_3_SELECTED_DELETION.md`](VERSION_23_STEP_3_SELECTED_DELETION.md), [`VERSION_23_STEP_4_LOAD_MORE.md`](VERSION_23_STEP_4_LOAD_MORE.md), [`VERSION_23_CHECKPOINT.md`](VERSION_23_CHECKPOINT.md), [`VERSION_23_DATA_CONTROL_QA.md`](VERSION_23_DATA_CONTROL_QA.md), [`VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md`](VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md), [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md), [`TAXONOMY_MAINTENANCE.md`](TAXONOMY_MAINTENANCE.md), [`VERSION_16_CHECKPOINT.md`](VERSION_16_CHECKPOINT.md), and [`VERSION_16_PRODUCTION_READINESS_REVIEW.md`](VERSION_16_PRODUCTION_READINESS_REVIEW.md).
 
 ---
 
