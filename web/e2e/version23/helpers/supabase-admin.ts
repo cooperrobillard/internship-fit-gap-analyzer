@@ -16,6 +16,155 @@ function adminClient(config: QaConfig) {
   });
 }
 
+export type JobAnalysisCleanupRow = {
+  id: string;
+  job_title: string;
+  company: string;
+  clerk_user_id: string;
+};
+
+export type CleanupSupabaseClient = ReturnType<typeof adminClient>;
+
+export function assertCurrentRunRecordProvenance(
+  config: QaConfig,
+  record: CreatedRecord,
+  row: JobAnalysisCleanupRow,
+  ownerIds: { A: string; B: string },
+): void {
+  const expectedOwnerId = ownerIds[record.ownerLabel];
+  if (row.id !== record.id) {
+    throw new Error("Refusing cleanup: manifest record ID mismatch.");
+  }
+  if (row.clerk_user_id !== expectedOwnerId) {
+    throw new Error("Refusing cleanup: owner mismatch for manifest record.");
+  }
+  if (row.company !== SYNTHETIC_COMPANY) {
+    throw new Error("Refusing cleanup: unexpected company for manifest record.");
+  }
+  if (!row.job_title.startsWith(`V23 QA ${config.runId}`)) {
+    throw new Error("Refusing cleanup: unexpected run provenance for manifest record.");
+  }
+}
+
+export async function findRemainingCurrentRunRecordsWithClient(
+  config: QaConfig,
+  manifest: RunManifest,
+  supabase: CleanupSupabaseClient,
+  ownerIds: { A: string; B: string },
+): Promise<CreatedRecord[]> {
+  const remaining: CreatedRecord[] = [];
+
+  for (const record of manifest.records) {
+    const expectedOwnerId = ownerIds[record.ownerLabel];
+    const lookup = await supabase
+      .from("job_analyses")
+      .select("id, job_title, company, clerk_user_id")
+      .eq("id", record.id)
+      .eq("clerk_user_id", expectedOwnerId)
+      .maybeSingle();
+
+    if (lookup.error) {
+      throw new Error("Unable to verify current-run cleanup residual.");
+    }
+    if (!lookup.data) {
+      continue;
+    }
+
+    assertCurrentRunRecordProvenance(
+      config,
+      record,
+      lookup.data as JobAnalysisCleanupRow,
+      ownerIds,
+    );
+    remaining.push(record);
+  }
+
+  return remaining;
+}
+
+export async function cleanupCurrentRunWithClient(
+  config: QaConfig,
+  manifestPath: string,
+  supabase: CleanupSupabaseClient,
+  ownerIds: { A: string; B: string },
+  options: { dryRun?: boolean } = {},
+): Promise<{ remainingCount: number }> {
+  const manifest = readManifest(manifestPath);
+
+  if (manifest.records.length === 0) {
+    if (!options.dryRun) {
+      saveManifest(manifestPath, {
+        ...manifest,
+        cleanupStatus: "PASS",
+      });
+    }
+    return { remainingCount: 0 };
+  }
+
+  let remaining = await findRemainingCurrentRunRecordsWithClient(
+    config,
+    manifest,
+    supabase,
+    ownerIds,
+  );
+
+  if (options.dryRun) {
+    return { remainingCount: remaining.length };
+  }
+
+  if (remaining.length === 0) {
+    saveManifest(manifestPath, {
+      ...manifest,
+      cleanupStatus: "PASS",
+    });
+    return { remainingCount: 0 };
+  }
+
+  let ok = true;
+
+  for (const record of remaining) {
+    const ownerId = ownerIds[record.ownerLabel];
+    const { error } = await supabase
+      .from("job_analyses")
+      .delete()
+      .eq("id", record.id)
+      .eq("clerk_user_id", ownerId)
+      .eq("company", SYNTHETIC_COMPANY)
+      .like("job_title", `V23 QA ${config.runId}%`);
+
+    if (error) {
+      ok = false;
+      console.error(
+        `Cleanup failed for synthetic ${record.ownerLabel} ${record.id} ${record.title}`,
+      );
+    }
+  }
+
+  remaining = await findRemainingCurrentRunRecordsWithClient(
+    config,
+    manifest,
+    supabase,
+    ownerIds,
+  );
+
+  if (remaining.length > 0) {
+    ok = false;
+  }
+
+  saveManifest(manifestPath, {
+    ...manifest,
+    cleanupStatus: ok ? "PASS" : "FAIL",
+  });
+
+  if (!ok) {
+    throw new Error(
+      `Cleanup failed. Safe retry: npm run qa:version23:cleanup -- --run-id ${config.runId}`,
+    );
+  }
+
+  return { remainingCount: remaining.length };
+}
+
 export async function countSavedAnalysesForOwner(
   config: QaConfig,
   ownerLabel: "A" | "B",
@@ -220,67 +369,16 @@ async function insertStructuredRecord(input: {
 export async function cleanupCurrentRun(
   config: QaConfig,
   options: { dryRun?: boolean } = {},
-): Promise<void> {
-  const manifest = readManifest(config.manifestPath);
-  if (manifest.records.length === 0) {
-    saveManifest(config.manifestPath, {
-      ...manifest,
-      cleanupStatus: "PASS",
-    });
-    return;
-  }
-
-  if (options.dryRun) {
-    console.log(
-      `Dry run: would delete ${manifest.records.length} current-run manifest record(s) for run ${config.runId}.`,
-    );
-    return;
-  }
-
+): Promise<{ remainingCount: number }> {
   const ownerIds = await resolveClerkUserIds(config);
   const supabase = adminClient(config);
-  let ok = true;
-
-  for (const record of manifest.records) {
-    const ownerId = ownerIds[record.ownerLabel];
-    const { error } = await supabase
-      .from("job_analyses")
-      .delete()
-      .eq("id", record.id)
-      .eq("clerk_user_id", ownerId)
-      .eq("company", SYNTHETIC_COMPANY)
-      .like("job_title", `V23 QA ${config.runId}%`);
-
-    if (error) {
-      ok = false;
-      console.error(
-        `Cleanup failed for synthetic ${record.ownerLabel} ${record.id} ${record.title}`,
-      );
-    }
-  }
-
-  const remaining = await supabase
-    .from("job_analyses")
-    .select("id")
-    .in(
-      "id",
-      manifest.records.map((record) => record.id),
-    );
-
-  if (remaining.error || (remaining.data?.length ?? 0) > 0) {
-    ok = false;
-  }
-
-  saveManifest(config.manifestPath, {
-    ...manifest,
-    cleanupStatus: ok ? "PASS" : "FAIL",
-  });
-
-  if (!ok) {
-    throw new Error(
-      `Cleanup failed. Safe retry: npm run qa:version23:cleanup -- --run-id ${config.runId}`,
-    );
-  }
+  return cleanupCurrentRunWithClient(
+    config,
+    config.manifestPath,
+    supabase,
+    ownerIds,
+    options,
+  );
 }
 
 export async function dryRunStaleCleanup(config: QaConfig): Promise<void> {

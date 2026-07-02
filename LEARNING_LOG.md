@@ -3973,3 +3973,11 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Root cause 2: Version 25 Playwright reused the default `test-results` output directory and cleared `version23-results.json` before consolidated reporting.
 - Remediation centralizes the existing homepage copy as `HOME_DESCRIPTION`, isolates Version 25 Playwright artifacts, and adds explicit Version 23 JSON guards in the combined runner without changing public metadata wording or application behavior.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT` and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 2 — Twitter card and cleanup verification
+
+- The second Step 6B Production run returned a strict automated FAIL; manual checks were not started.
+- PR #54 fixes passed, including homepage Open Graph description alignment and Version 23 JSON artifact handoff.
+- Remaining blockers: homepage Twitter card omitted at the page metadata layer; Version 23 cleanup dry-run counted manifest entries instead of querying exact current-run Production rows.
+- Remediation adds shared `TWITTER_CARD` / `HOME_TWITTER_METADATA`, makes dry-run verify actual database residuals, and preserves the manifest as local audit evidence.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

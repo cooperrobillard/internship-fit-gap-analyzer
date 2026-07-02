@@ -9,10 +9,14 @@ import sitemap from "@/app/sitemap";
 import {
   absoluteSiteUrl,
   HOME_DESCRIPTION,
+  HOME_TWITTER_METADATA,
   SITE_DESCRIPTION,
+  SITE_NAME,
   SITE_ORIGIN,
   SITE_URL,
+  TWITTER_CARD,
 } from "./site-config";
+import { metadata as homepageMetadata } from "@/app/page";
 
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const homepageSource = readFileSync(join(webRoot, "app/page.tsx"), "utf8");
@@ -42,11 +46,24 @@ test("HOME_DESCRIPTION is the shared homepage metadata source", () => {
   assert.notEqual(HOME_DESCRIPTION, SITE_DESCRIPTION);
 });
 
+test("HOME_TWITTER_METADATA is the shared homepage Twitter metadata source", () => {
+  assert.equal(TWITTER_CARD, "summary_large_image");
+  assert.deepEqual(HOME_TWITTER_METADATA, {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: HOME_DESCRIPTION,
+  });
+});
+
+test("homepage metadata export includes required Twitter fields", () => {
+  assert.deepEqual(homepageMetadata.twitter, HOME_TWITTER_METADATA);
+});
+
 test("homepage metadata source uses HOME_DESCRIPTION for all public descriptions", () => {
-  assert.match(homepageSource, /import \{[^}]*HOME_DESCRIPTION[^}]*\} from "@\/lib\/site-config"/);
+  assert.match(homepageSource, /import \{[^}]*HOME_TWITTER_METADATA[^}]*\} from "@\/lib\/site-config"/);
   assert.match(homepageSource, /description: HOME_DESCRIPTION/);
   assert.match(homepageSource, /openGraph:\s*\{[\s\S]*description: HOME_DESCRIPTION/);
-  assert.match(homepageSource, /twitter:\s*\{[\s\S]*description: HOME_DESCRIPTION/);
+  assert.match(homepageSource, /twitter: HOME_TWITTER_METADATA/);
   assert.equal(homepageSource.includes("homeDescription"), false);
   assert.equal(homepageSource.includes("SITE_NAME"), true);
 });

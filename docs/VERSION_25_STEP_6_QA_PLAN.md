@@ -77,6 +77,8 @@ The first Version 25 Step 6B Production checkpoint on commit `d427d8f501d0d41f5a
 
 Remediation requires merging the scoped handoff fix, waiting for its exact merged commit to deploy, updating ignored local `QA_EXPECTED_COMMIT`, and rerunning the complete Step 6B checkpoint exactly once. No partial successful result may be promoted into PASS.
 
+The second Step 6B run returned strict FAIL after the handoff remediation passed. The homepage Twitter card remained incorrect because the page-level metadata object omitted the card, and Version 23 cleanup dry-run produced a false positive by counting retained manifest entries instead of querying exact current-run Production rows. Manual checks were not started. Follow-up remediation adds the explicit Twitter card, preserves the manifest for audit, and makes dry-run verify actual exact current-run database residuals.
+
 ## Rollback-readiness boundary
 
 Rollback readiness is a manual Step 6B review item. This foundation records it as pending only.

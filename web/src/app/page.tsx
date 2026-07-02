@@ -3,7 +3,12 @@ import { Show } from "@clerk/nextjs";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LandingAnalysisPreview } from "@/components/landing-analysis-preview";
-import { absoluteSiteUrl, HOME_DESCRIPTION, SITE_NAME } from "@/lib/site-config";
+import {
+  absoluteSiteUrl,
+  HOME_DESCRIPTION,
+  HOME_TWITTER_METADATA,
+  SITE_NAME,
+} from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: { absolute: SITE_NAME },
@@ -16,10 +21,7 @@ export const metadata: Metadata = {
     description: HOME_DESCRIPTION,
     url: absoluteSiteUrl("/"),
   },
-  twitter: {
-    title: SITE_NAME,
-    description: HOME_DESCRIPTION,
-  },
+  twitter: HOME_TWITTER_METADATA,
 };
 
 const benefits = [
