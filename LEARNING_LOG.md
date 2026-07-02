@@ -3942,3 +3942,20 @@ Documented the completed human-controlled Clerk Development-to-Production activa
 ## Version 25 Step 4 — Canonical Production metadata
 
 Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, including shared site configuration, route-level canonical URLs for `/` and `/privacy`, no-index metadata for app routes, generated social images, sitemap, robots, focused tests, and current-reference documentation updates. This is implementation-time validation only; post-merge Production verification, provider reconciliation, and portfolio publication remain later Version 25 steps.
+
+## 2026-07-02 — Version 25 Step 5 provider and integration reconciliation
+
+### What changed
+
+* Documented that Version 25 Step 5 passed for the canonical Production hostname `https://jobfit.cooperrobillard.com`.
+* Recorded that the canonical UptimeRobot frontend monitor was added.
+* Recorded that the old Vercel monitor was retained as `Job Fit Analyzer — Vercel Fallback`.
+* Recorded that the Render `/health` backend monitor was retained unchanged.
+* Confirmed that FastAPI/CORS required no change because Production browser analysis uses the same-origin Next.js `/api/analyze` proxy and Next.js calls Render server-to-server.
+* Confirmed that Vercel, Render, Sentry, Clerk, Supabase, and RLS required no change.
+* Preserved privacy, RLS, and secret-handling boundaries.
+* Recorded that no runtime remediation was required.
+
+### Next step
+
+* Version 25 Step 6 — complete canonical-host Production verification and synthetic Playwright QA before any portfolio publication.

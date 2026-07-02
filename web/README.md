@@ -4,7 +4,7 @@ This folder contains the Next.js 16 frontend for the hosted **Job Fit & Skill-Ga
 
 Canonical Production URL: https://jobfit.cooperrobillard.com
 
-The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 observability are complete in the repository. Version 25 custom-domain work is complete through the Clerk Production migration; canonical metadata, sitemap, robots, and social-share metadata are implemented by the current PR. Production Playwright QA passed for the bounded Version 23 data-control feature set on the old Vercel hostname; final Production verification, portfolio launch, formal accessibility certification, and security certification have not been declared complete.
+The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 observability are complete in the repository. Version 25 custom-domain work is complete through Step 5: Clerk Production migration, canonical metadata, and provider/integration reconciliation passed. Step 5 required only the UptimeRobot monitoring transition; no frontend runtime, FastAPI/CORS, Vercel, Render, Sentry, Clerk, Supabase, schema, or RLS change was required. Production Playwright QA passed for the bounded Version 23 data-control feature set on the old Vercel hostname; final Production verification, portfolio launch, formal accessibility certification, and security certification have not been declared complete.
 
 ## Current frontend surfaces
 
@@ -32,6 +32,16 @@ Browser / Next.js dashboard
 ```
 
 Clerk protects the dashboard route and supplies the signed-in user context for Supabase browser access. Browser code uses only Supabase publishable/browser-safe configuration. Server-only analysis configuration remains in Vercel/Render environment variables.
+
+## Current Production integration posture
+
+- Canonical frontend monitoring target: `https://jobfit.cooperrobillard.com/` (`Job Fit Analyzer — Canonical Frontend`).
+- Old Vercel fallback monitoring target: `https://internship-fit-gap-analyzer.vercel.app/` (`Job Fit Analyzer — Vercel Fallback`).
+- Render backend health monitoring target: `https://internship-fit-gap-analyzer.onrender.com/health` (`Job Fit Analyzer — Backend Health`).
+- Browser analysis uses the same-origin Next.js `POST /api/analyze` route.
+- The Next.js server calls Render FastAPI server-to-server; browser code does not call Render directly in the Production analysis flow.
+- Render CORS required no change for the canonical hostname because the public hostname change did not create a direct browser-to-Render request path. The verified Render `ALLOWED_ORIGINS` posture is explicit and nonwildcard.
+- Generated Vercel Preview URLs are constrained as designed: public Preview routes may be reviewed, but Production authentication is not expected on arbitrary generated Preview hostnames.
 
 ## Privacy posture
 

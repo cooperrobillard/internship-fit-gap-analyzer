@@ -153,3 +153,18 @@ curl -fsS https://jobfit.cooperrobillard.com/privacy | tr '>' '>\n' | grep -E 'c
 curl -fsSI https://jobfit.cooperrobillard.com/opengraph-image
 curl -fsSI https://jobfit.cooperrobillard.com/twitter-image
 ```
+
+## Version 25 Step 5 Production-vs-Preview environment reconciliation
+
+Version 25 Step 5 passed for Vercel with **NO CHANGE** required. The canonical Production hostname is `https://jobfit.cooperrobillard.com`, while `https://internship-fit-gap-analyzer.vercel.app` remains attached as a noncanonical fallback/deployment inspection path during the rollback window. No redirect from the old alias is configured.
+
+| Area | Production | Preview |
+| --- | --- | --- |
+| Clerk key classes | `pk_live` / `sk_live` | `pk_test` / `sk_test` |
+| Authentication expectation | Production authentication on the canonical hostname | Constrained as designed; arbitrary generated Preview URLs are not expected to support Production authentication |
+| Telemetry posture | Production telemetry enabled with the existing privacy-preserving server-side posture | Preview telemetry isolated/constrained; Production telemetry is not used in Preview |
+| Canonical-host expectation | Canonical metadata points to `https://jobfit.cooperrobillard.com` | Preview metadata points to Production canonical URLs where applicable |
+| Old-host expectation | Old Vercel alias remains noncanonical and not a fully authenticated second Production app | Not a replacement for Production authentication |
+| Public route review | Canonical Production public routes are reviewable | Public Preview routes may be reviewed |
+
+Environment-variable changes in Vercel still require a redeployment before they affect a deployed environment. Step 5 did not require any Vercel environment-variable change or Production redeployment. Do not document full key values or fragments in this repository.
