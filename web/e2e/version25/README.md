@@ -34,7 +34,7 @@ Do not run `qa:version25:production` before the exact merged commit is deployed.
 
 ## Cleanup behavior
 
-The manifest at `web/test-results/version25-profile-manifest-<run-id>.json` tracks exact current-run profile IDs and expected owner IDs. Node-only cleanup validates ownership, deletes only exact manifest records, and verifies no current-run IDs remain. Ordinary cleanup never performs broad prefix deletion.
+The manifest at `web/test-results/version25-profile-manifest-<run-id>.json` tracks exact current-run profile IDs and expected owner IDs. Creation-time profile names remain in the manifest as current-run provenance only. Node-only cleanup validates ownership, deletes only exact manifest records by immutable profile ID plus expected owner ID, and verifies those exact IDs no longer remain even if the display name changed during the run. Ordinary cleanup never performs broad prefix deletion.
 
 ## Manual-check boundary
 

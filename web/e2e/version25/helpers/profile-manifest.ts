@@ -7,6 +7,7 @@ export type CreatedProfileRecord = {
   id: string;
   ownerLabel: ProfileOwnerLabel;
   expectedOwnerId: string;
+  /** Creation-time display name used for current-run manifest provenance only. */
   profileName: string;
   createdAt: string;
 };

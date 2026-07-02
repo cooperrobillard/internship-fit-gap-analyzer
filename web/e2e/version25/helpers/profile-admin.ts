@@ -13,10 +13,27 @@ function adminClient(config: QaConfig) {
   });
 }
 
-function assertCurrentRunRecord(config: QaConfig, record: CreatedProfileRecord): void {
-  if (!record.id || !record.expectedOwnerId || !record.profileName.startsWith(`V25 QA ${config.runId} `)) {
+export function assertManifestRecordProvenance(
+  config: QaConfig,
+  record: CreatedProfileRecord,
+): void {
+  if (!record.id || !record.expectedOwnerId) {
+    throw new Error("Refusing to cleanup a profile without exact manifest identity.");
+  }
+  if (!record.profileName.startsWith(`V25 QA ${config.runId} `)) {
     throw new Error("Refusing to cleanup a profile without exact current-run manifest ownership.");
   }
+}
+
+export function resolveManifestOwnerId(
+  record: CreatedProfileRecord,
+  ownerIds: Record<"A" | "B", string>,
+): string {
+  const expectedOwnerId = ownerIds[record.ownerLabel];
+  if (record.expectedOwnerId !== expectedOwnerId) {
+    throw new Error("Profile manifest owner does not match the current Clerk QA owner.");
+  }
+  return expectedOwnerId;
 }
 
 export async function discoverProfileForManifest(input: {
@@ -45,13 +62,17 @@ export async function discoverProfileForManifest(input: {
     profileName: String(data[0].profile_name),
     createdAt: String(data[0].created_at),
   } satisfies CreatedProfileRecord;
-  assertCurrentRunRecord(input.config, record);
+  assertManifestRecordProvenance(input.config, record);
   return record;
 }
 
-export async function cleanupVersion25Profiles(
+type CleanupSupabase = ReturnType<typeof adminClient>;
+
+export async function cleanupVersion25ProfilesWithClient(
   config: QaConfig,
   manifestPath: string,
+  supabase: CleanupSupabase,
+  ownerIds: Record<"A" | "B", string>,
   options: { dryRun?: boolean } = {},
 ): Promise<void> {
   const manifest = readProfileManifest(manifestPath, config.runId);
@@ -60,22 +81,22 @@ export async function cleanupVersion25Profiles(
     return;
   }
 
-  const ownerIds = await resolveClerkUserIds(config);
-  const supabase = adminClient(config);
   let ok = true;
 
   for (const record of manifest.records) {
-    assertCurrentRunRecord(config, record);
-    const expectedOwnerId = ownerIds[record.ownerLabel];
-    if (record.expectedOwnerId !== expectedOwnerId) {
+    assertManifestRecordProvenance(config, record);
+    let expectedOwnerId: string;
+    try {
+      expectedOwnerId = resolveManifestOwnerId(record, ownerIds);
+    } catch {
       throw new Error("Profile manifest owner does not match the current Clerk QA owner.");
     }
+
     const lookup = await supabase
       .from("resume_profiles")
       .select("id, clerk_user_id, profile_name")
       .eq("id", record.id)
       .eq("clerk_user_id", expectedOwnerId)
-      .eq("profile_name", record.profileName)
       .maybeSingle();
     if (lookup.error) {
       ok = false;
@@ -91,8 +112,7 @@ export async function cleanupVersion25Profiles(
       .from("resume_profiles")
       .delete()
       .eq("id", record.id)
-      .eq("clerk_user_id", expectedOwnerId)
-      .eq("profile_name", record.profileName);
+      .eq("clerk_user_id", expectedOwnerId);
     if (deletion.error) ok = false;
   }
 
@@ -102,11 +122,20 @@ export async function cleanupVersion25Profiles(
       .select("id")
       .eq("id", record.id)
       .eq("clerk_user_id", record.expectedOwnerId)
-      .eq("profile_name", record.profileName)
       .maybeSingle();
     if (error || data) ok = false;
   }
 
   saveProfileManifest(manifestPath, { ...manifest, cleanupStatus: ok ? "PASS" : "FAIL" });
   if (!ok) throw new Error("Version 25 structured-profile cleanup verification failed.");
+}
+
+export async function cleanupVersion25Profiles(
+  config: QaConfig,
+  manifestPath: string,
+  options: { dryRun?: boolean } = {},
+): Promise<void> {
+  const ownerIds = await resolveClerkUserIds(config);
+  const supabase = adminClient(config);
+  await cleanupVersion25ProfilesWithClient(config, manifestPath, supabase, ownerIds, options);
 }

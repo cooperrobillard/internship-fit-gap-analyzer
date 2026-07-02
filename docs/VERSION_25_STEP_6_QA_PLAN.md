@@ -43,7 +43,7 @@ The human-readable report is `/tmp/version25-production-verification.md`. Machin
 
 ## Exact cleanup behavior
 
-The suite writes an exact profile manifest containing current-run profile records and expected owners. The Node-only cleanup helper validates ownership, deletes only exact manifest entries, and verifies no current-run IDs remain. Ordinary cleanup does not use broad prefix deletion.
+The suite writes an exact profile manifest containing current-run profile records and expected owners. Creation-time profile names remain as current-run provenance only. The Node-only cleanup helper validates ownership, deletes only exact manifest entries by immutable profile ID plus expected owner ID, and verifies those exact IDs no longer remain even if a profile display name changed during the run. Ordinary cleanup does not use broad prefix deletion.
 
 ## Cleanup dry run
 
