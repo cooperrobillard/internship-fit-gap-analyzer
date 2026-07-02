@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { HOME_DESCRIPTION, SITE_NAME } from "../../src/lib/site-config";
 import { loadQaConfig } from "../version23/helpers/config";
 import { signInQaUserOnPage, switchQaUserOnPage } from "../version23/helpers/auth";
 import { loadClerkQaUserIdsFromEnv } from "../version23/helpers/clerk-precheck";
@@ -102,8 +103,8 @@ test("public metadata and canonical-host verification", async ({ page, request }
   assertMetadataSnapshot({
     metadata: homeMetadata,
     expectedCanonical: EXPECTED_HOME_CANONICAL,
-    expectedTitle: "Job Fit & Skill-Gap Analyzer",
-    expectedDescription: "Rule-based career planning workspace for comparing résumé skills with job descriptions, reviewing skill gaps, and working with structured saved results.",
+    expectedTitle: SITE_NAME,
+    expectedDescription: HOME_DESCRIPTION,
   });
   await page.goto(`${config.baseUrl}/privacy`);
   const privacyMetadata = await metadataSnapshot(page);

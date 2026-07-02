@@ -29,7 +29,8 @@
     "qa:version25:production": "tsx e2e/version25/scripts/run-production.mjs",
     "qa:version25:report": "tsx e2e/version25/scripts/report.mjs",
     "qa:version25:cleanup:dry-run": "tsx e2e/version25/scripts/cleanup.mjs --dry-run",
-    "qa:version25:cleanup": "tsx e2e/version25/scripts/cleanup.mjs"
+    "qa:version25:cleanup": "tsx e2e/version25/scripts/cleanup.mjs",
+    "qa:version25:handoff:regression": "tsx e2e/version25/helpers/artifact-handoff.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.1",

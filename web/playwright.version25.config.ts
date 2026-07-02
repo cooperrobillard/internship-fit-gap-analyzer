@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /(version23\/clerk\.setup|version25\/version25-launch-verification\.spec)\.ts/,
+  outputDir: "test-results/version25-playwright-artifacts",
   fullyParallel: false,
   workers: 1,
   timeout: 240_000,

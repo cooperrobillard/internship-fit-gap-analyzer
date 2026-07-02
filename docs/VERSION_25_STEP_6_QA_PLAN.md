@@ -65,6 +65,18 @@ Stop if the deployed commit is not expected, Render health fails, Clerk QA users
 
 The runner preserves the original failing status even if cleanup or report generation also fails. Required automated output must exist. Missing manual checks remain pending and never become PASS automatically.
 
+## First Step 6B Production run (sanitized)
+
+The first Version 25 Step 6B Production checkpoint on commit `d427d8f501d0d41f5a1f6befa73efdfeaf89bbec` completed exactly once and returned a strict automated **FAIL**:
+
+- exact Vercel Production commit verification, Render health, local preflight, Version 23 browser coverage, and cleanup passed;
+- Version 25 failed because metadata expectations used the global site description instead of the homepage-specific description already served by Production;
+- the Version 25 Playwright handoff removed `test-results/version23-results.json` before consolidated reporting;
+- manual Step 6B checks were not started;
+- portfolio publication remains blocked.
+
+Remediation requires merging the scoped handoff fix, waiting for its exact merged commit to deploy, updating ignored local `QA_EXPECTED_COMMIT`, and rerunning the complete Step 6B checkpoint exactly once. No partial successful result may be promoted into PASS.
+
 ## Rollback-readiness boundary
 
 Rollback readiness is a manual Step 6B review item. This foundation records it as pending only.

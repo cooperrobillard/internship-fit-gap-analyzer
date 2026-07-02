@@ -18,6 +18,7 @@ import {
   extractSitemapUrls,
   normalizeSkillSet,
 } from "./launch-assertions";
+import { HOME_DESCRIPTION, SITE_NAME } from "../../../src/lib/site-config";
 import {
   assertManifestRecordProvenance,
   cleanupVersion25ProfilesWithClient,
@@ -57,20 +58,22 @@ throws(() => assertNoIndex({ robots: "index" }, "/sign-in"), /noindex/);
 
 assertMetadataSnapshot({
   expectedCanonical: EXPECTED_HOME_CANONICAL,
-  expectedTitle: "Job Fit & Skill-Gap Analyzer",
-  expectedDescription: "Description",
+  expectedTitle: SITE_NAME,
+  expectedDescription: HOME_DESCRIPTION,
   metadata: {
     canonical: EXPECTED_HOME_CANONICAL,
-    openGraphTitle: "Job Fit & Skill-Gap Analyzer",
-    openGraphDescription: "Description",
+    openGraphTitle: SITE_NAME,
+    openGraphDescription: HOME_DESCRIPTION,
     openGraphUrl: EXPECTED_HOME_CANONICAL,
     openGraphImage: `${CANONICAL_ORIGIN}/opengraph-image`,
     twitterCard: "summary_large_image",
-    twitterTitle: "Job Fit & Skill-Gap Analyzer",
-    twitterDescription: "Description",
+    twitterTitle: SITE_NAME,
+    twitterDescription: HOME_DESCRIPTION,
     twitterImage: `${CANONICAL_ORIGIN}/twitter-image`,
   },
 });
+
+assert.notEqual(HOME_DESCRIPTION, "Rule-based career planning workspace for comparing résumé skills with job descriptions, reviewing skill gaps, and working with structured saved results.");
 
 assert.deepEqual(normalizeSkillSet([" Excel ", "excel", "Logistics"]), ["excel", "logistics"]);
 assertExactSkillSets({
