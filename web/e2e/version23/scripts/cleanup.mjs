@@ -23,8 +23,15 @@ if (dryRun && stale) {
 }
 
 if (dryRun) {
-  await cleanupCurrentRun(config, { dryRun: true });
-  process.exit(0);
+  const { remainingCount } = await cleanupCurrentRun(config, { dryRun: true });
+  if (remainingCount === 0) {
+    console.log("Version 23 cleanup verification passed: no current-run records remain.");
+    process.exit(0);
+  }
+  console.log(
+    `Dry run: ${remainingCount} exact current-run record(s) remain and would be deleted.`,
+  );
+  process.exit(1);
 }
 
 if (stale) {

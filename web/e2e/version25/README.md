@@ -60,6 +60,8 @@ The first Version 25 Step 6B Production checkpoint on commit `d427d8f501d0d41f5a
 
 Remediation centralizes the existing homepage metadata description as `HOME_DESCRIPTION`, isolates Version 25 Playwright artifacts from `test-results/version23-results.json`, and adds explicit artifact guards in the combined runner. After remediation merges and deploys, rerun the complete Step 6B checkpoint from the beginning exactly once.
 
+The second Step 6B run returned strict FAIL after those fixes passed. The homepage page-level Twitter metadata omitted the required large-image card, and Version 23 cleanup dry-run falsely counted retained manifest entries instead of querying exact current-run Production rows. Manual checks were not started. A follow-up remediation adds the explicit Twitter card and makes dry-run verify actual database residuals while preserving the manifest for audit.
+
 ## Next phase
 
 Version 25 Step 6B — Production execution and human verification.

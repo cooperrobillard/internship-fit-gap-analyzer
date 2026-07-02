@@ -3,7 +3,13 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
-import { SITE_DESCRIPTION, SITE_LOCALE, SITE_NAME, SITE_URL } from "@/lib/site-config";
+import {
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_URL,
+  TWITTER_CARD,
+} from "@/lib/site-config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +38,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   twitter: {
-    card: "summary_large_image",
+    card: TWITTER_CARD,
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },

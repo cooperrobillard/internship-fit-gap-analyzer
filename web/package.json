@@ -23,6 +23,7 @@
     "qa:version23:report": "tsx e2e/version23/scripts/report.mjs",
     "qa:version23:cleanup:dry-run": "tsx e2e/version23/scripts/cleanup.mjs --dry-run",
     "qa:version23:cleanup": "tsx e2e/version23/scripts/cleanup.mjs",
+    "qa:version23:cleanup:regression": "tsx e2e/version23/scripts/cleanup-verification-regression.mjs",
     "qa:version23:cleanup:stale": "tsx e2e/version23/scripts/cleanup.mjs --stale",
     "qa:version25:setup": "playwright install chromium",
     "qa:version25:launch": "playwright test --config=playwright.version25.config.ts --project=version25-launch",

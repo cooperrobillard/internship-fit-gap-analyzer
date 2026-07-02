@@ -18,7 +18,7 @@ import {
   extractSitemapUrls,
   normalizeSkillSet,
 } from "./launch-assertions";
-import { HOME_DESCRIPTION, SITE_NAME } from "../../../src/lib/site-config";
+import { HOME_DESCRIPTION, SITE_NAME, TWITTER_CARD } from "../../../src/lib/site-config";
 import {
   assertManifestRecordProvenance,
   cleanupVersion25ProfilesWithClient,
@@ -66,7 +66,7 @@ assertMetadataSnapshot({
     openGraphDescription: HOME_DESCRIPTION,
     openGraphUrl: EXPECTED_HOME_CANONICAL,
     openGraphImage: `${CANONICAL_ORIGIN}/opengraph-image`,
-    twitterCard: "summary_large_image",
+    twitterCard: TWITTER_CARD,
     twitterTitle: SITE_NAME,
     twitterDescription: HOME_DESCRIPTION,
     twitterImage: `${CANONICAL_ORIGIN}/twitter-image`,
