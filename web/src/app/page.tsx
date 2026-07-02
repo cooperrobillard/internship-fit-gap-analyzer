@@ -3,26 +3,22 @@ import { Show } from "@clerk/nextjs";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LandingAnalysisPreview } from "@/components/landing-analysis-preview";
-import { absoluteSiteUrl, SITE_NAME } from "@/lib/site-config";
-
-
-const homeDescription =
-  "Compare résumé skills with job descriptions, review explicit matched and missing skills, and save structured results in a rule-based career planning workspace.";
+import { absoluteSiteUrl, HOME_DESCRIPTION, SITE_NAME } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: { absolute: SITE_NAME },
-  description: homeDescription,
+  description: HOME_DESCRIPTION,
   alternates: {
     canonical: absoluteSiteUrl("/"),
   },
   openGraph: {
     title: SITE_NAME,
-    description: homeDescription,
+    description: HOME_DESCRIPTION,
     url: absoluteSiteUrl("/"),
   },
   twitter: {
     title: SITE_NAME,
-    description: homeDescription,
+    description: HOME_DESCRIPTION,
   },
 };
 

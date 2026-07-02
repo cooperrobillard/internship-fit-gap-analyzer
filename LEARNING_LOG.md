@@ -3965,3 +3965,11 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Added a separate Version 25 Playwright launch-verification foundation that preserves the existing Version 23 Production QA suite as the first gate.
 - Documented that Step 6B is the next phase for Production execution and human verification, including manual accessibility, authentication, observability, monitoring, cleanup, and rollback-readiness checks.
 - Added exact structured-profile cleanup planning with Node-only elevated access and sanitized reporting boundaries.
+
+## Version 25 Step 6B remediation — metadata and artifact handoff
+
+- The first Step 6B Production run on commit `d427d8f501d0d41f5a1f6befa73efdfeaf89bbec` returned a strict automated FAIL after one complete run; manual checks were not started.
+- Root cause 1: Version 25 metadata expectations used the global `SITE_DESCRIPTION` instead of the homepage-specific description already served by Production.
+- Root cause 2: Version 25 Playwright reused the default `test-results` output directory and cleared `version23-results.json` before consolidated reporting.
+- Remediation centralizes the existing homepage copy as `HOME_DESCRIPTION`, isolates Version 25 Playwright artifacts, and adds explicit Version 23 JSON guards in the combined runner without changing public metadata wording or application behavior.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT` and rerun the complete Step 6B checkpoint exactly once.

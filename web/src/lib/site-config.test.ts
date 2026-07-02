@@ -1,9 +1,29 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
-import { absoluteSiteUrl, SITE_ORIGIN, SITE_URL } from "./site-config";
+import {
+  absoluteSiteUrl,
+  HOME_DESCRIPTION,
+  SITE_DESCRIPTION,
+  SITE_ORIGIN,
+  SITE_URL,
+} from "./site-config";
+
+const webRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const homepageSource = readFileSync(join(webRoot, "app/page.tsx"), "utf8");
+
+test("canonical site origin is fixed to the Production custom hostname", () => {
+  assert.equal(SITE_ORIGIN, "https://jobfit.cooperrobillard.com");
+  assert.equal(SITE_URL.protocol, "https:");
+  assert.equal(SITE_URL.pathname, "/");
+  assert.equal(SITE_URL.search, "");
+  assert.equal(SITE_URL.hash, "");
+});
 
 const forbiddenHostFragments = [
   "internship-fit-gap-analyzer.vercel.app",
@@ -13,12 +33,22 @@ const forbiddenHostFragments = [
   "*",
 ];
 
-test("canonical site origin is fixed to the Production custom hostname", () => {
-  assert.equal(SITE_ORIGIN, "https://jobfit.cooperrobillard.com");
-  assert.equal(SITE_URL.protocol, "https:");
-  assert.equal(SITE_URL.pathname, "/");
-  assert.equal(SITE_URL.search, "");
-  assert.equal(SITE_URL.hash, "");
+test("HOME_DESCRIPTION is the shared homepage metadata source", () => {
+  assert.ok(HOME_DESCRIPTION.length > 0);
+  assert.equal(
+    HOME_DESCRIPTION,
+    "Compare résumé skills with job descriptions, review explicit matched and missing skills, and save structured results in a rule-based career planning workspace.",
+  );
+  assert.notEqual(HOME_DESCRIPTION, SITE_DESCRIPTION);
+});
+
+test("homepage metadata source uses HOME_DESCRIPTION for all public descriptions", () => {
+  assert.match(homepageSource, /import \{[^}]*HOME_DESCRIPTION[^}]*\} from "@\/lib\/site-config"/);
+  assert.match(homepageSource, /description: HOME_DESCRIPTION/);
+  assert.match(homepageSource, /openGraph:\s*\{[\s\S]*description: HOME_DESCRIPTION/);
+  assert.match(homepageSource, /twitter:\s*\{[\s\S]*description: HOME_DESCRIPTION/);
+  assert.equal(homepageSource.includes("homeDescription"), false);
+  assert.equal(homepageSource.includes("SITE_NAME"), true);
 });
 
 test("absoluteSiteUrl resolves supported public metadata paths canonically", () => {

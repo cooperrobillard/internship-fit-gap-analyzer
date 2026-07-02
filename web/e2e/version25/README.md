@@ -48,6 +48,18 @@ Stop if credentials are missing, the deployed commit is not the expected commit,
 
 The runner preserves the first failing automated status even if fallback cleanup or report generation also fails. Report generation must not turn pending manual checks into PASS.
 
+## First Step 6B Production run (sanitized)
+
+The first Version 25 Step 6B Production checkpoint on commit `d427d8f501d0d41f5a1f6befa73efdfeaf89bbec` completed exactly once and returned a strict automated **FAIL**:
+
+- deployment verification, preflight, Version 23 browser coverage, and cleanup passed;
+- Version 25 failed on homepage metadata expectations;
+- the combined runner lost the Version 23 JSON machine artifact during the Version 25 Playwright handoff;
+- manual Step 6B checks were not started;
+- no partial result may be promoted to PASS.
+
+Remediation centralizes the existing homepage metadata description as `HOME_DESCRIPTION`, isolates Version 25 Playwright artifacts from `test-results/version23-results.json`, and adds explicit artifact guards in the combined runner. After remediation merges and deploys, rerun the complete Step 6B checkpoint from the beginning exactly once.
+
 ## Next phase
 
 Version 25 Step 6B — Production execution and human verification.
