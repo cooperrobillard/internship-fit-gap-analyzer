@@ -3959,3 +3959,9 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 ### Next step
 
 * Version 25 Step 6 — complete canonical-host Production verification and synthetic Playwright QA before any portfolio publication.
+
+## Version 25 Step 6A — Production launch-verification QA foundation
+
+- Added a separate Version 25 Playwright launch-verification foundation that preserves the existing Version 23 Production QA suite as the first gate.
+- Documented that Step 6B is the next phase for Production execution and human verification, including manual accessibility, authentication, observability, monitoring, cleanup, and rollback-readiness checks.
+- Added exact structured-profile cleanup planning with Node-only elevated access and sanitized reporting boundaries.
