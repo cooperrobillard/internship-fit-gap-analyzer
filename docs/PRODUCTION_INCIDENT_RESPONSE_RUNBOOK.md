@@ -233,3 +233,15 @@ Use `not confirmed` for root cause when evidence does not prove a cause.
 ## 33. Scheduled operational review
 
 At each production checkpoint or before broader public launch, review: monitor state, alert rules, notification path, kill-switch readiness, rollback targets, Sentry redaction, provider commit identity, documented limitations, and whether any new feature changed the privacy boundary.
+
+## Version 25 Step 5 monitor triage update
+
+Current UptimeRobot frontend/backend triage distinguishes three monitors:
+
+| Monitor | Target | What it helps isolate |
+| --- | --- | --- |
+| `Job Fit Analyzer — Canonical Frontend` | `https://jobfit.cooperrobillard.com/` | Canonical public frontend reachability, custom-host HTTP/TLS availability, and user-facing homepage availability. |
+| `Job Fit Analyzer — Vercel Fallback` | `https://internship-fit-gap-analyzer.vercel.app/` | Whether the Vercel deployment is reachable through the preserved old alias when the canonical hostname has a suspected DNS/custom-host issue. This is a noncanonical fallback/deployment inspection path, not a fully authenticated second Production app. |
+| `Job Fit Analyzer — Backend Health` | `https://internship-fit-gap-analyzer.onrender.com/health` | Render backend service health independent of frontend routing and Clerk authentication. |
+
+If the canonical frontend monitor alerts but the Vercel fallback monitor remains healthy, prioritize custom-host, DNS, certificate, or canonical-host routing investigation before assuming the Vercel deployment itself is down. If both frontend monitors are healthy but analysis fails, check the backend health monitor and the same-origin Next.js `/api/analyze` proxy path. Preserve the existing privacy and incident-response boundaries: do not expose secrets, tokens, SQL errors, stack traces, request bodies, cookies, headers, user context, raw resume text, raw job-description text, or raw logs during triage.

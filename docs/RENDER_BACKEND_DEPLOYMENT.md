@@ -140,3 +140,11 @@ Then set **`ANALYSIS_API_URL`** on Vercel to `https://YOUR_RENDER_SERVICE_URL` (
 ## Next steps
 
 After the API is live: deploy the Next.js app on Vercel, configure Clerk and Supabase, and run the full hosted flow checklist in [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md).
+
+## Version 25 Step 5 CORS and health reconciliation
+
+Version 25 Step 5 passed for Render with **NO CHANGE** required. The Production browser analysis path is same-origin through the Next.js `POST /api/analyze` route on the frontend host. The Next.js server then calls Render FastAPI server-to-server.
+
+Because the browser does not call Render directly in the Production analysis flow, the canonical frontend hostname `https://jobfit.cooperrobillard.com` does not need to be added to Render CORS solely because the public frontend hostname changed. The verified `ALLOWED_ORIGINS` classification is explicit and nonwildcard, and no wildcard CORS behavior was found.
+
+The Render backend hostname and runtime remain unchanged. The `https://internship-fit-gap-analyzer.onrender.com/health` endpoint remains the backend availability monitor target (`Job Fit Analyzer — Backend Health`).
