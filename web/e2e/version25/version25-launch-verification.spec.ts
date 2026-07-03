@@ -127,11 +127,14 @@ test("public metadata and canonical-host verification", async ({ page, request }
     assertNoIndex(await metadataSnapshot(page), route);
   }
 
-  const oldHostResponse = await request.get(`${OLD_VERCEL_ORIGIN}/`);
-  expect(oldHostResponse.ok()).toBeTruthy();
-  const oldHostHtml = await oldHostResponse.text();
-  expect(oldHostHtml).toContain(`href="${EXPECTED_HOME_CANONICAL}"`);
-  expect(oldHostHtml).not.toMatch(/localhost|127\.0\.0\.1|\.vercel\.app|\*\./i);
+  const oldHostResponse = await page.goto(`${OLD_VERCEL_ORIGIN}/`);
+  expect(oldHostResponse?.ok()).toBeTruthy();
+
+  const oldHostMetadata = await metadataSnapshot(page);
+
+  assertCanonicalUrl(oldHostMetadata.canonical, EXPECTED_HOME_CANONICAL);
+
+  assertCanonicalUrl(oldHostMetadata.openGraphUrl, EXPECTED_HOME_CANONICAL);
 });
 
 test("authentication and session boundary", async ({ page, context }) => {

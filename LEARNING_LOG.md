@@ -3989,3 +3989,11 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Remaining blocker: exact sitemap root-format mismatch — the shared `absoluteSiteUrl("/")` helper removed the trailing slash while the Version 25 canonical contract requires `https://jobfit.cooperrobillard.com/`.
 - Remediation preserves the root slash in the shared helper, aligns sitemap and homepage metadata on one canonical root representation, and leaves `SITE_ORIGIN` and `robots.host` unchanged.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 4 — root metadata serialization boundary
+
+- The fourth Step 6B Production run on commit `4a0370cdf8cb6eca39192bab2042cb051087dfe1` (run ID `20260703214518-id1jwg`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; both cleanup paths and both post-run dry runs passed; sitemap remediation verified live with the trailing-slash root.
+- Remaining blocker: the old-host verification used a raw exact-slash HTML substring that bypassed the existing semantic canonical normalizer while Next.js 16.2.9 renders queryless root canonical and `og:url` as the origin form.
+- Remediation is QA-only: old-host verification now uses browser metadata extraction plus `assertCanonicalUrl()`; the exact sitemap contract remains unchanged.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

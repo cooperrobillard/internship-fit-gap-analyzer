@@ -57,6 +57,8 @@ export function normalizeCanonical(value: string): string {
   if (parsed.origin !== CANONICAL_ORIGIN) {
     return parsed.toString();
   }
+  // Next.js 16.2.9 serializes an absolute queryless root URL as its origin; normalize
+  // both equivalent HTML forms to the slash-root canonical representation.
   if (parsed.pathname === "/") {
     return `${CANONICAL_ORIGIN}/`;
   }

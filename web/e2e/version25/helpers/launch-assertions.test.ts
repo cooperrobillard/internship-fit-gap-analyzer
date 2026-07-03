@@ -42,6 +42,7 @@ assertCanonicalBaseUrl(CANONICAL_ORIGIN);
 throws(() => assertCanonicalBaseUrl("https://internship-fit-gap-analyzer.vercel.app"), /QA_BASE_URL/);
 
 assertCanonicalUrl("https://jobfit.cooperrobillard.com/", EXPECTED_HOME_CANONICAL);
+assertCanonicalUrl("https://jobfit.cooperrobillard.com", EXPECTED_HOME_CANONICAL);
 assertCanonicalUrl("https://jobfit.cooperrobillard.com/privacy/", EXPECTED_PRIVACY_CANONICAL);
 throws(() => assertCanonicalUrl("https://localhost:3000/", EXPECTED_HOME_CANONICAL), /Unexpected canonical/);
 
@@ -65,6 +66,23 @@ assertMetadataSnapshot({
     openGraphTitle: SITE_NAME,
     openGraphDescription: HOME_DESCRIPTION,
     openGraphUrl: EXPECTED_HOME_CANONICAL,
+    openGraphImage: `${CANONICAL_ORIGIN}/opengraph-image`,
+    twitterCard: TWITTER_CARD,
+    twitterTitle: SITE_NAME,
+    twitterDescription: HOME_DESCRIPTION,
+    twitterImage: `${CANONICAL_ORIGIN}/twitter-image`,
+  },
+});
+
+assertMetadataSnapshot({
+  expectedCanonical: EXPECTED_HOME_CANONICAL,
+  expectedTitle: SITE_NAME,
+  expectedDescription: HOME_DESCRIPTION,
+  metadata: {
+    canonical: CANONICAL_ORIGIN,
+    openGraphTitle: SITE_NAME,
+    openGraphDescription: HOME_DESCRIPTION,
+    openGraphUrl: CANONICAL_ORIGIN,
     openGraphImage: `${CANONICAL_ORIGIN}/opengraph-image`,
     twitterCard: TWITTER_CARD,
     twitterTitle: SITE_NAME,

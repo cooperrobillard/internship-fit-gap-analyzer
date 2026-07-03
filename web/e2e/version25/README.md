@@ -64,6 +64,8 @@ The second Step 6B run returned strict FAIL after those fixes passed. The homepa
 
 The third Step 6B run returned strict FAIL after those remediations passed. Version 23 automation, cleanup, and machine-artifact handoff passed. Version 25 stopped at exact sitemap verification because `absoluteSiteUrl("/")` emitted the homepage without a trailing slash while the launch canonical contract requires the slash root. Manual checks were not started. Follow-up remediation standardizes the shared helper and sitemap expectations on `https://jobfit.cooperrobillard.com/` without changing visible page copy.
 
+The fourth Step 6B run on commit `4a0370cdf8cb6eca39192bab2042cb051087dfe1` (run ID `20260703214518-id1jwg`) returned strict FAIL after that sitemap remediation deployed live. Version 23 passed 17/17; both cleanup paths and both post-run dry runs passed. Version 25 failed in the first serial spec because the old-host check used a raw exact-slash HTML substring while Next.js 16.2.9 renders queryless root canonical and `og:url` as the origin form. The remaining five Version 25 specs were skipped; manual checks were not started; Step 6C was not created; the suite was not rerun. Follow-up remediation is QA-only: use the existing semantic canonical normalizer for old-host browser metadata instead of weakening the exact sitemap contract.
+
 ## Next phase
 
 Version 25 Step 6B — Production execution and human verification.
