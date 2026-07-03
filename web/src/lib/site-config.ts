@@ -22,7 +22,7 @@ export function absoluteSiteUrl(path: string): string {
   const url = new URL(path, SITE_URL);
 
   if (url.pathname === "/") {
-    return `${url.origin}/`;
+    return `${url.origin}/${url.search}${url.hash}`;
   }
 
   return `${url.origin}${url.pathname.replace(/\/$/, "")}${url.search}${url.hash}`;
