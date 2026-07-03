@@ -3981,3 +3981,11 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Remaining blockers: homepage Twitter card omitted at the page metadata layer; Version 23 cleanup dry-run counted manifest entries instead of querying exact current-run Production rows.
 - Remediation adds shared `TWITTER_CARD` / `HOME_TWITTER_METADATA`, makes dry-run verify actual database residuals, and preserves the manifest as local audit evidence.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 3 — canonical homepage sitemap URL
+
+- The third Step 6B Production run returned a strict automated FAIL; manual checks were not started.
+- Version 23 automation, cleanup, and machine-artifact handoff passed; prior metadata, artifact-handoff, Twitter-card, and cleanup-verification fixes passed.
+- Remaining blocker: exact sitemap root-format mismatch — the shared `absoluteSiteUrl("/")` helper removed the trailing slash while the Version 25 canonical contract requires `https://jobfit.cooperrobillard.com/`.
+- Remediation preserves the root slash in the shared helper, aligns sitemap and homepage metadata on one canonical root representation, and leaves `SITE_ORIGIN` and `robots.host` unchanged.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

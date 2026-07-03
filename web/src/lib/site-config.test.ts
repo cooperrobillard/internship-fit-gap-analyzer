@@ -69,10 +69,22 @@ test("homepage metadata source uses HOME_DESCRIPTION for all public descriptions
 });
 
 test("absoluteSiteUrl resolves supported public metadata paths canonically", () => {
-  assert.equal(absoluteSiteUrl("/"), "https://jobfit.cooperrobillard.com");
+  assert.equal(absoluteSiteUrl("/"), "https://jobfit.cooperrobillard.com/");
   assert.equal(absoluteSiteUrl("/privacy"), "https://jobfit.cooperrobillard.com/privacy");
+  assert.equal(absoluteSiteUrl("/privacy/"), "https://jobfit.cooperrobillard.com/privacy");
+  assert.equal(
+    absoluteSiteUrl("/privacy?source=qa#controls"),
+    "https://jobfit.cooperrobillard.com/privacy?source=qa#controls",
+  );
   assert.equal(absoluteSiteUrl("/sitemap.xml"), "https://jobfit.cooperrobillard.com/sitemap.xml");
   assert.equal(absoluteSiteUrl("/robots.txt"), "https://jobfit.cooperrobillard.com/robots.txt");
+});
+
+test("homepage canonical and Open Graph URLs use the trailing-slash root", () => {
+  const root = absoluteSiteUrl("/");
+  assert.equal(root, "https://jobfit.cooperrobillard.com/");
+  assert.equal(homepageMetadata.alternates?.canonical, root);
+  assert.equal(homepageMetadata.openGraph?.url, root);
 });
 
 test("absoluteSiteUrl cannot emit old, local, Preview, or wildcard hosts", () => {
@@ -89,7 +101,7 @@ test("sitemap contains exactly the canonical public indexable routes", () => {
   const entries = sitemap();
   const urls = entries.map((entry) => entry.url);
 
-  assert.deepEqual(urls, ["https://jobfit.cooperrobillard.com", "https://jobfit.cooperrobillard.com/privacy"]);
+  assert.deepEqual(urls, ["https://jobfit.cooperrobillard.com/", "https://jobfit.cooperrobillard.com/privacy"]);
   assert.equal(entries.length, 2);
   assert.equal(urls.some((url) => url.includes("/dashboard")), false);
   assert.equal(urls.some((url) => url.includes("/sign-in")), false);
