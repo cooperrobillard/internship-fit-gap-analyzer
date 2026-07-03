@@ -3997,3 +3997,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Remaining blocker: the old-host verification used a raw exact-slash HTML substring that bypassed the existing semantic canonical normalizer while Next.js 16.2.9 renders queryless root canonical and `og:url` as the origin form.
 - Remediation is QA-only: old-host verification now uses browser metadata extraction plus `assertCanonicalUrl()`; the exact sitemap contract remains unchanged.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 5 — Clerk UserButton sign-out selector
+
+- The fifth Step 6B Production run on commit `93b02b63c71450b33503c66fb70d135e649177c0` (run ID `20260703221025-lmlq6y`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup and public metadata/canonical-host verification passed.
+- Remaining blocker: authentication and session boundary timed out waiting for a `menuitem` named Sign out while Clerk renders that action as a button in the UserButton popover.
+- The remaining four Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: sign-out now uses Clerk's UserButton trigger, popover, and button-role selector contract.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

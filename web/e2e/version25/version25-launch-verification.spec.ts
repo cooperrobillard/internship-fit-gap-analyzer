@@ -51,6 +51,21 @@ async function metadataSnapshot(page: Page): Promise<MetadataSnapshot> {
   });
 }
 
+async function signOutViaUserButton(page: Page): Promise<void> {
+  const trigger = page.locator(".cl-userButtonTrigger");
+  await expect(trigger).toBeVisible({ timeout: 30_000 });
+  await trigger.click();
+
+  const popover = page.locator(".cl-userButtonPopoverCard");
+  await expect(popover).toBeVisible({ timeout: 30_000 });
+
+  const signOutButton = popover.getByRole("button", {
+    name: /^sign out$/i,
+  });
+  await expect(signOutButton).toBeVisible({ timeout: 30_000 });
+  await signOutButton.click();
+}
+
 async function assertNoHorizontalOverflow(page: Page): Promise<void> {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
@@ -150,9 +165,7 @@ test("authentication and session boundary", async ({ page, context }) => {
   await secondPage.goto(`${config.baseUrl}/dashboard/saved`);
   await expect(secondPage.getByRole("heading", { name: /saved analyses/i })).toBeVisible({ timeout: 30_000 });
   await secondPage.close();
-  await expect(page.getByRole("button", { name: /user|account|open user/i }).first()).toBeVisible();
-  await page.getByRole("button", { name: /user|account|open user/i }).first().click();
-  await page.getByRole("menuitem", { name: /sign out/i }).click();
+  await signOutViaUserButton(page);
   await page.goto(`${config.baseUrl}/dashboard`);
   await expect(page).toHaveURL(/sign-in|sign-in\//, { timeout: 30_000 });
 });

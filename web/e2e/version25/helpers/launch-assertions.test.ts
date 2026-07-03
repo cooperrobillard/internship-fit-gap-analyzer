@@ -33,6 +33,7 @@ import type { QaConfig } from "../../version23/helpers/config";
 
 const helperDir = dirname(fileURLToPath(import.meta.url));
 const profileAdminSource = readFileSync(resolve(helperDir, "profile-admin.ts"), "utf8");
+const launchSpecSource = readFileSync(resolve(helperDir, "../version25-launch-verification.spec.ts"), "utf8");
 
 function throws(fn: () => void, message: RegExp) {
   assert.throws(fn, message);
@@ -102,6 +103,18 @@ throws(() => assertExactSkillSets({ matched: ["excel"], missing: ["excel"] }), /
 
 assertSafeUiText("Analysis complete with structured skills.");
 throws(() => assertSafeUiText("Authorization: Bearer abc.def"), /Unsafe UI text/);
+
+assert(
+  !launchSpecSource.includes('getByRole("menuitem", { name: /sign out/i })'),
+  "launch spec must not use obsolete Clerk Sign out menuitem locator",
+);
+assert(launchSpecSource.includes(".cl-userButtonTrigger"), "launch spec must target Clerk UserButton trigger");
+assert(launchSpecSource.includes(".cl-userButtonPopoverCard"), "launch spec must target Clerk UserButton popover");
+assert(
+  launchSpecSource.includes('getByRole("button"') && launchSpecSource.includes("/^sign out$/i"),
+  "launch spec must use button role with exact-ending Sign out pattern",
+);
+assert(launchSpecSource.includes("signOutViaUserButton"), "launch spec must centralize UserButton sign-out flow");
 
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
