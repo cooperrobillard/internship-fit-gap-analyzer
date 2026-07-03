@@ -70,6 +70,10 @@ test("homepage metadata source uses HOME_DESCRIPTION for all public descriptions
 
 test("absoluteSiteUrl resolves supported public metadata paths canonically", () => {
   assert.equal(absoluteSiteUrl("/"), "https://jobfit.cooperrobillard.com/");
+  assert.equal(
+    absoluteSiteUrl("/?source=qa#controls"),
+    "https://jobfit.cooperrobillard.com/?source=qa#controls",
+  );
   assert.equal(absoluteSiteUrl("/privacy"), "https://jobfit.cooperrobillard.com/privacy");
   assert.equal(absoluteSiteUrl("/privacy/"), "https://jobfit.cooperrobillard.com/privacy");
   assert.equal(
