@@ -79,6 +79,8 @@ Remediation requires merging the scoped handoff fix, waiting for its exact merge
 
 The second Step 6B run returned strict FAIL after the handoff remediation passed. The homepage Twitter card remained incorrect because the page-level metadata object omitted the card, and Version 23 cleanup dry-run produced a false positive by counting retained manifest entries instead of querying exact current-run Production rows. Manual checks were not started. Follow-up remediation adds the explicit Twitter card, preserves the manifest for audit, and makes dry-run verify actual exact current-run database residuals.
 
+The third Step 6B run returned strict FAIL after those remediations passed. Version 23 automation, cleanup, and machine-artifact handoff passed. Version 25 stopped at exact sitemap verification because the application helper emitted the homepage URL without a trailing slash while the launch canonical contract requires `https://jobfit.cooperrobillard.com/`. Manual checks were not started. Follow-up remediation standardizes the shared `absoluteSiteUrl("/")` helper and sitemap expectations on the trailing-slash root without changing visible page copy.
+
 ## Rollback-readiness boundary
 
 Rollback readiness is a manual Step 6B review item. This foundation records it as pending only.

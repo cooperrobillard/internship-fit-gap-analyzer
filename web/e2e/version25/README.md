@@ -62,6 +62,8 @@ Remediation centralizes the existing homepage metadata description as `HOME_DESC
 
 The second Step 6B run returned strict FAIL after those fixes passed. The homepage page-level Twitter metadata omitted the required large-image card, and Version 23 cleanup dry-run falsely counted retained manifest entries instead of querying exact current-run Production rows. Manual checks were not started. A follow-up remediation adds the explicit Twitter card and makes dry-run verify actual database residuals while preserving the manifest for audit.
 
+The third Step 6B run returned strict FAIL after those remediations passed. Version 23 automation, cleanup, and machine-artifact handoff passed. Version 25 stopped at exact sitemap verification because `absoluteSiteUrl("/")` emitted the homepage without a trailing slash while the launch canonical contract requires the slash root. Manual checks were not started. Follow-up remediation standardizes the shared helper and sitemap expectations on `https://jobfit.cooperrobillard.com/` without changing visible page copy.
+
 ## Next phase
 
 Version 25 Step 6B — Production execution and human verification.
