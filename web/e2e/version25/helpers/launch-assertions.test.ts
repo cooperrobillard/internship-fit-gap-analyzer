@@ -607,6 +607,305 @@ assert(
   "createProfile must retain exact cleanup-manifest registration",
 );
 
+const structuredProfileTestSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    'test("structured profile CRUD, use, and two-user isolation"',
+  ),
+  launchSpecSource.indexOf(
+    'test("cross-route responsive smoke checks"',
+  ),
+);
+assert(
+  structuredProfileTestSource.includes(
+    'getByRole("radio", {',
+  ) &&
+    structuredProfileTestSource.includes(
+      'name: "Saved profile"',
+    ) &&
+    structuredProfileTestSource.includes(
+      "exact: true",
+    ),
+  "structured profile test must locate Saved profile radio by exact role and name",
+);
+assert(
+  structuredProfileTestSource.includes(
+    'getByRole("combobox", {',
+  ) &&
+    structuredProfileTestSource.includes(
+      'name: "Saved profile"',
+    ),
+  "structured profile test must locate Saved profile select by combobox role with exact name",
+);
+assert(
+  !structuredProfileTestSource.includes('getByLabel("Saved profile")'),
+  "structured profile test must not use ambiguous getByLabel for Saved profile select",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "const profileSourceDetails = page",
+  ) &&
+    structuredProfileTestSource.includes(
+      '"Profile source details"',
+    ),
+  "structured profile test must scope selected preview through profileSourceDetails",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "selectedProfilePreview.getByText(userAProfileNameEdited",
+  ),
+  "structured profile test must assert edited profile name inside selectedProfilePreview",
+);
+assert(
+  structuredProfileTestSource.includes(
+    'profileSourceDetails.getByText(\n      "Manual entry · structured profile data only."',
+  ) ||
+    structuredProfileTestSource.includes(
+      '"Manual entry · structured profile data only."',
+    ),
+  "structured profile test must assert structured-profile source text inside profileSourceDetails",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "const editProfileForm = page",
+  ) &&
+    structuredProfileTestSource.includes(
+      'name: "Edit profile"',
+    ),
+  "structured profile test must scope edit interactions through editProfileForm",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "await expect(editProfileForm).toHaveCount(1)",
+  ),
+  "structured profile test must assert exactly one edit form",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "editProfileForm.getByLabel(",
+  ) &&
+    structuredProfileTestSource.includes(
+      "editProfileForm.getByRole(",
+    ),
+  "structured profile test must perform edit interactions inside editProfileForm",
+);
+assert(
+  structuredProfileTestSource.includes("Profile updated."),
+  "structured profile test must retain Profile updated confirmation",
+);
+assert(
+  structuredProfileTestSource.includes(
+    "name: userAProfileNameEdited, exact: true",
+  ),
+  "structured profile test must assert edited heading with exact matching",
+);
+assert(
+  structuredProfileTestSource.includes(
+    'getByLabel(/resume information/i)',
+  ) &&
+    structuredProfileTestSource.includes("toHaveCount(0)"),
+  "structured profile test must retain absent pasted résumé field check in saved-profile mode",
+);
+assert(
+  !structuredProfileTestSource.match(/\.(first|last|nth)\(/),
+  "structured profile test must not use positional locators",
+);
+assert(
+  !structuredProfileTestSource.includes("force: true") &&
+    !structuredProfileTestSource.includes("waitForTimeout") &&
+    !structuredProfileTestSource.includes("xpath=") &&
+    !structuredProfileTestSource.includes("getByTestId") &&
+    !structuredProfileTestSource.includes("dispatchEvent") &&
+    !structuredProfileTestSource.match(/locator\(\s*["']\.[a-zA-Z_-]/),
+  "structured profile test must not use forced, XPath, test-ID, class, or arbitrary-wait shortcuts",
+);
+
+const deleteProfileHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    "async function deleteProfileViaUi",
+  ),
+  launchSpecSource.indexOf(
+    "function skillListSection(",
+  ),
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "await expect(profileButton).toHaveCount(1)",
+  ),
+  "deleteProfileViaUi must assert exactly one profile selection button",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "selectedProfileDetail.getByRole(\"button\"",
+  ) &&
+    deleteProfileHelperSource.includes(
+      "name: /^delete$/i",
+    ),
+  "deleteProfileViaUi must scope Delete to selected profile detail controls",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "await expect(deleteButton).toHaveCount(1)",
+  ),
+  "deleteProfileViaUi must assert exactly one Delete button in selected profile detail",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "selectedProfileDetail.getByRole(\"button\"",
+  ) &&
+    deleteProfileHelperSource.includes(
+      "name: /^delete profile$/i",
+    ),
+  "deleteProfileViaUi must scope Delete profile to selected profile detail confirmation",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "await expect(deleteProfileButton).toHaveCount(1)",
+  ),
+  "deleteProfileViaUi must assert exactly one Delete profile confirmation button",
+);
+assert(
+  deleteProfileHelperSource.includes("Profile deleted."),
+  "deleteProfileViaUi must retain Profile deleted confirmation",
+);
+assert(
+  !deleteProfileHelperSource.match(/\.(first|last|nth)\(/),
+  "deleteProfileViaUi must not use positional locators",
+);
+
+const profileLauncherHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    "async function createProfile",
+  ),
+  launchSpecSource.indexOf(
+    "async function deleteProfileViaUi",
+  ),
+);
+assert(
+  profileLauncherHelperSource.includes(
+    "const profileLauncher = page.getByRole(\"button\"",
+  ) &&
+    profileLauncherHelperSource.includes(
+      "/^(?:new profile|create profile)$/i",
+    ),
+  "createProfile must use anchored exact profile launcher pattern",
+);
+assert(
+  profileLauncherHelperSource.includes(
+    "await expect(profileLauncher).toHaveCount(1)",
+  ),
+  "createProfile must assert exactly one profile launcher",
+);
+assert(
+  !profileLauncherHelperSource.match(/\.(first|last|nth)\(/),
+  "createProfile must not use positional locators",
+);
+
+const responsiveTestSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    'test("cross-route responsive smoke checks"',
+  ),
+  launchSpecSource.indexOf(
+    'test("accessibility smoke checks"',
+  ),
+);
+assert(
+  responsiveTestSource.includes("expectUniqueVisibleButton"),
+  "responsive smoke test must use unique visible button helper",
+);
+assert(
+  !responsiveTestSource.match(/\.(first|last|nth)\(/),
+  "responsive smoke test must not use positional locators",
+);
+assert(
+  responsiveTestSource.includes("/^(?:new profile|create profile)$/i"),
+  "responsive smoke test must use anchored exact profile launcher pattern on profiles route",
+);
+
+const accessibilityTestSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    'test("accessibility smoke checks"',
+  ),
+  launchSpecSource.length,
+);
+assert(
+  accessibilityTestSource.includes(
+    "const profileLauncher = page.getByRole(\"button\"",
+  ) &&
+    accessibilityTestSource.includes(
+      "/^(?:new profile|create profile)$/i",
+    ),
+  "accessibility smoke test must use anchored exact profile launcher pattern",
+);
+assert(
+  accessibilityTestSource.includes(
+    "await expect(profileLauncher).toHaveCount(1)",
+  ),
+  "accessibility smoke test must assert exactly one profile launcher",
+);
+assert(
+  accessibilityTestSource.includes(
+    "createProfileForm.getByRole(\"button\"",
+  ) &&
+    accessibilityTestSource.includes(
+      "name: /^cancel$/i",
+    ),
+  "accessibility smoke test must locate Cancel inside the active New profile form",
+);
+assert(
+  accessibilityTestSource.includes(
+    "await expect(cancelButton).toHaveCount(1)",
+  ),
+  "accessibility smoke test must assert exactly one Cancel button in the active form",
+);
+assert(
+  !accessibilityTestSource.match(/\.(first|last|nth)\(/),
+  "accessibility smoke test must not use positional locators",
+);
+assert(
+  accessibilityTestSource.includes("skip to main content") ||
+    accessibilityTestSource.includes("skip to main content/i"),
+  "accessibility smoke test must retain skip-link behavior",
+);
+assert(
+  accessibilityTestSource.includes("#main-content"),
+  "accessibility smoke test must retain main-content focus check",
+);
+assert(
+  accessibilityTestSource.includes('locator("main")') &&
+    accessibilityTestSource.includes("toHaveCount(1)"),
+  "accessibility smoke test must retain one main region assertion",
+);
+assert(
+  accessibilityTestSource.includes('getByRole("heading", { level: 1 })'),
+  "accessibility smoke test must retain one top-level heading assertion",
+);
+assert(
+  accessibilityTestSource.includes("document.documentElement.style.zoom"),
+  "accessibility smoke test may retain existing zoom implementation",
+);
+
+const remainingFlowSource = [
+  structuredProfileTestSource,
+  deleteProfileHelperSource,
+  profileLauncherHelperSource,
+  responsiveTestSource,
+  accessibilityTestSource,
+].join("\n");
+assert(
+  !remainingFlowSource.includes("force: true") &&
+    !remainingFlowSource.includes("waitForTimeout") &&
+    !remainingFlowSource.includes("xpath=") &&
+    !remainingFlowSource.includes("getByTestId") &&
+    !remainingFlowSource.includes("dispatchEvent") &&
+    !remainingFlowSource.match(/\.evaluate\([^)]*\)\s*;\s*$/m),
+  "remaining profile/responsive/accessibility flows must not introduce forbidden shortcuts",
+);
+assert(
+  structuredProfileTestSource.includes("discoverProfileForManifest") ||
+    launchSpecSource.includes("appendProfileRecord"),
+  "launch spec must retain manifest discovery and cleanup registration",
+);
+
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
     !profileAdminSource.includes(".like('profile_name'"),
