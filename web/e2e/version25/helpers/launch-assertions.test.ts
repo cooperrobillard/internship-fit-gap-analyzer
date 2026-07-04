@@ -121,11 +121,18 @@ const signOutHelperSource = launchSpecSource.slice(
   launchSpecSource.indexOf("async function assertNoHorizontalOverflow"),
 );
 assert(
-  signOutHelperSource.includes('getByRole("link"') && signOutHelperSource.includes("/^sign in$/i"),
-  "sign-out helper must wait for visible Sign in link with exact pattern",
+  signOutHelperSource.includes('const signInLink = page.getByRole("link", {') &&
+    signOutHelperSource.includes("name: /^sign in$/i"),
+  "sign-out helper must define the exact Sign in link completion signal",
 );
-assert(signOutHelperSource.includes("toBeVisible"), "sign-out helper must wait for Sign in link visibility");
-assert(signOutHelperSource.includes("toBeHidden"), "sign-out helper must wait for UserButton trigger to hide");
+assert(
+  signOutHelperSource.includes("await expect(signInLink).toBeVisible"),
+  "sign-out helper must await Sign in link visibility",
+);
+assert(
+  signOutHelperSource.includes("await expect(trigger).toBeHidden"),
+  "sign-out helper must await the UserButton trigger becoming hidden",
+);
 assert(!signOutHelperSource.includes("waitForTimeout"), "sign-out helper must not use arbitrary timeout waits");
 assert(!signOutHelperSource.includes("clerk.signOut"), "sign-out helper must not call direct Clerk signOut");
 assert(!signOutHelperSource.includes("signOutQaUser"), "sign-out helper must not bypass UI with auth helper signOut");
