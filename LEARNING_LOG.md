@@ -4006,3 +4006,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - The remaining four Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: sign-out now uses Clerk's UserButton trigger, popover, and button-role selector contract.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 6 — Clerk sign-out completion wait
+
+- The sixth Step 6B Production run on commit `5469b0f6b8f3e2fda43d5d47c4231b114fd51c5c` (run ID `20260703223057-9k0pcp`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, metadata/canonical-host verification, and the corrected UserButton selector path passed.
+- Remaining blocker: authentication and session boundary navigated to `/dashboard` immediately after clicking Sign out without waiting for Clerk's asynchronous signed-out state; the route remained `/dashboard` for the 30-second assertion timeout.
+- The remaining four Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `signOutViaUserButton()` now waits for the visible Sign in link and hidden UserButton trigger before the protected-route assertion.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

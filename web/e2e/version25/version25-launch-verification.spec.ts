@@ -64,6 +64,13 @@ async function signOutViaUserButton(page: Page): Promise<void> {
   });
   await expect(signOutButton).toBeVisible({ timeout: 30_000 });
   await signOutButton.click();
+
+  const signInLink = page.getByRole("link", {
+    name: /^sign in$/i,
+  });
+  await expect(signInLink).toBeVisible({ timeout: 30_000 });
+
+  await expect(trigger).toBeHidden({ timeout: 30_000 });
 }
 
 async function assertNoHorizontalOverflow(page: Page): Promise<void> {
