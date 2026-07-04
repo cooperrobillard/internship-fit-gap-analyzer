@@ -404,9 +404,117 @@ assert(
 );
 assert(
   createProfileHelperSource.includes(
-    'getByRole("button", { name: /^create profile$/i })',
+    "const createProfileForm = page",
+  ) &&
+    createProfileHelperSource.includes(
+      '.locator("form")',
+    ) &&
+    createProfileHelperSource.includes(
+      ".filter({",
+    ),
+  "createProfile must define a scoped create form",
+);
+assert(
+  createProfileHelperSource.includes(
+    'name: "New profile"',
+  ) &&
+    createProfileHelperSource.includes(
+      "exact: true",
+    ),
+  "createProfile form must be scoped by the exact New profile heading",
+);
+assert(
+  createProfileHelperSource.includes(
+    "await expect(createProfileForm).toHaveCount(1)",
   ),
-  "createProfile must retain the Create profile UI action",
+  "createProfile must assert exactly one create form",
+);
+assert(
+  createProfileHelperSource.includes(
+    'createProfileForm.getByRole("button"',
+  ) &&
+    createProfileHelperSource.includes(
+      "name: /^create profile$/i",
+    ),
+  "createProfile must locate its submit action inside the scoped form",
+);
+assert(
+  createProfileHelperSource.includes(
+    "await expect(createProfileSubmit).toHaveCount(1)",
+  ) &&
+    createProfileHelperSource.includes(
+      "await expect(createProfileSubmit).toBeVisible()",
+    ) &&
+    createProfileHelperSource.includes(
+      "await createProfileSubmit.click()",
+    ),
+  "createProfile must verify and click the unique visible scoped submit action",
+);
+assert(
+  !createProfileHelperSource.includes(
+    'page.getByRole("button", { name: /^create profile$/i }).click()',
+  ),
+  "createProfile must not use an ambiguous page-wide submit locator",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "createProfileSubmit.first()",
+  ) &&
+    !createProfileHelperSource.includes(
+      "createProfileSubmit.last()",
+    ) &&
+    !createProfileHelperSource.includes(
+      "createProfileSubmit.nth(",
+    ),
+  "createProfile must not resolve submit ambiguity positionally",
+);
+assert(
+  createProfileHelperSource.includes(
+    'const profileDetails = page',
+  ) &&
+    createProfileHelperSource.includes(
+      '.locator("details")',
+    ) &&
+    createProfileHelperSource.includes(
+      '"Profile details"',
+    ),
+  "createProfile must scope persisted source verification to Profile details",
+);
+assert(
+  createProfileHelperSource.includes(
+    'profileDetails.getByText("Manual"',
+  ),
+  "createProfile must verify the persisted Manual source type",
+);
+assert(
+  !createProfileHelperSource.includes(
+    '"Manual entry"',
+  ),
+  "createProfile must not use the analysis-form source label in profile details",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "force: true",
+  ) &&
+    !createProfileHelperSource.includes(
+      "waitForTimeout",
+    ) &&
+    !createProfileHelperSource.includes(
+      "xpath=",
+    ) &&
+    !createProfileHelperSource.includes(
+      "getByTestId",
+    ) &&
+    !createProfileHelperSource.includes(
+      ".evaluate(",
+    ) &&
+    !createProfileHelperSource.includes(
+      "dispatchEvent",
+    ) &&
+    !createProfileHelperSource.match(
+      /locator\(\s*["']\.[a-zA-Z_-]/,
+    ),
+  "createProfile must not use forced, positional, programmatic, XPath, test-ID, class, or arbitrary-wait shortcuts",
 );
 assert(
   createProfileHelperSource.includes(
