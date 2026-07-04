@@ -4044,3 +4044,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `collectSkills()` now inspects list-item child structure and extracts only the first nested skill-label element without relying on CSS classes, categories, expected names, or delimiters.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 10 — hidden Source type default
+
+- The tenth Step 6B Production run on commit `afe943f00f0853daa4d4a1c9b77792b208fa42a8` (run ID `20260704021053-shha01`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed completely including exact matched/missing skill verification, same-origin behavior, and safe UI assertions.
+- Structured profile CRUD/use and two-user isolation began running; remaining blocker: `createProfile()` timed out calling `selectOption("manual")` on the Source type control inside the closed "Advanced profile details" `<details>` element—the control exists in the DOM but is not visible, while application runtime already initializes new profiles with Source type `manual`.
+- Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `createProfile()` now asserts the existing hidden Source type value is `manual` without opening advanced details or calling `selectOption()`.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
