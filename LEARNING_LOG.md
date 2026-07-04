@@ -4113,3 +4113,11 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `deleteProfileViaUi()` now selects the profile row through button role filtered by an exact profile-name descendant while retaining scoped UI deletion and manifest-based exact cleanup.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 17 — early production target guard
+
+- The seventeenth Step 6B Production run (run ID `20260704040931-exzemx`) returned a strict automated FAIL before browser QA started; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun against commit `1089882c6866f0ceb05678d084dfd6c06f366025`.
+- Vercel Production was serving commit `1089882c6866f0ceb05678d084dfd6c06f366025`, but stale local `QA_EXPECTED_COMMIT` still contained `0ef85ba1b105ac4d9d067e9a3e0f011add930671`.
+- Python, npm install, lint, TypeScript, build, and git diff preflight checks passed; the Vercel provider gate detected the mismatch; Version 23 and Version 25 Playwright did not start; structured profile, responsive, and accessibility checks did not run; no browser mutation flow began; the combined runner generated reports after the failure.
+- Remediation is QA-only: the Version 25 combined runner now compares local Git HEAD with `QA_EXPECTED_COMMIT` before Version 23 production starts, while retaining the existing Vercel verification.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
