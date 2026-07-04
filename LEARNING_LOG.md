@@ -4053,3 +4053,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `createProfile()` now asserts the existing hidden Source type value is `manual` without opening advanced details or calling `selectOption()`.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 11 — scoped profile form submit
+
+- The eleventh Step 6B Production run on commit `50c93326d28c890481295c7f3158b18b3b65a075` (run ID `20260704023919-jb7hav`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed completely; the Source type default assertion passed.
+- Remaining blocker: profile creation failed because the page-wide exact Create profile locator resolved both the empty-workspace launcher and the active form submit action—no profile was submitted before the strict-mode failure.
+- Source inspection also found the next profile-detail assertion incorrectly expected `Manual entry`, while the profile-management detail UI renders `Manual` inside the closed Profile details disclosure.
+- Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `createProfile()` scopes submission to the unique form containing the exact New profile heading and verifies the persisted Manual value inside the opened Profile details disclosure.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

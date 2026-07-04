@@ -100,12 +100,55 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
   await expect(sourceSelect).toHaveValue(
     "manual",
   );
-  await page.getByRole("button", { name: /^create profile$/i }).click();
+  const createProfileForm = page
+    .locator("form")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "New profile",
+        exact: true,
+      }),
+    });
+
+  await expect(createProfileForm).toHaveCount(1);
+  await expect(createProfileForm).toBeVisible();
+
+  const createProfileSubmit =
+    createProfileForm.getByRole("button", {
+      name: /^create profile$/i,
+    });
+
+  await expect(createProfileSubmit).toHaveCount(1);
+  await expect(createProfileSubmit).toBeVisible();
+
+  await createProfileSubmit.click();
   await expect(page.getByText(`Profile created. “${profileName}” is ready to use.`)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("heading", { name: profileName })).toBeVisible();
   await expect(page.getByText(`Synthetic Version 25 ${ownerLabel} structured notes only.`)).toBeVisible();
   await expect(page.getByText("excel", { exact: true })).toBeVisible();
-  await expect(page.getByText("Manual entry", { exact: true })).toBeVisible();
+  const profileDetails = page
+    .locator("details")
+    .filter({
+      has: page.getByText(
+        "Profile details",
+        {
+          exact: true,
+        },
+      ),
+    });
+
+  await expect(profileDetails).toHaveCount(1);
+
+  await profileDetails
+    .getByText("Profile details", {
+      exact: true,
+    })
+    .click();
+
+  await expect(
+    profileDetails.getByText("Manual", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(page.getByText(/Created/i)).toBeVisible();
   await expect(page.getByText(/Updated/i)).toBeVisible();
 
