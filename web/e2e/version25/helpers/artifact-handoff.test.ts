@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   assertVersion23ResultsArtifact,
   isVersion25OutputDirIsolatedFromVersion23Json,
@@ -12,6 +13,84 @@ import {
   version23ResultsPath,
   version25PlaywrightOutputDir,
 } from "./artifact-handoff";
+
+const helperDir = dirname(fileURLToPath(import.meta.url));
+const runProductionSource = readFileSync(
+  resolve(helperDir, "../scripts/run-production.mjs"),
+  "utf8",
+);
+
+function runRunProductionSourceContractRegression() {
+  const version23ProductionIndex = runProductionSource.indexOf("qa:version23:production");
+  assert(version23ProductionIndex >= 0, "run-production must invoke qa:version23:production");
+
+  assert(
+    runProductionSource.includes("loadQaConfig"),
+    "run-production must load QA configuration through loadQaConfig()",
+  );
+  assert(
+    runProductionSource.includes('"rev-parse", "HEAD"') ||
+      runProductionSource.includes("'rev-parse', 'HEAD'"),
+    "run-production must resolve local Git HEAD using git rev-parse HEAD",
+  );
+  assert(
+    runProductionSource.includes("resolveLocalGitHead"),
+    "run-production must define resolveLocalGitHead()",
+  );
+  assert(
+    runProductionSource.includes("shell: false"),
+    "run-production Git invocation must use shell: false",
+  );
+  assert(
+    runProductionSource.includes("config.expectedCommit"),
+    "run-production must compare local HEAD with config.expectedCommit",
+  );
+  assert(
+    runProductionSource.includes("Production target mismatch before QA started"),
+    "run-production must emit a sanitized target-mismatch error",
+  );
+
+  const targetGuardIndex = runProductionSource.indexOf("assertProductionTargetMatches");
+  assert(
+    targetGuardIndex >= 0 && targetGuardIndex < version23ProductionIndex,
+    "run-production target guard must run before qa:version23:production",
+  );
+
+  assert(
+    !runProductionSource.includes("console.log(config") &&
+      !runProductionSource.includes("console.log(process.env") &&
+      !runProductionSource.includes(".env.qa.local"),
+    "run-production must not print environment contents or the complete QA config object",
+  );
+  assert(
+    !runProductionSource.match(/console\.(log|info|debug)\([^)]*CLERK_/i) &&
+      !runProductionSource.match(/console\.(log|info|debug)\([^)]*SUPABASE_/i) &&
+      !runProductionSource.match(/console\.(log|info|debug)\([^)]*VERCEL_/i),
+    "run-production must not log secret-bearing environment variables",
+  );
+
+  assert(
+    runProductionSource.includes("assertVersion23ResultsArtifact"),
+    "run-production must retain Version 23 artifact-handoff checks",
+  );
+  assert(
+    runProductionSource.includes("qa:version25:cleanup"),
+    "run-production must retain Version 25 cleanup invocation",
+  );
+  assert(
+    runProductionSource.includes("qa:version25:report"),
+    "run-production must retain Version 25 report invocation",
+  );
+  assert(
+    runProductionSource.includes("REQUIRED_COMBINED_RUNNER_OUTPUTS"),
+    "run-production must retain required-output verification",
+  );
+  assert(
+    runProductionSource.includes("process.exit(1)") ||
+      runProductionSource.includes("process.exit(finalStatus)"),
+    "run-production must exit nonzero on failure",
+  );
+}
 
 function runArtifactHandoffRegression() {
   assert.equal(isVersion25OutputDirIsolatedFromVersion23Json(), true);
@@ -62,5 +141,6 @@ function runArtifactHandoffRegression() {
   );
 }
 
+runRunProductionSourceContractRegression();
 runArtifactHandoffRegression();
 console.log("Version 25 artifact-handoff regression tests passed.");
