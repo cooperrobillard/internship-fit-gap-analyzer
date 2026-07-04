@@ -4015,3 +4015,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - The remaining four Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `signOutViaUserButton()` now waits for the visible Sign in link and hidden UserButton trigger before the protected-route assertion.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 7 — direct sample analysis authentication
+
+- The seventh Step 6B Production run on commit `c664639071c5f4e4ac4aad8936ac7d4ea85e5373` (run ID `20260704005535-4x6k0m`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, and authentication/session boundary passed (confirming the prior sign-out remediation).
+- Remaining blocker: direct sample analysis timed out after 240 seconds waiting for the "Use sample inputs" button because the test opened the protected `/dashboard` route in a fresh Playwright test context without authenticating; authentication from the preceding test could not carry over because Playwright isolates tests.
+- The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: the direct sample-analysis checkpoint now calls `signInQaUserOnPage()` for QA User A, waits for the "Analyze a role" heading, and waits for the named sample-inputs button before clicking.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

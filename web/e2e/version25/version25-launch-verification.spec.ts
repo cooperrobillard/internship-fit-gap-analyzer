@@ -178,15 +178,37 @@ test("authentication and session boundary", async ({ page, context }) => {
 });
 
 test("direct sample analysis stays same-origin and safe", async ({ page }) => {
+  await signInQaUserOnPage(page, config, "A", {
+    qaUserIds,
+  });
+
   await page.goto(`${config.baseUrl}/dashboard`);
+
+  await expect(
+    page.getByRole("heading", {
+      name: /analyze a role/i,
+    }),
+  ).toBeVisible({ timeout: 30_000 });
+
   let analyzeCalls = 0;
   const renderRequests: string[] = [];
+
   page.on("request", (request) => {
     const url = request.url();
     if (url === `${config.baseUrl}/api/analyze`) analyzeCalls += 1;
-    if (url.includes("internship-fit-gap-analyzer.onrender.com")) renderRequests.push(url);
+    if (url.includes("internship-fit-gap-analyzer.onrender.com")) {
+      renderRequests.push(url);
+    }
   });
-  await page.getByRole("button", { name: /use sample inputs/i }).click();
+
+  const sampleInputsButton = page.getByRole("button", {
+    name: /use sample inputs/i,
+  });
+
+  await expect(sampleInputsButton).toBeVisible({
+    timeout: 30_000,
+  });
+  await sampleInputsButton.click();
   await expect(page.getByText("Fictional sample inputs loaded. Run analysis when ready; nothing has been saved.")).toBeVisible();
   expect(analyzeCalls).toBe(0);
   await expect(page.getByText("Structured result saved")).toHaveCount(0);
