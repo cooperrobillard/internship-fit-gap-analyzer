@@ -332,6 +332,98 @@ assert(
   "direct sample analysis skill-list assertions must not shortcut through direct API results",
 );
 
+const createProfileHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    "async function createProfile",
+  ),
+  launchSpecSource.indexOf(
+    "async function deleteProfileViaUi",
+  ),
+);
+assert(
+  createProfileHelperSource.includes("page.getByLabel(") &&
+    createProfileHelperSource.includes("/source type/i"),
+  "createProfile must locate Source type by accessible label",
+);
+assert(
+  createProfileHelperSource.includes(
+    "await expect(sourceSelect).toHaveCount(1)",
+  ),
+  "createProfile must assert exactly one Source type control",
+);
+assert(
+  createProfileHelperSource.includes(
+    'await expect(sourceSelect).toHaveValue(',
+  ) &&
+    createProfileHelperSource.includes(
+      '"manual"',
+    ),
+  "createProfile must validate the existing manual default",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "selectOption",
+  ),
+  "createProfile must not interact with the hidden Source type select",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "Advanced profile details",
+  ),
+  "createProfile must not open optional advanced details",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "force: true",
+  ) &&
+    !createProfileHelperSource.includes(
+      ".evaluate(",
+    ) &&
+    !createProfileHelperSource.includes(
+      "dispatchEvent",
+    ),
+  "createProfile must not force or programmatically mutate the hidden control",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "waitForTimeout",
+  ),
+  "createProfile must not use arbitrary sleeps",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "xpath=",
+  ) &&
+    !createProfileHelperSource.includes(
+      "getByTestId",
+    ) &&
+    !createProfileHelperSource.match(
+      /locator\(\s*["']\.[a-zA-Z_-]/,
+    ),
+  "createProfile must not use XPath, test IDs, or CSS class selectors",
+);
+assert(
+  createProfileHelperSource.includes(
+    'getByRole("button", { name: /^create profile$/i })',
+  ),
+  "createProfile must retain the Create profile UI action",
+);
+assert(
+  createProfileHelperSource.includes(
+    "Profile created.",
+  ),
+  "createProfile must retain the creation confirmation assertion",
+);
+assert(
+  createProfileHelperSource.includes(
+    "discoverProfileForManifest",
+  ) &&
+    createProfileHelperSource.includes(
+      "appendProfileRecord",
+    ),
+  "createProfile must retain exact cleanup-manifest registration",
+);
+
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
     !profileAdminSource.includes(".like('profile_name'"),

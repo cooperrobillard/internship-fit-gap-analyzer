@@ -91,8 +91,15 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
   await page.getByLabel(/notes/i).fill(`Synthetic Version 25 ${ownerLabel} structured notes only.`);
   await page.getByLabel(/skills from the source/i).fill("excel, logistics, procurement");
   await page.getByLabel(/skills you added/i).fill("inventory management, forecasting");
-  const sourceSelect = page.getByLabel(/source type/i);
-  if (await sourceSelect.count()) await sourceSelect.selectOption("manual");
+  const sourceSelect = page.getByLabel(
+    /source type/i,
+  );
+
+  await expect(sourceSelect).toHaveCount(1);
+
+  await expect(sourceSelect).toHaveValue(
+    "manual",
+  );
   await page.getByRole("button", { name: /^create profile$/i }).click();
   await expect(page.getByText(`Profile created. “${profileName}” is ready to use.`)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("heading", { name: profileName })).toBeVisible();
