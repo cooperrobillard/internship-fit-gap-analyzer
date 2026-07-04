@@ -184,9 +184,14 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
 
 async function deleteProfileViaUi(page: Page, profileName: string): Promise<void> {
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
-  const profileButton = page.getByRole("button", {
-    name: new RegExp(`^${profileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+  const profileNameText = page.getByText(profileName, {
+    exact: true,
   });
+  const profileButton = page
+    .getByRole("button")
+    .filter({
+      has: profileNameText,
+    });
 
   await expect(profileButton).toHaveCount(1);
   await expect(profileButton).toBeVisible();

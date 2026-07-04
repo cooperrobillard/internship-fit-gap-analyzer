@@ -729,9 +729,53 @@ const deleteProfileHelperSource = launchSpecSource.slice(
 );
 assert(
   deleteProfileHelperSource.includes(
+    "const profileNameText = page.getByText(profileName",
+  ) &&
+    deleteProfileHelperSource.includes(
+      "exact: true",
+    ),
+  "deleteProfileViaUi must define an exact profile-name text locator",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    '.getByRole("button")',
+  ) &&
+    deleteProfileHelperSource.includes(
+      ".filter({",
+    ) &&
+    deleteProfileHelperSource.includes(
+      "has: profileNameText",
+    ),
+  "deleteProfileViaUi must locate the profile row through button role filtered by exact profile-name descendant",
+);
+assert(
+  deleteProfileHelperSource.includes(
     "await expect(profileButton).toHaveCount(1)",
-  ),
-  "deleteProfileViaUi must assert exactly one profile selection button",
+  ) &&
+    deleteProfileHelperSource.includes(
+      "await expect(profileButton).toBeVisible()",
+    ) &&
+    deleteProfileHelperSource.includes(
+      "await profileButton.click()",
+    ),
+  "deleteProfileViaUi must assert, verify visibility, and click the unique profile row button",
+);
+assert(
+  !deleteProfileHelperSource.includes("new RegExp(") &&
+    !deleteProfileHelperSource.includes("profileName.replace("),
+  "deleteProfileViaUi must not use an accessible-name regular expression anchored to only profileName",
+);
+assert(
+  deleteProfileHelperSource.includes(
+    "const selectedProfileDetail = page",
+  ) &&
+    deleteProfileHelperSource.includes(
+      "name: profileName",
+    ) &&
+    deleteProfileHelperSource.includes(
+      "exact: true",
+    ),
+  "deleteProfileViaUi must retain selectedProfileDetail scoping through exact profile heading",
 );
 assert(
   deleteProfileHelperSource.includes(
@@ -770,6 +814,15 @@ assert(
 assert(
   !deleteProfileHelperSource.match(/\.(first|last|nth)\(/),
   "deleteProfileViaUi must not use positional locators",
+);
+assert(
+  !deleteProfileHelperSource.includes("force: true") &&
+    !deleteProfileHelperSource.includes("waitForTimeout") &&
+    !deleteProfileHelperSource.includes("xpath=") &&
+    !deleteProfileHelperSource.includes("getByTestId") &&
+    !deleteProfileHelperSource.includes("dispatchEvent") &&
+    !deleteProfileHelperSource.match(/locator\(\s*["']\.[a-zA-Z_-]/),
+  "deleteProfileViaUi must not use forced, XPath, test-ID, CSS-class, programmatic-click, or arbitrary-wait shortcuts",
 );
 
 const profileLauncherHelperSource = launchSpecSource.slice(
