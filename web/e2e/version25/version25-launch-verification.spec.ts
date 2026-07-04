@@ -88,7 +88,8 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
   await expect(page.getByRole("heading", { name: /resume profiles/i })).toBeVisible({ timeout: 30_000 });
   const profileLauncher = page.getByRole("button", {
-    name: /^(?:new profile|create profile)$/i,
+    name: "New profile",
+    exact: true,
   });
 
   await expect(profileLauncher).toHaveCount(1);
@@ -501,7 +502,7 @@ test("cross-route responsive smoke checks", async ({ page }) => {
       if (route.startsWith("/dashboard")) await expect(page.getByRole("navigation", { name: /dashboard|workspace/i })).toBeVisible();
       if (route === "/dashboard") await expectUniqueVisibleButton(page, /^run analysis$/i);
       if (route === "/dashboard/profiles") {
-        await expectUniqueVisibleButton(page, /^(?:new profile|create profile)$/i);
+        await expectUniqueVisibleButton(page, "New profile");
       }
       if (route === "/dashboard/saved") await expect(page.getByRole("heading", { name: /saved analyses/i })).toBeVisible();
     }
@@ -525,7 +526,8 @@ test("accessibility smoke checks", async ({ page }) => {
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
 
   const profileLauncher = page.getByRole("button", {
-    name: /^(?:new profile|create profile)$/i,
+    name: "New profile",
+    exact: true,
   });
 
   await expect(profileLauncher).toHaveCount(1);
