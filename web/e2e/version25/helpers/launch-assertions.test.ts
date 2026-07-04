@@ -541,6 +541,33 @@ assert(
   "createProfile must not use the analysis-form source label in profile details",
 );
 assert(
+  createProfileHelperSource.includes(
+    'profileDetails.getByText("Created"',
+  ) &&
+    createProfileHelperSource.includes(
+      'profileDetails.getByText("Updated"',
+    ),
+  "createProfile must scope Created and Updated timestamp assertions to Profile details",
+);
+assert(
+  createProfileHelperSource.includes(
+    'profileDetails.getByText("Created", { exact: true })',
+  ) &&
+    createProfileHelperSource.includes(
+      'profileDetails.getByText("Updated", { exact: true })',
+    ),
+  "createProfile must use exact Created and Updated text inside Profile details",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "page.getByText(/Created/i)",
+  ) &&
+    !createProfileHelperSource.includes(
+      "page.getByText(/Updated/i)",
+    ),
+  "createProfile must not use ambiguous page-wide timestamp locators",
+);
+assert(
   !createProfileHelperSource.includes(
     "force: true",
   ) &&

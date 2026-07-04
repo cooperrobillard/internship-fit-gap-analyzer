@@ -163,8 +163,12 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
       exact: true,
     }),
   ).toBeVisible();
-  await expect(page.getByText(/Created/i)).toBeVisible();
-  await expect(page.getByText(/Updated/i)).toBeVisible();
+  await expect(
+    profileDetails.getByText("Created", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    profileDetails.getByText("Updated", { exact: true }),
+  ).toBeVisible();
 
   const record = await discoverProfileForManifest({ config, manifestPath, ownerLabel, profileName });
   appendProfileRecord(manifestPath, config.runId, record);

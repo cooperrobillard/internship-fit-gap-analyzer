@@ -4073,3 +4073,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; exact cleanup completed and the report was generated.
 - Remediation is QA-only: `createProfile()` scopes the notes assertion to `profileSummary` anchored on the exact selected-profile heading.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 13 — scoped profile timestamp fields
+
+- The thirteenth Step 6B Production run on commit `599b078734c6a3277885ac0a37b21acd91ff7513` (run ID `20260704032054-4xnj9n`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed.
+- The selected-profile notes assertion passed and profile creation succeeded.
+- Remaining blocker: a page-wide Created timestamp locator matched both the profile-created status message and the exact Created field inside the Profile details disclosure.
+- Responsive and accessibility smoke tests did not run because the suite is serial; exact cleanup completed and the report was generated.
+- Remediation is QA-only: `createProfile()` scopes Created and Updated assertions to `profileDetails.getByText(..., { exact: true })` inside the opened Profile details disclosure.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
