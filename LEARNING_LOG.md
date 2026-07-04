@@ -4034,3 +4034,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `skillListSection()` scopes to the outer skill-list wrapper via two parent steps, waits for four matched and five missing list items, and passes named sections to `collectSkills()` before `assertExactSkillSets()`.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 9 — skill-label text extraction
+
+- The ninth Step 6B Production run on commit `619ba6c24d86f5bdf0f12c0fcd3045bb9b219109` (run ID `20260704015949-lgwryb`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, and authentication/session boundary passed.
+- Direct sample analysis authenticated, loaded the sample, ran successfully, reached "Analysis complete," and found exactly four matched and five missing list items.
+- Remaining blocker: matched-skill extraction returned skill/category concatenations such as `exceldata` because `collectSkills()` read each complete `<li>` text and attempted to split on an em dash that is not present in the markup; exact missing-skill verification was not reached because matched verification threw first.
+- The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `collectSkills()` now inspects list-item child structure and extracts only the first nested skill-label element without relying on CSS classes, categories, expected names, or delimiters.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
