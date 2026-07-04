@@ -116,6 +116,20 @@ assert(
 );
 assert(launchSpecSource.includes("signOutViaUserButton"), "launch spec must centralize UserButton sign-out flow");
 
+const signOutHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf("async function signOutViaUserButton"),
+  launchSpecSource.indexOf("async function assertNoHorizontalOverflow"),
+);
+assert(
+  signOutHelperSource.includes('getByRole("link"') && signOutHelperSource.includes("/^sign in$/i"),
+  "sign-out helper must wait for visible Sign in link with exact pattern",
+);
+assert(signOutHelperSource.includes("toBeVisible"), "sign-out helper must wait for Sign in link visibility");
+assert(signOutHelperSource.includes("toBeHidden"), "sign-out helper must wait for UserButton trigger to hide");
+assert(!signOutHelperSource.includes("waitForTimeout"), "sign-out helper must not use arbitrary timeout waits");
+assert(!signOutHelperSource.includes("clerk.signOut"), "sign-out helper must not call direct Clerk signOut");
+assert(!signOutHelperSource.includes("signOutQaUser"), "sign-out helper must not bypass UI with auth helper signOut");
+
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
     !profileAdminSource.includes(".like('profile_name'"),

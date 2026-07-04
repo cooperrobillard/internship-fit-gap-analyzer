@@ -68,6 +68,8 @@ The fourth Step 6B run on commit `4a0370cdf8cb6eca39192bab2042cb051087dfe1` (run
 
 The fifth Step 6B run on commit `93b02b63c71450b33503c66fb70d135e649177c0` (run ID `20260703221025-lmlq6y`) returned strict FAIL after metadata and canonical-host verification passed. Version 23 passed 17/17. Version 25 authentication and session boundary failed because the test waited for a `menuitem` named Sign out while Clerk renders that action as a button in the UserButton popover. The remaining four Version 25 specs did not run; cleanup completed and the report was generated; manual checks were not started; Step 6C was not created; the suite was not rerun. Follow-up remediation is QA-only and aligns the sign-out selector with Clerk's UserButton button contract.
 
+The sixth Step 6B run on commit `5469b0f6b8f3e2fda43d5d47c4231b114fd51c5c` (run ID `20260703223057-9k0pcp`) returned strict FAIL after metadata/canonical-host verification and the corrected Clerk UserButton selector path passed. Version 23 passed 17/17. Authentication and session boundary failed because the test navigated to `/dashboard` immediately after clicking Sign out without waiting for Clerk's asynchronous signed-out state; the route remained `/dashboard` for the 30-second assertion timeout. The remaining four Version 25 specs did not run; cleanup completed and the report was generated; manual checks were not started; Step 6C was not created; the suite was not rerun. Follow-up remediation is QA-only and adds an observable signed-out completion barrier before the protected-route assertion.
+
 ## Next phase
 
 Version 25 Step 6B — Production execution and human verification.
