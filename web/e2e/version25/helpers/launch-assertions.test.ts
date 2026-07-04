@@ -216,6 +216,77 @@ assert(
   "skillListSection must ascend two parent steps to the outer skill-list wrapper",
 );
 
+const collectSkillsHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    "async function collectSkills",
+  ),
+  launchSpecSource.indexOf(
+    'test("public metadata and canonical-host verification"',
+  ),
+);
+assert(
+  collectSkillsHelperSource.includes(
+    'section.locator("li").evaluateAll',
+  ),
+  "collectSkills must evaluate list items in the named section",
+);
+assert(
+  collectSkillsHelperSource.includes(
+    "Array.from(",
+  ) &&
+    collectSkillsHelperSource.includes(
+      "item.children",
+    ),
+  "collectSkills must inspect list-item child structure",
+);
+assert(
+  collectSkillsHelperSource.includes(
+    "child.children.length > 0",
+  ),
+  "collectSkills must find the nested content group",
+);
+assert(
+  collectSkillsHelperSource.includes(
+    "contentGroup?.firstElementChild?.textContent?.trim()",
+  ),
+  "collectSkills must extract only the skill-label element",
+);
+assert(
+  collectSkillsHelperSource.includes(".filter(Boolean)"),
+  "collectSkills must filter empty results",
+);
+assert(
+  !collectSkillsHelperSource.includes(
+    'split("—")',
+  ),
+  "collectSkills must not depend on a nonexistent em-dash delimiter",
+);
+assert(
+  !collectSkillsHelperSource.match(
+    /item\.textContent/,
+  ),
+  "collectSkills must not read the complete list-item textContent as the returned value",
+);
+assert(
+  !collectSkillsHelperSource.includes("EXPECTED_MATCHED_SKILLS") &&
+    !collectSkillsHelperSource.includes("EXPECTED_MISSING_SKILLS") &&
+    !collectSkillsHelperSource.includes("Procurement") &&
+    !collectSkillsHelperSource.includes("operations_supply_chain"),
+  "collectSkills must not reference expected skill names or category labels",
+);
+assert(
+  !collectSkillsHelperSource.match(
+    /locator\(\s*["']\.[a-zA-Z_-]/,
+  ),
+  "collectSkills must not use CSS class locators",
+);
+assert(
+  !collectSkillsHelperSource.includes("xpath=") &&
+    !collectSkillsHelperSource.includes("getByTestId") &&
+    !collectSkillsHelperSource.includes("waitForTimeout"),
+  "collectSkills must not use XPath, test IDs, or arbitrary sleeps",
+);
+
 assert(
   directSampleTestSource.includes("const matchedSkillsSection = skillListSection("),
   "direct sample analysis test must define matchedSkillsSection",

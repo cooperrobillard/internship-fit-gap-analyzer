@@ -124,8 +124,23 @@ function skillListSection(page: Page, headingName: string): Locator {
     .locator("..");
 }
 
-async function collectSkills(section: Locator): Promise<string[]> {
-  return section.locator("li").evaluateAll((items) => items.map((item) => item.textContent?.split("—")[0].trim() ?? "").filter(Boolean));
+async function collectSkills(
+  section: Locator,
+): Promise<string[]> {
+  return section.locator("li").evaluateAll((items) =>
+    items
+      .map((item) => {
+        const contentGroup = Array.from(
+          item.children,
+        ).find((child) => child.children.length > 0);
+
+        return (
+          contentGroup?.firstElementChild?.textContent?.trim() ??
+          ""
+        );
+      })
+      .filter(Boolean),
+  );
 }
 
 test("public metadata and canonical-host verification", async ({ page, request }) => {
