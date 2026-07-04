@@ -470,6 +470,54 @@ assert(
 );
 assert(
   createProfileHelperSource.includes(
+    "const profileSummary = page",
+  ) &&
+    createProfileHelperSource.includes(
+      "name: profileName",
+    ) &&
+    createProfileHelperSource.includes(
+      'getByRole("heading"',
+    ),
+  "createProfile must anchor the selected summary through the exact profileName heading",
+);
+assert(
+  createProfileHelperSource.includes(
+    '.locator("..")',
+  ) &&
+    createProfileHelperSource.includes(
+      "profileSummary.getByText(",
+    ),
+  "createProfile must scope notes verification inside profileSummary",
+);
+assert(
+  createProfileHelperSource.includes(
+    "profileSummary.getByText(",
+  ) &&
+    createProfileHelperSource.includes(
+      "exact: true",
+    ),
+  "createProfile must use exact matching for scoped notes text",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "page.getByText(`Synthetic Version 25 ${ownerLabel} structured notes only.`",
+  ),
+  "createProfile must not use an ambiguous page-wide profile-notes locator",
+);
+assert(
+  !createProfileHelperSource.includes(
+    "profileSummary.first()",
+  ) &&
+    !createProfileHelperSource.includes(
+      "profileSummary.last()",
+    ) &&
+    !createProfileHelperSource.includes(
+      "profileSummary.nth(",
+    ),
+  "createProfile must not resolve profile summary ambiguity positionally",
+);
+assert(
+  createProfileHelperSource.includes(
     'const profileDetails = page',
   ) &&
     createProfileHelperSource.includes(
