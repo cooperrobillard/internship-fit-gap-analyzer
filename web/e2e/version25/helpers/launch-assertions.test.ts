@@ -785,15 +785,25 @@ assert(
     "const profileLauncher = page.getByRole(\"button\"",
   ) &&
     profileLauncherHelperSource.includes(
-      "/^(?:new profile|create profile)$/i",
+      'name: "New profile"',
+    ) &&
+    profileLauncherHelperSource.includes(
+      "exact: true",
     ),
-  "createProfile must use anchored exact profile launcher pattern",
+  "createProfile must locate the profile launcher by exact New profile button role and name",
 );
 assert(
   profileLauncherHelperSource.includes(
     "await expect(profileLauncher).toHaveCount(1)",
+  ) &&
+    profileLauncherHelperSource.includes(
+      "await expect(profileLauncher).toBeVisible()",
   ),
-  "createProfile must assert exactly one profile launcher",
+  "createProfile must assert exactly one visible profile launcher",
+);
+assert(
+  !profileLauncherHelperSource.includes("/^(?:new profile|create profile)$/i"),
+  "createProfile must not use the New profile/Create profile union locator",
 );
 assert(
   !profileLauncherHelperSource.match(/\.(first|last|nth)\(/),
@@ -817,8 +827,12 @@ assert(
   "responsive smoke test must not use positional locators",
 );
 assert(
-  responsiveTestSource.includes("/^(?:new profile|create profile)$/i"),
-  "responsive smoke test must use anchored exact profile launcher pattern on profiles route",
+  responsiveTestSource.includes('expectUniqueVisibleButton(page, "New profile")'),
+  "responsive smoke test must assert the unique exact New profile button on profiles route",
+);
+assert(
+  !responsiveTestSource.includes("/^(?:new profile|create profile)$/i"),
+  "responsive smoke test must not use the New profile/Create profile union locator",
 );
 
 const accessibilityTestSource = launchSpecSource.slice(
@@ -832,9 +846,16 @@ assert(
     "const profileLauncher = page.getByRole(\"button\"",
   ) &&
     accessibilityTestSource.includes(
-      "/^(?:new profile|create profile)$/i",
+      'name: "New profile"',
+    ) &&
+    accessibilityTestSource.includes(
+      "exact: true",
     ),
-  "accessibility smoke test must use anchored exact profile launcher pattern",
+  "accessibility smoke test must use exact New profile profile launcher",
+);
+assert(
+  !accessibilityTestSource.includes("/^(?:new profile|create profile)$/i"),
+  "accessibility smoke test must not use the New profile/Create profile union locator",
 );
 assert(
   accessibilityTestSource.includes(

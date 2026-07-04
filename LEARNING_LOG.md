@@ -4093,3 +4093,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: the structured-profile flow now uses role-specific radio/combobox locators, scopes the selected-profile preview through Profile source details, scopes edit interactions through the Edit profile form, and removes positional ambiguity suppression from remaining profile/responsive/accessibility locators.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 15 — empty workspace profile launcher
+
+- The fifteenth Step 6B Production run on commit `0e33ad056dcf9bb156cc2a92b96b7be4f98ab52b` (run ID `20260704034712-1pkmav`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed.
+- User A profile create/detail/edit/select/analyze flow passed and switching to QA User B passed.
+- Remaining blocker: the empty User B profile workspace legitimately exposes both an exact New profile header action and an exact Create profile empty-state action while the QA locator combined both names and asserted uniqueness.
+- Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: create, responsive, and accessibility flows now target the persistent exact New profile header action instead of the New profile/Create profile union locator.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
