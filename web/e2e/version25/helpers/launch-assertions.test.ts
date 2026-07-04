@@ -199,6 +199,68 @@ assert(
   "direct sample analysis test must navigate to dashboard before clicking sample inputs",
 );
 
+const skillListSectionHelperSource = launchSpecSource.slice(
+  launchSpecSource.indexOf("function skillListSection("),
+  launchSpecSource.indexOf("async function collectSkills"),
+);
+assert(
+  skillListSectionHelperSource.includes('getByRole("heading"'),
+  "skillListSection must locate heading by accessible role",
+);
+assert(
+  skillListSectionHelperSource.includes("exact: true"),
+  "skillListSection must use exact accessible heading name",
+);
+assert(
+  (skillListSectionHelperSource.match(/\.locator\("\.\."\)/g) ?? []).length >= 2,
+  "skillListSection must ascend two parent steps to the outer skill-list wrapper",
+);
+
+assert(
+  directSampleTestSource.includes("const matchedSkillsSection = skillListSection("),
+  "direct sample analysis test must define matchedSkillsSection",
+);
+assert(
+  directSampleTestSource.includes("const missingSkillsSection = skillListSection("),
+  "direct sample analysis test must define missingSkillsSection",
+);
+assert(
+  directSampleTestSource.includes('await expect(matchedSkillsSection.locator("li")).toHaveCount(4'),
+  "direct sample analysis test must wait for four matched list items",
+);
+assert(
+  directSampleTestSource.includes('await expect(missingSkillsSection.locator("li")).toHaveCount(5'),
+  "direct sample analysis test must wait for five missing list items",
+);
+assert(
+  directSampleTestSource.includes("await collectSkills(matchedSkillsSection)"),
+  "direct sample analysis test must collect matched skills from named section",
+);
+assert(
+  directSampleTestSource.includes("await collectSkills(missingSkillsSection)"),
+  "direct sample analysis test must collect missing skills from named section",
+);
+assert(
+  directSampleTestSource.includes("assertExactSkillSets({"),
+  "direct sample analysis test must retain assertExactSkillSets",
+);
+assert(
+  !directSampleTestSource.includes("waitForTimeout"),
+  "direct sample analysis skill-list assertions must not use waitForTimeout",
+);
+assert(
+  !directSampleTestSource.includes("xpath=") &&
+    !directSampleTestSource.includes("getByTestId") &&
+    !directSampleTestSource.match(/locator\(\s*["']\.[a-zA-Z_-]/),
+  "direct sample analysis skill-list assertions must not use XPath, test IDs, or CSS class selectors",
+);
+assert(
+  !directSampleTestSource.includes("request.post") &&
+    !directSampleTestSource.includes("response.json") &&
+    !directSampleTestSource.includes("analyzeResult"),
+  "direct sample analysis skill-list assertions must not shortcut through direct API results",
+);
+
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
     !profileAdminSource.includes(".like('profile_name'"),

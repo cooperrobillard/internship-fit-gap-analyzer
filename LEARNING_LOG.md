@@ -4024,3 +4024,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: the direct sample-analysis checkpoint now calls `signInQaUserOnPage()` for QA User A, waits for the "Analyze a role" heading, and waits for the named sample-inputs button before clicking.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 8 — skill-list locator scope
+
+- The eighth Step 6B Production run on commit `b7759c7a71577e1af5fb95e606fe3951f6696c9d` (run ID `20260704014022-wny2gc`) returned a strict automated FAIL; manual checks were not started; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, and authentication/session boundary passed.
+- Direct sample analysis authenticated successfully, loaded the sample, ran analysis, and reached "Analysis complete".
+- Remaining blocker: the assertion received an empty matched-skill array because the QA locator searched the heading's immediate parent while the `<ul>` is a sibling under the outer `SkillList` wrapper.
+- The remaining three Version 25 specs did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `skillListSection()` scopes to the outer skill-list wrapper via two parent steps, waits for four matched and five missing list items, and passes named sections to `collectSkills()` before `assertExactSkillSets()`.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.

@@ -114,6 +114,16 @@ async function deleteProfileViaUi(page: Page, profileName: string): Promise<void
   await expect(page.getByText("Profile deleted.")).toBeVisible({ timeout: 30_000 });
 }
 
+function skillListSection(page: Page, headingName: string): Locator {
+  return page
+    .getByRole("heading", {
+      name: headingName,
+      exact: true,
+    })
+    .locator("..")
+    .locator("..");
+}
+
 async function collectSkills(section: Locator): Promise<string[]> {
   return section.locator("li").evaluateAll((items) => items.map((item) => item.textContent?.split("—")[0].trim() ?? "").filter(Boolean));
 }
@@ -216,9 +226,36 @@ test("direct sample analysis stays same-origin and safe", async ({ page }) => {
   await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 120_000 });
   expect(analyzeCalls).toBe(1);
   expect(renderRequests).toEqual([]);
-  const matched = await collectSkills(page.getByRole("heading", { name: "Matched skills" }).locator(".."));
-  const missing = await collectSkills(page.getByRole("heading", { name: "Missing skills" }).locator(".."));
-  assertExactSkillSets({ matched, missing });
+  const matchedSkillsSection = skillListSection(
+    page,
+    "Matched skills",
+  );
+  const missingSkillsSection = skillListSection(
+    page,
+    "Missing skills",
+  );
+
+  await expect(matchedSkillsSection).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(missingSkillsSection).toBeVisible({
+    timeout: 30_000,
+  });
+
+  await expect(matchedSkillsSection.locator("li")).toHaveCount(4, {
+    timeout: 30_000,
+  });
+  await expect(missingSkillsSection.locator("li")).toHaveCount(5, {
+    timeout: 30_000,
+  });
+
+  const matched = await collectSkills(matchedSkillsSection);
+  const missing = await collectSkills(missingSkillsSection);
+
+  assertExactSkillSets({
+    matched,
+    missing,
+  });
   assertSafeUiText(await page.locator("body").innerText());
 });
 
