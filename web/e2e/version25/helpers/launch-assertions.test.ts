@@ -137,6 +137,68 @@ assert(!signOutHelperSource.includes("waitForTimeout"), "sign-out helper must no
 assert(!signOutHelperSource.includes("clerk.signOut"), "sign-out helper must not call direct Clerk signOut");
 assert(!signOutHelperSource.includes("signOutQaUser"), "sign-out helper must not bypass UI with auth helper signOut");
 
+const directSampleTestSource = launchSpecSource.slice(
+  launchSpecSource.indexOf(
+    'test("direct sample analysis stays same-origin and safe"',
+  ),
+  launchSpecSource.indexOf(
+    'test("structured profile CRUD, use, and two-user isolation"',
+  ),
+);
+assert(
+  directSampleTestSource.includes('await signInQaUserOnPage(page, config, "A", {'),
+  "direct sample analysis test must sign in QA User A",
+);
+assert(directSampleTestSource.includes("qaUserIds"), "direct sample analysis test must pass qaUserIds");
+assert(
+  directSampleTestSource.includes('await page.goto(`${config.baseUrl}/dashboard`);'),
+  "direct sample analysis test must navigate to dashboard",
+);
+assert(
+  directSampleTestSource.includes('name: /analyze a role/i'),
+  "direct sample analysis test must wait for Analyze a role heading",
+);
+assert(
+  directSampleTestSource.includes('getByRole("button"') &&
+    directSampleTestSource.includes("/use sample inputs/i"),
+  "direct sample analysis test must define sampleInputsButton by button role",
+);
+assert(
+  directSampleTestSource.includes("await expect(sampleInputsButton).toBeVisible"),
+  "direct sample analysis test must wait for sampleInputsButton visibility",
+);
+assert(
+  directSampleTestSource.includes("await sampleInputsButton.click();"),
+  "direct sample analysis test must click sampleInputsButton",
+);
+assert(!directSampleTestSource.includes("waitForTimeout"), "direct sample analysis test must not use waitForTimeout");
+assert(!directSampleTestSource.includes("clerk.signIn"), "direct sample analysis test must not call clerk.signIn");
+assert(
+  !directSampleTestSource.includes("storageState") && !directSampleTestSource.includes("storage state"),
+  "direct sample analysis test must not rely on storage state",
+);
+
+const directSampleSignInIndex = directSampleTestSource.indexOf(
+  'await signInQaUserOnPage(page, config, "A", {',
+);
+const directSampleDashboardIndex = directSampleTestSource.indexOf(
+  'await page.goto(`${config.baseUrl}/dashboard`);',
+);
+const directSampleClickIndex = directSampleTestSource.indexOf(
+  "await sampleInputsButton.click();",
+);
+assert(directSampleSignInIndex >= 0, "direct sample analysis test must include signInQaUserOnPage call");
+assert(directSampleDashboardIndex >= 0, "direct sample analysis test must include dashboard navigation");
+assert(directSampleClickIndex >= 0, "direct sample analysis test must include sampleInputsButton click");
+assert(
+  directSampleSignInIndex < directSampleDashboardIndex,
+  "direct sample analysis test must sign in before navigating to dashboard",
+);
+assert(
+  directSampleDashboardIndex < directSampleClickIndex,
+  "direct sample analysis test must navigate to dashboard before clicking sample inputs",
+);
+
 assert(
   !profileAdminSource.includes('.like("profile_name"') &&
     !profileAdminSource.includes(".like('profile_name'"),
