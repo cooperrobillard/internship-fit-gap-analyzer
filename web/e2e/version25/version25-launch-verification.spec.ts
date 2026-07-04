@@ -122,8 +122,22 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
 
   await createProfileSubmit.click();
   await expect(page.getByText(`Profile created. “${profileName}” is ready to use.`)).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { name: profileName })).toBeVisible();
-  await expect(page.getByText(`Synthetic Version 25 ${ownerLabel} structured notes only.`)).toBeVisible();
+  await expect(page.getByRole("heading", { name: profileName, exact: true })).toBeVisible();
+  const profileSummary = page
+    .getByRole("heading", {
+      name: profileName,
+      exact: true,
+    })
+    .locator("..");
+
+  await expect(
+    profileSummary.getByText(
+      `Synthetic Version 25 ${ownerLabel} structured notes only.`,
+      {
+        exact: true,
+      },
+    ),
+  ).toBeVisible();
   await expect(page.getByText("excel", { exact: true })).toBeVisible();
   const profileDetails = page
     .locator("details")

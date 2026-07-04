@@ -4063,3 +4063,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: `createProfile()` scopes submission to the unique form containing the exact New profile heading and verifies the persisted Manual value inside the opened Profile details disclosure.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once.
+
+## Version 25 Step 6B remediation 12 — scoped profile summary notes
+
+- The twelfth Step 6B Production run on commit `18beb3d9015b0b150a899f5ca701550a8195adbb` (run ID `20260704025631-tnlhku`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed.
+- Structured profile creation succeeded through profile-created confirmation and exact selected-profile heading verification.
+- Remaining blocker: a page-wide profile-notes locator resolved the same notes text in both the profile-list card and the selected profile detail summary.
+- Responsive and accessibility smoke tests did not run because the suite is serial; exact cleanup completed and the report was generated.
+- Remediation is QA-only: `createProfile()` scopes the notes assertion to `profileSummary` anchored on the exact selected-profile heading.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
