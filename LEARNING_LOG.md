@@ -4083,3 +4083,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; exact cleanup completed and the report was generated.
 - Remediation is QA-only: `createProfile()` scopes Created and Updated assertions to `profileDetails.getByText(..., { exact: true })` inside the opened Profile details disclosure.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 14 — Saved profile role ambiguity
+
+- The fourteenth Step 6B Production run on commit `79cb73c0f7f5337866a48cdb93d3ee9912d647f4` (run ID `20260704033340-wl1ezk`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed.
+- Profile create/detail/edit assertions reached and passed.
+- Remaining blocker: `getByLabel("Saved profile")` resolved both the Saved profile radio button and the Saved profile combobox during saved-profile analysis selection.
+- Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: the structured-profile flow now uses role-specific radio/combobox locators, scopes the selected-profile preview through Profile source details, scopes edit interactions through the Edit profile form, and removes positional ambiguity suppression from remaining profile/responsive/accessibility locators.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.

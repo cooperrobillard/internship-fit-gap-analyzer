@@ -78,15 +78,22 @@ async function assertNoHorizontalOverflow(page: Page): Promise<void> {
   expect(overflow).toBeLessThanOrEqual(1);
 }
 
-async function expectVisibleButton(page: Page, name: RegExp | string): Promise<void> {
-  await expect(page.getByRole("button", { name }).first()).toBeVisible({ timeout: 15_000 });
+async function expectUniqueVisibleButton(page: Page, name: RegExp | string): Promise<void> {
+  const button = page.getByRole("button", { name });
+  await expect(button).toHaveCount(1);
+  await expect(button).toBeVisible({ timeout: 15_000 });
 }
 
 async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: string): Promise<void> {
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
   await expect(page.getByRole("heading", { name: /resume profiles/i })).toBeVisible({ timeout: 30_000 });
-  const newProfile = page.getByRole("button", { name: /new profile|create profile/i }).first();
-  await newProfile.click();
+  const profileLauncher = page.getByRole("button", {
+    name: /^(?:new profile|create profile)$/i,
+  });
+
+  await expect(profileLauncher).toHaveCount(1);
+  await expect(profileLauncher).toBeVisible();
+  await profileLauncher.click();
   await page.getByLabel("Profile name").fill(profileName);
   await page.getByLabel(/notes/i).fill(`Synthetic Version 25 ${ownerLabel} structured notes only.`);
   await page.getByLabel(/skills from the source/i).fill("excel, logistics, procurement");
@@ -176,9 +183,39 @@ async function createProfile(page: Page, ownerLabel: "A" | "B", profileName: str
 
 async function deleteProfileViaUi(page: Page, profileName: string): Promise<void> {
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
-  await page.getByRole("button", { name: new RegExp(profileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") }).click();
-  await page.getByRole("button", { name: /^delete$/i }).click();
-  await page.getByRole("button", { name: /^delete profile$/i }).click();
+  const profileButton = page.getByRole("button", {
+    name: new RegExp(`^${profileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+  });
+
+  await expect(profileButton).toHaveCount(1);
+  await expect(profileButton).toBeVisible();
+  await profileButton.click();
+
+  const selectedProfileDetail = page
+    .getByRole("heading", {
+      name: profileName,
+      exact: true,
+    })
+    .locator("../..")
+    .locator("..");
+
+  await expect(selectedProfileDetail).toBeVisible();
+
+  const deleteButton = selectedProfileDetail.getByRole("button", {
+    name: /^delete$/i,
+  });
+
+  await expect(deleteButton).toHaveCount(1);
+  await expect(deleteButton).toBeVisible();
+  await deleteButton.click();
+
+  const deleteProfileButton = selectedProfileDetail.getByRole("button", {
+    name: /^delete profile$/i,
+  });
+
+  await expect(deleteProfileButton).toHaveCount(1);
+  await expect(deleteProfileButton).toBeVisible();
+  await deleteProfileButton.click();
   await expect(page.getByText("Profile deleted.")).toBeVisible({ timeout: 30_000 });
 }
 
@@ -345,18 +382,99 @@ test("direct sample analysis stays same-origin and safe", async ({ page }) => {
 test("structured profile CRUD, use, and two-user isolation", async ({ page }) => {
   await signInQaUserOnPage(page, config, "A", { qaUserIds });
   await createProfile(page, "A", userAProfileName);
-  await page.getByRole("button", { name: /^edit$/i }).click();
-  await page.getByLabel("Profile name").fill(userAProfileNameEdited);
-  await page.getByLabel(/notes/i).fill("Synthetic Version 25 User A edited structured notes only.");
-  await page.getByRole("button", { name: /^save changes$/i }).click();
+
+  const selectedProfileDetail = page
+    .getByRole("heading", {
+      name: userAProfileName,
+      exact: true,
+    })
+    .locator("../..")
+    .locator("..");
+
+  const editButton = selectedProfileDetail.getByRole("button", {
+    name: /^edit$/i,
+  });
+
+  await expect(editButton).toHaveCount(1);
+  await expect(editButton).toBeVisible();
+  await editButton.click();
+
+  const editProfileForm = page
+    .locator("form")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "Edit profile",
+        exact: true,
+      }),
+    });
+
+  await expect(editProfileForm).toHaveCount(1);
+  await expect(editProfileForm).toBeVisible();
+  await editProfileForm.getByLabel("Profile name").fill(userAProfileNameEdited);
+  await editProfileForm.getByLabel(/notes/i).fill("Synthetic Version 25 User A edited structured notes only.");
+
+  const saveChangesButton = editProfileForm.getByRole("button", {
+    name: /^save changes$/i,
+  });
+
+  await expect(saveChangesButton).toHaveCount(1);
+  await expect(saveChangesButton).toBeVisible();
+  await saveChangesButton.click();
   await expect(page.getByText("Profile updated.")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { name: userAProfileNameEdited })).toBeVisible();
+  await expect(page.getByRole("heading", { name: userAProfileNameEdited, exact: true })).toBeVisible();
 
   await page.goto(`${config.baseUrl}/dashboard`);
-  await page.getByRole("radio", { name: /saved profile/i }).check();
-  await page.getByLabel("Saved profile").selectOption({ label: userAProfileNameEdited });
-  await expect(page.getByText(userAProfileNameEdited)).toBeVisible();
-  await expect(page.getByText(/structured profile data only/i)).toBeVisible();
+
+  const savedProfileRadio = page.getByRole("radio", {
+    name: "Saved profile",
+    exact: true,
+  });
+
+  await expect(savedProfileRadio).toHaveCount(1);
+  await expect(savedProfileRadio).toBeVisible();
+  await savedProfileRadio.check();
+
+  const savedProfileSelect = page.getByRole("combobox", {
+    name: "Saved profile",
+    exact: true,
+  });
+
+  await expect(savedProfileSelect).toHaveCount(1);
+  await expect(savedProfileSelect).toBeVisible();
+  await savedProfileSelect.selectOption({ label: userAProfileNameEdited });
+
+  const profileSourceDetails = page
+    .locator("details")
+    .filter({
+      has: page.getByText("Profile source details", {
+        exact: true,
+      }),
+    });
+
+  await expect(profileSourceDetails).toHaveCount(1);
+
+  const selectedProfilePreview = profileSourceDetails.locator("..");
+
+  await expect(
+    selectedProfilePreview.getByText(userAProfileNameEdited, {
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  await profileSourceDetails
+    .getByText("Profile source details", {
+      exact: true,
+    })
+    .click();
+
+  await expect(
+    profileSourceDetails.getByText(
+      "Manual entry · structured profile data only.",
+      {
+        exact: true,
+      },
+    ),
+  ).toBeVisible();
   await expect(page.getByLabel(/resume information/i)).toHaveCount(0);
   await page.getByLabel(/job description/i).fill("Synthetic role requiring excel, logistics, procurement, inventory management, forecasting, erp, sap erp, demand planning, and supplier management.");
   await page.getByRole("button", { name: /^run analysis$/i }).click();
@@ -381,8 +499,10 @@ test("cross-route responsive smoke checks", async ({ page }) => {
       await page.goto(`${config.baseUrl}${route}`);
       await assertNoHorizontalOverflow(page);
       if (route.startsWith("/dashboard")) await expect(page.getByRole("navigation", { name: /dashboard|workspace/i })).toBeVisible();
-      if (route === "/dashboard") await expectVisibleButton(page, /run analysis/i);
-      if (route === "/dashboard/profiles") await expectVisibleButton(page, /new profile|create profile/i);
+      if (route === "/dashboard") await expectUniqueVisibleButton(page, /^run analysis$/i);
+      if (route === "/dashboard/profiles") {
+        await expectUniqueVisibleButton(page, /^(?:new profile|create profile)$/i);
+      }
       if (route === "/dashboard/saved") await expect(page.getByRole("heading", { name: /saved analyses/i })).toBeVisible();
     }
   }
@@ -403,16 +523,36 @@ test("accessibility smoke checks", async ({ page }) => {
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toBeVisible();
   await page.goto(`${config.baseUrl}/dashboard/profiles`);
-  await page.getByRole("button", { name: /new profile|create profile/i }).first().focus();
+
+  const profileLauncher = page.getByRole("button", {
+    name: /^(?:new profile|create profile)$/i,
+  });
+
+  await expect(profileLauncher).toHaveCount(1);
+  await profileLauncher.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Profile name")).toBeVisible();
   await expect(page.getByLabel(/notes/i)).toBeVisible();
   await page.keyboard.press("Escape");
-  const cancel = page.getByRole("button", { name: /cancel/i }).first();
-  if (await cancel.count()) {
-    await cancel.focus();
-    await page.keyboard.press("Enter");
-  }
+
+  const createProfileForm = page
+    .locator("form")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "New profile",
+        exact: true,
+      }),
+    });
+
+  await expect(createProfileForm).toHaveCount(1);
+
+  const cancelButton = createProfileForm.getByRole("button", {
+    name: /^cancel$/i,
+  });
+
+  await expect(cancelButton).toHaveCount(1);
+  await cancelButton.focus();
+  await page.keyboard.press("Enter");
   await page.setViewportSize({ width: 640, height: 900 });
   await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
   await assertNoHorizontalOverflow(page);
