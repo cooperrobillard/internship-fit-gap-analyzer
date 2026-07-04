@@ -4103,3 +4103,13 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation is QA-only: create, responsive, and accessibility flows now target the persistent exact New profile header action instead of the New profile/Create profile union locator.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 16 — profile-row delete selection
+
+- The sixteenth Step 6B Production run on commit `0ef85ba1b105ac4d9d067e9a3e0f011add930671` (run ID `20260704040022-vrlb7m`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, and direct sample analysis passed.
+- User A profile create/detail/edit/select/analyze passed, User B profile creation passed, switching between both QA users passed, and two-user profile isolation passed in both directions.
+- Remaining blocker: final User A profile-row selection for UI deletion failed because the row button's accessible name includes profile notes, skill count, and updated date while the QA locator required an exact profile-name-only match.
+- Responsive and accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation is QA-only: `deleteProfileViaUi()` now selects the profile row through button role filtered by an exact profile-name descendant while retaining scoped UI deletion and manifest-based exact cleanup.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
