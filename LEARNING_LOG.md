@@ -4121,3 +4121,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Python, npm install, lint, TypeScript, build, and git diff preflight checks passed; the Vercel provider gate detected the mismatch; Version 23 and Version 25 Playwright did not start; structured profile, responsive, and accessibility checks did not run; no browser mutation flow began; the combined runner generated reports after the failure.
 - Remediation is QA-only: the Version 25 combined runner now compares local Git HEAD with `QA_EXPECTED_COMMIT` before Version 23 production starts, while retaining the existing Vercel verification.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 18 — mobile landing preview overflow
+
+- The eighteenth Step 6B Production run on commit `9e71fd34a7bc8e8401d1c654fafd9be0df4f96c2` (run ID `20260704042258-u1girj`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, direct sample analysis, and the full structured-profile lifecycle including two-user isolation passed.
+- Remaining blocker: responsive testing failed on the homepage at the initial 320px viewport because document overflow measured 4px; the mobile app-shell side margin is `0.75rem` while the decorative `LandingAnalysisPreview` background extended `1rem` beyond the preview container.
+- Accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation tightens the mobile decorative horizontal inset to `inset-x-[-0.75rem]` while preserving `sm:inset-x-[-1rem]` and without global overflow suppression.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.

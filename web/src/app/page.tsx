@@ -114,7 +114,7 @@ export default function Home() {
           <div className="relative min-w-0">
             <div
               aria-hidden="true"
-              className="absolute inset-x-[-1rem] bottom-[-1rem] top-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_25%_20%,rgba(254,215,170,0.38),transparent_32%),linear-gradient(135deg,rgba(254,249,195,0.48),rgba(186,230,253,0.34)_48%,rgba(209,250,229,0.28))]"
+              className="absolute inset-x-[-0.75rem] bottom-[-1rem] top-[-1rem] sm:inset-x-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_25%_20%,rgba(254,215,170,0.38),transparent_32%),linear-gradient(135deg,rgba(254,249,195,0.48),rgba(186,230,253,0.34)_48%,rgba(209,250,229,0.28))]"
             />
             <div className="relative p-3 sm:p-5">
               <LandingAnalysisPreview />

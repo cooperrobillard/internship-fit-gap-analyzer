@@ -34,6 +34,7 @@ import type { QaConfig } from "../../version23/helpers/config";
 const helperDir = dirname(fileURLToPath(import.meta.url));
 const profileAdminSource = readFileSync(resolve(helperDir, "profile-admin.ts"), "utf8");
 const launchSpecSource = readFileSync(resolve(helperDir, "../version25-launch-verification.spec.ts"), "utf8");
+const homePageSource = readFileSync(resolve(helperDir, "../../../src/app/page.tsx"), "utf8");
 
 function throws(fn: () => void, message: RegExp) {
   assert.throws(fn, message);
@@ -886,6 +887,43 @@ assert(
 assert(
   !responsiveTestSource.includes("/^(?:new profile|create profile)$/i"),
   "responsive smoke test must not use the New profile/Create profile union locator",
+);
+assert(
+  responsiveTestSource.includes("320") &&
+    responsiveTestSource.includes("375") &&
+    responsiveTestSource.includes("390"),
+  "responsive smoke test must retain 320, 375, and 390 viewport widths",
+);
+assert(
+  responsiveTestSource.includes('"/"') &&
+    responsiveTestSource.includes("assertNoHorizontalOverflow"),
+  "responsive smoke test must retain homepage route and no-horizontal-overflow assertion",
+);
+
+const landingPreviewBackgroundSource = homePageSource.slice(
+  homePageSource.indexOf("<LandingAnalysisPreview />") - 400,
+  homePageSource.indexOf("<LandingAnalysisPreview />") + 80,
+);
+assert(
+  landingPreviewBackgroundSource.includes("inset-x-[-0.75rem]") &&
+    landingPreviewBackgroundSource.includes("sm:inset-x-[-1rem]"),
+  "homepage LandingAnalysisPreview decorative background must use mobile 0.75rem and sm 1rem negative horizontal inset",
+);
+assert(
+  landingPreviewBackgroundSource.includes('aria-hidden="true"'),
+  "homepage LandingAnalysisPreview decorative background must remain aria-hidden",
+);
+assert(
+  landingPreviewBackgroundSource.includes("absolute") &&
+    landingPreviewBackgroundSource.includes("bottom-[-1rem]") &&
+    landingPreviewBackgroundSource.includes("top-[-1rem]"),
+  "homepage LandingAnalysisPreview decorative background must remain absolutely positioned with existing vertical inset",
+);
+assert(
+  !homePageSource.includes("overflow-x-hidden") &&
+    !homePageSource.match(/<html[^>]*overflow/) &&
+    !homePageSource.match(/<body[^>]*overflow/),
+  "homepage must not introduce global html or body overflow suppression",
 );
 
 const accessibilityTestSource = launchSpecSource.slice(
