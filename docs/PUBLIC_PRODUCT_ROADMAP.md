@@ -259,7 +259,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 **Complete for its bounded current scope.** Version 24 established requirements, request correlation, sanitized server logs, server-only Sentry failure delivery, Sentry alerts, UptimeRobot frontend/backend monitors, rollback readiness, and the production incident-response runbook. See [`VERSION_24_CHECKPOINT.md`](VERSION_24_CHECKPOINT.md), [`VERSION_24_RELEASE_DIRECTION.md`](VERSION_24_RELEASE_DIRECTION.md), and [`PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md`](PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md).
 
-### Version 25 — Custom domain and broader public-launch configuration (current next release)
+### Version 25 — Custom domain, Production verification, and project closeout ✅
 
 - Custom domain on Vercel — **Complete in Version 25 Steps 1–2**
 - Vercel DNS/domain verification — **Complete in Version 25 Step 2**
@@ -267,7 +267,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 - Canonical metadata and URL updates — **Complete in Version 25 Step 4**; see [`VERSION_25_STEP_4_CANONICAL_METADATA.md`](VERSION_25_STEP_4_CANONICAL_METADATA.md)
 - Step 5 — provider and integration reconciliation — **Complete**
 - Step 6 — complete Production verification — **Complete**; see [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md)
-- Step 7 — portfolio publication, public links, launch checkpoint
+- Step 7 — final documentation closeout, current-status reconciliation, limitation reconciliation, explicit portfolio/public-promotion deferral, and maintenance handoff — **Complete**; see [`VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](VERSION_25_STEP_7_PROJECT_CLOSEOUT.md)
 
 ---
 
@@ -285,7 +285,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Next:** Version 25 Step 7 — portfolio publication, public links, and launch checkpoint. Step 6 canonical-host Production verification passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d`. Final public launch is not complete. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
+**Next:** Limited-public-beta maintenance and feedback triage — monitor the canonical frontend and backend, collect real-user feedback, fix only evidence-supported defects, preserve privacy and RLS boundaries, and defer Version 26 feature planning until an observation period identifies the highest-value next work. Version 25 is complete for its bounded technical release scope on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d`. The application remains a limited public beta. Portfolio publication is an independent deferred distribution task. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
@@ -305,13 +305,19 @@ Update this file when hosted parity changes or public v1 scope shifts. Do not ma
 - Version 23 Step 4 added accessible Load more pagination for records beyond the previous recent loaded set.
 
 
-## Version 25 remaining sequence
+## Version 25 — Completed sequence
 
-Canonical metadata and URL updates are complete in Version 25 Step 4. Version 25 and final public launch are not complete. Remaining sequence:
+Version 25 is **complete** for its bounded technical release scope. The completed sequence:
 
-1. Step 5 — provider and integration reconciliation — **Complete**
-2. Step 6 — complete Production verification — **Complete**
-3. Step 7 — portfolio publication, public links, launch checkpoint
+1. Step 1 — custom-domain planning and dependency inventory — **Complete**
+2. Step 2 — Vercel domain, Porkbun DNS, ownership, and TLS — **Complete**
+3. Step 3 — Clerk Production migration and `authorizedParties` guardrail — **Complete**
+4. Step 4 — canonical metadata, Open Graph/Twitter metadata, social images, sitemap, and robots — **Complete**
+5. Step 5 — provider and integration reconciliation — **Complete**
+6. Step 6 — canonical-host Production verification — **Complete**; see [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md)
+7. Step 7 — final documentation closeout, current-status reconciliation, limitation reconciliation, explicit portfolio/public-promotion deferral, and maintenance handoff — **Complete**; see [`VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](VERSION_25_STEP_7_PROJECT_CLOSEOUT.md)
+
+Portfolio publication and broader public promotion are intentionally deferred and are not claimed as completed.
 
 ## Version 25 Step 5 — Provider and Integration Reconciliation ✅
 
@@ -327,4 +333,10 @@ No runtime remediation was required. FastAPI/CORS, Vercel Production, Vercel Pre
 
 Step 6 completed canonical-host Production verification on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` (run ID `20260706005955-b8a1m2`). Version 23 automated QA passed 17/17. Version 25 automated QA passed 7/7. Manual verification, cleanup, and rollback readiness passed. See [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md).
 
-Version 25 and final public launch are **not** complete. The exact next step is **Version 25 Step 7 — update the portfolio and other approved current public links to `https://jobfit.cooperrobillard.com`, complete the public sharing and launch checkpoint, preserve honest limited-public-beta, privacy, rule-based, and limitations language, verify every published destination, and then close Version 25 without overstating product maturity.**
+## Version 25 Step 7 — Final project closeout ✅
+
+**Result:** PASS — complete for this bounded documentation step.
+
+Step 7 reconciled current status, limitations, and maintenance direction. Portfolio publication and broader public promotion are intentionally deferred. No portfolio repository work occurred. See [`VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](VERSION_25_STEP_7_PROJECT_CLOSEOUT.md).
+
+**Next operating direction:** Limited-public-beta maintenance and feedback triage — monitor the canonical frontend and backend, collect real-user feedback, fix only evidence-supported defects, preserve privacy and RLS boundaries, and defer Version 26 feature planning until an observation period identifies the highest-value next work.

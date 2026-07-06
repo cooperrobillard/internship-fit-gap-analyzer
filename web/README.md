@@ -4,7 +4,7 @@ This folder contains the Next.js 16 frontend for the hosted **Job Fit & Skill-Ga
 
 Canonical Production URL: https://jobfit.cooperrobillard.com
 
-The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 observability are complete in the repository. Version 25 custom-domain work is complete through Step 6: Clerk Production migration, canonical metadata, provider/integration reconciliation, and canonical-host Production verification passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` with Version 23 17/17 and Version 25 7/7 automated results plus manual verification, cleanup, and rollback readiness. The exact next step is Version 25 Step 7 portfolio publication and public-link updates. Formal accessibility certification and security certification have not been declared complete.
+The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS/abuse evidence, Dev 20 app-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 observability are complete in the repository. **Version 25 is complete.** Custom-domain configuration, Clerk Production migration, canonical metadata, provider reconciliation, canonical-host Production verification, and final documentation closeout are complete. Canonical-host Production verification passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` with Version 23 17/17 and Version 25 7/7 automated results plus manual verification, cleanup, and rollback readiness. Portfolio publication and broader promotion are intentionally deferred. Formal accessibility certification and security certification have not been declared complete.
 
 ## Current frontend surfaces
 
@@ -65,6 +65,8 @@ Supporting records:
 - [`../docs/DEV19_RLS_AUTH_REVERIFICATION.md`](../docs/DEV19_RLS_AUTH_REVERIFICATION.md)
 - [`../docs/DEV19_ABUSE_RATE_LIMIT_REVIEW.md`](../docs/DEV19_ABUSE_RATE_LIMIT_REVIEW.md)
 - [`../docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md`](../docs/DEV20_LIMITED_PUBLIC_BETA_LAUNCH_READINESS.md)
+- [`../docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](../docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md)
+- [`../docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](../docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md)
 
 ## Run locally
 
@@ -148,8 +150,9 @@ Before preview or production review, also run the tracked-file privacy checks do
 - Limited public beta/portfolio software, not mature production SaaS.
 - No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
 - No account-wide select-all, account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion and exports are limited to records currently loaded in the browser.
-- Observability is not yet implemented as a complete product-defined centralized error-monitoring, uptime-alerting, incident-response, log-retention, and PII-redaction foundation. Version 24 addresses observability before custom-domain launch work.
-- Custom-domain launch is later Version 25 work. Final public launch, formal accessibility certification, and security certification are not complete.
+- Version 24 observability is complete for its bounded privacy-safe scope: sanitized server-side Sentry failure delivery, UptimeRobot canonical frontend, Vercel fallback, and backend health monitors, plus the production incident-response runbook. This is not a formal security audit, penetration test, legal review, compliance certification, or mature-SaaS claim.
+- Version 25 custom-domain configuration, Clerk Production migration, canonical metadata, provider reconciliation, and canonical-host Production verification are complete. Portfolio publication and broader promotion are intentionally deferred.
+- Formal accessibility certification and security certification are not complete.
 
 ## Version 23 production QA status
 
