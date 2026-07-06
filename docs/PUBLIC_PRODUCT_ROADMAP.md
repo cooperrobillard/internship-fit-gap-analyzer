@@ -265,8 +265,8 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 - Vercel DNS/domain verification — **Complete in Version 25 Step 2**
 - Clerk production-domain callback and redirect review — **Complete in Version 25 Step 3**; see [`VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md`](VERSION_25_STEP_3_CLERK_PRODUCTION_MIGRATION.md)
 - Canonical metadata and URL updates — **Complete in Version 25 Step 4**; see [`VERSION_25_STEP_4_CANONICAL_METADATA.md`](VERSION_25_STEP_4_CANONICAL_METADATA.md)
-- Step 5 — provider and integration reconciliation
-- Step 6 — complete Production verification
+- Step 5 — provider and integration reconciliation — **Complete**
+- Step 6 — complete Production verification — **Complete**; see [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md)
 - Step 7 — portfolio publication, public links, launch checkpoint
 
 ---
@@ -285,7 +285,7 @@ Dev 19 supports a limited public-beta/portfolio readiness verdict after one fina
 
 Version 23 preserved RLS, avoided raw resume/job text storage, avoided analyzer/taxonomy changes, and kept account-wide controls honest. Progressive loading reaches older saved-analysis records in the browser, while bulk actions remain scoped to currently loaded records. Account-wide select-all, one-click account-wide export, and account-wide delete-all remain unimplemented.
 
-**Next:** Version 25 Step 5 — provider and integration reconciliation. Step 6 is complete Production verification. Step 7 is portfolio publication, public links, and launch checkpoint. Final public launch is not complete. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
+**Next:** Version 25 Step 7 — portfolio publication, public links, and launch checkpoint. Step 6 canonical-host Production verification passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d`. Final public launch is not complete. Mature SaaS hardening, semantic matching, AI extraction, billing, teams, organization features, legal review, security audit, automated retention, restore, and formal security/legal certification remain incomplete.
 
 **Out of scope until separately approved:** raw resume text, PDF/DOCX parsing, AI extraction, semantic matching, application tracking, automated retention, and mature SaaS/security-certification claims.
 
@@ -309,8 +309,8 @@ Update this file when hosted parity changes or public v1 scope shifts. Do not ma
 
 Canonical metadata and URL updates are complete in Version 25 Step 4. Version 25 and final public launch are not complete. Remaining sequence:
 
-1. Step 5 — provider and integration reconciliation
-2. Step 6 — complete Production verification
+1. Step 5 — provider and integration reconciliation — **Complete**
+2. Step 6 — complete Production verification — **Complete**
 3. Step 7 — portfolio publication, public links, launch checkpoint
 
 ## Version 25 Step 5 — Provider and Integration Reconciliation ✅
@@ -321,4 +321,10 @@ Step 5 reconciled the canonical Production hostname `https://jobfit.cooperrobill
 
 No runtime remediation was required. FastAPI/CORS, Vercel Production, Vercel Preview constrained-auth behavior, Render, Sentry, Clerk, Supabase, database schema, RLS, DNS, and old-host redirect behavior required no change.
 
-Version 25 and final public launch are **not** complete. The exact next step is **Version 25 Step 6 — run the complete canonical-host Production verification and synthetic Playwright QA checkpoint across metadata, authentication, analysis, saved analyses, structured profiles, two-user RLS isolation, responsive and accessibility checks, observability, monitoring, cleanup, and rollback readiness; record a bounded PASS/FAIL verdict before any portfolio publication.**
+## Version 25 Step 6 — Production verification ✅
+
+**Result:** PASS — complete for this bounded step.
+
+Step 6 completed canonical-host Production verification on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` (run ID `20260706005955-b8a1m2`). Version 23 automated QA passed 17/17. Version 25 automated QA passed 7/7. Manual verification, cleanup, and rollback readiness passed. See [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md).
+
+Version 25 and final public launch are **not** complete. The exact next step is **Version 25 Step 7 — update the portfolio and other approved current public links to `https://jobfit.cooperrobillard.com`, complete the public sharing and launch checkpoint, preserve honest limited-public-beta, privacy, rule-based, and limitations language, verify every published destination, and then close Version 25 without overstating product maturity.**
