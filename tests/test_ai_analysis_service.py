@@ -70,13 +70,7 @@ MATHWORKS_AI_ANALYSIS_PAYLOAD = {
             "evidence": "CALDERA or similar",
         },
     ],
-    "transferableSkills": [
-        {
-            "skill": "REST APIs",
-            "category": "Technical concepts",
-            "evidence": "Automation background may transfer",
-        }
-    ],
+    "transferableSkills": [],
     "resumeSkills": [
         {"skill": "Python", "category": "Programming languages", "evidence": "Listed in experience"},
         {"skill": "PowerShell", "category": "Technical tools", "evidence": "Listed in experience"},
@@ -125,6 +119,13 @@ class MockOpenAiClient:
     def create(self, **kwargs):
         self.last_kwargs = kwargs
         return MockOpenAiResponse(self.payload)
+
+
+class MockOpenAiSdkClient:
+    """Mimics openai.OpenAI client shape: client.responses.create(...)."""
+
+    def __init__(self, payload: dict) -> None:
+        self.responses = MockOpenAiClient(payload)
 
 
 class TimeoutMockClient:
@@ -178,6 +179,23 @@ def test_run_smart_analysis_parses_schema_success():
     assert result.model == "gpt-5.4-mini"
     assert mock_client.last_kwargs is not None
     assert mock_client.last_kwargs.get("store") is False
+    prompt = str(mock_client.last_kwargs.get("input", ""))
+    assert "matchedSkills" in prompt
+    assert "transferableSkills" in prompt
+    assert "Do not list every résumé skill" in prompt
+
+
+def test_openai_sdk_client_uses_responses_resource():
+    mock_client = MockOpenAiSdkClient(MATHWORKS_AI_ANALYSIS_PAYLOAD)
+    result = run_smart_analysis(
+        resume_text=SYNTHETIC_RESUME,
+        job_text=SYNTHETIC_SECURITY_JOB,
+        client=mock_client,
+        config=_enabled_config(),
+    )
+    assert result.analysisMode == "ai_smart"
+    assert mock_client.responses.last_kwargs is not None
+    assert mock_client.responses.last_kwargs.get("store") is False
 
 
 def test_resume_skill_extraction_includes_explicit_skills():
@@ -326,6 +344,7 @@ def test_ai_analyze_endpoint_maps_disabled_to_safe_http_error():
 if __name__ == "__main__":
     test_get_ai_runtime_config_defaults()
     test_run_smart_analysis_parses_schema_success()
+    test_openai_sdk_client_uses_responses_resource()
     test_resume_skill_extraction_includes_explicit_skills()
     test_profile_extraction_returns_skills_without_contact_info()
     test_missing_api_key_raises_safe_error()

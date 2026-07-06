@@ -89,7 +89,7 @@ export async function countAiUsageSince(
 ): Promise<number> {
   const { count, error } = await supabase
     .from("ai_usage_events")
-    .select("id", { count: "exact", head: true })
+    .select("id", { count: "exact" })
     .eq("clerk_user_id", clerkUserId)
     .eq("feature", feature)
     .gte("created_at", sinceIso)
@@ -209,7 +209,11 @@ export async function reserveAiUsageEvent(
     .select("id")
     .single();
 
-  if (error || !data?.id) {
+  if (error) {
+    throw new Error("quota_reserve_failed");
+  }
+
+  if (!data?.id) {
     throw new Error("quota_reserve_failed");
   }
 

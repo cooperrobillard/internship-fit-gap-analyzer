@@ -1112,12 +1112,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               {jobTitle.trim() || company.trim() ? (
                 <p className="mt-1 break-words text-sm font-medium text-zinc-700">{[jobTitle.trim(), company.trim()].filter(Boolean).join(" · ")}</p>
               ) : null}
-              <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
-              {result.analysisMode === "ai_smart" ? (
+              {result.analysisMode !== "ai_smart" ? (
+                <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
+              ) : (
                 <p className="mt-2 text-xs text-zinc-500">
-                  Smart AI may make mistakes. Review matched, missing, and adjacent skills before acting on this result.
+                  Smart AI may make mistakes. Review before acting.
                 </p>
-              ) : null}
+              )}
             </div>
             <div className="flex flex-wrap gap-2 text-sm">
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-900">Matched {result.matchedSkillsCount}</span>
@@ -1126,48 +1127,15 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </div>
 
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
-            <SkillList title="Matched skills" skills={result.matchedSkills} emptyMessage="No matched skills found." showEvidence={result.analysisMode === "ai_smart"} />
-            <SkillList title="Missing skills" skills={result.missingSkills} emptyMessage="No missing skills found." showEvidence={result.analysisMode === "ai_smart"} />
+            <SkillList title="Matched skills" skills={result.matchedSkills} emptyMessage="No matched skills found." />
+            <SkillList title="Missing skills" skills={result.missingSkills} emptyMessage="No missing skills found." />
           </div>
-
-          {result.analysisMode === "ai_smart" && result.transferableSkills && result.transferableSkills.length > 0 ? (
-            <div className="mt-6">
-              <SkillList
-                title="Adjacent / transferable skills"
-                skills={result.transferableSkills}
-                emptyMessage="No adjacent skills identified."
-                showEvidence
-              />
-            </div>
-          ) : null}
-
-          {result.analysisMode === "ai_smart" && result.ignoredBoilerplate && result.ignoredBoilerplate.length > 0 ? (
-            <div className="mt-6 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-700">
-              <p className="font-medium text-zinc-900">Ignored boilerplate</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                {result.ignoredBoilerplate.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {result.limitations && result.limitations.length > 0 ? (
-            <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-600">
-              <p className="font-medium text-zinc-800">Accuracy note</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                {result.limitations.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
 
           <details className="mt-5 border-t border-zinc-100 pt-4 text-xs text-zinc-600">
             <summary className="cursor-pointer font-medium text-sky-900">How this result was generated</summary>
             <p className="mt-2">
               {result.analysisMode === "ai_smart"
-                ? "Smart AI analyzed transient résumé and job text with structured outputs, then the app rendered matched, missing, and adjacent skills. This is planning guidance, not a hiring decision."
+                ? "Smart AI analyzed transient résumé and job text, then surfaced matched and missing skills in the same layout as rule-based analysis. This is planning guidance, not a hiring decision."
                 : "Results come from explicit taxonomy phrases and reviewed aliases using rule-based matching. The analyzer does not infer proficiency, evidence strength, or unstated skills; this is planning guidance, not a hiring decision."}
             </p>
           </details>

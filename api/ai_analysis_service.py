@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import traceback
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -77,6 +78,24 @@ class ResponseValidationError(AiServiceError):
 
 class OpenAiResponsesClient(Protocol):
     def create(self, **kwargs: Any) -> Any: ...
+
+
+def _resolve_responses_client(client: Any) -> OpenAiResponsesClient:
+    """Use SDK responses resource when present; tests may pass a direct mock."""
+    responses = getattr(client, "responses", None)
+    if responses is not None and callable(getattr(responses, "create", None)):
+        return responses
+    return client
+
+
+def _log_openai_call_failure(exc: BaseException) -> None:
+    """Temporary local-dev aid: safe OpenAI failure metadata only."""
+    logger.warning(
+        "OpenAI structured call failed (class=%s message=%s traceback=%s)",
+        exc.__class__.__name__,
+        str(exc),
+        traceback.format_exc(limit=8),
+    )
 
 
 @dataclass(frozen=True)
@@ -274,8 +293,9 @@ def _call_openai_structured(
     schema: dict[str, Any],
     user_prompt: str,
 ) -> tuple[dict[str, Any], AiTokenUsage, str]:
+    responses_client = _resolve_responses_client(client)
     try:
-        response = client.create(
+        response = responses_client.create(
             model=model,
             instructions=SYSTEM_INSTRUCTIONS,
             input=user_prompt,
@@ -291,7 +311,7 @@ def _call_openai_structured(
             raise OpenAiTimeoutError("OpenAI request timed out.") from exc
         if "ratelimit" in exc_name or "rate limit" in str(exc).lower():
             raise OpenAiRateLimitError("OpenAI rate limit reached.") from exc
-        logger.error("OpenAI request failed with an unexpected error class: %s", exc.__class__.__name__)
+        _log_openai_call_failure(exc)
         raise AiServiceError("Smart AI analysis is temporarily unavailable.") from exc
 
     payload = _extract_output_json(response)
@@ -323,6 +343,16 @@ def _build_analyze_prompt(
 
     return (
         "Compare the résumé against the job description and produce structured skill-fit analysis.\n\n"
+        "Skill bucketing — the product shows only matchedSkills and missingSkills:\n"
+        "- matchedSkills: job requirements directly supported by the résumé, plus strong "
+        "transferable matches that reasonably satisfy a role requirement. For transferable "
+        "matches, note the transfer briefly in category or evidence (for example, "
+        "'Transferable match').\n"
+        "- missingSkills: role requirements without direct or strong transferable support.\n"
+        "- transferableSkills: optional debug/details only. Leave empty unless a weak adjacent "
+        "signal is worth retaining internally. Do not treat this as a third user-facing bucket.\n"
+        "- Do not list every résumé skill. Include only skills relevant to this role comparison.\n"
+        "- Keep summary and limitations concise; they are stored for reference, not shown as a report.\n\n"
         f"Résumé text:\n{resume_text}\n\n"
         f"Job description text:\n{job_text}"
         f"{metadata_section}"

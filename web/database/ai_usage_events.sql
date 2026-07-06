@@ -53,6 +53,12 @@ to authenticated
 using (clerk_user_id = (select auth.jwt() ->> 'sub'))
 with check (clerk_user_id = (select auth.jwt() ->> 'sub'));
 
+grant usage on schema public to authenticated;
+
+grant select, insert, update
+on table public.ai_usage_events
+to authenticated;
+
 -- updated_at trigger (matches schema.sql pattern)
 create or replace function public.set_ai_usage_events_updated_at()
 returns trigger
