@@ -322,6 +322,10 @@ Use synthetic saved analyses only, then clean them up after testing.
 
 Canonical Production base URL: https://jobfit.cooperrobillard.com
 
+Historical record: Version 25 Step 6 canonical-host Production verification passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` (run ID `20260706005955-b8a1m2`) with Version 23 17/17 and Version 25 7/7 automated results plus manual verification, cleanup, and rollback readiness. See [`VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md). That historical PASS does not make the reusable checklist below permanently complete for future deployments.
+
+For each future deployment, re-run the relevant release checks with synthetic data only:
+
 - [ ] `/` has the correct canonical.
 - [ ] `/privacy` has the correct canonical.
 - [ ] Old Vercel-host HTML points canonically to the custom host.
