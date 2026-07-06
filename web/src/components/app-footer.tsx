@@ -5,7 +5,7 @@ export function AppFooter() {
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="app-shell-container flex flex-col gap-3 py-6 text-sm text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-2xl">
-          Rule-based planning guidance—not a hiring decision.
+          Planning guidance only—not a hiring decision.
         </p>
         <Link
           href="/privacy"
