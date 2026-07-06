@@ -16,6 +16,7 @@ if str(repo_root) not in sys.path:
 from fastapi.testclient import TestClient
 
 import api.main as api_main_module
+import api.ai_analysis_service as ai_module
 from api.main import app, get_allowed_origins, parse_allowed_origins
 from api.models import MAX_ANALYSIS_TEXT_LENGTH
 from api.observability import FAILURE_CLASSES, REQUEST_ID_HEADER, SAFE_EVENT_KEYS
@@ -793,6 +794,43 @@ def test_sentry_adapter_failure_does_not_change_unexpected_exception_response():
     assert "private boom" not in response.text
 
 
+def test_ai_analyze_endpoint_returns_safe_error_when_disabled():
+    payload = {
+        "resumeText": SAMPLE_RESUME,
+        "jobText": SAMPLE_JOB,
+    }
+    with patch(
+        "api.main.run_smart_analysis",
+        side_effect=ai_module.AiDisabledError("disabled"),
+    ):
+        response = client.post("/ai/analyze", json=payload)
+    assert response.status_code == 503
+    assert "disabled" in response.json()["detail"].lower()
+    assert TEST_SHARED_SECRET not in response.text
+
+
+def test_ai_extract_profile_endpoint_excludes_raw_resume_text():
+    with patch("api.main.run_profile_extraction") as mock_extract:
+        from api.models import AiExtractProfileResponse, AiTokenUsage
+
+        mock_extract.return_value = AiExtractProfileResponse(
+            candidateName="Sample Candidate",
+            skills=["Python", "SQL"],
+            summary="Synthetic extraction note.",
+            usage=AiTokenUsage(promptTokens=10, completionTokens=5, totalTokens=15),
+            model="gpt-5.4-mini",
+        )
+        response = client.post(
+            "/ai/extract-profile",
+            json={"resumeText": SAMPLE_RESUME},
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["candidateName"] == "Sample Candidate"
+    assert "resumeText" not in body
+    assert SAMPLE_RESUME not in response.text
+
+
 if __name__ == "__main__":
     test_health_returns_ok()
     test_analyze_success_returns_and_emits_safe_request_id()
@@ -832,4 +870,6 @@ if __name__ == "__main__":
     test_analyze_does_not_create_tracked_generated_files()
     test_sentry_adapter_not_invoked_for_success_validation_auth_or_health()
     test_sentry_adapter_failure_does_not_change_unexpected_exception_response()
+    test_ai_analyze_endpoint_returns_safe_error_when_disabled()
+    test_ai_extract_profile_endpoint_excludes_raw_resume_text()
     print("All API service tests passed.")

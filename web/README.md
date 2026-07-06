@@ -8,10 +8,12 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 
 ## Current frontend surfaces
 
-- Public landing page with rule-based/not-AI positioning, curated cross-domain taxonomy copy, current feature proof, and privacy/data-control links.
+- Public landing page with rule-based positioning, optional Smart AI when configured, curated cross-domain taxonomy copy, current feature proof, and privacy/data-control links.
 - Clerk sign-in and sign-up routes with product context.
 - Protected `/dashboard` workspace.
 - Dashboard `POST /api/analyze` proxy to Render FastAPI rule-based analysis.
+- Optional Smart AI analysis via `POST /api/ai/analyze` with quota tracking and automatic rule-based fallback.
+- Optional Smart AI résumé profile extraction via `POST /api/ai/extract-profile` with deterministic fallback.
 - Transient pasted text and transient PDF, DOCX, TXT, and MD upload support (deterministic extraction; not AI/OCR).
 - **Try sample inputs** and **Run analysis (does not save)** workflow labels, currently using a fictional Supply Chain Operations Analyst Intern sample for Northstar Distribution.
 - Structured resume profiles with profile metadata and skill lists.
@@ -45,7 +47,9 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 
 ## Privacy posture
 
-- Analysis is rule-based with explicit taxonomy phrases and reviewed aliases, not AI or semantic judgment.
+- Rule-based analysis uses explicit taxonomy phrases and reviewed aliases.
+- When enabled, Smart AI mode sends transient résumé/job text to OpenAI for the current request only; rule-based fallback remains available.
+- OpenAI API content is not used for training by default, but platform abuse monitoring/application-state handling may apply.
 - Pasted or uploaded resume/job documents are processed transiently for the request. Files and raw extracted bodies are not saved by the application save path.
 - The application save path does not intentionally persist raw resume body text or raw job-description body text.
 - Saved analyses store structured results and metadata.
@@ -128,8 +132,9 @@ Local values go in `web/.env.local`; hosted values are configured in provider da
 | Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Public key is browser-visible; secret key is server-only. |
 | Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Use the publishable/browser-safe key only in client code. |
 | Analysis API | `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET` | Server-side Vercel/Render configuration. |
+| Smart AI (optional) | `AI_FEATURES_ENABLED`, `AI_DAILY_LIMIT`, `AI_MONTHLY_LIMIT`, `AI_PROFILE_MONTHLY_LIMIT` | Vercel server-side only. Render also needs `OPENAI_API_KEY` and related backend vars. |
 
-Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code.
+Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY`.
 
 ## Checks
 

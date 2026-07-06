@@ -19,11 +19,17 @@ import {
   formatSourceKindLabel,
 } from "@/lib/document-extraction";
 import {
-  analyzeWithApi,
-  type AnalysisErrorCategory,
-} from "@/lib/analysis/api-analysis-client";
+  runAnalysisByMode,
+  type SmartAnalysisClientResult,
+} from "@/lib/analysis/ai-analysis-client";
+import type { AnalysisErrorCategory } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
-import type { WebAnalysisInput, WebAnalysisResult } from "@/lib/analysis/types";
+import type {
+  AnalysisSkillWithEvidence,
+  UserAnalysisModeChoice,
+  WebAnalysisInput,
+  WebAnalysisResult,
+} from "@/lib/analysis/types";
 import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
@@ -336,10 +342,12 @@ function SkillList({
   title,
   skills,
   emptyMessage,
+  showEvidence = false,
 }: {
   title: string;
-  skills: { skill: string; category: string }[];
+  skills: AnalysisSkillWithEvidence[];
   emptyMessage: string;
+  showEvidence?: boolean;
 }) {
   return (
     <div>
@@ -366,6 +374,11 @@ function SkillList({
                 <span className="block break-words text-xs text-zinc-500">
                   {item.category}
                 </span>
+                {showEvidence && item.evidence ? (
+                  <span className="mt-1 block break-words text-xs text-zinc-600">
+                    {item.evidence}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}
@@ -433,6 +446,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [sampleInputsLoaded, setSampleInputsLoaded] = useState(false);
   const [rateLimitRetryAt, setRateLimitRetryAt] = useState<number | null>(null);
   const [cooldownSecondsRemaining, setCooldownSecondsRemaining] = useState(0);
+  const [analysisMode, setAnalysisMode] =
+    useState<UserAnalysisModeChoice>("smart_ai");
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
 
   const isRateLimited = cooldownSecondsRemaining > 0;
 
@@ -489,6 +505,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   function clearAnalysisOutput() {
     setResult(null);
     setLastInput(null);
+    setFallbackReason(null);
     setSaveUiState({ kind: "idle" });
   }
 
@@ -662,26 +679,44 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       notes: notes.trim() || undefined,
     };
 
-    const apiResult = await analyzeWithApi(analysisInput);
+    const apiResult: SmartAnalysisClientResult = await runAnalysisByMode(
+      analysisMode,
+      analysisInput,
+    );
     setIsAnalyzing(false);
 
     if (apiResult.status === "error") {
-      if (apiResult.category === "rate_limited") {
-        const retryAfterSeconds = apiResult.retryAfterSeconds ?? 60;
-        setRateLimitRetryAt(Date.now() + retryAfterSeconds * 1000);
-        setCooldownSecondsRemaining(retryAfterSeconds);
+      const category: AnalysisErrorCategory =
+        apiResult.category === "validation" ? "validation" : "unavailable";
+      if (category === "unavailable") {
+        setAnalysisError({
+          message: apiResult.message,
+          category,
+          retryable: true,
+        });
+      } else {
+        setAnalysisError({
+          message: apiResult.message,
+          category,
+          retryable: false,
+        });
       }
-      setAnalysisError({
-        message: apiResult.message,
-        category: apiResult.category,
-        retryable: apiResult.retryable,
-      });
       return;
     }
 
     setRateLimitRetryAt(null);
     setCooldownSecondsRemaining(0);
     setLastInput(analysisInput);
+    if (apiResult.status === "fallback") {
+      setFallbackReason(apiResult.fallbackReason);
+      setResult({
+        ...apiResult.result,
+        fallbackReason: apiResult.fallbackReason,
+      });
+      return;
+    }
+
+    setFallbackReason(null);
     setResult(apiResult.result);
   }
 
@@ -991,11 +1026,53 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-col gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center">
+      <div className="mt-5 flex flex-col gap-3 border-t border-zinc-200 pt-4">
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold text-zinc-900">Analysis mode</legend>
+          <label className="flex cursor-pointer items-start gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 hover:bg-zinc-50">
+            <input
+              type="radio"
+              name="analysis-mode"
+              value="smart_ai"
+              checked={analysisMode === "smart_ai"}
+              onChange={() => setAnalysisMode("smart_ai")}
+              disabled={isAnalyzing}
+              className="mt-1"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-900">
+                Smart AI analysis <span className="font-normal text-sky-800">(recommended)</span>
+              </span>
+              <span className="block text-xs text-zinc-600">
+                Sends transient résumé and job text to OpenAI for richer skill extraction. Falls back to rule-based analysis when unavailable.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 hover:bg-zinc-50">
+            <input
+              type="radio"
+              name="analysis-mode"
+              value="rule_based"
+              checked={analysisMode === "rule_based"}
+              onChange={() => setAnalysisMode("rule_based")}
+              disabled={isAnalyzing}
+              className="mt-1"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-900">Rule-based analysis</span>
+              <span className="block text-xs text-zinc-600">
+                Deterministic taxonomy matcher only. No OpenAI call.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <button type="button" onClick={() => void handleAnalyze()} disabled={!canRunAnalysis} className="min-h-11 rounded-md bg-sky-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-sky-800 sm:w-auto">
           {isAnalyzing ? "Running analysis…" : isRateLimited ? "Analysis temporarily paused" : "Run analysis"}
         </button>
         <p className="text-xs text-zinc-600">Running analysis does not save anything.</p>
+        </div>
       </div>
 
       {!canRunAnalysis && !isAnalyzing && !validationError && !isRateLimited ? (
@@ -1018,13 +1095,29 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
       {result ? (
         <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 text-zinc-800 shadow-sm shadow-zinc-200/50 sm:p-5" role="status" aria-live="polite">
+          {result.analysisMode === "rule_based_fallback" || fallbackReason ? (
+            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950" role="status">
+              <p className="font-medium">Rule-based fallback used</p>
+              <p className="mt-1">
+                {result.fallbackReason ?? fallbackReason ?? "Smart AI was unavailable, so the deterministic analyzer produced this result instead."}
+              </p>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-950">Analysis complete</h3>
+              <h3 className="text-lg font-semibold text-zinc-950">
+                {result.analysisMode === "ai_smart" ? "Smart AI analysis complete" : "Analysis complete"}
+              </h3>
               {jobTitle.trim() || company.trim() ? (
                 <p className="mt-1 break-words text-sm font-medium text-zinc-700">{[jobTitle.trim(), company.trim()].filter(Boolean).join(" · ")}</p>
               ) : null}
               <p className="mt-2 text-sm text-zinc-600">{result.summary}</p>
+              {result.analysisMode === "ai_smart" ? (
+                <p className="mt-2 text-xs text-zinc-500">
+                  Smart AI may make mistakes. Review matched, missing, and adjacent skills before acting on this result.
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2 text-sm">
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-900">Matched {result.matchedSkillsCount}</span>
@@ -1033,13 +1126,50 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </div>
 
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
-            <SkillList title="Matched skills" skills={result.matchedSkills} emptyMessage="No matched skills found." />
-            <SkillList title="Missing skills" skills={result.missingSkills} emptyMessage="No missing skills found." />
+            <SkillList title="Matched skills" skills={result.matchedSkills} emptyMessage="No matched skills found." showEvidence={result.analysisMode === "ai_smart"} />
+            <SkillList title="Missing skills" skills={result.missingSkills} emptyMessage="No missing skills found." showEvidence={result.analysisMode === "ai_smart"} />
           </div>
+
+          {result.analysisMode === "ai_smart" && result.transferableSkills && result.transferableSkills.length > 0 ? (
+            <div className="mt-6">
+              <SkillList
+                title="Adjacent / transferable skills"
+                skills={result.transferableSkills}
+                emptyMessage="No adjacent skills identified."
+                showEvidence
+              />
+            </div>
+          ) : null}
+
+          {result.analysisMode === "ai_smart" && result.ignoredBoilerplate && result.ignoredBoilerplate.length > 0 ? (
+            <div className="mt-6 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-700">
+              <p className="font-medium text-zinc-900">Ignored boilerplate</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {result.ignoredBoilerplate.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {result.limitations && result.limitations.length > 0 ? (
+            <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-600">
+              <p className="font-medium text-zinc-800">Accuracy note</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {result.limitations.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <details className="mt-5 border-t border-zinc-100 pt-4 text-xs text-zinc-600">
             <summary className="cursor-pointer font-medium text-sky-900">How this result was generated</summary>
-            <p className="mt-2">Results come from explicit taxonomy phrases and reviewed aliases using rule-based matching. The analyzer does not infer proficiency, evidence strength, or unstated skills; this is planning guidance, not a hiring decision.</p>
+            <p className="mt-2">
+              {result.analysisMode === "ai_smart"
+                ? "Smart AI analyzed transient résumé and job text with structured outputs, then the app rendered matched, missing, and adjacent skills. This is planning guidance, not a hiring decision."
+                : "Results come from explicit taxonomy phrases and reviewed aliases using rule-based matching. The analyzer does not infer proficiency, evidence strength, or unstated skills; this is planning guidance, not a hiring decision."}
+            </p>
           </details>
 
           <div className="mt-5 border-t border-zinc-100 pt-4">

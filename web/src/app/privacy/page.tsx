@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 const navItems = [
   ["#summary", "Summary"],
   ["#transient-inputs", "Analysis inputs"],
+  ["#smart-ai", "Smart AI mode"],
   ["#saved-analyses", "Saved analyses"],
   ["#resume-profiles", "Resume profiles"],
   ["#controls", "Controls"],
@@ -145,9 +146,10 @@ export default function PrivacyPage() {
         <article className="min-w-0 space-y-10">
           <Section id="summary" title="Plain-language summary">
             <p>
-              Job Fit &amp; Skill-Gap Analyzer uses rule-based matching with a
-              curated cross-domain skill taxonomy and reviewed aliases rather
-              than semantic AI.
+              Job Fit &amp; Skill-Gap Analyzer supports rule-based matching with a
+              curated cross-domain skill taxonomy and reviewed aliases. When
+              configured, Smart AI analysis can provide richer skill extraction
+              and comparison with automatic rule-based fallback.
             </p>
             <p>
               Analysis compares résumé information or a structured profile with
@@ -183,6 +185,36 @@ export default function PrivacyPage() {
             <p>
               Unsaved results remain part of the current workflow rather than
               becoming an account record in the application save path.
+            </p>
+          </Section>
+
+          <Section id="smart-ai" title="Smart AI mode">
+            <p>
+              When Smart AI is enabled and you choose Smart AI analysis or AI
+              profile extraction, transient résumé and job-description text is
+              sent to OpenAI for processing on that request only.
+            </p>
+            <p>
+              OpenAI API data is not used for model training by default, but
+              platform abuse monitoring and application-state handling may still
+              apply. Avoid unusually sensitive content.
+            </p>
+            <p>
+              Smart AI is optional. Rule-based analysis and deterministic profile
+              extraction remain available, including automatic fallback when Smart
+              AI is disabled, misconfigured, over quota, or temporarily
+              unavailable.
+            </p>
+            <p>
+              Per-user Smart AI quotas help control beta cost. Quota usage is
+              tracked in your account through Supabase row-level security; raw
+              résumé or job body text is not intentionally saved by the app save
+              path.
+            </p>
+            <p>
+              Smart AI output may contain mistakes and is planning guidance only.
+              This is not a hiring decision tool, legal compliance product, or
+              security-audited SaaS.
             </p>
           </Section>
 
