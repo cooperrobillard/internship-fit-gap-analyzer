@@ -32,7 +32,7 @@ export default function SignUpPage() {
         <section aria-labelledby="sign-up-heading" className="relative min-w-0 py-3 sm:py-6">
           <div
             aria-hidden="true"
-            className="absolute inset-x-[-1rem] inset-y-0 rounded-[2rem] bg-[radial-gradient(circle_at_18%_18%,rgba(254,215,170,0.35),transparent_31%),linear-gradient(135deg,rgba(254,249,195,0.42),rgba(186,230,253,0.26)_52%,rgba(209,250,229,0.24))]"
+            className="absolute inset-x-[-0.75rem] inset-y-0 sm:inset-x-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_18%_18%,rgba(254,215,170,0.35),transparent_31%),linear-gradient(135deg,rgba(254,249,195,0.42),rgba(186,230,253,0.26)_52%,rgba(209,250,229,0.24))]"
           />
           <div className="relative max-w-md p-3 sm:p-5">
             <p className="text-sm font-semibold text-[var(--color-text-muted)]">Limited public beta</p>

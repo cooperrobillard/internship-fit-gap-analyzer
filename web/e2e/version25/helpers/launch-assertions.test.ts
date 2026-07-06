@@ -35,6 +35,8 @@ const helperDir = dirname(fileURLToPath(import.meta.url));
 const profileAdminSource = readFileSync(resolve(helperDir, "profile-admin.ts"), "utf8");
 const launchSpecSource = readFileSync(resolve(helperDir, "../version25-launch-verification.spec.ts"), "utf8");
 const homePageSource = readFileSync(resolve(helperDir, "../../../src/app/page.tsx"), "utf8");
+const signInPageSource = readFileSync(resolve(helperDir, "../../../src/app/sign-in/[[...sign-in]]/page.tsx"), "utf8");
+const signUpPageSource = readFileSync(resolve(helperDir, "../../../src/app/sign-up/[[...sign-up]]/page.tsx"), "utf8");
 
 function throws(fn: () => void, message: RegExp) {
   assert.throws(fn, message);
@@ -889,15 +891,17 @@ assert(
   "responsive smoke test must not use the New profile/Create profile union locator",
 );
 assert(
+  responsiveTestSource.includes('"/"') &&
+    responsiveTestSource.includes('"/sign-in"') &&
+    responsiveTestSource.includes('"/sign-up"') &&
+    responsiveTestSource.includes("assertNoHorizontalOverflow"),
+  "responsive smoke test must retain homepage, auth routes, and no-horizontal-overflow assertion",
+);
+assert(
   responsiveTestSource.includes("320") &&
     responsiveTestSource.includes("375") &&
     responsiveTestSource.includes("390"),
   "responsive smoke test must retain 320, 375, and 390 viewport widths",
-);
-assert(
-  responsiveTestSource.includes('"/"') &&
-    responsiveTestSource.includes("assertNoHorizontalOverflow"),
-  "responsive smoke test must retain homepage route and no-horizontal-overflow assertion",
 );
 
 const landingPreviewBackgroundSource = homePageSource.slice(
@@ -919,11 +923,48 @@ assert(
     landingPreviewBackgroundSource.includes("top-[-1rem]"),
   "homepage LandingAnalysisPreview decorative background must remain absolutely positioned with existing vertical inset",
 );
+
+const signInDecorativeSource = signInPageSource.slice(
+  signInPageSource.indexOf('aria-labelledby="sign-in-heading"'),
+  signInPageSource.indexOf('aria-labelledby="sign-in-heading"') + 500,
+);
 assert(
-  !homePageSource.includes("overflow-x-hidden") &&
+  signInDecorativeSource.includes("inset-x-[-0.75rem]") &&
+    signInDecorativeSource.includes("sm:inset-x-[-1rem]"),
+  "sign-in auth hero decorative background must use mobile 0.75rem and sm 1rem negative horizontal inset",
+);
+assert(
+  signInDecorativeSource.includes('aria-hidden="true"') &&
+    signInDecorativeSource.includes("absolute") &&
+    signInDecorativeSource.includes("inset-y-0"),
+  "sign-in auth hero decorative background must remain aria-hidden, absolute, and vertically inset",
+);
+
+const signUpDecorativeSource = signUpPageSource.slice(
+  signUpPageSource.indexOf('aria-labelledby="sign-up-heading"'),
+  signUpPageSource.indexOf('aria-labelledby="sign-up-heading"') + 500,
+);
+assert(
+  signUpDecorativeSource.includes("inset-x-[-0.75rem]") &&
+    signUpDecorativeSource.includes("sm:inset-x-[-1rem]"),
+  "sign-up auth hero decorative background must use mobile 0.75rem and sm 1rem negative horizontal inset",
+);
+assert(
+  !signInDecorativeSource.includes("absolute inset-x-[-1rem] inset-y-0") &&
+    !signUpDecorativeSource.includes("absolute inset-x-[-1rem] inset-y-0"),
+  "auth hero decorative backgrounds must not retain the unscoped 1rem mobile horizontal inset",
+);
+assert(
+  !signUpPageSource.includes("overflow-x-hidden") &&
+    !signInPageSource.includes("overflow-x-hidden") &&
+    !homePageSource.includes("overflow-x-hidden") &&
+    !signInPageSource.match(/<html[^>]*overflow/) &&
+    !signUpPageSource.match(/<html[^>]*overflow/) &&
+    !signInPageSource.match(/<body[^>]*overflow/) &&
+    !signUpPageSource.match(/<body[^>]*overflow/) &&
     !homePageSource.match(/<html[^>]*overflow/) &&
     !homePageSource.match(/<body[^>]*overflow/),
-  "homepage must not introduce global html or body overflow suppression",
+  "homepage and auth pages must not introduce global html or body overflow suppression",
 );
 
 const accessibilityTestSource = launchSpecSource.slice(
