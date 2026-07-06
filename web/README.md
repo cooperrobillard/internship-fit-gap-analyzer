@@ -8,7 +8,7 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 
 ## Current frontend surfaces
 
-- Public landing page with rule-based positioning, optional Smart AI when configured, curated cross-domain taxonomy copy, current feature proof, and privacy/data-control links.
+- Public landing page with Smart AI and rule-based positioning, curated cross-domain taxonomy copy, current feature proof, and privacy/data-control links.
 - Clerk sign-in and sign-up routes with product context.
 - Protected `/dashboard` workspace.
 - Dashboard `POST /api/analyze` proxy to Render FastAPI rule-based analysis.
@@ -47,7 +47,7 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 
 ## Privacy posture
 
-- Rule-based analysis uses explicit taxonomy phrases and reviewed aliases.
+- Rule-based analysis uses explicit taxonomy phrases and reviewed aliases when Smart AI is unavailable or selected.
 - When enabled, Smart AI mode sends transient résumé/job text to OpenAI for the current request only; rule-based fallback remains available.
 - OpenAI API content is not used for training by default, but platform abuse monitoring/application-state handling may apply.
 - Pasted or uploaded resume/job documents are processed transiently for the request. Files and raw extracted bodies are not saved by the application save path.
@@ -150,10 +150,19 @@ git diff --check
 
 Before preview or production review, also run the tracked-file privacy checks documented in [`../docs/HOSTED_PROTOTYPE_SMOKE_TEST.md`](../docs/HOSTED_PROTOTYPE_SMOKE_TEST.md).
 
+## Smart AI / OpenAI troubleshooting (developer notes)
+
+If the OpenAI dashboard shows zero usage after Smart AI runs:
+
+- Confirm Render uses an `OPENAI_API_KEY` from the intended OpenAI project.
+- Check Supabase `ai_usage_events` for successful rows and token counts for the signed-in user.
+- Very small spend may round to `$0.00`, but token counts should appear when calls reach OpenAI.
+- If quota rows show `error` status or the UI reports rule-based fallback, the app may not be making paid OpenAI calls.
+
 ## Current limits
 
 - Limited public beta/portfolio software, not mature production SaaS.
-- No AI/semantic matching, OCR, application tracking, billing, or organization features. PDF/DOCX support is deterministic text extraction only.
+- Smart AI is optional and quota-limited; rule-based analysis remains available as fallback. PDF/DOCX support is deterministic text extraction only (not OCR). No application tracking, billing, or organization features.
 - No account-wide select-all, account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion and exports are limited to records currently loaded in the browser.
 - Version 24 observability is complete for its bounded privacy-safe scope: sanitized server-side Sentry failure delivery, UptimeRobot canonical frontend, Vercel fallback, and backend health monitors, plus the production incident-response runbook. This is not a formal security audit, penetration test, legal review, compliance certification, or mature-SaaS claim.
 - Version 25 custom-domain configuration, Clerk Production migration, canonical metadata, provider reconciliation, and canonical-host Production verification are complete. Portfolio publication and broader promotion are intentionally deferred.

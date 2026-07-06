@@ -9,7 +9,7 @@ export default function DashboardPage() {
           Analyze a role
         </h1>
         <p className="mt-3 text-base leading-7 text-zinc-700 sm:text-lg">
-          Compare resume information or a saved profile with a job description using a curated cross-domain taxonomy.
+          Compare resume information or a saved profile with a job description using Smart AI when configured, or rule-based analysis as fallback.
         </p>
         <Link
           href="/privacy"

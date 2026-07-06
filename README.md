@@ -15,7 +15,7 @@ This is a **portfolio and learning project** and limited public-beta product—n
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
 | **Hosted web app** | Versions 22–25 complete for bounded scopes — validated curated taxonomy, saved-analysis data controls, privacy-safe production observability, custom-domain Production configuration, and canonical-host Production verification are active; still a limited public-beta/portfolio product, not mature production SaaS or security certified |
 
-The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/PDF/DOCX/TXT/MD document extraction, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
+The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, Smart AI and rule-based analysis, transient pasted/PDF/DOCX/TXT/MD document extraction, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
 
 Dev 19 privacy/RLS/abuse hardening, Dev 20 application-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 privacy-safe production observability are complete in the repository for their bounded scopes. Sentry receives only approved sanitized server-side failure events, UptimeRobot monitors the canonical frontend, retained old Vercel fallback, and backend health endpoint, and the production incident-response runbook exists. **Version 25 is complete with a bounded PASS.** The canonical Production limited beta remains at `https://jobfit.cooperrobillard.com`. Step 6 passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` with Version 23 17/17 and Version 25 7/7 automated results plus manual verification, cleanup, and rollback readiness. Step 7 completed documentation reconciliation and maintenance handoff. Portfolio publication and broader promotion are intentionally deferred. The application remains a portfolio and learning project, rule-based, and not mature SaaS. These are scoped release checkpoints, not a completed portfolio launch, broad marketing launch, mature SaaS claim, security certification, penetration test, or legal compliance sign-off. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`docs/VERSION_23_CHECKPOINT.md`](docs/VERSION_23_CHECKPOINT.md), [`docs/VERSION_23_DATA_CONTROL_QA.md`](docs/VERSION_23_DATA_CONTROL_QA.md), [`docs/VERSION_24_CHECKPOINT.md`](docs/VERSION_24_CHECKPOINT.md), [`docs/PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md`](docs/PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md), [`docs/VERSION_24_RELEASE_DIRECTION.md`](docs/VERSION_24_RELEASE_DIRECTION.md), [`docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md), and [`docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md).
 
@@ -56,6 +56,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 
 - Next.js landing page and Clerk sign-in/sign-up
 - Protected dashboard with analysis form and **Try sample inputs** / **Run analysis (does not save)** workflow
+- Hosted Smart AI analysis via `/api/ai/analyze` when configured (quota tracking and rule-based fallback)
 - Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/document inputs and `/extract-document` for deterministic PDF/DOCX/TXT/MD extraction
 - Supabase **Save structured results** / read / individual delete of analyses with per-user RLS
 - Structured resume-profile create/edit/delete and explicit saved-profile analysis handoff
@@ -81,8 +82,8 @@ Technical documentation for Version 22 records a curated cross-domain taxonomy w
 
 Be honest about what this is today:
 
-- **Rule-based matching only** — curated keywords and aliases across multiple professional domains, not meaning or evidence strength
-- **No semantic/AI matching** — the curated cross-domain taxonomy is broad but not exhaustive and does not infer unstated skills, proficiency, or evidence strength
+- **Smart AI when configured** — sends transient résumé/job text to OpenAI for structured skill extraction with automatic rule-based fallback; outputs are planning guidance, not hiring judgment
+- **Rule-based fallback** — curated keywords and aliases across multiple professional domains when Smart AI is unavailable or you choose rule-based mode
 - **Hosted web app is not mature production SaaS** — Clerk route protection, a server-only Render shared secret, RLS verification, rate limiting, Version 23 production data-control QA, and Version 24 bounded observability are in place, but there is no formal security audit, penetration test, or legal compliance certification
 - **Do not paste unusually sensitive resume or job text** into the hosted dashboard—use generic sample text for demos when possible
 - **No raw resume or job-body persistence** in the application save path
@@ -90,6 +91,15 @@ Be honest about what this is today:
 - **Local Streamlit** does not replace the hosted stack; both coexist for different workflows
 
 More detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md), [`docs/DEPLOYMENT_READINESS.md`](docs/DEPLOYMENT_READINESS.md).
+
+### Smart AI / OpenAI troubleshooting (developer notes)
+
+If the OpenAI dashboard shows zero usage after Smart AI runs:
+
+- Confirm Render uses an `OPENAI_API_KEY` from the intended OpenAI project.
+- Check Supabase `ai_usage_events` for successful rows and token counts.
+- Very small spend may round to `$0.00`, but token counts should appear when calls reach OpenAI.
+- If quota rows show `error` status or the UI reports rule-based fallback, the app may not be making paid OpenAI calls.
 
 ## Run locally
 

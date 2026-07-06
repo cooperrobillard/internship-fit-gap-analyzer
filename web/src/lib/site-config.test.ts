@@ -41,7 +41,7 @@ test("HOME_DESCRIPTION is the shared homepage metadata source", () => {
   assert.ok(HOME_DESCRIPTION.length > 0);
   assert.equal(
     HOME_DESCRIPTION,
-    "Compare résumé skills with job descriptions, review explicit matched and missing skills, and save structured results in a rule-based career planning workspace.",
+    "Compare résumé skills with job descriptions, review matched and missing skills with Smart AI or rule-based analysis, and save structured results in a limited public-beta career planning workspace.",
   );
   assert.notEqual(HOME_DESCRIPTION, SITE_DESCRIPTION);
 });

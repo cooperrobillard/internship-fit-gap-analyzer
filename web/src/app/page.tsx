@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 const benefits = [
   {
     title: "Understand the role",
-    body: "Review matched and missing skills found by a curated cross-domain taxonomy.",
+    body: "Review matched and missing skills with Smart AI when configured, or deterministic rule-based analysis as fallback.",
   },
   {
     title: "Compare opportunities",
@@ -83,7 +83,7 @@ export default function Home() {
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(20rem,0.85fr)] lg:gap-16">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--color-text-muted)]">
-              Rule-based career planning · Limited public beta
+              Smart AI + rule-based analysis · Limited public beta
             </p>
             <h1
               id="landing-hero-heading"
@@ -92,7 +92,7 @@ export default function Home() {
               Compare your résumé with the role in front of you.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--color-text-muted)]">
-              See explicitly recognized skill phrases, gaps worth investigating, and patterns across the technical, operations, business, and other opportunities you choose to save.
+              Compare résumé and job-description skills, spot gaps worth investigating, and track recurring patterns across the roles you choose to save.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -171,9 +171,9 @@ export default function Home() {
             Clear method. Deliberate saving.
           </h2>
           <div className="mt-6 grid gap-5 text-sm leading-6 text-[var(--color-text-muted)] md:grid-cols-3">
-            <p>The analyzer uses a curated cross-domain taxonomy and reviewed aliases—not semantic AI or a generated fit score.</p>
-            <p>Running an analysis does not automatically save it. Optional saved records contain structured skills and metadata rather than the raw résumé or job-description body text.</p>
-            <p>Detected phrases do not prove proficiency, evidence strength, candidate quality, or hiring fit; results require human interpretation.</p>
+            <p>When configured, Smart AI interprets résumés and job descriptions, ignores boilerplate, and surfaces matched and missing skills. Rule-based analysis remains available as a deterministic fallback.</p>
+            <p>Running an analysis does not automatically save it. Optional saved records contain structured skills and metadata rather than raw résumé or job-description body text.</p>
+            <p>Results are planning guidance only. They do not prove proficiency, evidence strength, candidate quality, or hiring fit.</p>
           </div>
           <div className="mt-6">
             <TextLink href="/privacy">Privacy and data controls</TextLink>

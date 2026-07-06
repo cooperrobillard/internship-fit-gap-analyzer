@@ -16,6 +16,10 @@ from typing import Any, Protocol
 
 from pydantic import ValidationError
 
+from api.ai_skill_canonicalization import (
+    canonicalize_ai_skill_name,
+    canonicalize_skill_name_list,
+)
 from api.models import (
     AiAnalyzeResponse,
     AiExtractProfileResponse,
@@ -37,6 +41,8 @@ Rules:
 - Separate technical tools, programming languages, frameworks, engineering methods, domain knowledge, soft skills, and creative tools where useful for the category field.
 - Ignore boilerplate unrelated to role requirements (onboarding, hybrid work, visa sponsorship, generic equal-opportunity language, generic culture copy, application links, interviewing logistics) unless genuinely relevant to the role.
 - Preserve useful canonical names such as PowerShell, Python, Sysinternals, Next.js, REST APIs, OpenAI API, CALDERA, ANSYS Fluent, CFD, PyTorch, ResNet-18.
+- Prefer stable, reusable canonical skill labels over one-off wording. Use common industry names, group synonyms and spelling variants, and keep skill names concise for recurring-gap analysis.
+- Put supporting detail in evidence or category fields, not in the skill name. Do not turn every responsibility into a unique skill label.
 - Do not include personal contact details (email, phone, address, URLs to personal pages).
 - Evidence snippets must be short and must not reproduce long résumé or job passages.
 - Output only schema-compliant structured data."""
@@ -206,12 +212,17 @@ def _responses_text_format(name: str, schema: dict[str, Any]) -> dict[str, Any]:
 
 def _normalize_skill_items(raw_items: list[dict[str, Any]]) -> list[AiSkillItem]:
     items: list[AiSkillItem] = []
+    seen: set[str] = set()
     for raw in raw_items:
-        skill = str(raw.get("skill", "")).strip()
+        skill = canonicalize_ai_skill_name(str(raw.get("skill", "")))
         category = str(raw.get("category", "")).strip() or "General"
         evidence = str(raw.get("evidence", "")).strip() or None
         if not skill:
             continue
+        dedupe_key = skill.lower()
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
         items.append(AiSkillItem(skill=skill, category=category, evidence=evidence))
     return items
 
@@ -352,7 +363,8 @@ def _build_analyze_prompt(
         "- transferableSkills: optional debug/details only. Leave empty unless a weak adjacent "
         "signal is worth retaining internally. Do not treat this as a third user-facing bucket.\n"
         "- Do not list every résumé skill. Include only skills relevant to this role comparison.\n"
-        "- Keep summary and limitations concise; they are stored for reference, not shown as a report.\n\n"
+        "- Keep summary and limitations concise; they are stored for reference, not shown as a report.\n"
+        "- Use stable canonical skill labels suitable for recurring-gap tracking across jobs.\n\n"
         f"Résumé text:\n{resume_text}\n\n"
         f"Job description text:\n{job_text}"
         f"{metadata_section}"
@@ -459,7 +471,8 @@ def run_profile_extraction(
 
     prompt = (
         "Extract a suggested profile name and a rich list of professional skills from this résumé text. "
-        "Do not include contact details.\n\n"
+        "Do not include contact details. Prefer stable canonical skill labels over one-off wording; "
+        "use common industry names and group synonyms or spelling variants.\n\n"
         f"Résumé text:\n{resume_text}{context_section}"
     )
 
@@ -473,7 +486,7 @@ def run_profile_extraction(
     )
 
     candidate_name = str(payload.get("candidateName", "")).strip() or "Résumé profile"
-    skills = _normalize_string_list(payload.get("skills", []))
+    skills = canonicalize_skill_name_list(_normalize_string_list(payload.get("skills", [])))
     summary = str(payload.get("summary", "")).strip() or "Skills extracted with Smart AI."
 
     return AiExtractProfileResponse(
