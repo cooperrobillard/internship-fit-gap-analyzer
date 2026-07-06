@@ -101,6 +101,23 @@ If the OpenAI dashboard shows zero usage after Smart AI runs:
 - Very small spend may round to `$0.00`, but token counts should appear when calls reach OpenAI.
 - If quota rows show `error` status or the UI reports rule-based fallback, the app may not be making paid OpenAI calls.
 
+### Quota alert email (optional)
+
+Configure on Vercel (server-only):
+
+- `RESEND_API_KEY`
+- `AI_QUOTA_ALERT_EMAIL` (e.g. `cooper.robillard@gmail.com`)
+- `ALERTS_FROM_EMAIL` (verified Resend sender)
+
+Sends one safe metadata-only email per user/feature/quota window when Smart AI quota is exceeded. No résumé/job text is included.
+
+### Tip jar nudge (optional)
+
+- `NEXT_PUBLIC_TIP_JAR_URL` — external support link; hidden when unset
+- `NEXT_PUBLIC_TIP_PROMPT_ANALYSIS_THRESHOLD` — default `5` successful dashboard analyses before the nudge
+
+Does not affect analysis, quotas, or in-app payments.
+
 ## Run locally
 
 All commands from the **project root** unless noted. Python 3 required.

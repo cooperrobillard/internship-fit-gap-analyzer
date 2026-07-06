@@ -9,6 +9,7 @@ import { createClerkSupabaseClient, getSupabaseEnv } from "@/lib/supabase/client
 import {
   checkProfileExtractionQuota,
   isAiFeaturesEnabled,
+  notifyQuotaExceededIfNeeded,
   quotaExceededMessage,
   reserveAiUsageEvent,
   updateAiUsageEvent,
@@ -223,6 +224,16 @@ export async function POST(request: Request) {
   }
 
   if (!quota.allowed && quota.reason) {
+    try {
+      await notifyQuotaExceededIfNeeded(
+        supabase,
+        userId,
+        "profile_extraction",
+        quota,
+      );
+    } catch {
+      // Best effort only.
+    }
     return withRequestId(
       NextResponse.json({
         outcome: "rule_based_fallback",

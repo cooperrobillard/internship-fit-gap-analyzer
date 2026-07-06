@@ -11,6 +11,7 @@ import { createClerkSupabaseClient, getSupabaseEnv } from "@/lib/supabase/client
 import {
   checkSmartAnalysisQuota,
   isAiFeaturesEnabled,
+  notifyQuotaExceededIfNeeded,
   quotaExceededMessage,
   reserveAiUsageEvent,
   updateAiUsageEvent,
@@ -280,6 +281,11 @@ export async function POST(request: Request) {
   }
 
   if (!quota.allowed && quota.reason) {
+    try {
+      await notifyQuotaExceededIfNeeded(supabase, userId, "smart_analysis", quota);
+    } catch {
+      // Best effort only.
+    }
     return tryRuleBasedFallback(
       input,
       requestId,

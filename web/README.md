@@ -134,7 +134,26 @@ Local values go in `web/.env.local`; hosted values are configured in provider da
 | Analysis API | `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET` | Server-side Vercel/Render configuration. |
 | Smart AI (optional) | `AI_FEATURES_ENABLED`, `AI_DAILY_LIMIT`, `AI_MONTHLY_LIMIT`, `AI_PROFILE_MONTHLY_LIMIT` | Vercel server-side only. Render also needs `OPENAI_API_KEY` and related backend vars. |
 
-Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY`.
+Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY` or `NEXT_PUBLIC_RESEND_API_KEY`.
+
+### Quota alert email (optional)
+
+| Variable | Notes |
+|---|---|
+| `RESEND_API_KEY` | Server-only Resend API key for quota alert emails |
+| `AI_QUOTA_ALERT_EMAIL` | Recipient for quota-exceeded alerts (e.g. `cooper.robillard@gmail.com`) |
+| `ALERTS_FROM_EMAIL` | Verified Resend sender address |
+
+When configured, the app sends one safe metadata-only email per user/feature/quota window when Smart AI quota is exceeded. Alerts include feature, limit type, counts, Clerk user id, timestamp, and environment only — never résumé/job text.
+
+### Tip jar nudge (optional)
+
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_TIP_JAR_URL` | External support link (e.g. Ko-fi/Buy Me a Coffee). Hidden when unset. |
+| `NEXT_PUBLIC_TIP_PROMPT_ANALYSIS_THRESHOLD` | Successful analyses before the nudge appears (default `5`) |
+
+The tip jar is dismissible dashboard UI only. It does not affect analysis results, quotas, or payments inside the app.
 
 ## Checks
 
