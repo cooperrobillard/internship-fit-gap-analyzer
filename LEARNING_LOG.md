@@ -4130,3 +4130,12 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
 - Remediation tightens the mobile decorative horizontal inset to `inset-x-[-0.75rem]` while preserving `sm:inset-x-[-1rem]` and without global overflow suppression.
 - Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
+
+## Version 25 Step 6B remediation 19 — mobile auth hero overflow
+
+- The nineteenth Step 6B Production run on commit `5c70aae1372be2f72203ce6db1fa3779e319a105` (run ID `20260705233806-6cteds`) returned a strict automated FAIL; formal Step 6B verdict remains FAIL; Step 6C was not created; the suite was not rerun.
+- Version 23 passed 17/17; Version 25 Clerk setup, public metadata/canonical-host verification, authentication/session boundary, direct sample analysis, and the full structured-profile lifecycle including two-user isolation passed.
+- The Attempt 18 homepage inset remediation was deployed, but responsive testing still measured exactly 4px horizontal overflow at 320px on `/sign-in`; the auth hero decorative background still used a `1rem` mobile negative inset while the app-shell side margin is `0.75rem`.
+- Accessibility smoke tests did not run because the suite is serial; cleanup completed and the report was generated.
+- Remediation applies the same mobile `0.75rem` / `sm:1rem` decorative inset pattern to the sign-in and sign-up auth hero backgrounds without global overflow suppression.
+- Next step after merge and deploy: update ignored local `QA_EXPECTED_COMMIT`, remove stale local run artifacts, and rerun the complete Step 6B checkpoint exactly once against the exact merge commit of this remediation.
