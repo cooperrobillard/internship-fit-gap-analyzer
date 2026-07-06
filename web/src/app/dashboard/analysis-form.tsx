@@ -22,6 +22,7 @@ import {
   runAnalysisByMode,
   type SmartAnalysisClientResult,
 } from "@/lib/analysis/ai-analysis-client";
+import { ANALYSIS_COMPLETED_EVENT } from "@/components/tip-jar-nudge";
 import type { AnalysisErrorCategory } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
 import type {
@@ -616,6 +617,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     clearAnalysisOutput();
   }
 
+  function notifyAnalysisCompleted() {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(ANALYSIS_COMPLETED_EVENT));
+    }
+  }
+
   async function handleAnalyze() {
     if (isAnalyzing || isRateLimited) {
       return;
@@ -713,11 +720,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         ...apiResult.result,
         fallbackReason: apiResult.fallbackReason,
       });
+      notifyAnalysisCompleted();
       return;
     }
 
     setFallbackReason(null);
     setResult(apiResult.result);
+    notifyAnalysisCompleted();
   }
 
   async function handleSavePrototype() {

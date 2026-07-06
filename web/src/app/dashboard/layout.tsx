@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { DashboardWorkspaceNav } from "@/components/dashboard-workspace-nav";
+import { TipJarNudge } from "@/components/tip-jar-nudge";
 
 export const metadata: Metadata = {
   title: "Workspace",
@@ -18,6 +19,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <DashboardWorkspaceNav />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
+      <TipJarNudge />
     </div>
   );
 }

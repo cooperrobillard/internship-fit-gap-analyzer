@@ -6,6 +6,11 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  quotaExceededErrorClass,
+  sendQuotaAlertEmail,
+} from "@/lib/notifications/quota-alert-email";
+
 export type AiUsageFeature = "smart_analysis" | "profile_extraction";
 
 export type AiUsageStatus = "reserved" | "success" | "error";
@@ -264,4 +269,109 @@ export function quotaExceededMessage(
     return "Daily Smart AI analysis quota reached. Rule-based analysis is still available.";
   }
   return "Monthly Smart AI analysis quota reached. Rule-based analysis is still available.";
+}
+
+export async function hasQuotaExceededAlertRecorded(
+  supabase: SupabaseClient,
+  clerkUserId: string,
+  feature: AiUsageFeature,
+  errorClass: string,
+  sinceIso: string,
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from("ai_usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("clerk_user_id", clerkUserId)
+    .eq("feature", feature)
+    .eq("status", "error")
+    .eq("error_class", errorClass)
+    .gte("created_at", sinceIso);
+
+  if (error) {
+    throw new Error("quota_alert_lookup_failed");
+  }
+
+  return (count ?? 0) > 0;
+}
+
+export async function recordQuotaExceededEvent(
+  supabase: SupabaseClient,
+  clerkUserId: string,
+  feature: AiUsageFeature,
+  errorClass: string,
+): Promise<void> {
+  const { error } = await supabase.from("ai_usage_events").insert({
+    clerk_user_id: clerkUserId,
+    feature,
+    status: "error",
+    provider: "openai",
+    error_class: errorClass,
+  });
+
+  if (error) {
+    throw new Error("quota_alert_record_failed");
+  }
+}
+
+export async function notifyQuotaExceededIfNeeded(
+  supabase: SupabaseClient,
+  clerkUserId: string,
+  feature: AiUsageFeature,
+  quota:
+    | SmartAnalysisQuotaCheck
+    | ProfileExtractionQuotaCheck,
+): Promise<void> {
+  if (quota.allowed || !quota.reason) {
+    return;
+  }
+
+  const errorClass = quotaExceededErrorClass(feature, quota.reason);
+  const sinceIso =
+    quota.reason === "daily_exceeded"
+      ? startOfUtcDayIso()
+      : startOfUtcMonthIso();
+
+  try {
+    const alreadyRecorded = await hasQuotaExceededAlertRecorded(
+      supabase,
+      clerkUserId,
+      feature,
+      errorClass,
+      sinceIso,
+    );
+    if (alreadyRecorded) {
+      return;
+    }
+
+    await recordQuotaExceededEvent(
+      supabase,
+      clerkUserId,
+      feature,
+      errorClass,
+    );
+  } catch {
+    return;
+  }
+
+  const configuredLimit =
+    feature === "profile_extraction"
+      ? quota.limits.monthlyProfileExtraction
+      : quota.reason === "daily_exceeded"
+        ? quota.limits.dailySmartAnalysis
+        : quota.limits.monthlySmartAnalysis;
+
+  const currentCount =
+    feature === "profile_extraction"
+      ? (quota as ProfileExtractionQuotaCheck).monthlyCount
+      : quota.reason === "daily_exceeded"
+        ? (quota as SmartAnalysisQuotaCheck).dailyCount
+        : (quota as SmartAnalysisQuotaCheck).monthlyCount;
+
+  await sendQuotaAlertEmail({
+    feature,
+    limitType: quota.reason,
+    configuredLimit,
+    currentCount,
+    clerkUserId,
+  });
 }
