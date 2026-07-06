@@ -25,6 +25,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
   applicationName: SITE_NAME,
+  manifest: "/site.webmanifest",
   title: {
     default: SITE_NAME,
     template: `%s | ${SITE_NAME}`,
