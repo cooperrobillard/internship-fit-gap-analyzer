@@ -11,7 +11,8 @@ export default function ProfilesDashboardPage() {
           Manage reusable structured skill profiles for future analyses.
         </p>
         <p className="mt-2 text-sm leading-6 text-zinc-600">
-          Profiles store structured skills and notes—not raw résumé text.
+          Upload or paste a résumé to create a reusable structured skill profile. Saved profiles
+          store skills and notes—not raw résumé text or uploaded files.
         </p>
       </header>
 

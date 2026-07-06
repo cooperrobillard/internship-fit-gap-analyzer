@@ -12,7 +12,7 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 - Clerk sign-in and sign-up routes with product context.
 - Protected `/dashboard` workspace.
 - Dashboard `POST /api/analyze` proxy to Render FastAPI rule-based analysis.
-- Transient pasted text and transient `.txt` input support.
+- Transient pasted text and transient PDF, DOCX, TXT, and MD upload support (deterministic extraction; not AI/OCR).
 - **Try sample inputs** and **Run analysis (does not save)** workflow labels, currently using a fictional Supply Chain Operations Analyst Intern sample for Northstar Distribution.
 - Structured resume profiles with profile metadata and skill lists.
 - Saved-profile analysis handoff that constructs temporary analysis input from selected profile metadata and skills.
@@ -46,7 +46,7 @@ Clerk protects the dashboard route and supplies the signed-in user context for S
 ## Privacy posture
 
 - Analysis is rule-based with explicit taxonomy phrases and reviewed aliases, not AI or semantic judgment.
-- Pasted or uploaded resume/job text is processed for the request.
+- Pasted or uploaded resume/job documents are processed transiently for the request. Files and raw extracted bodies are not saved by the application save path.
 - The application save path does not intentionally persist raw resume body text or raw job-description body text.
 - Saved analyses store structured results and metadata.
 - Structured profiles store profile metadata and skill names, not raw resume body text.
@@ -148,7 +148,7 @@ Before preview or production review, also run the tracked-file privacy checks do
 ## Current limits
 
 - Limited public beta/portfolio software, not mature production SaaS.
-- No AI/semantic matching, PDF/DOCX parsing, application tracking, billing, or organization features.
+- No AI/semantic matching, OCR, application tracking, billing, or organization features. PDF/DOCX support is deterministic text extraction only.
 - No account-wide select-all, account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion and exports are limited to records currently loaded in the browser.
 - Version 24 observability is complete for its bounded privacy-safe scope: sanitized server-side Sentry failure delivery, UptimeRobot canonical frontend, Vercel fallback, and backend health monitors, plus the production incident-response runbook. This is not a formal security audit, penetration test, legal review, compliance certification, or mature-SaaS claim.
 - Version 25 custom-domain configuration, Clerk Production migration, canonical metadata, provider reconciliation, and canonical-host Production verification are complete. Portfolio publication and broader promotion are intentionally deferred.

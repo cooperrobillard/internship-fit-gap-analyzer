@@ -11,13 +11,18 @@ import os
 import secrets
 from time import monotonic
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.analysis_service import analyze_request
-from api.models import AnalyzeRequest, AnalyzeResponse
+from api.document_extraction import (
+    DocumentExtractionError,
+    extract_from_file_bytes,
+    extract_from_pasted_text,
+)
+from api.models import AnalyzeRequest, AnalyzeResponse, ExtractDocumentResponse
 from api.sentry_telemetry import capture_safe_failure_to_sentry
 from api.observability import (
     REQUEST_ID_HEADER,
@@ -246,3 +251,60 @@ def analyze(
     Raw resumeText and jobText are not included in the response.
     """
     return analyze_request(request)
+
+
+@app.post("/extract-document", response_model=ExtractDocumentResponse)
+async def extract_document(
+    file: UploadFile | None = File(None),
+    text: str | None = Form(None),
+    filename: str | None = Form(None),
+    _: None = Depends(verify_analysis_api_key),
+) -> ExtractDocumentResponse:
+    """
+    Extract transient text and deterministic taxonomy skills from one file or pasted text.
+
+    Does not persist uploads or extracted bodies.
+    """
+    has_file = file is not None and file.filename
+    pasted = text is not None and text.strip()
+
+    if has_file and pasted:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either a file or pasted text, not both.",
+        )
+    if not has_file and not pasted:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide a file or pasted text to extract.",
+        )
+
+    try:
+        if has_file:
+            assert file is not None
+            file_bytes = await file.read()
+            result = extract_from_file_bytes(
+                file_bytes,
+                file.filename,
+                file.content_type,
+            )
+        else:
+            assert text is not None
+            result = extract_from_pasted_text(text, filename)
+
+        return ExtractDocumentResponse(
+            text=result.text,
+            suggestedName=result.suggested_name,
+            skills=result.skills,
+            sourceKind=result.source_kind,
+        )
+    except DocumentExtractionError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("extract-document failed with an unexpected error")
+        raise HTTPException(
+            status_code=500,
+            detail="Document extraction could not be completed. Please try again.",
+        ) from exc

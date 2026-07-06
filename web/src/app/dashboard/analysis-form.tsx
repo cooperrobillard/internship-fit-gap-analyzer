@@ -11,9 +11,13 @@ import {
 } from "react";
 import {
   formatTextStats,
-  readTextFile,
 } from "@/app/dashboard/analysis-input-helpers";
 import { DEMO_ANALYSIS_INPUTS } from "@/lib/demo-inputs";
+import {
+  DOCUMENT_UPLOAD_ACCEPT,
+  extractDocumentFromFile,
+  formatSourceKindLabel,
+} from "@/lib/document-extraction";
 import {
   analyzeWithApi,
   type AnalysisErrorCategory,
@@ -378,7 +382,7 @@ type SaveUiState =
   | { kind: "error"; message: string };
 
 type FileUploadFeedback =
-  | { kind: "success" }
+  | { kind: "success"; sourceLabel: string }
   | { kind: "error"; message: string };
 
 type AnalysisFormProps = {
@@ -412,6 +416,8 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     useState<FileUploadFeedback | null>(null);
   const [jobFileFeedback, setJobFileFeedback] =
     useState<FileUploadFeedback | null>(null);
+  const [isExtractingResume, setIsExtractingResume] = useState(false);
+  const [isExtractingJob, setIsExtractingJob] = useState(false);
   const resumeFileInputRef = useRef<HTMLInputElement>(null);
   const jobFileInputRef = useRef<HTMLInputElement>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -541,18 +547,27 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       return;
     }
 
-    const result = await readTextFile(file);
-    if (!result.ok) {
+    setIsExtractingResume(true);
+    setResumeFileFeedback(null);
+
+    const result = await extractDocumentFromFile(file);
+    setIsExtractingResume(false);
+
+    if (result.status === "error") {
       setResumeFileFeedback({ kind: "error", message: result.message });
       return;
     }
 
     setResumeText(result.text);
     setResumeInputMode("pasted");
-    setResumeFileFeedback({ kind: "success" });
+    setResumeFileFeedback({
+      kind: "success",
+      sourceLabel: formatSourceKindLabel(result.sourceKind),
+    });
     setSampleInputsLoaded(false);
     setValidationError(null);
     setAnalysisError(null);
+    clearAnalysisOutput();
   }
 
   async function handleJobFileUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -562,17 +577,26 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
       return;
     }
 
-    const result = await readTextFile(file);
-    if (!result.ok) {
+    setIsExtractingJob(true);
+    setJobFileFeedback(null);
+
+    const result = await extractDocumentFromFile(file);
+    setIsExtractingJob(false);
+
+    if (result.status === "error") {
       setJobFileFeedback({ kind: "error", message: result.message });
       return;
     }
 
     setJobText(result.text);
-    setJobFileFeedback({ kind: "success" });
+    setJobFileFeedback({
+      kind: "success",
+      sourceLabel: formatSourceKindLabel(result.sourceKind),
+    });
     setSampleInputsLoaded(false);
     setValidationError(null);
     setAnalysisError(null);
+    clearAnalysisOutput();
   }
 
   async function handleAnalyze() {
@@ -750,7 +774,11 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </summary>
           <div className="mt-2 space-y-1 rounded-md border border-zinc-200 bg-white p-3">
             <p>Matching uses explicit taxonomy phrases and reviewed aliases.</p>
-            <p><code>.txt</code> uploads are read for this browser workflow and are not stored as files or profiles.</p>
+            <p>
+              PDF, DOCX, TXT, and MD uploads are processed transiently for this
+              workflow. Files are not saved by the application.
+            </p>
+            <p>Extraction is deterministic and not AI-based; scanned PDFs may not be readable.</p>
             <p>It does not infer proficiency, evidence strength, or unstated skills.</p>
             <p>Running an analysis does not save anything. Optional saves store structured skills and metadata, not raw resume or job-description body text.</p>
             <Link href="/privacy" className="font-medium text-sky-800 underline underline-offset-4">Full privacy details</Link>
@@ -809,18 +837,18 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <label
                   className={`inline-flex min-h-10 items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-sky-900 ${
-                    isAnalyzing || isRateLimited
+                    isAnalyzing || isRateLimited || isExtractingResume
                       ? "cursor-not-allowed opacity-60"
                       : "cursor-pointer hover:bg-sky-50"
                   }`}
                 >
-                  Upload resume .txt
+                  Upload resume (PDF, DOCX, TXT, MD)
                   <input
                     ref={resumeFileInputRef}
                     type="file"
-                    accept=".txt,text/plain"
+                    accept={DOCUMENT_UPLOAD_ACCEPT}
                     className="sr-only"
-                    disabled={isAnalyzing || isRateLimited}
+                    disabled={isAnalyzing || isRateLimited || isExtractingResume}
                     onChange={(event) => void handleResumeFileUpload(event)}
                   />
                 </label>
@@ -828,14 +856,31 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
                   {resumeStats}
                 </span>
               </div>
+              {isExtractingResume ? (
+                <p className="mt-2 text-xs text-sky-800" role="status">
+                  Extracting resume text…
+                </p>
+              ) : null}
               {resumeFileFeedback?.kind === "success" ? (
                 <p className="mt-2 text-xs text-emerald-800" role="status">
-                  Resume text loaded from file.
+                  Resume text loaded from {resumeFileFeedback.sourceLabel}.
                 </p>
               ) : null}
               {resumeFileFeedback?.kind === "error" ? (
                 <p className="mt-2 text-xs text-red-800" role="alert">
                   {resumeFileFeedback.message}
+                </p>
+              ) : null}
+              {resumeText.trim() ? (
+                <p className="mt-3 text-xs text-zinc-600">
+                  Want a reusable structured profile?{" "}
+                  <Link
+                    href="/dashboard/profiles"
+                    className="font-medium text-sky-800 underline underline-offset-4 hover:text-sky-900"
+                  >
+                    Create one from your résumé
+                  </Link>
+                  .
                 </p>
               ) : null}
             </>
@@ -865,18 +910,18 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <label
               className={`inline-flex min-h-10 items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-sky-900 ${
-                isAnalyzing || isRateLimited
+                isAnalyzing || isRateLimited || isExtractingJob
                   ? "cursor-not-allowed opacity-60"
                   : "cursor-pointer hover:bg-sky-50"
               }`}
             >
-              Upload job .txt
+              Upload job description (PDF, DOCX, TXT, MD)
               <input
                 ref={jobFileInputRef}
                 type="file"
-                accept=".txt,text/plain"
+                accept={DOCUMENT_UPLOAD_ACCEPT}
                 className="sr-only"
-                disabled={isAnalyzing || isRateLimited}
+                disabled={isAnalyzing || isRateLimited || isExtractingJob}
                 onChange={(event) => void handleJobFileUpload(event)}
               />
             </label>
@@ -884,9 +929,14 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
               {jobStats}
             </span>
           </div>
+          {isExtractingJob ? (
+            <p className="mt-2 text-xs text-sky-800" role="status">
+              Extracting job description text…
+            </p>
+          ) : null}
           {jobFileFeedback?.kind === "success" ? (
             <p className="mt-2 text-xs text-emerald-800" role="status">
-              Job description text loaded from file.
+              Job description loaded from {jobFileFeedback.sourceLabel}.
             </p>
           ) : null}
           {jobFileFeedback?.kind === "error" ? (

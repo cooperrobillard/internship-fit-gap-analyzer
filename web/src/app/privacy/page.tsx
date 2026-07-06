@@ -61,14 +61,6 @@ function BulletList({ children }: { children: ReactNode }) {
   );
 }
 
-function InlineCode({ children }: { children: ReactNode }) {
-  return (
-    <code className="rounded bg-[var(--color-surface-muted)] px-1 py-0.5 text-xs text-[var(--color-text)]">
-      {children}
-    </code>
-  );
-}
-
 export default function PrivacyPage() {
   return (
     <main className="app-shell-container flex-1 py-10 sm:py-14 lg:py-16">
@@ -176,12 +168,17 @@ export default function PrivacyPage() {
           <Section id="transient-inputs" title="Analysis inputs">
             <p>
               Pasted résumé and job-description text is used to produce the
-              current analysis response. Plain <InlineCode>.txt</InlineCode>{" "}
-              uploads are read as transient convenience inputs.
+              current analysis response. PDF, DOCX, TXT, and MD uploads are
+              processed transiently for extraction in the browser workflow.
             </p>
             <p>
-              Uploaded files are not stored as files by the application. Running
-              an analysis does not automatically save the result.
+              Document extraction is deterministic and rule-based—not AI or OCR.
+              Image-only or scanned PDFs may not yield readable text.
+            </p>
+            <p>
+              Uploaded files and raw extracted bodies are not intentionally stored
+              in the application save path. Running an analysis does not
+              automatically save the result.
             </p>
             <p>
               Unsaved results remain part of the current workflow rather than
@@ -211,14 +208,15 @@ export default function PrivacyPage() {
           <Section id="resume-profiles" title="Resume profiles">
             <p>
               Resume profiles are structured skill sets rather than full résumé
-              documents; they do not provide full résumé parsing, PDF or DOCX
-              parsing, or AI extraction. They may contain profile name, optional
-              description or notes, extracted skill names, user-added skill
-              names, source type, and timestamps.
+              documents. You can upload or paste a résumé to extract taxonomy
+              skills for review; only structured fields are saved after you
+              confirm. Profiles may contain profile name, optional description
+              or notes, extracted skill names, user-added skill names, source
+              type, and timestamps.
             </p>
             <p>
               Raw résumé body text is not part of the structured profile.
-              Transient <InlineCode>.txt</InlineCode> uploads are not
+              Transient document uploads and extracted text previews are not
               automatically saved as profiles.
             </p>
             <p>

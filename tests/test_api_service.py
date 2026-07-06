@@ -727,6 +727,22 @@ def test_health_works_when_shared_secret_set():
             os.environ["ANALYSIS_API_SHARED_SECRET"] = original
 
 
+def test_extract_document_health_and_analyze_unchanged():
+    extract_response = client.post(
+        "/extract-document",
+        data={"text": SAMPLE_RESUME},
+    )
+    assert extract_response.status_code == 200
+    payload = extract_response.json()
+    assert payload["sourceKind"] == "pasted"
+    assert "text" in payload
+    assert PRIVATE_RESUME_MARKER not in extract_response.text
+
+    analyze_response = client.post("/analyze", json=_analyze_payload())
+    assert analyze_response.status_code == 200
+    assert analyze_response.json()["matchedSkillsCount"] >= 1
+
+
 def test_analyze_does_not_create_tracked_generated_files():
     repo_root = Path(__file__).resolve().parent.parent
     outputs_folder = repo_root / "data" / "outputs"
@@ -812,6 +828,7 @@ if __name__ == "__main__":
     test_analyze_fails_when_shared_secret_set_but_header_wrong()
     test_analyze_succeeds_when_shared_secret_set_and_header_matches()
     test_health_works_when_shared_secret_set()
+    test_extract_document_health_and_analyze_unchanged()
     test_analyze_does_not_create_tracked_generated_files()
     test_sentry_adapter_not_invoked_for_success_validation_auth_or_health()
     test_sentry_adapter_failure_does_not_change_unexpected_exception_response()

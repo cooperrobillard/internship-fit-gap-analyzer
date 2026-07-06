@@ -49,3 +49,10 @@ class AnalyzeResponse(BaseModel):
     missingSkillsCount: int
     summary: str
     metadata: AnalyzeMetadata = Field(default_factory=AnalyzeMetadata)
+
+
+class ExtractDocumentResponse(BaseModel):
+    text: str
+    suggestedName: str
+    skills: list[str]
+    sourceKind: str

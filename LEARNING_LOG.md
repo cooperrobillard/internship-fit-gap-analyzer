@@ -4166,3 +4166,10 @@ Implemented fixed canonical metadata for `https://jobfit.cooperrobillard.com`, i
 - Portfolio publication was intentionally deferred; broader promotion was intentionally deferred.
 - No runtime, database, RLS, provider, DNS, monitoring, or QA configuration changed.
 - Future work moves to limited-public-beta maintenance and feedback triage; Version 26 feature planning is deferred until evidence supports it.
+
+## Version 26 Dev — Transient document extraction and profile creation
+
+- Added server-side `api/document_extraction.py` with deterministic PDF/DOCX/TXT/MD extraction, name suggestion, and taxonomy skill detection via existing `find_skills`.
+- Added protected `POST /extract-document`, Next.js `/api/extract-document` proxy, and shared `web/src/lib/document-extraction.ts` client helper.
+- Workspace uploads and profile creation now use the same transient extraction flow; profiles still save structured fields only after explicit review.
+- Extraction is not AI/OCR; scanned PDFs may be unreadable. No raw document persistence or database changes.

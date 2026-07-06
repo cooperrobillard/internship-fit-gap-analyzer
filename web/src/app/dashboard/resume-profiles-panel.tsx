@@ -6,10 +6,18 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type ChangeEvent,
   type FormEvent,
   type ReactNode,
 } from "react";
+import {
+  DOCUMENT_UPLOAD_ACCEPT,
+  extractDocumentFromFile,
+  extractDocumentFromPastedText,
+  type DocumentSourceKind,
+} from "@/lib/document-extraction";
 import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
@@ -36,6 +44,19 @@ const primaryButtonClass = `min-h-10 rounded-md bg-sky-800 px-4 py-2 text-sm fon
 const textLinkButtonClass = `text-sm font-medium text-sky-800 hover:text-sky-950 ${focusVisibleClass}`;
 
 type WorkspaceMode = "browse" | "create" | "edit";
+type CreatePhase = "input" | "review";
+
+function mapExtractionSourceToProfileSource(
+  sourceKind: DocumentSourceKind,
+): ResumeProfileSourceType {
+  if (sourceKind === "pasted") {
+    return "pasted";
+  }
+  if (sourceKind === "txt") {
+    return "txt_upload";
+  }
+  return "imported";
+}
 
 const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
   manual: "Manual",
@@ -305,6 +326,12 @@ export function ResumeProfilesPanel() {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState<ProfileFormState>(emptyCreateForm);
+  const [createPhase, setCreatePhase] = useState<CreatePhase>("input");
+  const [createPastedText, setCreatePastedText] = useState("");
+  const [createTransientText, setCreateTransientText] = useState<string | null>(null);
+  const [createSkillsWarning, setCreateSkillsWarning] = useState<string | null>(null);
+  const [isExtractingCreate, setIsExtractingCreate] = useState(false);
+  const createFileInputRef = useRef<HTMLInputElement>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -371,17 +398,104 @@ export function ResumeProfilesPanel() {
     };
   }, [configured, isLoaded, session, userId, reloadNonce]);
 
+  function resetCreateWorkflow() {
+    setCreatePhase("input");
+    setCreatePastedText("");
+    setCreateTransientText(null);
+    setCreateSkillsWarning(null);
+    setCreateForm(emptyCreateForm());
+    setCreateError(null);
+    if (createFileInputRef.current) {
+      createFileInputRef.current.value = "";
+    }
+  }
+
   function startCreate() {
     setMode("create");
-    setCreateError(null);
+    resetCreateWorkflow();
     setStatusMessage(null);
     setDeleteUiState({ kind: "idle" });
   }
 
   function cancelCreate() {
     setMode("browse");
+    resetCreateWorkflow();
+  }
+
+  function beginCreateReview(options: {
+    text: string;
+    suggestedName: string;
+    skills: string[];
+    sourceKind: DocumentSourceKind;
+  }) {
+    setCreateTransientText(options.text);
+    setCreateForm({
+      profileName: options.suggestedName,
+      profileDescription: "",
+      extractedSkillsText: skillsToTextInput(options.skills),
+      userAddedSkillsText: "",
+      sourceType: mapExtractionSourceToProfileSource(options.sourceKind),
+    });
+    setCreateSkillsWarning(
+      options.skills.length === 0
+        ? "No taxonomy skills were detected. Add skills manually before saving."
+        : null,
+    );
+    setCreatePhase("review");
     setCreateError(null);
-    setCreateForm(emptyCreateForm());
+  }
+
+  async function handleCreateFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (createFileInputRef.current) {
+      createFileInputRef.current.value = "";
+    }
+    if (!file) {
+      return;
+    }
+
+    setCreatePastedText("");
+    setIsExtractingCreate(true);
+    setCreateError(null);
+
+    const result = await extractDocumentFromFile(file);
+    setIsExtractingCreate(false);
+
+    if (result.status === "error") {
+      setCreateError(result.message);
+      return;
+    }
+
+    beginCreateReview({
+      text: result.text,
+      suggestedName: result.suggestedName,
+      skills: result.skills,
+      sourceKind: result.sourceKind,
+    });
+  }
+
+  async function handleExtractCreateFromPaste() {
+    setCreateError(null);
+    setIsExtractingCreate(true);
+
+    const result = await extractDocumentFromPastedText(createPastedText);
+    setIsExtractingCreate(false);
+
+    if (result.status === "error") {
+      setCreateError(result.message);
+      return;
+    }
+
+    if (createFileInputRef.current) {
+      createFileInputRef.current.value = "";
+    }
+
+    beginCreateReview({
+      text: result.text,
+      suggestedName: result.suggestedName,
+      skills: result.skills,
+      sourceKind: result.sourceKind,
+    });
   }
 
   function selectProfile(profileId: string) {
@@ -426,6 +540,13 @@ export function ResumeProfilesPanel() {
       return;
     }
 
+    const extractedSkills = parseSkillTextInput(createForm.extractedSkillsText);
+    const userAddedSkills = parseSkillTextInput(createForm.userAddedSkillsText);
+    if (extractedSkills.length + userAddedSkills.length === 0) {
+      setCreateError("Add at least one skill before saving this profile.");
+      return;
+    }
+
     setIsCreating(true);
     setCreateError(null);
     setStatusMessage(null);
@@ -434,8 +555,8 @@ export function ResumeProfilesPanel() {
     const result = await createResumeProfile(supabase, userId, {
       profileName: trimmedName,
       profileDescription: createForm.profileDescription.trim() || null,
-      extractedSkills: parseSkillTextInput(createForm.extractedSkillsText),
-      userAddedSkills: parseSkillTextInput(createForm.userAddedSkillsText),
+      extractedSkills,
+      userAddedSkills,
       sourceType: createForm.sourceType,
     });
 
@@ -446,7 +567,7 @@ export function ResumeProfilesPanel() {
       return;
     }
 
-    setCreateForm(emptyCreateForm());
+    resetCreateWorkflow();
     setProfiles((current) => [
       result.profile,
       ...current.filter((profile) => profile.id !== result.profile.id),
@@ -655,28 +776,183 @@ export function ResumeProfilesPanel() {
     </div>
   );
 
-  const createFormView = (
-    <form onSubmit={(event) => void handleCreate(event)} aria-busy={isCreating} className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+  const createFormView =
+    createPhase === "input" ? (
+      <div className="space-y-4" aria-busy={isExtractingCreate}>
         <div>
           <button type="button" onClick={cancelCreate} className={`mb-3 xl:hidden ${textLinkButtonClass}`}>
             Back to profiles
           </button>
-          <h2 className="text-xl font-semibold text-zinc-950">New profile</h2>
+          <h2 className="text-xl font-semibold text-zinc-950">Create profile from résumé</h2>
+          <p className="mt-2 text-sm text-zinc-600">
+            Upload or paste a résumé to extract taxonomy skills. The source is processed for this
+            request only; saved profiles store structured fields, not the raw résumé.
+          </p>
         </div>
+
+        <label className="block text-sm">
+          <span className="font-medium text-zinc-900">Upload résumé (PDF, DOCX, TXT, MD)</span>
+          <input
+            ref={createFileInputRef}
+            type="file"
+            accept={DOCUMENT_UPLOAD_ACCEPT}
+            disabled={isExtractingCreate || isCreating}
+            onChange={(event) => void handleCreateFileUpload(event)}
+            className={`${inputClass} file:mr-3 file:rounded-md file:border-0 file:bg-sky-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-sky-900`}
+          />
+        </label>
+
+        {isExtractingCreate ? (
+          <p className="text-sm text-sky-800" role="status">
+            Extracting résumé text and skills…
+          </p>
+        ) : null}
+
+        <p className="text-center text-xs font-medium uppercase tracking-wide text-zinc-500">
+          or paste résumé text
+        </p>
+
+        <label className="block text-sm" htmlFor="create-profile-paste">
+          <span className="font-medium text-zinc-900">Pasted résumé text</span>
+          <textarea
+            id="create-profile-paste"
+            value={createPastedText}
+            onChange={(event) => {
+              setCreatePastedText(event.target.value);
+              setCreateError(null);
+            }}
+            disabled={isExtractingCreate || isCreating}
+            rows={8}
+            className={textareaClass}
+            placeholder="Paste skills, experience, and education here."
+          />
+        </label>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => void handleExtractCreateFromPaste()}
+            disabled={isExtractingCreate || isCreating || !createPastedText.trim()}
+            className={primaryButtonClass}
+          >
+            {isExtractingCreate ? "Extracting…" : "Review profile"}
+          </button>
+          <button type="button" onClick={cancelCreate} disabled={isExtractingCreate || isCreating} className={secondaryButtonClass}>
+            Cancel
+          </button>
+        </div>
+
+        {createError ? <p className="text-sm text-red-800" role="alert">{createError}</p> : null}
       </div>
-      <ProfileFormFields formIdPrefix="create-profile" form={createForm} onChange={setCreateForm} disabled={isCreating} />
-      {createError ? <p className="text-sm text-red-800" role="alert">{createError}</p> : null}
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <button type="submit" disabled={isCreating} className={primaryButtonClass}>
-          {isCreating ? "Creating…" : "Create profile"}
-        </button>
-        <button type="button" onClick={cancelCreate} disabled={isCreating} className={secondaryButtonClass}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
+    ) : (
+      <form onSubmit={(event) => void handleCreate(event)} aria-busy={isCreating} className="space-y-4">
+        <div>
+          <button type="button" onClick={cancelCreate} className={`mb-3 xl:hidden ${textLinkButtonClass}`}>
+            Back to profiles
+          </button>
+          <h2 className="text-xl font-semibold text-zinc-950">Review profile</h2>
+          <p className="mt-2 text-sm text-zinc-600">
+            Edit the suggested name and skills before saving. Only structured profile fields are stored.
+          </p>
+        </div>
+
+        <label className="block text-sm" htmlFor="create-profile-name">
+          <span className="font-medium text-zinc-900">Profile name</span>
+          <input
+            id="create-profile-name"
+            type="text"
+            value={createForm.profileName}
+            onChange={(event) => setCreateForm({ ...createForm, profileName: event.target.value })}
+            disabled={isCreating}
+            required
+            className={inputClass}
+            autoComplete="off"
+          />
+        </label>
+
+        <label className="block text-sm" htmlFor="create-profile-extracted-skills">
+          <span className="font-medium text-zinc-900">Skills found</span>
+          <textarea
+            id="create-profile-extracted-skills"
+            value={createForm.extractedSkillsText}
+            onChange={(event) =>
+              setCreateForm({ ...createForm, extractedSkillsText: event.target.value })
+            }
+            disabled={isCreating}
+            rows={4}
+            className={textareaClass}
+            placeholder="Python, SQL, communication"
+          />
+        </label>
+
+        {createSkillsWarning ? (
+          <p className="text-sm text-amber-900" role="status">
+            {createSkillsWarning}
+          </p>
+        ) : null}
+
+        <label className="block text-sm" htmlFor="create-profile-added-skills">
+          <span className="font-medium text-zinc-900">
+            Additional skills <span className="font-normal text-zinc-500">(optional)</span>
+          </span>
+          <textarea
+            id="create-profile-added-skills"
+            value={createForm.userAddedSkillsText}
+            onChange={(event) =>
+              setCreateForm({ ...createForm, userAddedSkillsText: event.target.value })
+            }
+            disabled={isCreating}
+            rows={3}
+            className={textareaClass}
+            placeholder="Leadership, public speaking"
+          />
+        </label>
+
+        <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+          <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
+            Optional details
+          </summary>
+          <label className="mt-3 block text-sm" htmlFor="create-profile-description">
+            <span className="font-medium text-zinc-900">Notes</span>
+            <textarea
+              id="create-profile-description"
+              value={createForm.profileDescription}
+              onChange={(event) =>
+                setCreateForm({ ...createForm, profileDescription: event.target.value })
+              }
+              disabled={isCreating}
+              rows={3}
+              className={textareaClass}
+            />
+          </label>
+        </details>
+
+        {createTransientText ? (
+          <details className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+            <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
+              View extracted text
+            </summary>
+            <p className="mt-2 text-xs text-zinc-600">
+              Transient preview only. This text is not saved with the profile.
+            </p>
+            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-md border border-zinc-200 bg-white p-3 text-xs text-zinc-800">
+              {createTransientText}
+            </pre>
+          </details>
+        ) : null}
+
+        {createError ? <p className="text-sm text-red-800" role="alert">{createError}</p> : null}
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button type="submit" disabled={isCreating} className={primaryButtonClass}>
+            {isCreating ? "Saving…" : "Save profile"}
+          </button>
+          <button type="button" onClick={resetCreateWorkflow} disabled={isCreating} className={secondaryButtonClass}>
+            Use a different résumé
+          </button>
+        </div>
+      </form>
+    );
 
   const editFormView = activeProfile && editForm ? (
     <form onSubmit={(event) => void handleSaveEdit(event)} aria-busy={isSavingEdit} className="space-y-4">

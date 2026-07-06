@@ -15,7 +15,7 @@ This is a **portfolio and learning project** and limited public-beta product—n
 | **Local Python app** | Stable — CLI, Streamlit UI, SQLite persistence, pandas summaries |
 | **Hosted web app** | Versions 22–25 complete for bounded scopes — validated curated taxonomy, saved-analysis data controls, privacy-safe production observability, custom-domain Production configuration, and canonical-host Production verification are active; still a limited public-beta/portfolio product, not mature production SaaS or security certified |
 
-The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/`.txt` inputs, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
+The **local app** remains the full-featured offline workflow (uploads, SQLite history, comparison, exports). The **hosted web app** is the primary public product surface for sign-in, rule-based analysis, transient pasted/PDF/DOCX/TXT/MD document extraction, structured resume-profile management, saved-profile analysis handoff, saved analysis review/search/filter/detail/comparison/export/delete, recurring gap stats, privacy/data-control copy, safe `413` handling, and safe `429` cooldown handling.
 
 Dev 19 privacy/RLS/abuse hardening, Dev 20 application-shell and launch polish, Dev 21 route redesign/visual QA, Version 22 curated cross-domain taxonomy validation, Version 23 saved-analysis data controls, and Version 24 privacy-safe production observability are complete in the repository for their bounded scopes. Sentry receives only approved sanitized server-side failure events, UptimeRobot monitors the canonical frontend, retained old Vercel fallback, and backend health endpoint, and the production incident-response runbook exists. **Version 25 is complete with a bounded PASS.** The canonical Production limited beta remains at `https://jobfit.cooperrobillard.com`. Step 6 passed on commit `0ceb8b88a602f349e1de89e4fd9bf00e5725939d` with Version 23 17/17 and Version 25 7/7 automated results plus manual verification, cleanup, and rollback readiness. Step 7 completed documentation reconciliation and maintenance handoff. Portfolio publication and broader promotion are intentionally deferred. The application remains a portfolio and learning project, rule-based, and not mature SaaS. These are scoped release checkpoints, not a completed portfolio launch, broad marketing launch, mature SaaS claim, security certification, penetration test, or legal compliance sign-off. See [`docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md`](docs/DEV19_PRIVACY_DATA_PRODUCTION_READINESS.md), [`docs/VERSION_23_CHECKPOINT.md`](docs/VERSION_23_CHECKPOINT.md), [`docs/VERSION_23_DATA_CONTROL_QA.md`](docs/VERSION_23_DATA_CONTROL_QA.md), [`docs/VERSION_24_CHECKPOINT.md`](docs/VERSION_24_CHECKPOINT.md), [`docs/PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md`](docs/PRODUCTION_INCIDENT_RESPONSE_RUNBOOK.md), [`docs/VERSION_24_RELEASE_DIRECTION.md`](docs/VERSION_24_RELEASE_DIRECTION.md), [`docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md`](docs/VERSION_25_STEP_6_PRODUCTION_VERIFICATION.md), and [`docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md`](docs/VERSION_25_STEP_7_PROJECT_CLOSEOUT.md).
 
@@ -54,7 +54,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 
 - Next.js landing page and Clerk sign-in/sign-up
 - Protected dashboard with analysis form and **Try sample inputs** / **Run analysis (does not save)** workflow
-- Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/`.txt` inputs
+- Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/document inputs and `/extract-document` for deterministic PDF/DOCX/TXT/MD extraction
 - Supabase **Save structured results** / read / individual delete of analyses with per-user RLS
 - Structured resume-profile create/edit/delete and explicit saved-profile analysis handoff
 - Recurring gap stats, saved-analysis detail, progressive saved-history loading in pages of ten, row multi-selection, **Select all visible**, selected CSV export, loaded CSV export, selected deletion with explicit confirmation and partial-failure handling, search/filter, compare, export/download, privacy/data-control page (`/privacy`), metadata labels
@@ -66,7 +66,6 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 **Not built yet (or limited)**
 
 - Semantic or AI matching
-- PDF/DOCX parsing in the web app
 - Full application tracking or billing
 - Formal legal privacy policy, penetration test, or comprehensive security audit
 - Account-wide select-all, one-click account-wide export, account-wide delete-all, restore/undo, automated retention, or account deletion data-cleanup integration
@@ -201,7 +200,7 @@ Do **not** commit `.env`, `.env.local`, or `web/.env.local`. Do **not** put secr
 
 **Hosted web app**
 
-- Analysis runs through Vercel and Render for each request; raw pasted/uploaded text is **not intentionally stored** in Supabase by the product save path.
+- Analysis runs through Vercel and Render for each request; raw pasted/uploaded text and uploaded files are **not intentionally stored** in Supabase by the product save path. Structured profile fields are saved only after explicit user action.
 - Cloud save writes **matched/missing skills and metadata** (title, company, source URL, notes, counts, categories, timestamps, etc.) per the current write contract.
 - Structured resume profiles store names, optional notes/description, skill lists, source type, and timestamps—not raw resume body text.
 - Platform/service logging cannot be guaranteed absent; avoid unusually sensitive content.
