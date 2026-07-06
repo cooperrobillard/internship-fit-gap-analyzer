@@ -2,11 +2,11 @@
 
 This document explains the current limitations of the Internship Fit & Skill-Gap Analyzer.
 
-The project is a rule-based analyzer with a local CLI/Streamlit workflow and a hosted Next.js/FastAPI/Clerk/Supabase prototype. It is useful for learning and for first-pass skill-gap analysis, but it should not be treated as a perfect job-fit evaluator or mature production SaaS.
+The project is a hosted job-fit analyzer with optional Smart AI analysis and a local CLI/Streamlit workflow. It is useful for learning and for first-pass skill-gap analysis, but it should not be treated as a perfect job-fit evaluator or mature production SaaS.
 
 ## Current approach
 
-The analyzer uses rule-based keyword matching.
+The hosted analyzer supports Smart AI analysis when configured, plus rule-based keyword matching as a deterministic fallback.
 
 It compares:
 
@@ -43,10 +43,10 @@ The current version does not:
 - judge whether resume evidence is strong or weak,
 - detect skill level, such as beginner vs. intermediate vs. advanced,
 - understand whether a project actually proves a skill,
-- identify transferable experience unless the keyword appears,
-- use OpenAI API or structured AI extraction,
+- guarantee transferable-skill detection in rule-based mode without explicit keywords,
+- provide Smart AI analysis when it is disabled, over quota, or misconfigured,
 - generate resume bullets or application materials,
-- provide semantic/AI matching or full resume evidence review,
+- provide hiring decisions, fit guarantees, or formal legal/security compliance,
 - provide account-wide export/delete, automated retention, restore/undo, or account deletion data cleanup in the hosted app.
 
 Optional SQLite and pandas features store and summarize results locally. They do not add semantic understanding of job descriptions or resume evidence.
@@ -62,7 +62,8 @@ Important current limits:
 
 - **Not mature production SaaS.** Dev 19 completed bounded RLS, abuse-control, privacy-copy, and readiness checks, and later work improved UI/routes and taxonomy validation, but there is no formal penetration test, comprehensive security audit, or legal/privacy compliance sign-off.
 - **Curated cross-domain but not exhaustive.** Version 22 validation exercises 23 categories with fictional role cases and negative controls, which is strong regression evidence but not proof of universal occupational coverage.
-- **Rule-based only.** Matching uses explicit taxonomy phrases and reviewed aliases, not semantic understanding, AI extraction, generated fit scores, or hiring judgment.
+- **Smart AI when configured** — transient OpenAI processing with quota limits and rule-based fallback; outputs may still miss niche skills or over-group variants.
+- **Rule-based fallback** — explicit taxonomy phrases and reviewed aliases; not semantic understanding, generated fit scores, or hiring judgment.
 - **Phrase detection is not proficiency evidence.** A detected phrase does not prove skill level, project depth, evidence strength, candidate quality, or hiring fit. Results require human interpretation.
 - **No PDF/DOCX parsing.** Hosted upload support is limited to transient `.txt` handling where available.
 - **No raw resume/job-body persistence by the application save path.** Pasted/uploaded text is sent through Vercel to Render for the request, but saved cloud records are structured results and metadata. Platform/service logging cannot be guaranteed absent.
@@ -217,7 +218,6 @@ Possible future improvements include:
 - better matching logic,
 - required vs. preferred skill detection,
 - stronger tests,
-- OpenAI API structured extraction,
 - confidence notes,
 - evidence mapping from resume projects to job requirements,
 - final UI, accessibility, mobile polish, and broader hosted data-control improvements,

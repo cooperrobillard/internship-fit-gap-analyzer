@@ -808,13 +808,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             How inputs and saves work
           </summary>
           <div className="mt-2 space-y-1 rounded-md border border-zinc-200 bg-white p-3">
-            <p>Matching uses explicit taxonomy phrases and reviewed aliases.</p>
+            <p>Smart AI (when enabled) sends transient résumé and job text to OpenAI for the current request. Rule-based analysis uses explicit taxonomy phrases and reviewed aliases.</p>
             <p>
               PDF, DOCX, TXT, and MD uploads are processed transiently for this
               workflow. Files are not saved by the application.
             </p>
-            <p>Extraction is deterministic and not AI-based; scanned PDFs may not be readable.</p>
-            <p>It does not infer proficiency, evidence strength, or unstated skills.</p>
+            <p>Document extraction is deterministic and not AI-based; scanned PDFs may not be readable.</p>
+            <p>Neither mode proves proficiency, evidence strength, or unstated skills. Review results before acting.</p>
             <p>Running an analysis does not save anything. Optional saves store structured skills and metadata, not raw resume or job-description body text.</p>
             <Link href="/privacy" className="font-medium text-sky-800 underline underline-offset-4">Full privacy details</Link>
           </div>

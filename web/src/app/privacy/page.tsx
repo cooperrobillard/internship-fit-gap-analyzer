@@ -6,7 +6,7 @@ import { absoluteSiteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Privacy & data controls",
   description:
-    "Current data-handling summary, user controls, and limitations for the rule-based job-fit analyzer public beta.",
+    "Current data-handling summary, user controls, and limitations for the Job Fit & Skill-Gap Analyzer limited public beta.",
   alternates: {
     canonical: absoluteSiteUrl("/privacy"),
   },
@@ -146,10 +146,12 @@ export default function PrivacyPage() {
         <article className="min-w-0 space-y-10">
           <Section id="summary" title="Plain-language summary">
             <p>
-              Job Fit &amp; Skill-Gap Analyzer supports rule-based matching with a
-              curated cross-domain skill taxonomy and reviewed aliases. When
-              configured, Smart AI analysis can provide richer skill extraction
-              and comparison with automatic rule-based fallback.
+              Job Fit &amp; Skill-Gap Analyzer supports Smart AI analysis when
+              configured, plus rule-based matching with a curated cross-domain
+              skill taxonomy and reviewed aliases. Smart AI helps interpret
+              résumés and job descriptions, ignore boilerplate, and identify
+              matched skills, missing skills, and transferable evidence. Rule-based
+              analysis remains available as a deterministic fallback.
             </p>
             <p>
               Analysis compares résumé information or a structured profile with
@@ -240,8 +242,9 @@ export default function PrivacyPage() {
           <Section id="resume-profiles" title="Resume profiles">
             <p>
               Resume profiles are structured skill sets rather than full résumé
-              documents. You can upload or paste a résumé to extract taxonomy
-              skills for review; only structured fields are saved after you
+              documents.               You can upload or paste a résumé to extract skills with Smart AI
+              when configured, or deterministic taxonomy extraction as fallback;
+              only structured fields are saved after you
               confirm. Profiles may contain profile name, optional description
               or notes, extracted skill names, user-added skill names, source
               type, and timestamps.
@@ -281,10 +284,13 @@ export default function PrivacyPage() {
 
           <Section id="limitations" title="Current limitations">
             <BulletList>
-              <li>The taxonomy is broad but not exhaustive.</li>
+              <li>The taxonomy and Smart AI outputs are broad but not exhaustive.</li>
               <li>
-                Differently worded skills may be missed when they do not match
-                explicit recognized phrases or reviewed aliases.
+                Differently worded skills may be missed in rule-based mode when
+                they do not match explicit recognized phrases or reviewed aliases.
+              </li>
+              <li>
+                Smart AI may still mislabel, over-group, or miss niche skills.
               </li>
               <li>
                 Phrase detection does not prove proficiency, evidence strength,
@@ -315,8 +321,8 @@ export default function PrivacyPage() {
             </BulletList>
             <p>
               The current product is a limited public beta and portfolio
-              application for rule-based planning, saved structured results, and
-              recurring-gap review.
+              application for career planning, saved structured results, and
+              recurring-gap review—not a hiring decision tool or security-certified SaaS.
             </p>
           </Section>
 
@@ -340,9 +346,10 @@ export default function PrivacyPage() {
               <div className="mt-4 space-y-4 text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
                 <p>
                   At a high level, Vercel hosts the Next.js web application and
-                  analysis proxy; Render runs the FastAPI rule-based analysis
-                  service; Clerk provides authentication; and Supabase stores
-                  structured account-owned records.
+                  analysis proxy; Render runs the FastAPI analysis service,
+                  including optional OpenAI Smart AI endpoints; Clerk provides
+                  authentication; and Supabase stores structured account-owned
+                  records.
                 </p>
                 <p>
                   A June 22, 2026 two-user human verification checked

@@ -831,7 +831,7 @@ export function ResumeProfilesPanel() {
           </button>
           <h2 className="text-xl font-semibold text-zinc-950">Create profile from résumé</h2>
           <p className="mt-2 text-sm text-zinc-600">
-            Upload or paste a résumé to extract taxonomy skills. The source is processed for this
+            Upload or paste a résumé to extract skills with Smart AI when configured, or deterministic taxonomy extraction as fallback. The source is processed for this
             request only; saved profiles store structured fields, not the raw résumé.
           </p>
         </div>
