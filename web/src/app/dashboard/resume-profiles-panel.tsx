@@ -18,6 +18,7 @@ import {
   extractDocumentFromPastedText,
   type DocumentSourceKind,
 } from "@/lib/document-extraction";
+import { extractProfileWithAi } from "@/lib/analysis/ai-analysis-client";
 import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
@@ -330,6 +331,7 @@ export function ResumeProfilesPanel() {
   const [createPastedText, setCreatePastedText] = useState("");
   const [createTransientText, setCreateTransientText] = useState<string | null>(null);
   const [createSkillsWarning, setCreateSkillsWarning] = useState<string | null>(null);
+  const [createExtractionMethod, setCreateExtractionMethod] = useState<string | null>(null);
   const [isExtractingCreate, setIsExtractingCreate] = useState(false);
   const createFileInputRef = useRef<HTMLInputElement>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -403,6 +405,7 @@ export function ResumeProfilesPanel() {
     setCreatePastedText("");
     setCreateTransientText(null);
     setCreateSkillsWarning(null);
+    setCreateExtractionMethod(null);
     setCreateForm(emptyCreateForm());
     setCreateError(null);
     if (createFileInputRef.current) {
@@ -427,22 +430,64 @@ export function ResumeProfilesPanel() {
     suggestedName: string;
     skills: string[];
     sourceKind: DocumentSourceKind;
+    extractionMethod: string;
+    extractionNote?: string;
   }) {
     setCreateTransientText(options.text);
     setCreateForm({
       profileName: options.suggestedName,
-      profileDescription: "",
+      profileDescription: options.extractionNote ?? "",
       extractedSkillsText: skillsToTextInput(options.skills),
       userAddedSkillsText: "",
       sourceType: mapExtractionSourceToProfileSource(options.sourceKind),
     });
+    setCreateExtractionMethod(options.extractionMethod);
     setCreateSkillsWarning(
       options.skills.length === 0
-        ? "No taxonomy skills were detected. Add skills manually before saving."
+        ? "No skills were detected. Add skills manually before saving."
         : null,
     );
     setCreatePhase("review");
     setCreateError(null);
+  }
+
+  async function runProfileExtractionReview(options: {
+    text: string;
+    suggestedName: string;
+    skills: string[];
+    sourceKind: DocumentSourceKind;
+    filename?: string;
+  }) {
+    const aiResult = await extractProfileWithAi({
+      resumeText: options.text,
+      filename: options.filename,
+      sourceKind: options.sourceKind,
+    });
+
+    if (aiResult.status === "success") {
+      beginCreateReview({
+        text: options.text,
+        suggestedName: aiResult.candidateName,
+        skills: aiResult.skills,
+        sourceKind: options.sourceKind,
+        extractionMethod: "Smart AI extraction",
+        extractionNote: aiResult.summary,
+      });
+      return;
+    }
+
+    const fallbackLabel =
+      aiResult.status === "fallback"
+        ? `Rule-based extraction (${aiResult.fallbackReason})`
+        : "Rule-based extraction";
+
+    beginCreateReview({
+      text: options.text,
+      suggestedName: options.suggestedName,
+      skills: options.skills,
+      sourceKind: options.sourceKind,
+      extractionMethod: fallbackLabel,
+    });
   }
 
   async function handleCreateFileUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -466,11 +511,12 @@ export function ResumeProfilesPanel() {
       return;
     }
 
-    beginCreateReview({
+    await runProfileExtractionReview({
       text: result.text,
       suggestedName: result.suggestedName,
       skills: result.skills,
       sourceKind: result.sourceKind,
+      filename: file.name,
     });
   }
 
@@ -490,7 +536,7 @@ export function ResumeProfilesPanel() {
       createFileInputRef.current.value = "";
     }
 
-    beginCreateReview({
+    await runProfileExtractionReview({
       text: result.text,
       suggestedName: result.suggestedName,
       skills: result.skills,
@@ -804,7 +850,7 @@ export function ResumeProfilesPanel() {
 
         {isExtractingCreate ? (
           <p className="text-sm text-sky-800" role="status">
-            Extracting résumé text and skills…
+            Extracting résumé text and skills (Smart AI when available)…
           </p>
         ) : null}
 
@@ -854,6 +900,11 @@ export function ResumeProfilesPanel() {
           <p className="mt-2 text-sm text-zinc-600">
             Edit the suggested name and skills before saving. Only structured profile fields are stored.
           </p>
+          {createExtractionMethod ? (
+            <p className="mt-2 text-xs text-zinc-500">
+              Extraction method: {createExtractionMethod}
+            </p>
+          ) : null}
         </div>
 
         <label className="block text-sm" htmlFor="create-profile-name">

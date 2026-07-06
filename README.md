@@ -4,9 +4,9 @@ Repository name: `internship-fit-gap-analyzer`.
 
 **Production limited public beta:** https://jobfit.cooperrobillard.com
 
-A **rule-based** job-fit and skill-gap analyzer. It compares resume text and job descriptions against a curated cross-domain JSON **skill taxonomy** and reviewed **aliases**, reports **matched skills** and **missing skills**, and summarizes **recurring gaps** across multiple postings.
+A **rule-based** job-fit and skill-gap analyzer with optional **Smart AI** analysis when configured. It compares resume text and job descriptions against a curated cross-domain JSON **skill taxonomy** and reviewed **aliases** (rule-based mode), or uses OpenAI structured outputs for richer extraction (Smart AI mode with automatic rule-based fallback).
 
-This is a **portfolio and learning project** and limited public-beta product—not mature production SaaS, not semantic/AI matching, and not a guarantee of job fit.
+This is a **portfolio and learning project** and limited public-beta product—not mature production SaaS, not a guarantee of job fit, and not a formal security or legal compliance certification.
 
 ## Current status
 
@@ -26,8 +26,10 @@ Browser
   → Vercel (Next.js, web/)
       → Clerk (sign-in, protected /dashboard)
       → POST /api/analyze (Next.js route handler)
+      → POST /api/ai/analyze (optional Smart AI; quota + fallback)
           → Render (FastAPI, api/)
               → rule-based analyzer (src/, in-memory)
+              → optional OpenAI Smart AI (api/ai_analysis_service.py)
       → Supabase (saved analyses + structured resume profiles, RLS per Clerk user)
 ```
 
@@ -65,7 +67,6 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 
 **Not built yet (or limited)**
 
-- Semantic or AI matching
 - Full application tracking or billing
 - Formal legal privacy policy, penetration test, or comprehensive security audit
 - Account-wide select-all, one-click account-wide export, account-wide delete-all, restore/undo, automated retention, or account deletion data-cleanup integration

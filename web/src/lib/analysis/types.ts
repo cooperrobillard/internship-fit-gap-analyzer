@@ -11,6 +11,12 @@ export type AnalysisSkill = {
   category: string;
 };
 
+export type AnalysisSkillWithEvidence = AnalysisSkill & {
+  evidence?: string;
+};
+
+export type AnalysisMode = "rule_based" | "ai_smart" | "rule_based_fallback";
+
 export type WebAnalysisInput = {
   resumeText: string;
   jobText: string;
@@ -26,4 +32,22 @@ export type WebAnalysisResult = {
   matchedSkillsCount: number;
   missingSkillsCount: number;
   summary: string;
+  analysisMode?: AnalysisMode;
+  transferableSkills?: AnalysisSkillWithEvidence[];
+  resumeSkills?: AnalysisSkillWithEvidence[];
+  jobSkills?: AnalysisSkillWithEvidence[];
+  ignoredBoilerplate?: string[];
+  limitations?: string[];
+  model?: string;
+  fallbackReason?: string;
+};
+
+export type UserAnalysisModeChoice = "smart_ai" | "rule_based";
+
+export type AiProfileExtractionResult = {
+  candidateName: string;
+  skills: string[];
+  summary: string;
+  extractionMethod: "ai" | "rule_based";
+  model?: string;
 };

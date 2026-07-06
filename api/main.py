@@ -17,12 +17,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.analysis_service import analyze_request
+from api.ai_analysis_service import (
+    AiDisabledError,
+    AiServiceError,
+    MissingApiKeyError,
+    OpenAiRateLimitError,
+    OpenAiTimeoutError,
+    MalformedResponseError,
+    ResponseValidationError,
+    run_profile_extraction,
+    run_smart_analysis,
+)
 from api.document_extraction import (
     DocumentExtractionError,
     extract_from_file_bytes,
     extract_from_pasted_text,
 )
-from api.models import AnalyzeRequest, AnalyzeResponse, ExtractDocumentResponse
+from api.models import (
+    AiAnalyzeRequest,
+    AiAnalyzeResponse,
+    AiExtractProfileRequest,
+    AiExtractProfileResponse,
+    AnalyzeRequest,
+    AnalyzeResponse,
+    ExtractDocumentResponse,
+)
 from api.sentry_telemetry import capture_safe_failure_to_sentry
 from api.observability import (
     REQUEST_ID_HEADER,
@@ -307,4 +326,83 @@ async def extract_document(
         raise HTTPException(
             status_code=500,
             detail="Document extraction could not be completed. Please try again.",
+        ) from exc
+
+
+def _safe_ai_error_status(exc: AiServiceError) -> int:
+    if isinstance(exc, (AiDisabledError, MissingApiKeyError)):
+        return 503
+    if isinstance(exc, OpenAiRateLimitError):
+        return 429
+    if isinstance(exc, OpenAiTimeoutError):
+        return 504
+    if isinstance(exc, (MalformedResponseError, ResponseValidationError)):
+        return 502
+    return 503
+
+
+def _safe_ai_error_message(exc: AiServiceError) -> str:
+    if isinstance(exc, AiDisabledError):
+        return "Smart AI features are disabled."
+    if isinstance(exc, MissingApiKeyError):
+        return "Smart AI is not configured."
+    if isinstance(exc, OpenAiRateLimitError):
+        return "Smart AI is temporarily rate limited. Try again shortly."
+    if isinstance(exc, OpenAiTimeoutError):
+        return "Smart AI took too long to respond. Try again shortly."
+    if isinstance(exc, (MalformedResponseError, ResponseValidationError)):
+        return "Smart AI returned an invalid response."
+    return "Smart AI is temporarily unavailable."
+
+
+@app.post("/ai/analyze", response_model=AiAnalyzeResponse)
+def ai_analyze(
+    request: AiAnalyzeRequest,
+    _: None = Depends(verify_analysis_api_key),
+) -> AiAnalyzeResponse:
+    """Run Smart AI job-fit analysis on transient resume and job text."""
+    try:
+        return run_smart_analysis(
+            resume_text=request.resumeText,
+            job_text=request.jobText,
+            job_title=request.jobTitle,
+            company=request.company,
+            source_url=request.sourceUrl,
+            notes=request.notes,
+        )
+    except AiServiceError as exc:
+        raise HTTPException(
+            status_code=_safe_ai_error_status(exc),
+            detail=_safe_ai_error_message(exc),
+        ) from exc
+    except Exception as exc:
+        logger.error("ai/analyze failed with an unexpected error")
+        raise HTTPException(
+            status_code=503,
+            detail="Smart AI is temporarily unavailable.",
+        ) from exc
+
+
+@app.post("/ai/extract-profile", response_model=AiExtractProfileResponse)
+def ai_extract_profile(
+    request: AiExtractProfileRequest,
+    _: None = Depends(verify_analysis_api_key),
+) -> AiExtractProfileResponse:
+    """Extract structured profile fields from transient resume text."""
+    try:
+        return run_profile_extraction(
+            resume_text=request.resumeText,
+            filename=request.filename,
+            source_kind=request.sourceKind,
+        )
+    except AiServiceError as exc:
+        raise HTTPException(
+            status_code=_safe_ai_error_status(exc),
+            detail=_safe_ai_error_message(exc),
+        ) from exc
+    except Exception as exc:
+        logger.error("ai/extract-profile failed with an unexpected error")
+        raise HTTPException(
+            status_code=503,
+            detail="Smart AI profile extraction is temporarily unavailable.",
         ) from exc
