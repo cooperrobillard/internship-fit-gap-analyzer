@@ -25,7 +25,10 @@ import {
 import { applyExtractedJobMetadataAutofill } from "@/lib/analysis/job-metadata-autofill";
 import { ANALYSIS_COMPLETED_EVENT } from "@/components/tip-jar-nudge";
 import type { AnalysisErrorCategory } from "@/lib/analysis/api-analysis-client";
-import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
+import {
+  mapWebAnalysisToCloudSaveInput,
+  withCurrentMetadataForSave,
+} from "@/lib/analysis/to-cloud-save-input";
 import type {
   AnalysisSkillWithEvidence,
   UserAnalysisModeChoice,
@@ -43,6 +46,10 @@ import {
 } from "@/lib/supabase/resume-profiles";
 import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors";
 import { getWorkspaceProfilePreviewSkills } from "@/lib/workspace-profile-preview";
+import {
+  loadWorkspaceResumePreference,
+  saveWorkspaceResumePreference,
+} from "@/lib/workspace-resume-preferences";
 
 type ResumeInputMode = "pasted" | "saved_profile";
 
@@ -109,6 +116,7 @@ function ResumeProfileAnalysisGuardrail({
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const restoredPreferenceRef = useRef(false);
   const canUseProfiles =
     configured && isLoaded && Boolean(session) && Boolean(userId);
   const selectedProfile = canUseProfiles
@@ -129,6 +137,12 @@ function ResumeProfileAnalysisGuardrail({
     async function runLoad() {
       setIsLoading(true);
       setLoadError(null);
+      const preference =
+        !restoredPreferenceRef.current &&
+        userId &&
+        typeof window !== "undefined"
+          ? loadWorkspaceResumePreference(window.localStorage, userId)
+          : null;
 
       const supabase = createClerkSupabaseClient(() => session!.getToken());
       const result = await listResumeProfiles(supabase, userId!);
@@ -139,16 +153,34 @@ function ResumeProfileAnalysisGuardrail({
 
       if (result.status === "success") {
         setProfiles(result.profiles);
-        setSelectedProfileId((currentId) =>
-          result.profiles.some((profile) => profile.id === currentId)
-            ? currentId
-            : "",
-        );
+        const hasPreferredProfile =
+          preference?.inputMode === "saved_profile" &&
+          Boolean(preference.selectedProfileId) &&
+          result.profiles.some((profile) => profile.id === preference.selectedProfileId);
+
+        if (preference?.inputMode === "saved_profile") {
+          onInputModeChange(hasPreferredProfile ? "saved_profile" : "pasted");
+        } else if (preference?.inputMode === "pasted") {
+          onInputModeChange("pasted");
+        }
+
+        setSelectedProfileId((currentId) => {
+          const preferredId =
+            hasPreferredProfile && preference?.selectedProfileId
+              ? preference.selectedProfileId
+              : currentId;
+
+          return result.profiles.some((profile) => profile.id === preferredId)
+            ? preferredId
+            : "";
+        });
       } else {
         setProfiles([]);
         setSelectedProfileId("");
         setLoadError(result.message);
       }
+
+      restoredPreferenceRef.current = true;
 
       setIsLoading(false);
     }
@@ -158,7 +190,21 @@ function ResumeProfileAnalysisGuardrail({
     return () => {
       cancelled = true;
     };
-  }, [canUseProfiles, session, userId, retryNonce]);
+  }, [canUseProfiles, onInputModeChange, session, userId, retryNonce]);
+
+  useEffect(() => {
+    if (!isLoaded || !userId || !restoredPreferenceRef.current) {
+      return;
+    }
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    saveWorkspaceResumePreference(window.localStorage, userId, {
+      inputMode,
+      selectedProfileId,
+    });
+  }, [inputMode, isLoaded, selectedProfileId, userId]);
 
   const combinedSkills = selectedProfile
     ? getCombinedProfileSkills(selectedProfile)
@@ -528,7 +574,6 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
 
   function handleClearInputs() {
     setResumeText("");
-    setResumeInputMode("pasted");
     setJobText("");
     setJobTitle("");
     setCompany("");
@@ -772,9 +817,21 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
         return;
       }
 
-      const saveInput = mapWebAnalysisToCloudSaveInput(lastInput, result);
+      const saveInputWithCurrentMetadata = mapWebAnalysisToCloudSaveInput(
+        withCurrentMetadataForSave(lastInput, {
+          jobTitle,
+          company,
+          sourceUrl,
+          notes,
+        }),
+        result,
+      );
       const supabase = createClerkSupabaseClient(() => session.getToken());
-      const saveResult = await saveCloudAnalysis(supabase, userId, saveInput);
+      const saveResult = await saveCloudAnalysis(
+        supabase,
+        userId,
+        saveInputWithCurrentMetadata,
+      );
 
       if (saveResult.status === "error") {
         setSaveUiState({ kind: "error", message: saveResult.message });
