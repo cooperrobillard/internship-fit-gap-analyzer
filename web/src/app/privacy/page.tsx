@@ -23,6 +23,7 @@ const navItems = [
   ["#resume-profiles", "Resume profiles"],
   ["#controls", "Controls"],
   ["#limitations", "Limitations"],
+  ["#analytics", "Analytics"],
   ["#service-providers", "Technical path"],
 ] as const;
 
@@ -323,6 +324,24 @@ export default function PrivacyPage() {
               The current product is a limited public beta and portfolio
               application for career planning, saved structured results, and
               recurring-gap review—not a hiring decision tool or security-certified SaaS.
+            </p>
+          </Section>
+
+          <Section id="analytics" title="Analytics">
+            <p>
+              The site may use Google Analytics to understand basic site usage,
+              such as page views and interactions.
+            </p>
+            <p>
+              The app does not intentionally send raw résumé text, job
+              descriptions, profile names, uploaded files, AI prompts or
+              responses, or analysis contents to Google Analytics. Even so,
+              please avoid entering unusually sensitive information.
+            </p>
+            <p>
+              Google Analytics is a third-party service subject to Google&apos;s
+              own policies and settings. This summary is not a formal legal
+              privacy policy.
             </p>
           </Section>
 

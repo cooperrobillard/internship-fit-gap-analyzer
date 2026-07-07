@@ -156,6 +156,14 @@ When configured, the app sends one safe metadata-only email per user/feature/quo
 
 The tip jar is dismissible dashboard UI only. It does not affect analysis results, quotas, or payments inside the app.
 
+### Google Analytics (optional)
+
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GA4 measurement ID (e.g. `G-XXXXXXXXXX`). Browser-visible by design. Google Analytics loads only when this is set. |
+
+When set, the app loads Google Analytics 4 for basic site-usage measurement such as page views and interactions. Analytics is pageview-only: the app does not intentionally send raw resume text, job descriptions, extracted skills, profile names, uploaded files, AI prompts/responses, or account identifiers (Clerk/Supabase IDs, names, emails) to Google Analytics. No custom product events are configured. Google Analytics is a third-party service subject to Google's own policies and settings.
+
 ## Checks
 
 From the repository root for a release candidate:

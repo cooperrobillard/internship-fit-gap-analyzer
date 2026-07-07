@@ -125,6 +125,11 @@ Sends one safe metadata-only email per user/feature/quota window when Smart AI q
 
 Does not affect analysis, quotas, or in-app payments.
 
+### Google Analytics (optional)
+
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — GA4 measurement ID (e.g. `G-XXXXXXXXXX`); browser-visible by design; GA loads only when set
+- Pageview-only; no resume/job/profile/AI/account data is sent to Google Analytics, and no custom events are configured
+
 ## Run locally
 
 All commands from the **project root** unless noted. Python 3 required.
