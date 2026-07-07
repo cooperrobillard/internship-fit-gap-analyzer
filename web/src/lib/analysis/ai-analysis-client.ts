@@ -5,6 +5,7 @@
  */
 
 import { analyzeWithApi } from "./api-analysis-client";
+import { normalizeExtractedJobMetadata } from "./job-metadata-autofill";
 import type {
   UserAnalysisModeChoice,
   WebAnalysisInput,
@@ -132,6 +133,7 @@ function mapAiAnalyzePayload(payload: Record<string, unknown>): WebAnalysisResul
       ? payload.limitations.map((item) => String(item))
       : [],
     model: typeof payload.model === "string" ? payload.model : undefined,
+    jobMetadata: normalizeExtractedJobMetadata(payload.jobMetadata),
   };
 }
 

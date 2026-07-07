@@ -19,6 +19,7 @@ import {
   type DocumentSourceKind,
 } from "@/lib/document-extraction";
 import { extractProfileWithAi } from "@/lib/analysis/ai-analysis-client";
+import { resolveDefaultProfileName } from "@/lib/profile-name";
 import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
@@ -467,7 +468,10 @@ export function ResumeProfilesPanel() {
     if (aiResult.status === "success") {
       beginCreateReview({
         text: options.text,
-        suggestedName: aiResult.candidateName,
+        suggestedName: resolveDefaultProfileName({
+          filename: options.filename,
+          candidateName: aiResult.candidateName,
+        }),
         skills: aiResult.skills,
         sourceKind: options.sourceKind,
         extractionMethod: "Smart AI extraction",
@@ -483,7 +487,10 @@ export function ResumeProfilesPanel() {
 
     beginCreateReview({
       text: options.text,
-      suggestedName: options.suggestedName,
+      suggestedName: resolveDefaultProfileName({
+        filename: options.filename,
+        ruleBasedSuggestedName: options.suggestedName,
+      }),
       skills: options.skills,
       sourceKind: options.sourceKind,
       extractionMethod: fallbackLabel,
@@ -785,11 +792,6 @@ export function ResumeProfilesPanel() {
                     <span className="block break-words font-medium text-zinc-950">
                       {profile.profileName}
                     </span>
-                    {profile.profileDescription ? (
-                      <span className="mt-1 line-clamp-1 block break-words text-xs text-zinc-600">
-                        {profile.profileDescription}
-                      </span>
-                    ) : null}
                     <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
                       <span>{combinedSkills.length} {combinedSkills.length === 1 ? "skill" : "skills"}</span>
                       <span>Updated {formatProfileDate(profile.updatedAt)}</span>
@@ -1039,9 +1041,9 @@ export function ResumeProfilesPanel() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="break-words text-xl font-semibold text-zinc-950">{activeProfile.profileName}</h2>
-            {activeProfile.profileDescription ? (
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-700">{activeProfile.profileDescription}</p>
-            ) : null}
+            <p className="mt-1 text-sm text-zinc-600">
+              {combinedSkills.length} {combinedSkills.length === 1 ? "skill" : "skills"}
+            </p>
           </div>
           <p className="shrink-0 text-xs text-zinc-500">Updated {formatProfileDate(activeProfile.updatedAt)}</p>
         </div>
@@ -1058,7 +1060,15 @@ export function ResumeProfilesPanel() {
           <summary className={`cursor-pointer text-sm font-medium text-zinc-900 ${focusVisibleClass}`}>
             Profile details
           </summary>
-          <dl className="mt-3 space-y-2 text-sm text-zinc-700">
+          {activeProfile.profileDescription ? (
+            <div className="mt-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Notes</p>
+              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-700">
+                {activeProfile.profileDescription}
+              </p>
+            </div>
+          ) : null}
+          <dl className={`space-y-2 text-sm text-zinc-700 ${activeProfile.profileDescription ? "mt-3" : "mt-3"}`}>
             <div className="flex flex-wrap justify-between gap-2"><dt>Source type</dt><dd>{SOURCE_TYPE_LABELS[activeProfile.sourceType]}</dd></div>
             <div className="flex flex-wrap justify-between gap-2"><dt>Created</dt><dd>{formatExactProfileDate(activeProfile.createdAt)}</dd></div>
             <div className="flex flex-wrap justify-between gap-2"><dt>Updated</dt><dd>{formatExactProfileDate(activeProfile.updatedAt)}</dd></div>

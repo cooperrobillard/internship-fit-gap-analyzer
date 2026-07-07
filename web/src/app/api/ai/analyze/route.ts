@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { applyDeterministicGuardrails } from "@/lib/analysis/deterministic-skill-overlap";
+import { normalizeExtractedJobMetadata } from "@/lib/analysis/job-metadata-autofill";
 import { fetchRuleBasedAnalysis } from "@/lib/analysis/rule-based-proxy";
 import type { WebAnalysisInput } from "@/lib/analysis/types";
 import {
@@ -128,6 +129,12 @@ type AiBackendSuccess = {
   limitations?: string[];
   matchedSkillsCount: number;
   missingSkillsCount: number;
+  jobMetadata?: {
+    jobTitle?: string | null;
+    company?: string | null;
+    sourceUrl?: string | null;
+    notes?: string | null;
+  };
   usage?: {
     promptTokens?: number | null;
     completionTokens?: number | null;
@@ -342,6 +349,7 @@ export async function POST(request: Request) {
   }
 
   const result = guarded.result;
+  const jobMetadata = normalizeExtractedJobMetadata(payload.jobMetadata);
   try {
     await updateAiUsageEvent(supabase, userId, usageEventId, {
       status: "success",
@@ -359,6 +367,7 @@ export async function POST(request: Request) {
       outcome: "ai_success",
       result: {
         ...result,
+        jobMetadata,
         analysisMode: "ai_smart",
       },
     }),

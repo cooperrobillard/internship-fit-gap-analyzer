@@ -88,6 +88,12 @@ MATHWORKS_AI_ANALYSIS_PAYLOAD = {
     ],
     "summary": "Partial fit for security engineering internship with strong scripting overlap.",
     "limitations": ["Smart AI may miss niche security tools."],
+    "jobMetadata": {
+        "jobTitle": "Security Engineering Intern",
+        "company": "MathWorks",
+        "sourceUrl": "",
+        "notes": "Hybrid work available; visa sponsorship not provided.",
+    },
 }
 
 PROFILE_EXTRACTION_PAYLOAD = {
@@ -177,6 +183,10 @@ def test_run_smart_analysis_parses_schema_success():
     assert "equal opportunity" in result.ignoredBoilerplate[0].lower()
     assert result.usage.totalTokens == 200
     assert result.model == "gpt-5.4-mini"
+    assert result.jobMetadata is not None
+    assert result.jobMetadata.jobTitle == "Security Engineering Intern"
+    assert result.jobMetadata.company == "MathWorks"
+    assert "hybrid" in (result.jobMetadata.notes or "").lower()
     assert mock_client.last_kwargs is not None
     assert mock_client.last_kwargs.get("store") is False
     prompt = str(mock_client.last_kwargs.get("input", ""))

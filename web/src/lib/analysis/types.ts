@@ -40,6 +40,12 @@ export type WebAnalysisResult = {
   limitations?: string[];
   model?: string;
   fallbackReason?: string;
+  jobMetadata?: {
+    jobTitle?: string;
+    company?: string;
+    sourceUrl?: string;
+    notes?: string;
+  };
 };
 
 export type UserAnalysisModeChoice = "smart_ai" | "rule_based";

@@ -22,6 +22,7 @@ import {
   runAnalysisByMode,
   type SmartAnalysisClientResult,
 } from "@/lib/analysis/ai-analysis-client";
+import { applyExtractedJobMetadataAutofill } from "@/lib/analysis/job-metadata-autofill";
 import { ANALYSIS_COMPLETED_EVENT } from "@/components/tip-jar-nudge";
 import type { AnalysisErrorCategory } from "@/lib/analysis/api-analysis-client";
 import { mapWebAnalysisToCloudSaveInput } from "@/lib/analysis/to-cloud-save-input";
@@ -39,17 +40,9 @@ import { saveCloudAnalysis } from "@/lib/supabase/save-analysis";
 import {
   listResumeProfiles,
   type ResumeProfile,
-  type ResumeProfileSourceType,
 } from "@/lib/supabase/resume-profiles";
 import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors";
-
-const SOURCE_TYPE_LABELS: Record<ResumeProfileSourceType, string> = {
-  manual: "Manual entry",
-  pasted: "Pasted text",
-  txt_upload: "Plain .txt upload",
-  demo: "Demo profile",
-  imported: "Imported profile",
-};
+import { getWorkspaceProfilePreviewSkills } from "@/lib/workspace-profile-preview";
 
 type ResumeInputMode = "pasted" | "saved_profile";
 
@@ -170,6 +163,7 @@ function ResumeProfileAnalysisGuardrail({
   const combinedSkills = selectedProfile
     ? getCombinedProfileSkills(selectedProfile)
     : [];
+  const profilePreview = getWorkspaceProfilePreviewSkills(combinedSkills);
 
   return (
     <div className="space-y-3 text-sm text-zinc-950">
@@ -302,35 +296,32 @@ function ResumeProfileAnalysisGuardrail({
           ) : null}
 
           {inputMode === "saved_profile" && selectedProfile ? (
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 text-sky-950">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="font-medium">{selectedProfile.profileName}</p>
-                  {selectedProfile.profileDescription ? (
-                    <p className="mt-1 text-sm text-sky-900/80">
-                      {selectedProfile.profileDescription}
-                    </p>
-                  ) : null}
-                </div>
-                <Link href="/dashboard/profiles" className="text-xs font-medium text-sky-800 underline underline-offset-4">
-                  Manage profiles
-                </Link>
+            <div className="max-h-40 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 text-sky-950">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="font-medium">{selectedProfile.profileName}</p>
+                <p className="text-xs text-sky-800/75">
+                  {combinedSkills.length} {combinedSkills.length === 1 ? "skill" : "skills"}
+                </p>
               </div>
               {combinedSkills.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {combinedSkills.map((skill) => (
-                    <span key={skill} className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-sky-950">
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {profilePreview.visible.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-sky-950"
+                    >
                       {skill}
                     </span>
                   ))}
+                  {profilePreview.hiddenCount > 0 ? (
+                    <span className="rounded-full border border-dashed border-zinc-300 px-2 py-0.5 text-xs text-sky-800/80">
+                      +{profilePreview.hiddenCount} more
+                    </span>
+                  ) : null}
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-sky-800/70">No skills saved on this profile.</p>
+                <p className="mt-2 text-xs text-sky-800/70">No skills saved on this profile.</p>
               )}
-              <details className="mt-3 text-xs text-sky-900/75">
-                <summary className="cursor-pointer font-medium">Profile source details</summary>
-                <p className="mt-1">{SOURCE_TYPE_LABELS[selectedProfile.sourceType]} · structured profile data only.</p>
-              </details>
             </div>
           ) : null}
         </>
@@ -450,6 +441,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
   const [analysisMode, setAnalysisMode] =
     useState<UserAnalysisModeChoice>("smart_ai");
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
+  const [jobMetadataAutofillNotice, setJobMetadataAutofillNotice] = useState(false);
 
   const isRateLimited = cooldownSecondsRemaining > 0;
 
@@ -675,6 +667,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     setValidationError(null);
     setAnalysisError(null);
     setSaveUiState({ kind: "idle" });
+    setJobMetadataAutofillNotice(false);
     setIsAnalyzing(true);
 
     const analysisInput: WebAnalysisInput = {
@@ -728,7 +721,28 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     }
 
     setFallbackReason(null);
-    setResult(apiResult.result);
+    const analysisResult = apiResult.result;
+    setResult(analysisResult);
+
+    if (analysisMode === "smart_ai" && analysisResult.jobMetadata) {
+      const autofill = applyExtractedJobMetadataAutofill(
+        {
+          jobTitle,
+          company,
+          sourceUrl,
+          notes,
+        },
+        analysisResult.jobMetadata,
+      );
+      if (autofill.filledAny) {
+        setJobTitle(autofill.next.jobTitle);
+        setCompany(autofill.next.company);
+        setSourceUrl(autofill.next.sourceUrl);
+        setNotes(autofill.next.notes);
+        setJobMetadataAutofillNotice(true);
+      }
+    }
+
     notifyAnalysisCompleted();
   }
 
@@ -1018,6 +1032,12 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
           </label>
         </div>
       </details>
+
+      {jobMetadataAutofillNotice ? (
+        <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900" role="status">
+          Smart AI filled optional job details. Review before saving.
+        </p>
+      ) : null}
 
       {validationError ? (
         <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">

@@ -26,12 +26,14 @@ from api.models import (
     AiSkillItem,
     AiTokenUsage,
     AnalyzeMetadata,
+    ExtractedJobMetadata,
 )
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_ANALYSIS_MODEL = "gpt-5.4-mini"
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 30.0
+MAX_EXTRACTED_JOB_NOTES_LENGTH = 280
 
 SYSTEM_INSTRUCTIONS = """You are a professional résumé and job-description skill analyst.
 
@@ -158,6 +160,20 @@ def _skill_item_schema() -> dict[str, Any]:
     }
 
 
+def _job_metadata_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "jobTitle": {"type": "string"},
+            "company": {"type": "string"},
+            "sourceUrl": {"type": "string"},
+            "notes": {"type": "string"},
+        },
+        "required": ["jobTitle", "company", "sourceUrl", "notes"],
+        "additionalProperties": False,
+    }
+
+
 def _analyze_output_schema() -> dict[str, Any]:
     skill_schema = _skill_item_schema()
     return {
@@ -171,6 +187,7 @@ def _analyze_output_schema() -> dict[str, Any]:
             "ignoredBoilerplate": {"type": "array", "items": {"type": "string"}},
             "summary": {"type": "string"},
             "limitations": {"type": "array", "items": {"type": "string"}},
+            "jobMetadata": _job_metadata_schema(),
         },
         "required": [
             "matchedSkills",
@@ -181,6 +198,7 @@ def _analyze_output_schema() -> dict[str, Any]:
             "ignoredBoilerplate",
             "summary",
             "limitations",
+            "jobMetadata",
         ],
         "additionalProperties": False,
     }
@@ -225,6 +243,36 @@ def _normalize_skill_items(raw_items: list[dict[str, Any]]) -> list[AiSkillItem]
         seen.add(dedupe_key)
         items.append(AiSkillItem(skill=skill, category=category, evidence=evidence))
     return items
+
+
+def _normalize_optional_metadata_field(value: Any) -> str | None:
+    if value is None:
+        return None
+    trimmed = str(value).strip()
+    return trimmed or None
+
+
+def _normalize_extracted_job_metadata(raw: Any) -> ExtractedJobMetadata | None:
+    if not isinstance(raw, dict):
+        return None
+
+    job_title = _normalize_optional_metadata_field(raw.get("jobTitle"))
+    company = _normalize_optional_metadata_field(raw.get("company"))
+    source_url = _normalize_optional_metadata_field(raw.get("sourceUrl"))
+    notes = _normalize_optional_metadata_field(raw.get("notes"))
+
+    if notes and len(notes) > MAX_EXTRACTED_JOB_NOTES_LENGTH:
+        notes = notes[: MAX_EXTRACTED_JOB_NOTES_LENGTH - 1].rstrip() + "…"
+
+    if not any([job_title, company, source_url, notes]):
+        return None
+
+    return ExtractedJobMetadata(
+        jobTitle=job_title,
+        company=company,
+        sourceUrl=source_url,
+        notes=notes,
+    )
 
 
 def _normalize_string_list(raw_items: list[Any]) -> list[str]:
@@ -364,7 +412,14 @@ def _build_analyze_prompt(
         "signal is worth retaining internally. Do not treat this as a third user-facing bucket.\n"
         "- Do not list every résumé skill. Include only skills relevant to this role comparison.\n"
         "- Keep summary and limitations concise; they are stored for reference, not shown as a report.\n"
-        "- Use stable canonical skill labels suitable for recurring-gap tracking across jobs.\n\n"
+        "- Use stable canonical skill labels suitable for recurring-gap tracking across jobs.\n"
+        "- Populate jobMetadata when the posting supports it:\n"
+        "  - jobTitle and company only when clearly stated in the posting.\n"
+        "  - sourceUrl only when an actual URL appears in the text.\n"
+        "  - notes: concise application/work details only (hybrid, sponsorship, focus area, team, deadline, location, or major role focus). "
+        "Use at most 1–2 short sentences or a few semicolon-separated phrases.\n"
+        "  - Use empty strings for unknown jobMetadata fields.\n"
+        "  - Do not include equal-opportunity boilerplate, generic culture copy, long paragraphs, or résumé content in notes.\n\n"
         f"Résumé text:\n{resume_text}\n\n"
         f"Job description text:\n{job_text}"
         f"{metadata_section}"
@@ -415,6 +470,7 @@ def run_smart_analysis(
         ignored_boilerplate = _normalize_string_list(payload.get("ignoredBoilerplate", []))
         summary = str(payload.get("summary", "")).strip()
         limitations = _normalize_string_list(payload.get("limitations", []))
+        job_metadata = _normalize_extracted_job_metadata(payload.get("jobMetadata"))
 
         if not summary:
             raise ResponseValidationError("AI response summary was empty.")
@@ -439,6 +495,7 @@ def run_smart_analysis(
                 sourceUrl=source_url,
                 notes=notes,
             ),
+            jobMetadata=job_metadata,
             usage=usage,
             model=model,
         )
