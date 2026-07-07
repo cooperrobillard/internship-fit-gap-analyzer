@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import {
   SITE_DESCRIPTION,
   SITE_LOCALE,
@@ -57,6 +58,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} h-full scroll-smooth antialiased`}
       >
         <body className="min-h-full overflow-x-hidden font-sans">
+          <GoogleAnalytics />
           <a href="#main-content" className="skip-link">
             Skip to main content
           </a>
