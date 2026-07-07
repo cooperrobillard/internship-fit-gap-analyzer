@@ -1,3 +1,5 @@
+import { canonicalizeSkill, canonicalizeSkillList } from "@/lib/analysis/skill-canonicalization";
+
 /**
  * Design contract for the future cloud saved-analysis write path.
  *
@@ -89,10 +91,10 @@ function normalizeOptionalString(value?: string): string | null {
 }
 
 function normalizeSkillResult(skill: SkillResult): SkillResult {
-  return {
+  return canonicalizeSkill({
     skill: skill.skill.trim(),
     category: skill.category.trim(),
-  };
+  });
 }
 
 /**
@@ -102,13 +104,13 @@ function normalizeSkillResult(skill: SkillResult): SkillResult {
 export function buildCloudAnalysisWritePlan(
   input: CloudAnalysisSaveInput,
 ): CloudAnalysisWritePlan {
-  const matchedSkills = input.matchedSkills
-    .map(normalizeSkillResult)
-    .filter((row) => row.skill.length > 0 && row.category.length > 0);
+  const matchedSkills = canonicalizeSkillList(
+    input.matchedSkills.map(normalizeSkillResult),
+  ).filter((row) => row.skill.length > 0 && row.category.length > 0);
 
-  const skillGaps = input.missingSkills
-    .map(normalizeSkillResult)
-    .filter((row) => row.skill.length > 0 && row.category.length > 0);
+  const skillGaps = canonicalizeSkillList(
+    input.missingSkills.map(normalizeSkillResult),
+  ).filter((row) => row.skill.length > 0 && row.category.length > 0);
 
   const metadata = input.metadata;
 

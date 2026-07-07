@@ -17,6 +17,7 @@ from typing import Any, Protocol
 from pydantic import ValidationError
 
 from api.ai_skill_canonicalization import (
+    canonicalize_ai_skill_category,
     canonicalize_ai_skill_name,
     canonicalize_skill_name_list,
 )
@@ -233,7 +234,10 @@ def _normalize_skill_items(raw_items: list[dict[str, Any]]) -> list[AiSkillItem]
     seen: set[str] = set()
     for raw in raw_items:
         skill = canonicalize_ai_skill_name(str(raw.get("skill", "")))
-        category = str(raw.get("category", "")).strip() or "General"
+        category = canonicalize_ai_skill_category(
+            skill,
+            str(raw.get("category", "")).strip() or "General",
+        )
         evidence = str(raw.get("evidence", "")).strip() or None
         if not skill:
             continue

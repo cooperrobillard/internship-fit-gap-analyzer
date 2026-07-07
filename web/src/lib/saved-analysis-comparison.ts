@@ -1,7 +1,7 @@
 import {
-  canonicalizeSkillName,
-  comparisonSkillKey,
-} from "@/lib/skill-canonicalization";
+  canonicalizeSkill,
+  canonicalSkillKey,
+} from "@/lib/analysis/skill-canonicalization";
 import type { SavedAnalysisSkill } from "@/lib/supabase/saved-analyses";
 
 export type SavedAnalysisComparisonInput = {
@@ -40,19 +40,21 @@ function sortComparedSkills(skills: ComparedSkillEntry[]): ComparedSkillEntry[] 
   });
 }
 
-/** Case-insensitive dedupe by canonical skill name (category from first seen). */
+/** Canonical dedupe by skill concept (aliases collapse to one row). */
 export function dedupeSkills(skills: SavedAnalysisSkill[]): SavedAnalysisSkill[] {
   const seen = new Map<string, SavedAnalysisSkill>();
 
   for (const item of skills) {
-    const skill = canonicalizeSkillName(item.skill);
-    const category = item.category.trim() || "General";
-    if (!skill) {
+    const normalized = canonicalizeSkill({
+      skill: item.skill,
+      category: item.category,
+    });
+    if (!normalized.skill || !normalized.category) {
       continue;
     }
-    const key = comparisonSkillKey(skill);
+    const key = canonicalSkillKey(normalized.skill);
     if (!seen.has(key)) {
-      seen.set(key, { skill, category });
+      seen.set(key, normalized);
     }
   }
 
@@ -73,12 +75,14 @@ function groupSkillsAcrossAnalyses(
   for (let analysisIndex = 0; analysisIndex < analysisSkillLists.length; analysisIndex += 1) {
     const seenInAnalysis = new Set<string>();
     for (const item of analysisSkillLists[analysisIndex]) {
-      const skill = canonicalizeSkillName(item.skill);
-      const category = item.category.trim() || "General";
-      if (!skill) {
+      const normalized = canonicalizeSkill({
+        skill: item.skill,
+        category: item.category,
+      });
+      if (!normalized.skill) {
         continue;
       }
-      const key = comparisonSkillKey(skill);
+      const key = canonicalSkillKey(normalized.skill);
       if (seenInAnalysis.has(key)) {
         continue;
       }
@@ -87,8 +91,8 @@ function groupSkillsAcrossAnalyses(
       let entry = grouped.get(key);
       if (!entry) {
         entry = {
-          skill,
-          category,
+          skill: normalized.skill,
+          category: normalized.category,
           analysisIndices: new Set<number>(),
         };
         grouped.set(key, entry);

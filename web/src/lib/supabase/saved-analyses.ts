@@ -1,3 +1,4 @@
+import { canonicalizeSkillList } from "@/lib/analysis/skill-canonicalization";
 import {
   formatOptionalMetadata,
   formatNotesPreview,
@@ -153,8 +154,8 @@ function mapListRow(row: JobAnalysisListRow): SavedCloudAnalysisListItem {
     matched_skills_count: row.matched_skills_count,
     missing_skills_count: row.missing_skills_count,
     created_at: row.created_at,
-    matchedSkills: sortSkills(row.matched_skills ?? []),
-    missingSkills: sortSkills(row.skill_gaps ?? []),
+    matchedSkills: sortSkills(canonicalizeSkillList(row.matched_skills ?? [])),
+    missingSkills: sortSkills(canonicalizeSkillList(row.skill_gaps ?? [])),
   };
 }
 
