@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { canonicalizeSkillNameList } from "@/lib/analysis/skill-canonicalization";
 import {
   getSafeSavedAnalysisErrorMessage,
   isMissingSupabaseConfigError,
@@ -184,31 +185,29 @@ export function normalizeSkillStrings(value: unknown): string[] {
     return [];
   }
 
-  const seen = new Map<string, string>();
+  const rawSkills: string[] = [];
 
   for (const item of value) {
-    let skill: string | null = null;
-
     if (typeof item === "string") {
-      skill = item.trim();
-    } else if (item && typeof item === "object" && "skill" in item) {
-      const raw = (item as { skill: unknown }).skill;
-      if (typeof raw === "string") {
-        skill = raw.trim();
+      const skill = item.trim();
+      if (skill) {
+        rawSkills.push(skill);
       }
-    }
-
-    if (!skill) {
       continue;
     }
 
-    const key = skill.toLowerCase();
-    if (!seen.has(key)) {
-      seen.set(key, skill);
+    if (item && typeof item === "object" && "skill" in item) {
+      const raw = (item as { skill: unknown }).skill;
+      if (typeof raw === "string") {
+        const skill = raw.trim();
+        if (skill) {
+          rawSkills.push(skill);
+        }
+      }
     }
   }
 
-  return Array.from(seen.values());
+  return canonicalizeSkillNameList(rawSkills);
 }
 
 export function parseResumeProfileSourceType(value: unknown): ResumeProfileSourceType {

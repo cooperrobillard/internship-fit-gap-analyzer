@@ -5,6 +5,10 @@
  * Text is used in memory for matching; callers must not log or persist it.
  */
 
+import {
+  canonicalizeSkill,
+  canonicalSkillKey,
+} from "@/lib/analysis/skill-canonicalization";
 import type { AnalysisSkill, WebAnalysisInput } from "@/lib/analysis/types";
 
 type TaxonomyEntry = {
@@ -133,7 +137,7 @@ function entryMentionedInText(entry: TaxonomyEntry, normalizedText: string): boo
 }
 
 export function skillNormalizeKey(skill: string): string {
-  return skill.trim().toLowerCase();
+  return canonicalSkillKey(skill);
 }
 
 /**
@@ -179,19 +183,23 @@ function normalizeAiSkillItems(items: unknown): AiSkillPayload[] {
       continue;
     }
     const record = raw as Record<string, unknown>;
-    const skill = typeof record.skill === "string" ? record.skill.trim() : "";
-    const category = typeof record.category === "string" ? record.category.trim() : "";
-    if (!skill) {
+    const rawSkill = typeof record.skill === "string" ? record.skill.trim() : "";
+    const rawCategory = typeof record.category === "string" ? record.category.trim() : "";
+    if (!rawSkill) {
       continue;
     }
-    const key = skillNormalizeKey(skill);
+    const canonical = canonicalizeSkill({
+      skill: rawSkill,
+      category: rawCategory || "General",
+    });
+    const key = skillNormalizeKey(canonical.skill);
     if (seen.has(key)) {
       continue;
     }
     seen.add(key);
     normalized.push({
-      skill,
-      category: category || "General",
+      skill: canonical.skill,
+      category: canonical.category,
       evidence:
         typeof record.evidence === "string" && record.evidence.trim()
           ? record.evidence.trim()

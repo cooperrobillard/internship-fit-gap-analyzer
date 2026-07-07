@@ -158,6 +158,24 @@ test("invalid AI payload without summary is rejected for fallback", () => {
   );
 });
 
+test("AI skill aliases collapse before overlap merge keys are compared", () => {
+  const merged = mergeAiResultWithDeterministicOverlap(
+    {
+      ...EMPTY_AI,
+      matchedSkills: [
+        { skill: "AI-assisted development tools", category: "AI tools" },
+        { skill: "AI-assisted development", category: "Developer productivity" },
+      ],
+      matchedSkillsCount: 2,
+    },
+    { matchedSkills: [], missingSkills: [] },
+  );
+
+  assert.equal(merged.matchedSkills.length, 1);
+  assert.equal(merged.matchedSkills[0]?.skill, "AI-assisted development");
+  assert.equal(merged.matchedSkills[0]?.category, "AI tools");
+});
+
 test("AI matches are preserved and merged with deterministic matches", () => {
   const merged = mergeAiResultWithDeterministicOverlap(
     {

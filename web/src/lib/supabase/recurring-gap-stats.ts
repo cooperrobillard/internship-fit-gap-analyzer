@@ -1,4 +1,8 @@
 import {
+  canonicalizeSkill,
+  canonicalSkillKey,
+} from "@/lib/analysis/skill-canonicalization";
+import {
   createClerkSupabaseClient,
   isSupabaseConfigured,
   type AccessTokenGetter,
@@ -32,9 +36,9 @@ export type RecurringGapStatsResult =
   | { status: "not_configured" }
   | { status: "error"; message: string };
 
-/** Normalize skill names for grouping (case-insensitive). */
+/** Normalize skill names for grouping (canonical, case-insensitive). */
 export function normalizeSkillName(skill: string): string {
-  return skill.trim().toLowerCase();
+  return canonicalSkillKey(skill);
 }
 
 /**
@@ -51,7 +55,11 @@ export function buildRecurringGapStats(
   >();
 
   for (const row of gaps) {
-    const key = normalizeSkillName(row.skill);
+    const canonical = canonicalizeSkill({
+      skill: row.skill,
+      category: row.category,
+    });
+    const key = normalizeSkillName(canonical.skill);
     if (!key) {
       continue;
     }
@@ -59,8 +67,8 @@ export function buildRecurringGapStats(
     let entry = grouped.get(key);
     if (!entry) {
       entry = {
-        skill: row.skill.trim(),
-        category: row.category,
+        skill: canonical.skill,
+        category: canonical.category,
         jobAnalysisIds: new Set<string>(),
       };
       grouped.set(key, entry);
