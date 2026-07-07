@@ -695,6 +695,9 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     if (apiResult.status === "error") {
       const category: AnalysisErrorCategory =
         apiResult.category === "validation" ? "validation" : "unavailable";
+      if (apiResult.retryAfterSeconds) {
+        setRateLimitRetryAt(Date.now() + apiResult.retryAfterSeconds * 1000);
+      }
       if (category === "unavailable") {
         setAnalysisError({
           message: apiResult.message,

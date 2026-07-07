@@ -105,14 +105,35 @@ export function TipJarNudge() {
     };
   }, [isLoaded, isSignedIn, tipJarUrl, userId]);
 
+  const thresholdReached = analysisCount >= threshold;
+  const showPopup = thresholdReached && !popupDismissed;
+
+  useEffect(() => {
+    if (!showPopup || !userId) {
+      return;
+    }
+
+    const activeUserId = userId;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        writePopupDismissed(activeUserId);
+        setStorageVersion((version) => version + 1);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showPopup, userId]);
+
   if (!tipJarUrl || !isLoaded || !isSignedIn || !userId) {
     return null;
   }
 
   const activeUserId = userId;
   const activeTipJarUrl = tipJarUrl;
-  const thresholdReached = analysisCount >= threshold;
-  const showPopup = thresholdReached && !popupDismissed;
   const showChip = thresholdReached && popupDismissed;
 
   function dismissPopup() {
