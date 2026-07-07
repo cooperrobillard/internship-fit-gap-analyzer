@@ -111,6 +111,13 @@ Configure on Vercel (server-only):
 
 Sends one safe metadata-only email per user/feature/quota window when Smart AI quota is exceeded. No résumé/job text is included.
 
+### Smart AI quota bypass (optional, server-only)
+
+- `AI_QUOTA_BYPASS_USER_IDS` — comma-separated Clerk user IDs (e.g. owner/admin testing)
+- Vercel server-side only; never `NEXT_PUBLIC_*`
+- Listed users skip daily/monthly Smart AI and profile-extraction quota blocks and quota-exceeded alert emails; usage events still record when configured
+- Normal users remain limited exactly as before
+
 ### Tip jar nudge (optional)
 
 - `NEXT_PUBLIC_TIP_JAR_URL` — external support link; hidden when unset

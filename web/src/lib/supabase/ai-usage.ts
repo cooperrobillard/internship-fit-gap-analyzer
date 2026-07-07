@@ -6,6 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isAiQuotaBypassUser } from "@/lib/ai/quota-bypass";
 import {
   quotaExceededErrorClass,
   sendQuotaAlertEmail,
@@ -134,6 +135,15 @@ export async function checkSmartAnalysisQuota(
     startOfUtcMonthIso(now),
   );
 
+  if (isAiQuotaBypassUser(clerkUserId)) {
+    return {
+      allowed: true,
+      dailyCount,
+      monthlyCount,
+      limits,
+    };
+  }
+
   if (dailyCount >= limits.dailySmartAnalysis) {
     return {
       allowed: false,
@@ -181,6 +191,14 @@ export async function checkProfileExtractionQuota(
     "profile_extraction",
     startOfUtcMonthIso(now),
   );
+
+  if (isAiQuotaBypassUser(clerkUserId)) {
+    return {
+      allowed: true,
+      monthlyCount,
+      limits,
+    };
+  }
 
   if (monthlyCount >= limits.monthlyProfileExtraction) {
     return {
@@ -321,6 +339,10 @@ export async function notifyQuotaExceededIfNeeded(
     | SmartAnalysisQuotaCheck
     | ProfileExtractionQuotaCheck,
 ): Promise<void> {
+  if (isAiQuotaBypassUser(clerkUserId)) {
+    return;
+  }
+
   if (quota.allowed || !quota.reason) {
     return;
   }

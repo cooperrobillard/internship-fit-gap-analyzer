@@ -133,6 +133,7 @@ Local values go in `web/.env.local`; hosted values are configured in provider da
 | Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Use the publishable/browser-safe key only in client code. |
 | Analysis API | `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET` | Server-side Vercel/Render configuration. |
 | Smart AI (optional) | `AI_FEATURES_ENABLED`, `AI_DAILY_LIMIT`, `AI_MONTHLY_LIMIT`, `AI_PROFILE_MONTHLY_LIMIT` | Vercel server-side only. Render also needs `OPENAI_API_KEY` and related backend vars. |
+| Smart AI quota bypass (optional) | `AI_QUOTA_BYPASS_USER_IDS` | Server-only comma-separated Clerk user IDs for owner/admin testing. Bypasses daily/monthly Smart AI and profile-extraction quota enforcement and quota-exceeded alert emails for listed users only. Does not change limits for normal users. Never use `NEXT_PUBLIC_*`. |
 
 Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY` or `NEXT_PUBLIC_RESEND_API_KEY`.
 
