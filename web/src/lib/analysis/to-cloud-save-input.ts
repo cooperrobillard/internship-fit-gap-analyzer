@@ -63,3 +63,20 @@ export function mapWebAnalysisToCloudSaveInput(
     missingSkills: result.missingSkills,
   };
 }
+
+/**
+ * Merge current metadata field state onto the last analyzed input so saves
+ * use what the user currently sees, while keeping analyzed resume/job text.
+ */
+export function withCurrentMetadataForSave(
+  lastAnalyzedInput: WebAnalysisInput,
+  currentMetadata: Pick<WebAnalysisInput, "jobTitle" | "company" | "sourceUrl" | "notes">,
+): WebAnalysisInput {
+  return {
+    ...lastAnalyzedInput,
+    jobTitle: trimOptional(currentMetadata.jobTitle),
+    company: trimOptional(currentMetadata.company),
+    sourceUrl: trimOptional(currentMetadata.sourceUrl),
+    notes: trimOptional(currentMetadata.notes),
+  };
+}
