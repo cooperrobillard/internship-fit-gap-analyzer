@@ -74,6 +74,24 @@ test("case 2: Python and SQL match; React is missing only", () => {
   assert.ok(guarded.result.missingSkills.some((item) => item.skill === "React"));
 });
 
+test("case 2b: résumé-only skill (Git) never appears in matched or missing", () => {
+  const overlap = computeDeterministicSkillOverlap({
+    resumeText: "Python, SQL, Git, Docker",
+    jobText: "Python, SQL, Docker, AWS",
+  });
+
+  assert.deepEqual(
+    overlap.matchedSkills.map((item) => item.skill).sort(),
+    ["Docker", "Python", "SQL"],
+  );
+  assert.deepEqual(
+    overlap.missingSkills.map((item) => item.skill),
+    ["AWS"],
+  );
+  assert.ok(!overlap.matchedSkills.some((item) => item.skill === "Git"));
+  assert.ok(!overlap.missingSkills.some((item) => item.skill === "Git"));
+});
+
 test("case 3: React and TypeScript match from punctuation-heavy lists", () => {
   const overlap = computeDeterministicSkillOverlap({
     resumeText: "React, TypeScript, Node.js",

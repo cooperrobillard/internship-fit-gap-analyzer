@@ -298,6 +298,10 @@
     "power bi",
     "powerbi"
   ],
+  "powershell": [
+    "powershell",
+    "windows powershell"
+  ],
   "presentation": [
     "executive presentation",
     "presentation decks",
@@ -381,7 +385,8 @@
   "sql": [
     "sql",
     "sql databases",
-    "sql/nosql"
+    "sql/nosql",
+    "structured query language"
   ],
   "stakeholder": [
     "stakeholder communication",

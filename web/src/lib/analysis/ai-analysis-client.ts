@@ -76,6 +76,7 @@ export type SmartAnalysisClientResult =
       status: "error";
       message: string;
       category: "validation" | "unavailable" | "temporary";
+      retryAfterSeconds?: number;
     };
 
 export type ProfileExtractionClientResult =
@@ -255,6 +256,7 @@ export async function runAnalysisByMode(
         message: ruleResult.message,
         category:
           ruleResult.category === "validation" ? "validation" : "temporary",
+        retryAfterSeconds: ruleResult.retryAfterSeconds,
       };
     }
     return {

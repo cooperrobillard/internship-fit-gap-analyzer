@@ -75,6 +75,8 @@ POSITIVE_FIXTURES = [
     ("design_creative", "Designer worked in Figma, Photoshop, Illustrator, UX research, UI design, wireframing, video editing, and motion graphics.", {"figma", "adobe photoshop", "adobe illustrator", "ux research", "ui design", "wireframing", "video editing", "motion graphics"}),
     ("science_research", "Research assistant managed experimental design, literature review, laboratory safety, PCR, cell culture, microscopy, and chromatography.", {"experimental design", "literature review", "laboratory safety", "pcr", "cell culture", "microscopy", "chromatography"}),
     ("engineering_manufacturing", "Engineer used CAD, AutoCAD, SolidWorks, GD&T, PLCs, Six Sigma, quality control, systems engineering, and root cause analysis.", {"cad", "autocad", "solidworks", "gd&t", "plcs", "six sigma", "quality control", "systems engineering", "root-cause analysis"}),
+    ("programming", "Wrote Windows PowerShell scripts to automate deployments.", {"powershell"}),
+    ("data", "Wrote structured query language queries for weekly reporting.", {"sql"}),
 ]
 
 FALSE_POSITIVE_FIXTURES = [

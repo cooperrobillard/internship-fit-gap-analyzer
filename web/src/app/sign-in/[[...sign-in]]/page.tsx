@@ -35,7 +35,7 @@ export default function SignInPage() {
             className="absolute inset-x-[-0.75rem] inset-y-0 sm:inset-x-[-1rem] rounded-[2rem] bg-[radial-gradient(circle_at_18%_18%,rgba(254,215,170,0.35),transparent_31%),linear-gradient(135deg,rgba(254,249,195,0.42),rgba(186,230,253,0.26)_52%,rgba(209,250,229,0.24))]"
           />
           <div className="relative max-w-md p-3 sm:p-5">
-            <p className="text-sm font-semibold text-[var(--color-text-muted)]">Rule-based career workspace</p>
+            <p className="text-sm font-semibold text-[var(--color-text-muted)]">Smart AI + rule-based analysis · Limited public beta</p>
             <h1 id="sign-in-heading" className="mt-4 text-4xl font-semibold tracking-[-0.03em] text-[var(--color-text)] sm:text-5xl">
               Welcome back.
             </h1>

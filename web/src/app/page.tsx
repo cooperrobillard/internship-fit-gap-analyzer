@@ -42,7 +42,7 @@ const benefits = [
 const workflowSteps = [
   {
     title: "Add résumé information",
-    body: "Paste text, upload a plain .txt file, or choose a saved skill profile.",
+    body: "Paste text, upload a PDF, DOCX, TXT, or MD file, or choose a saved skill profile.",
   },
   {
     title: "Add the role",
