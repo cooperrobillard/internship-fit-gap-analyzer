@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { applyDeterministicGuardrails } from "@/lib/analysis/deterministic-skill-overlap";
 import { fetchRuleBasedAnalysis } from "@/lib/analysis/rule-based-proxy";
 import type { WebAnalysisInput } from "@/lib/analysis/types";
 import {
@@ -323,13 +324,31 @@ export async function POST(request: Request) {
   }
 
   const payload = backendResult.payload;
+  const guarded = applyDeterministicGuardrails(payload, input);
+  if (!guarded.ok) {
+    try {
+      await updateAiUsageEvent(supabase, userId, usageEventId, {
+        status: "error",
+        errorClass: "ai_invalid_response",
+      });
+    } catch {
+      // Best effort only.
+    }
+    return tryRuleBasedFallback(
+      input,
+      requestId,
+      "Smart AI returned an invalid result, so rule-based analysis was used instead.",
+    );
+  }
+
+  const result = guarded.result;
   try {
     await updateAiUsageEvent(supabase, userId, usageEventId, {
       status: "success",
-      model: payload.model ?? null,
-      promptTokens: payload.usage?.promptTokens ?? null,
-      completionTokens: payload.usage?.completionTokens ?? null,
-      totalTokens: payload.usage?.totalTokens ?? null,
+      model: result.model ?? null,
+      promptTokens: result.usage?.promptTokens ?? null,
+      completionTokens: result.usage?.completionTokens ?? null,
+      totalTokens: result.usage?.totalTokens ?? null,
     });
   } catch {
     // Best effort only — still return AI result.
@@ -339,7 +358,7 @@ export async function POST(request: Request) {
     NextResponse.json({
       outcome: "ai_success",
       result: {
-        ...payload,
+        ...result,
         analysisMode: "ai_smart",
       },
     }),
