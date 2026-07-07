@@ -147,7 +147,7 @@ export function TipJarNudge() {
             </h2>
             <p id={bodyId} className="mt-2 text-sm leading-6 text-zinc-600">
               If Job Fit is helping you compare roles, you can support the project
-              with a small coffee.
+              by buying me a coffee.
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
