@@ -71,3 +71,54 @@ export function saveWorkspaceResumePreference(
     }),
   );
 }
+
+export type WorkspaceResumePreferenceSnapshot = {
+  inputMode: ResumeInputModePreference;
+  selectedProfileId: string;
+};
+
+/** Apply stored preference once profiles are available; no-op when nothing changes. */
+export function resolveWorkspaceResumePreferenceAfterProfilesLoad(
+  preference: WorkspaceResumePreference | null,
+  profiles: ReadonlyArray<{ id: string }>,
+  current: WorkspaceResumePreferenceSnapshot,
+): WorkspaceResumePreferenceSnapshot {
+  if (!preference) {
+    return current;
+  }
+
+  const profileIds = new Set(profiles.map((profile) => profile.id));
+  const preferredProfileId = normalizeProfileId(preference.selectedProfileId);
+  const hasPreferredProfile =
+    preference.inputMode === "saved_profile" &&
+    preferredProfileId !== null &&
+    profileIds.has(preferredProfileId);
+
+  let inputMode = current.inputMode;
+  if (preference.inputMode === "saved_profile") {
+    inputMode = hasPreferredProfile ? "saved_profile" : "pasted";
+  } else if (preference.inputMode === "pasted") {
+    inputMode = "pasted";
+  }
+
+  let selectedProfileId = current.selectedProfileId;
+  if (hasPreferredProfile && preferredProfileId) {
+    selectedProfileId = preferredProfileId;
+  } else if (inputMode === "pasted") {
+    selectedProfileId = "";
+  } else if (inputMode === "saved_profile" && !profileIds.has(selectedProfileId)) {
+    selectedProfileId = "";
+  }
+
+  return { inputMode, selectedProfileId };
+}
+
+export function workspaceResumePreferenceChanged(
+  before: WorkspaceResumePreferenceSnapshot,
+  after: WorkspaceResumePreferenceSnapshot,
+): boolean {
+  return (
+    before.inputMode !== after.inputMode ||
+    before.selectedProfileId !== after.selectedProfileId
+  );
+}

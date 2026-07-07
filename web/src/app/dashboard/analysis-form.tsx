@@ -48,6 +48,7 @@ import { getSafeSavedAnalysisErrorMessage } from "@/lib/supabase/supabase-errors
 import { getWorkspaceProfilePreviewSkills } from "@/lib/workspace-profile-preview";
 import {
   loadWorkspaceResumePreference,
+  resolveWorkspaceResumePreferenceAfterProfilesLoad,
   saveWorkspaceResumePreference,
 } from "@/lib/workspace-resume-preferences";
 
@@ -116,36 +117,86 @@ function ResumeProfileAnalysisGuardrail({
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
-  const restoredPreferenceRef = useRef(false);
+  const [preferenceRestoreComplete, setPreferenceRestoreComplete] = useState(false);
+  const hasRestoredPreferenceRef = useRef(false);
+  const lastNotifiedProfileIdRef = useRef<string | null>(null);
+  const onInputModeChangeRef = useRef(onInputModeChange);
+  const onSelectedProfileChangeRef = useRef(onSelectedProfileChange);
+  const inputModeRef = useRef(inputMode);
+  const selectedProfileIdRef = useRef(selectedProfileId);
+
+  useEffect(() => {
+    onInputModeChangeRef.current = onInputModeChange;
+    onSelectedProfileChangeRef.current = onSelectedProfileChange;
+    inputModeRef.current = inputMode;
+    selectedProfileIdRef.current = selectedProfileId;
+  });
+
   const canUseProfiles =
     configured && isLoaded && Boolean(session) && Boolean(userId);
   const selectedProfile = canUseProfiles
     ? (profiles.find((profile) => profile.id === selectedProfileId) ?? null)
     : null;
 
-  useEffect(() => {
-    onSelectedProfileChange(selectedProfile);
-  }, [onSelectedProfileChange, selectedProfile]);
+  function persistPreference(
+    mode: ResumeInputMode,
+    profileId: string,
+  ) {
+    if (!userId || typeof window === "undefined") {
+      return;
+    }
+    saveWorkspaceResumePreference(window.localStorage, userId, {
+      inputMode: mode,
+      selectedProfileId: mode === "saved_profile" ? profileId : null,
+    });
+  }
+
+  function handleInputModeChange(mode: ResumeInputMode) {
+    if (mode !== inputMode) {
+      onInputModeChangeRef.current(mode);
+    }
+    persistPreference(mode, selectedProfileId);
+  }
+
+  function handleSelectedProfileIdChange(profileId: string) {
+    if (profileId === selectedProfileId) {
+      return;
+    }
+    setSelectedProfileId(profileId);
+    if (inputMode === "saved_profile") {
+      persistPreference("saved_profile", profileId);
+    }
+  }
 
   useEffect(() => {
-    if (!canUseProfiles) {
+    const nextId = selectedProfile?.id ?? null;
+    if (nextId === lastNotifiedProfileIdRef.current) {
+      return;
+    }
+    lastNotifiedProfileIdRef.current = nextId;
+    onSelectedProfileChangeRef.current(selectedProfile);
+  }, [selectedProfile]);
+
+  useEffect(() => {
+    if (!canUseProfiles || !userId || !session) {
       return;
     }
 
+    const activeUserId = userId;
+    const activeSession = session;
     let cancelled = false;
 
     async function runLoad() {
       setIsLoading(true);
       setLoadError(null);
+
       const preference =
-        !restoredPreferenceRef.current &&
-        userId &&
-        typeof window !== "undefined"
-          ? loadWorkspaceResumePreference(window.localStorage, userId)
+        !hasRestoredPreferenceRef.current && typeof window !== "undefined"
+          ? loadWorkspaceResumePreference(window.localStorage, activeUserId)
           : null;
 
-      const supabase = createClerkSupabaseClient(() => session!.getToken());
-      const result = await listResumeProfiles(supabase, userId!);
+      const supabase = createClerkSupabaseClient(() => activeSession.getToken());
+      const result = await listResumeProfiles(supabase, activeUserId);
 
       if (cancelled) {
         return;
@@ -153,34 +204,36 @@ function ResumeProfileAnalysisGuardrail({
 
       if (result.status === "success") {
         setProfiles(result.profiles);
-        const hasPreferredProfile =
-          preference?.inputMode === "saved_profile" &&
-          Boolean(preference.selectedProfileId) &&
-          result.profiles.some((profile) => profile.id === preference.selectedProfileId);
 
-        if (preference?.inputMode === "saved_profile") {
-          onInputModeChange(hasPreferredProfile ? "saved_profile" : "pasted");
-        } else if (preference?.inputMode === "pasted") {
-          onInputModeChange("pasted");
+        if (!hasRestoredPreferenceRef.current) {
+          const resolved = resolveWorkspaceResumePreferenceAfterProfilesLoad(
+            preference,
+            result.profiles,
+            {
+              inputMode: inputModeRef.current,
+              selectedProfileId: selectedProfileIdRef.current,
+            },
+          );
+
+          if (resolved.inputMode !== inputModeRef.current) {
+            onInputModeChangeRef.current(resolved.inputMode);
+          }
+          if (resolved.selectedProfileId !== selectedProfileIdRef.current) {
+            setSelectedProfileId(resolved.selectedProfileId);
+          }
+
+          hasRestoredPreferenceRef.current = true;
+          setPreferenceRestoreComplete(true);
         }
-
-        setSelectedProfileId((currentId) => {
-          const preferredId =
-            hasPreferredProfile && preference?.selectedProfileId
-              ? preference.selectedProfileId
-              : currentId;
-
-          return result.profiles.some((profile) => profile.id === preferredId)
-            ? preferredId
-            : "";
-        });
       } else {
         setProfiles([]);
-        setSelectedProfileId("");
+        if (selectedProfileIdRef.current !== "") {
+          setSelectedProfileId("");
+        }
         setLoadError(result.message);
+        hasRestoredPreferenceRef.current = true;
+        setPreferenceRestoreComplete(true);
       }
-
-      restoredPreferenceRef.current = true;
 
       setIsLoading(false);
     }
@@ -190,21 +243,7 @@ function ResumeProfileAnalysisGuardrail({
     return () => {
       cancelled = true;
     };
-  }, [canUseProfiles, onInputModeChange, session, userId, retryNonce]);
-
-  useEffect(() => {
-    if (!isLoaded || !userId || !restoredPreferenceRef.current) {
-      return;
-    }
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    saveWorkspaceResumePreference(window.localStorage, userId, {
-      inputMode,
-      selectedProfileId,
-    });
-  }, [inputMode, isLoaded, selectedProfileId, userId]);
+  }, [canUseProfiles, session, userId, retryNonce]);
 
   const combinedSkills = selectedProfile
     ? getCombinedProfileSkills(selectedProfile)
@@ -237,7 +276,7 @@ function ResumeProfileAnalysisGuardrail({
             value="pasted"
             checked={inputMode === "pasted"}
             disabled={disabled}
-            onChange={() => onInputModeChange("pasted")}
+            onChange={() => handleInputModeChange("pasted")}
           />
           <span className="font-medium">Paste or upload</span>
         </label>
@@ -250,7 +289,7 @@ function ResumeProfileAnalysisGuardrail({
             value="saved_profile"
             checked={inputMode === "saved_profile"}
             disabled={disabled || !canUseProfiles}
-            onChange={() => onInputModeChange("saved_profile")}
+            onChange={() => handleInputModeChange("saved_profile")}
           />
           <span className="font-medium">Saved profile</span>
         </label>
@@ -316,7 +355,7 @@ function ResumeProfileAnalysisGuardrail({
               <select
                 id="resume-profile-preview-select"
                 value={selectedProfileId}
-                onChange={(event) => setSelectedProfileId(event.target.value)}
+                onChange={(event) => handleSelectedProfileIdChange(event.target.value)}
                 disabled={disabled}
                 className="mt-1 min-h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -332,7 +371,9 @@ function ResumeProfileAnalysisGuardrail({
 
           {inputMode === "saved_profile" &&
           profiles.length > 0 &&
-          !selectedProfile ? (
+          !selectedProfile &&
+          preferenceRestoreComplete &&
+          !isLoading ? (
             <p
               className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
               role="alert"
@@ -540,6 +581,13 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
     },
     [analysisError],
   );
+
+  const handleResumeInputModeChange = useCallback((mode: ResumeInputMode) => {
+    setResumeInputMode((current) => (current === mode ? current : mode));
+    setValidationError(null);
+    setAnalysisError(null);
+    clearAnalysisOutput();
+  }, []);
 
   function clearAnalysisOutput() {
     setResult(null);
@@ -923,12 +971,7 @@ export function AnalysisForm({ onSaveSuccess }: AnalysisFormProps) {
             <ResumeProfileAnalysisGuardrail
               disabled={isAnalyzing || isRateLimited}
               inputMode={resumeInputMode}
-              onInputModeChange={(mode) => {
-                setResumeInputMode(mode);
-                setValidationError(null);
-                setAnalysisError(null);
-                clearAnalysisOutput();
-              }}
+              onInputModeChange={handleResumeInputModeChange}
               onSelectedProfileChange={handleSelectedResumeProfileChange}
             />
           </div>
