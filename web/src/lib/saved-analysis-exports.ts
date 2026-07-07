@@ -1,4 +1,8 @@
-import type { SavedAnalysisComparisonResult } from "@/lib/saved-analysis-comparison";
+import {
+  formatComparisonSkillFrequency,
+  type ComparedSkillEntry,
+  type SavedAnalysisComparisonResult,
+} from "@/lib/saved-analysis-comparison";
 import {
   formatOptionalMetadata,
   formatSavedAnalysisDate,
@@ -209,11 +213,20 @@ export function buildRecurringGapsCsv(stats: RecurringGapStat[]): string {
   return toCsv([headers, ...rows]);
 }
 
-function comparisonSkillLines(skills: SavedAnalysisSkill[]): string {
+function comparisonEntryLines(
+  skills: ComparedSkillEntry[],
+  totalAnalyses: number,
+  kind: "missing" | "matched",
+): string {
   if (skills.length === 0) {
     return "_None_";
   }
-  return skills.map((skill) => `- ${formatSkillToken(skill)}`).join("\n");
+  return skills
+    .map(
+      (skill) =>
+        `- ${formatSkillToken(skill)} — ${formatComparisonSkillFrequency(skill, totalAnalyses, kind)}`,
+    )
+    .join("\n");
 }
 
 /** Markdown export for a two-analysis skill comparison. */
@@ -232,38 +245,46 @@ export function buildComparisonMarkdown(input: ComparisonExportInput): string {
     "",
     `### Shared missing skills (${comparison.missing.shared.length})`,
     "",
-    comparisonSkillLines(comparison.missing.shared),
+    comparisonEntryLines(
+      comparison.missing.shared,
+      comparison.missing.totalAnalyses,
+      "missing",
+    ),
     "",
-    `### Missing only in first (${comparison.missing.onlyFirst.length})`,
+    `### Other missing skills (${comparison.missing.other.length})`,
     "",
-    comparisonSkillLines(comparison.missing.onlyFirst),
-    "",
-    `### Missing only in second (${comparison.missing.onlySecond.length})`,
-    "",
-    comparisonSkillLines(comparison.missing.onlySecond),
+    comparisonEntryLines(
+      comparison.missing.other,
+      comparison.missing.totalAnalyses,
+      "missing",
+    ),
     "",
     "## Matched skills",
     "",
     `### Shared matched skills (${comparison.matched.shared.length})`,
     "",
-    comparisonSkillLines(comparison.matched.shared),
+    comparisonEntryLines(
+      comparison.matched.shared,
+      comparison.matched.totalAnalyses,
+      "matched",
+    ),
     "",
-    `### Matched only in first (${comparison.matched.onlyFirst.length})`,
+    `### Other matched skills (${comparison.matched.other.length})`,
     "",
-    comparisonSkillLines(comparison.matched.onlyFirst),
-    "",
-    `### Matched only in second (${comparison.matched.onlySecond.length})`,
-    "",
-    comparisonSkillLines(comparison.matched.onlySecond),
+    comparisonEntryLines(
+      comparison.matched.other,
+      comparison.matched.totalAnalyses,
+      "matched",
+    ),
     "",
   ].join("\n");
 }
 
 function comparisonCsvSectionRows(
   group: string,
-  skills: SavedAnalysisSkill[],
+  skills: ComparedSkillEntry[],
 ): (string | number)[][] {
-  return skills.map((skill) => [group, skill.skill, skill.category, 1]);
+  return skills.map((skill) => [group, skill.skill, skill.category, skill.analysisCount]);
 }
 
 /** Long-format CSV export for a two-analysis skill comparison. */
@@ -284,19 +305,13 @@ export function buildComparisonCsv(input: ComparisonExportInput): string {
     ...comparisonCsvSectionRows("shared_missing", comparison.missing.shared).map(
       (row) => [...meta, ...row],
     ),
-    ...comparisonCsvSectionRows("missing_only_first", comparison.missing.onlyFirst).map(
-      (row) => [...meta, ...row],
-    ),
-    ...comparisonCsvSectionRows("missing_only_second", comparison.missing.onlySecond).map(
+    ...comparisonCsvSectionRows("other_missing", comparison.missing.other).map(
       (row) => [...meta, ...row],
     ),
     ...comparisonCsvSectionRows("shared_matched", comparison.matched.shared).map(
       (row) => [...meta, ...row],
     ),
-    ...comparisonCsvSectionRows("matched_only_first", comparison.matched.onlyFirst).map(
-      (row) => [...meta, ...row],
-    ),
-    ...comparisonCsvSectionRows("matched_only_second", comparison.matched.onlySecond).map(
+    ...comparisonCsvSectionRows("other_matched", comparison.matched.other).map(
       (row) => [...meta, ...row],
     ),
   ];

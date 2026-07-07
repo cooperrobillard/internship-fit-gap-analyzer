@@ -9,11 +9,14 @@ import {
   downloadComparisonCsv,
   downloadComparisonMarkdown,
 } from "@/lib/saved-analysis-exports";
-import { compareSavedAnalyses } from "@/lib/saved-analysis-comparison";
+import {
+  compareSavedAnalyses,
+  formatComparisonSkillFrequency,
+  type ComparedSkillEntry,
+} from "@/lib/saved-analysis-comparison";
 import {
   getSavedAnalysisCompanyLabel,
   getSavedAnalysisDisplayTitle,
-  type SavedAnalysisSkill,
   type SavedCloudAnalysisListItem,
 } from "@/lib/supabase/saved-analyses";
 
@@ -25,36 +28,45 @@ function analysisOptionLabel(analysis: SavedCloudAnalysisListItem): string {
   return `${title} · ${company}`;
 }
 
-function SkillGroup({
+function ComparedSkillGroup({
   title,
   skills,
+  totalAnalyses,
+  kind,
   emptyMessage,
 }: {
   title: string;
-  skills: SavedAnalysisSkill[];
+  skills: ComparedSkillEntry[];
+  totalAnalyses: number;
+  kind: "missing" | "matched";
   emptyMessage: string;
 }) {
   return (
-    <div className="min-w-0 border-t border-zinc-200 pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0 first:lg:border-l-0 first:lg:pl-0">
+    <section className="rounded-lg border border-zinc-200 bg-white p-4">
       <h4 className="font-medium text-zinc-900">
         {title} <span className="text-zinc-500">({skills.length})</span>
       </h4>
       {skills.length === 0 ? (
         <p className="mt-2 text-zinc-600">{emptyMessage}</p>
       ) : (
-        <ul className="mt-2 space-y-1">
+        <ul className="mt-3 space-y-2">
           {skills.map((item) => (
             <li
-              key={`${item.skill}-${item.category}`}
-              className="py-1.5 text-zinc-800"
+              key={`${kind}-${item.skill}-${item.category}`}
+              className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2 text-zinc-800"
             >
-              <span className="font-medium">{item.skill}</span>
-              <span className="text-zinc-500"> · {item.category}</span>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-medium text-zinc-950">{item.skill}</span>
+                <span className="text-xs text-zinc-500">{item.category}</span>
+              </div>
+              <p className="mt-1 text-xs text-zinc-600">
+                {formatComparisonSkillFrequency(item, totalAnalyses, kind)}
+              </p>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -173,10 +185,10 @@ Choose two analyses to compare skills.
       ) : null}
 
       {comparison && firstAnalysis && secondAnalysis ? (
-        <div className="mt-4 space-y-4" aria-live="polite">
+        <div className="mt-4 space-y-5" aria-live="polite">
           <p className="text-sm text-zinc-700"><span className="font-medium">{firstLabel}</span> ↔ <span className="font-medium">{secondLabel}</span></p>
 
-          <ExportDownloadGroup title="Export comparison" description="Shared and unique skill groups.">
+          <ExportDownloadGroup title="Export comparison" description="Shared and single-analysis skill groups.">
             <ExportDownloadButton
               label="Comparison (Markdown)"
               onClick={() =>
@@ -199,46 +211,40 @@ Choose two analyses to compare skills.
             />
           </ExportDownloadGroup>
 
-          <div>
+          <div className="space-y-3">
             <h3 className="font-medium text-zinc-950">Missing skills</h3>
-            <div className="mt-3 grid gap-4 lg:grid-cols-3">
-              <SkillGroup
-                title="Shared missing skills"
-                skills={comparison.missing.shared}
-                emptyMessage="No shared missing skills between these analyses."
-              />
-              <SkillGroup
-                title={`Missing only in first`}
-                skills={comparison.missing.onlyFirst}
-                emptyMessage="No missing skills unique to the first analysis."
-              />
-              <SkillGroup
-                title={`Missing only in second`}
-                skills={comparison.missing.onlySecond}
-                emptyMessage="No missing skills unique to the second analysis."
-              />
-            </div>
+            <ComparedSkillGroup
+              title="Shared missing skills"
+              skills={comparison.missing.shared}
+              totalAnalyses={comparison.missing.totalAnalyses}
+              kind="missing"
+              emptyMessage="No shared missing skills between these analyses."
+            />
+            <ComparedSkillGroup
+              title="Other missing skills"
+              skills={comparison.missing.other}
+              totalAnalyses={comparison.missing.totalAnalyses}
+              kind="missing"
+              emptyMessage="No missing skills unique to a single analysis."
+            />
           </div>
 
-          <div>
+          <div className="space-y-3">
             <h3 className="font-medium text-zinc-950">Matched skills</h3>
-            <div className="mt-3 grid gap-4 lg:grid-cols-3">
-              <SkillGroup
-                title="Shared matched skills"
-                skills={comparison.matched.shared}
-                emptyMessage="No shared matched skills between these analyses."
-              />
-              <SkillGroup
-                title={`Matched only in first`}
-                skills={comparison.matched.onlyFirst}
-                emptyMessage="No matched skills unique to the first analysis."
-              />
-              <SkillGroup
-                title={`Matched only in second`}
-                skills={comparison.matched.onlySecond}
-                emptyMessage="No matched skills unique to the second analysis."
-              />
-            </div>
+            <ComparedSkillGroup
+              title="Shared matched skills"
+              skills={comparison.matched.shared}
+              totalAnalyses={comparison.matched.totalAnalyses}
+              kind="matched"
+              emptyMessage="No shared matched skills between these analyses."
+            />
+            <ComparedSkillGroup
+              title="Other matched skills"
+              skills={comparison.matched.other}
+              totalAnalyses={comparison.matched.totalAnalyses}
+              kind="matched"
+              emptyMessage="No matched skills unique to a single analysis."
+            />
           </div>
         </div>
       ) : null}

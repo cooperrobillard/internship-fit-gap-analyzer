@@ -17,6 +17,13 @@ class AnalyzeMetadata(BaseModel):
     notes: str | None = None
 
 
+class ExtractedJobMetadata(BaseModel):
+    jobTitle: str | None = None
+    company: str | None = None
+    sourceUrl: str | None = None
+    notes: str | None = None
+
+
 class AnalyzeRequest(BaseModel):
     resumeText: str = Field(strict=True, max_length=MAX_ANALYSIS_TEXT_LENGTH)
     jobText: str = Field(strict=True, max_length=MAX_ANALYSIS_TEXT_LENGTH)
@@ -108,6 +115,7 @@ class AiAnalyzeResponse(BaseModel):
     matchedSkillsCount: int
     missingSkillsCount: int
     metadata: AnalyzeMetadata = Field(default_factory=AnalyzeMetadata)
+    jobMetadata: ExtractedJobMetadata | None = None
     usage: AiTokenUsage = Field(default_factory=AiTokenUsage)
     model: str
 

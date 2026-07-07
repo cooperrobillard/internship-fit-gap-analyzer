@@ -1,3 +1,7 @@
+import {
+  canonicalizeSkillName,
+  comparisonSkillKey,
+} from "@/lib/skill-canonicalization";
 import type { SavedAnalysisSkill } from "@/lib/supabase/saved-analyses";
 
 export type SavedAnalysisComparisonInput = {
@@ -5,22 +9,24 @@ export type SavedAnalysisComparisonInput = {
   matchedSkills: SavedAnalysisSkill[];
 };
 
-export type SkillSetComparison = {
-  shared: SavedAnalysisSkill[];
-  onlyFirst: SavedAnalysisSkill[];
-  onlySecond: SavedAnalysisSkill[];
+export type ComparedSkillEntry = {
+  skill: string;
+  category: string;
+  analysisCount: number;
+};
+
+export type GroupedSkillComparison = {
+  shared: ComparedSkillEntry[];
+  other: ComparedSkillEntry[];
+  totalAnalyses: number;
 };
 
 export type SavedAnalysisComparisonResult = {
-  missing: SkillSetComparison;
-  matched: SkillSetComparison;
+  missing: GroupedSkillComparison;
+  matched: GroupedSkillComparison;
 };
 
-function skillKey(skill: SavedAnalysisSkill): string {
-  return `${skill.skill.trim().toLowerCase()}|${skill.category.trim().toLowerCase()}`;
-}
-
-function sortSkills(skills: SavedAnalysisSkill[]): SavedAnalysisSkill[] {
+function sortComparedSkills(skills: ComparedSkillEntry[]): ComparedSkillEntry[] {
   return [...skills].sort((left, right) => {
     const bySkill = left.skill.localeCompare(right.skill, undefined, {
       sensitivity: "base",
@@ -34,61 +40,84 @@ function sortSkills(skills: SavedAnalysisSkill[]): SavedAnalysisSkill[] {
   });
 }
 
-/** Case-insensitive dedupe by skill name + category. */
+/** Case-insensitive dedupe by canonical skill name (category from first seen). */
 export function dedupeSkills(skills: SavedAnalysisSkill[]): SavedAnalysisSkill[] {
   const seen = new Map<string, SavedAnalysisSkill>();
 
   for (const item of skills) {
-    const normalized: SavedAnalysisSkill = {
-      skill: item.skill.trim(),
-      category: item.category.trim(),
-    };
-    if (!normalized.skill || !normalized.category) {
+    const skill = canonicalizeSkillName(item.skill);
+    const category = item.category.trim() || "General";
+    if (!skill) {
       continue;
     }
-    const key = skillKey(normalized);
+    const key = comparisonSkillKey(skill);
     if (!seen.has(key)) {
-      seen.set(key, normalized);
+      seen.set(key, { skill, category });
     }
   }
 
-  return sortSkills([...seen.values()]);
+  return [...seen.values()].sort((left, right) =>
+    left.skill.localeCompare(right.skill, undefined, { sensitivity: "base" }),
+  );
 }
 
-/** Compare two skill lists: shared, first-only, second-only (case-insensitive keys). */
-export function compareSkillSets(
-  firstSkills: SavedAnalysisSkill[],
-  secondSkills: SavedAnalysisSkill[],
-): SkillSetComparison {
-  const firstMap = new Map(
-    dedupeSkills(firstSkills).map((skill) => [skillKey(skill), skill]),
-  );
-  const secondMap = new Map(
-    dedupeSkills(secondSkills).map((skill) => [skillKey(skill), skill]),
-  );
+function groupSkillsAcrossAnalyses(
+  analysisSkillLists: SavedAnalysisSkill[][],
+): GroupedSkillComparison {
+  const totalAnalyses = analysisSkillLists.length;
+  const grouped = new Map<
+    string,
+    { skill: string; category: string; analysisIndices: Set<number> }
+  >();
 
-  const shared: SavedAnalysisSkill[] = [];
-  const onlyFirst: SavedAnalysisSkill[] = [];
-  const onlySecond: SavedAnalysisSkill[] = [];
+  for (let analysisIndex = 0; analysisIndex < analysisSkillLists.length; analysisIndex += 1) {
+    const seenInAnalysis = new Set<string>();
+    for (const item of analysisSkillLists[analysisIndex]) {
+      const skill = canonicalizeSkillName(item.skill);
+      const category = item.category.trim() || "General";
+      if (!skill) {
+        continue;
+      }
+      const key = comparisonSkillKey(skill);
+      if (seenInAnalysis.has(key)) {
+        continue;
+      }
+      seenInAnalysis.add(key);
 
-  for (const [key, skill] of firstMap) {
-    if (secondMap.has(key)) {
-      shared.push(skill);
-    } else {
-      onlyFirst.push(skill);
+      let entry = grouped.get(key);
+      if (!entry) {
+        entry = {
+          skill,
+          category,
+          analysisIndices: new Set<number>(),
+        };
+        grouped.set(key, entry);
+      }
+      entry.analysisIndices.add(analysisIndex);
     }
   }
 
-  for (const [key, skill] of secondMap) {
-    if (!firstMap.has(key)) {
-      onlySecond.push(skill);
+  const shared: ComparedSkillEntry[] = [];
+  const other: ComparedSkillEntry[] = [];
+
+  for (const entry of grouped.values()) {
+    const analysisCount = entry.analysisIndices.size;
+    const compared: ComparedSkillEntry = {
+      skill: entry.skill,
+      category: entry.category,
+      analysisCount,
+    };
+    if (analysisCount >= 2) {
+      shared.push(compared);
+    } else {
+      other.push(compared);
     }
   }
 
   return {
-    shared: sortSkills(shared),
-    onlyFirst: sortSkills(onlyFirst),
-    onlySecond: sortSkills(onlySecond),
+    shared: sortComparedSkills(shared),
+    other: sortComparedSkills(other),
+    totalAnalyses,
   };
 }
 
@@ -98,7 +127,17 @@ export function compareSavedAnalyses(
   second: SavedAnalysisComparisonInput,
 ): SavedAnalysisComparisonResult {
   return {
-    missing: compareSkillSets(first.missingSkills, second.missingSkills),
-    matched: compareSkillSets(first.matchedSkills, second.matchedSkills),
+    missing: groupSkillsAcrossAnalyses([first.missingSkills, second.missingSkills]),
+    matched: groupSkillsAcrossAnalyses([first.matchedSkills, second.matchedSkills]),
   };
+}
+
+export function formatComparisonSkillFrequency(
+  entry: ComparedSkillEntry,
+  totalAnalyses: number,
+  kind: "missing" | "matched",
+): string {
+  const verb = kind === "missing" ? "missing" : "matched";
+  const analysisLabel = totalAnalyses === 1 ? "analysis" : "analyses";
+  return `${verb} in ${entry.analysisCount} of ${totalAnalyses} selected ${analysisLabel}`;
 }
