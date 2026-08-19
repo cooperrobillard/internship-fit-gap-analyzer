@@ -26,7 +26,8 @@ Browser
   → Vercel (Next.js, web/)
       → Clerk (sign-in, protected /dashboard)
       → POST /api/analyze (Next.js route handler)
-      → POST /api/ai/analyze (optional Smart AI; quota + fallback)
+      → POST /api/ai/analyze (optional Smart AI; provider-failure fallback)
+      → POST /api/ai/extract-profile (optional Smart AI profile extraction)
           → Render (FastAPI, api/)
               → rule-based analyzer (src/, in-memory)
               → optional OpenAI Smart AI (api/ai_analysis_service.py)
@@ -56,7 +57,7 @@ Details: [`web/README.md`](web/README.md), [`docs/VERSION_13_HOSTED_DEPLOYMENT_C
 
 - Next.js landing page and Clerk sign-in/sign-up
 - Protected dashboard with analysis form and **Try sample inputs** / **Run analysis (does not save)** workflow
-- Hosted Smart AI analysis via `/api/ai/analyze` when configured (quota tracking and rule-based fallback)
+- Hosted Smart AI analysis via `/api/ai/analyze` when configured, with automatic rule-based fallback and no application-level per-user quota
 - Hosted rule-based analysis via `/api/analyze` → Render FastAPI with transient pasted/document inputs and `/extract-document` for deterministic PDF/DOCX/TXT/MD extraction
 - Supabase **Save structured results** / read / individual delete of analyses with per-user RLS
 - Structured resume-profile create/edit/delete and explicit saved-profile analysis handoff
@@ -96,34 +97,19 @@ More detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md), [`docs/DEPLOYMENT_REA
 
 If the OpenAI dashboard shows zero usage after Smart AI runs:
 
+- Confirm `AI_FEATURES_ENABLED` is exactly `true` on both Vercel and Render.
 - Confirm Render uses an `OPENAI_API_KEY` from the intended OpenAI project.
-- Check Supabase `ai_usage_events` for successful rows and token counts.
+- Confirm the Vercel `ANALYSIS_API_URL` and shared secret match the Render service.
 - Very small spend may round to `$0.00`, but token counts should appear when calls reach OpenAI.
-- If quota rows show `error` status or the UI reports rule-based fallback, the app may not be making paid OpenAI calls.
-
-### Quota alert email (optional)
-
-Configure on Vercel (server-only):
-
-- `RESEND_API_KEY`
-- `AI_QUOTA_ALERT_EMAIL` (e.g. `cooper.robillard@gmail.com`)
-- `ALERTS_FROM_EMAIL` (verified Resend sender)
-
-Sends one safe metadata-only email per user/feature/quota window when Smart AI quota is exceeded. No résumé/job text is included.
-
-### Smart AI quota bypass (optional, server-only)
-
-- `AI_QUOTA_BYPASS_USER_IDS` — comma-separated Clerk user IDs (e.g. owner/admin testing)
-- Vercel server-side only; never `NEXT_PUBLIC_*`
-- Listed users skip daily/monthly Smart AI and profile-extraction quota blocks and quota-exceeded alert emails; usage events still record when configured
-- Normal users remain limited exactly as before
+- If OpenAI rejects a request for billing, rate-limit, authentication, timeout, connection, or service reasons, the application safely uses rule-based fallback.
+- There is no application-level per-user Smart AI quota; OpenAI project billing and provider limits are the economic constraint.
 
 ### Tip jar nudge (optional)
 
 - `NEXT_PUBLIC_TIP_JAR_URL` — external support link; hidden when unset
 - `NEXT_PUBLIC_TIP_PROMPT_ANALYSIS_THRESHOLD` — default `5` successful dashboard analyses before the nudge
 
-Does not affect analysis, quotas, or in-app payments.
+Does not affect analysis or in-app payments.
 
 ## Run locally
 

@@ -8,7 +8,7 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`api
 
 ## Purpose
 
-Host the rule-based Python analyzer behind HTTP so the Vercel Next.js app (via `/api/analyze`) or `curl` can call `GET /health` and `POST /analyze` in a deployed environment. The Streamlit app and CLI remain local tools and are **not** deployed by this service.
+Host the rule-based analyzer and optional Smart AI endpoints behind HTTP so Vercel can call `GET /health`, `POST /analyze`, `POST /ai/analyze`, and `POST /ai/extract-profile`. The Streamlit app and CLI remain local tools and are **not** deployed by this service.
 
 ---
 
@@ -38,7 +38,11 @@ Set these in Render → your service → **Environment**:
 | Variable | Purpose |
 |----------|---------|
 | `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (no spaces required; trimming is supported) |
-| `ANALYSIS_API_SHARED_SECRET` | Shared secret for `/analyze` request validation (same value as Vercel; optional locally) |
+| `ANALYSIS_API_SHARED_SECRET` | Shared secret for analysis/extraction request validation (same value as Vercel; optional locally) |
+| `AI_FEATURES_ENABLED` | Global Smart AI kill switch; set exactly `true` to enable Smart AI |
+| `OPENAI_API_KEY` | Server-only OpenAI project API key |
+| `OPENAI_ANALYSIS_MODEL` | Optional model override; otherwise the code default is used |
+| `OPENAI_REQUEST_TIMEOUT_SECONDS` | Optional OpenAI request timeout override |
 
 **Examples for `ALLOWED_ORIGINS` (placeholders only — use your real URLs):**
 
@@ -64,7 +68,9 @@ https://your-vercel-app.vercel.app,https://your-git-branch-your-project.vercel.a
 |----------|---------|
 | `PYTHON_VERSION` | Optional — e.g. `3.13.5` if Render needs an explicit version pin |
 
-When `ANALYSIS_API_SHARED_SECRET` is set, `POST /analyze` requires header `X-Analysis-Api-Key` with the same value. `GET /health` stays public. The Vercel `/api/analyze` route handler sends this header server-side.
+When `ANALYSIS_API_SHARED_SECRET` is set, the analysis and extraction POST endpoints require header `X-Analysis-Api-Key` with the same value. `GET /health` stays public. The Vercel route handlers send this header server-side.
+
+Smart AI uses the Responses API with `store=False` and automatic SDK retries disabled. The application makes one provider attempt, then returns a safe error so Vercel can use rule-based fallback. There is no application-level per-user Smart AI quota.
 
 Do **not** commit `.env` files or paste secrets into the repository. Do not set `ALLOWED_ORIGINS` to `*` for normal production use.
 
@@ -110,7 +116,7 @@ Then set **`ANALYSIS_API_URL`** on Vercel to `https://YOUR_RENDER_SERVICE_URL` (
 ## Privacy
 
 - The API analyzes submitted resume and job description text **in memory only**.
-- It does **not** write raw resume or job text to disk, SQLite, Supabase, or external APIs.
+- Rule-based analysis does not call OpenAI. Smart AI sends transient request text to OpenAI but does **not** intentionally write raw résumé/job text to disk, SQLite, or Supabase.
 - Do **not** paste real private resume or job text into public docs, Git commits, screenshots, or issue comments. Use the generic sample strings above for smoke tests.
 
 ---

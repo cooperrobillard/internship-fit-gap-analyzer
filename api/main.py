@@ -21,6 +21,7 @@ from api.ai_analysis_service import (
     AiDisabledError,
     AiServiceError,
     MissingApiKeyError,
+    OpenAiBillingOrQuotaError,
     OpenAiRateLimitError,
     OpenAiTimeoutError,
     MalformedResponseError,
@@ -332,7 +333,7 @@ async def extract_document(
 def _safe_ai_error_status(exc: AiServiceError) -> int:
     if isinstance(exc, (AiDisabledError, MissingApiKeyError)):
         return 503
-    if isinstance(exc, OpenAiRateLimitError):
+    if isinstance(exc, (OpenAiBillingOrQuotaError, OpenAiRateLimitError)):
         return 429
     if isinstance(exc, OpenAiTimeoutError):
         return 504
@@ -346,6 +347,8 @@ def _safe_ai_error_message(exc: AiServiceError) -> str:
         return "Smart AI features are disabled."
     if isinstance(exc, MissingApiKeyError):
         return "Smart AI is not configured."
+    if isinstance(exc, OpenAiBillingOrQuotaError):
+        return "Smart AI is temporarily unavailable."
     if isinstance(exc, OpenAiRateLimitError):
         return "Smart AI is temporarily rate limited. Try again shortly."
     if isinstance(exc, OpenAiTimeoutError):
@@ -371,6 +374,7 @@ def ai_analyze(
             notes=request.notes,
         )
     except AiServiceError as exc:
+        logger.warning("Smart AI request failed (category=%s)", exc.error_class)
         raise HTTPException(
             status_code=_safe_ai_error_status(exc),
             detail=_safe_ai_error_message(exc),
@@ -396,6 +400,7 @@ def ai_extract_profile(
             source_kind=request.sourceKind,
         )
     except AiServiceError as exc:
+        logger.warning("Smart AI profile extraction failed (category=%s)", exc.error_class)
         raise HTTPException(
             status_code=_safe_ai_error_status(exc),
             detail=_safe_ai_error_message(exc),

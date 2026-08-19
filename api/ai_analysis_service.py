@@ -10,10 +10,22 @@ from __future__ import annotations
 import json
 import logging
 import os
-import traceback
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from openai import (
+    APIConnectionError as OpenAIAPIConnectionError,
+    APIError as OpenAIAPIError,
+    APIStatusError as OpenAIAPIStatusError,
+    APITimeoutError as OpenAIAPITimeoutError,
+    AuthenticationError as OpenAIAuthenticationError,
+    BadRequestError as OpenAIBadRequestError,
+    InternalServerError as OpenAIInternalServerError,
+    NotFoundError as OpenAINotFoundError,
+    PermissionDeniedError as OpenAIPermissionDeniedError,
+    RateLimitError as OpenAIRateLimitError,
+    UnprocessableEntityError as OpenAIUnprocessableEntityError,
+)
 from pydantic import ValidationError
 
 from api.ai_skill_canonicalization import (
@@ -35,6 +47,19 @@ logger = logging.getLogger(__name__)
 DEFAULT_ANALYSIS_MODEL = "gpt-5.4-mini"
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 30.0
 MAX_EXTRACTED_JOB_NOTES_LENGTH = 280
+OPENAI_MAX_RETRIES = 0
+
+_BILLING_OR_QUOTA_ERROR_CODES = frozenset(
+    {
+        "billing_hard_limit_reached",
+        "billing_not_active",
+        "credit_balance_exhausted",
+        "insufficient_quota",
+        "organization_spend_limit_exceeded",
+        "organization_usage_limit_exceeded",
+        "project_spend_limit_exceeded",
+    }
+)
 
 SYSTEM_INSTRUCTIONS = """You are a professional résumé and job-description skill analyst.
 
@@ -66,23 +91,43 @@ class AiDisabledError(AiServiceError):
 
 
 class MissingApiKeyError(AiServiceError):
-    error_class = "ai.missing_api_key"
+    error_class = "provider_auth_or_configuration"
+
+
+class OpenAiBillingOrQuotaError(AiServiceError):
+    error_class = "provider_billing_or_quota"
 
 
 class OpenAiRateLimitError(AiServiceError):
-    error_class = "ai.rate_limit"
+    error_class = "provider_rate_limited"
 
 
 class OpenAiTimeoutError(AiServiceError):
-    error_class = "ai.timeout"
+    error_class = "provider_timeout"
+
+
+class OpenAiConnectionError(AiServiceError):
+    error_class = "provider_connection"
+
+
+class OpenAiAuthOrConfigurationError(AiServiceError):
+    error_class = "provider_auth_or_configuration"
+
+
+class OpenAiUnavailableError(AiServiceError):
+    error_class = "provider_unavailable"
+
+
+class OpenAiUnknownError(AiServiceError):
+    error_class = "provider_unknown"
 
 
 class MalformedResponseError(AiServiceError):
-    error_class = "ai.malformed_response"
+    error_class = "provider_invalid_response"
 
 
 class ResponseValidationError(AiServiceError):
-    error_class = "ai.validation_failure"
+    error_class = "provider_invalid_response"
 
 
 class OpenAiResponsesClient(Protocol):
@@ -97,14 +142,78 @@ def _resolve_responses_client(client: Any) -> OpenAiResponsesClient:
     return client
 
 
-def _log_openai_call_failure(exc: BaseException) -> None:
-    """Temporary local-dev aid: safe OpenAI failure metadata only."""
+def _log_openai_call_failure(error_class: str) -> None:
+    """Log an allowlisted provider category without provider or input details."""
     logger.warning(
-        "OpenAI structured call failed (class=%s message=%s traceback=%s)",
-        exc.__class__.__name__,
-        str(exc),
-        traceback.format_exc(limit=8),
+        "OpenAI structured call failed (category=%s)",
+        error_class,
     )
+
+
+def _structured_provider_error_values(exc: BaseException) -> set[str]:
+    """Collect normalized SDK error codes/types without inspecting free-form messages."""
+    values: set[str] = set()
+    for value in (getattr(exc, "code", None), getattr(exc, "type", None)):
+        if isinstance(value, str) and value.strip():
+            values.add(value.strip().lower())
+
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        candidates = [body]
+        nested_error = body.get("error")
+        if isinstance(nested_error, dict):
+            candidates.append(nested_error)
+        for candidate in candidates:
+            for key in ("code", "type"):
+                value = candidate.get(key)
+                if isinstance(value, str) and value.strip():
+                    values.add(value.strip().lower())
+    return values
+
+
+def _is_billing_or_quota_error(exc: BaseException) -> bool:
+    return bool(_structured_provider_error_values(exc) & _BILLING_OR_QUOTA_ERROR_CODES)
+
+
+def _classify_openai_exception(exc: BaseException) -> AiServiceError:
+    """Map installed OpenAI SDK exceptions to stable, privacy-safe categories."""
+    if isinstance(exc, (OpenAIAPITimeoutError, TimeoutError)):
+        return OpenAiTimeoutError("OpenAI request timed out.")
+
+    if isinstance(exc, OpenAIRateLimitError):
+        if _is_billing_or_quota_error(exc):
+            return OpenAiBillingOrQuotaError("OpenAI billing or quota is unavailable.")
+        return OpenAiRateLimitError("OpenAI rate limit reached.")
+
+    if isinstance(exc, (OpenAIAuthenticationError, OpenAIPermissionDeniedError)):
+        return OpenAiAuthOrConfigurationError("OpenAI authentication or configuration failed.")
+
+    if isinstance(exc, OpenAIAPIConnectionError):
+        return OpenAiConnectionError("OpenAI could not be reached.")
+
+    if isinstance(exc, OpenAIInternalServerError):
+        return OpenAiUnavailableError("OpenAI is temporarily unavailable.")
+
+    if isinstance(
+        exc,
+        (OpenAIBadRequestError, OpenAINotFoundError, OpenAIUnprocessableEntityError),
+    ):
+        return OpenAiAuthOrConfigurationError("OpenAI request configuration was rejected.")
+
+    if isinstance(exc, OpenAIAPIStatusError):
+        if exc.status_code == 429:
+            if _is_billing_or_quota_error(exc):
+                return OpenAiBillingOrQuotaError("OpenAI billing or quota is unavailable.")
+            return OpenAiRateLimitError("OpenAI rate limit reached.")
+        if exc.status_code in {400, 401, 403, 404, 422}:
+            return OpenAiAuthOrConfigurationError("OpenAI request configuration was rejected.")
+        if exc.status_code >= 500:
+            return OpenAiUnavailableError("OpenAI is temporarily unavailable.")
+
+    if isinstance(exc, OpenAIAPIError):
+        return OpenAiUnknownError("OpenAI request failed.")
+
+    return OpenAiUnknownError("Smart AI analysis is temporarily unavailable.")
 
 
 @dataclass(frozen=True)
@@ -146,6 +255,17 @@ def _require_runtime(config: AiRuntimeConfig | None = None) -> AiRuntimeConfig:
     if not runtime.api_key:
         raise MissingApiKeyError("OpenAI is not configured.")
     return runtime
+
+
+def _create_openai_client(runtime: AiRuntimeConfig) -> Any:
+    """Create one-attempt OpenAI client; all provider failures return to fallback."""
+    from openai import OpenAI
+
+    return OpenAI(
+        api_key=runtime.api_key,
+        timeout=runtime.timeout_seconds,
+        max_retries=OPENAI_MAX_RETRIES,
+    )
 
 
 def _skill_item_schema() -> dict[str, Any]:
@@ -366,18 +486,16 @@ def _call_openai_structured(
             text=_responses_text_format(schema_name, schema),
             timeout=timeout_seconds,
         )
-    except TimeoutError as exc:
-        raise OpenAiTimeoutError("OpenAI request timed out.") from exc
     except Exception as exc:
-        exc_name = exc.__class__.__name__.lower()
-        if "timeout" in exc_name or "timed out" in str(exc).lower():
-            raise OpenAiTimeoutError("OpenAI request timed out.") from exc
-        if "ratelimit" in exc_name or "rate limit" in str(exc).lower():
-            raise OpenAiRateLimitError("OpenAI rate limit reached.") from exc
-        _log_openai_call_failure(exc)
-        raise AiServiceError("Smart AI analysis is temporarily unavailable.") from exc
+        classified = _classify_openai_exception(exc)
+        _log_openai_call_failure(classified.error_class)
+        raise classified from exc
 
-    payload = _extract_output_json(response)
+    try:
+        payload = _extract_output_json(response)
+    except MalformedResponseError as exc:
+        _log_openai_call_failure(exc.error_class)
+        raise
     usage = _map_usage(response)
     resolved_model = getattr(response, "model", None) or model
     return payload, usage, str(resolved_model)
@@ -443,9 +561,7 @@ def run_smart_analysis(
 ) -> AiAnalyzeResponse:
     runtime = _require_runtime(config)
     if client is None:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=runtime.api_key, timeout=runtime.timeout_seconds)
+        client = _create_openai_client(runtime)
 
     prompt = _build_analyze_prompt(
         resume_text=resume_text,
@@ -504,7 +620,7 @@ def run_smart_analysis(
             model=model,
         )
         return response
-    except ValidationError as exc:
+    except (AttributeError, TypeError, ValueError, ValidationError) as exc:
         raise ResponseValidationError("AI response failed validation.") from exc
 
 
@@ -518,9 +634,7 @@ def run_profile_extraction(
 ) -> AiExtractProfileResponse:
     runtime = _require_runtime(config)
     if client is None:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=runtime.api_key, timeout=runtime.timeout_seconds)
+        client = _create_openai_client(runtime)
 
     context_lines: list[str] = []
     if filename:
@@ -546,14 +660,21 @@ def run_profile_extraction(
         user_prompt=prompt,
     )
 
-    candidate_name = str(payload.get("candidateName", "")).strip() or "Résumé profile"
-    skills = canonicalize_skill_name_list(_normalize_string_list(payload.get("skills", [])))
-    summary = str(payload.get("summary", "")).strip() or "Skills extracted with Smart AI."
+    try:
+        candidate_name = str(payload.get("candidateName", "")).strip()
+        skills = canonicalize_skill_name_list(_normalize_string_list(payload.get("skills", [])))
+        summary = str(payload.get("summary", "")).strip()
+        if not candidate_name or not skills or not summary:
+            raise ResponseValidationError("AI profile response was incomplete.")
 
-    return AiExtractProfileResponse(
-        candidateName=candidate_name,
-        skills=skills,
-        summary=summary,
-        usage=usage,
-        model=model,
-    )
+        return AiExtractProfileResponse(
+            candidateName=candidate_name,
+            skills=skills,
+            summary=summary,
+            usage=usage,
+            model=model,
+        )
+    except ResponseValidationError:
+        raise
+    except (AttributeError, TypeError, ValueError, ValidationError) as exc:
+        raise ResponseValidationError("AI profile response failed validation.") from exc

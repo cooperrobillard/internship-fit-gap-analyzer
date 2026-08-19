@@ -204,14 +204,13 @@ export default function PrivacyPage() {
             <p>
               Smart AI is optional. Rule-based analysis and deterministic profile
               extraction remain available, including automatic fallback when Smart
-              AI is disabled, misconfigured, over quota, or temporarily
+              AI is disabled, rejected by the provider, or temporarily
               unavailable.
             </p>
             <p>
-              Per-user Smart AI quotas help control beta cost. Quota usage is
-              tracked in your account through Supabase row-level security; raw
-              résumé or job body text is not intentionally saved by the app save
-              path.
+              There is no application-level per-user Smart AI quota. OpenAI project
+              billing, credits, and provider limits constrain Smart AI usage. Raw
+              résumé or job body text is not intentionally saved by the app save path.
             </p>
             <p>
               Smart AI output may contain mistakes and is planning guidance only.

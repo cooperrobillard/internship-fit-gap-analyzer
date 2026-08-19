@@ -147,6 +147,23 @@ test("a provider quota response makes one backend attempt and safely falls back"
   assert.match(payload.fallbackReason, /could not complete/i);
 });
 
+test("another backend failure safely falls back", async () => {
+  installDeps({
+    fetchImpl: (async (input: RequestInfo | URL, init?: RequestInit) => {
+      backendCalls.push({ url: String(input), init });
+      return new Response(JSON.stringify({ detail: "Unavailable." }), { status: 503 });
+    }) as typeof fetch,
+  });
+
+  const response = await POST(request());
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.outcome, "rule_based_fallback");
+  assert.equal(backendCalls.length, 1);
+  assert.equal(fallbackCalls, 1);
+});
+
 test("an invalid Smart AI response safely falls back", async () => {
   installDeps({
     fetchImpl: (async (input: RequestInfo | URL, init?: RequestInit) => {

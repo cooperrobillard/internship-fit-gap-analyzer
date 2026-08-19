@@ -5,7 +5,7 @@ import {
   REQUEST_ID_HEADER,
   generateRequestId,
 } from "@/lib/observability/safe-events";
-import { isAiFeaturesEnabled } from "@/lib/supabase/ai-usage";
+import { isAiFeaturesEnabled } from "@/lib/ai/features";
 
 export const runtime = "nodejs";
 
