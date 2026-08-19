@@ -1,6 +1,6 @@
 # FastAPI analysis service
 
-HTTP wrapper around the rule-based Python analyzer in `src/`. Used by the Next.js dashboard during local development and prepared for future hosting on Render or Railway.
+HTTP wrapper around the rule-based Python analyzer in `src/` and the optional server-side OpenAI Smart AI service. Used by the Next.js dashboard locally and on Render.
 
 ## Endpoints
 
@@ -8,6 +8,9 @@ HTTP wrapper around the rule-based Python analyzer in `src/`. Used by the Next.j
 |--------|------|---------|
 | `GET` | `/health` | Liveness check — returns `{"status":"ok"}` |
 | `POST` | `/analyze` | Analyze pasted resume + job text (JSON body) |
+| `POST` | `/ai/analyze` | Smart AI job-fit analysis using transient résumé/job text |
+| `POST` | `/ai/extract-profile` | Smart AI structured profile extraction using transient résumé text |
+| `POST` | `/extract-document` | Deterministic transient document text extraction |
 
 ### `POST /analyze` request body
 
@@ -40,7 +43,11 @@ Health check URL: `http://127.0.0.1:8000/health` (local) or `https://<your-host>
 | Variable | Purpose |
 |----------|---------|
 | `ALLOWED_ORIGINS` | Comma-separated browser origins for CORS (see below) |
-| `ANALYSIS_API_SHARED_SECRET` | Optional shared secret for `/analyze` request validation (see below) |
+| `ANALYSIS_API_SHARED_SECRET` | Optional shared secret for analysis and extraction request validation (see below) |
+| `AI_FEATURES_ENABLED` | Global Smart AI kill switch; must be exactly `true` to enable AI endpoints |
+| `OPENAI_API_KEY` | Server-only OpenAI project API key required for Smart AI |
+| `OPENAI_ANALYSIS_MODEL` | Optional Smart AI model override; defaults in `ai_analysis_service.py` |
+| `OPENAI_REQUEST_TIMEOUT_SECONDS` | Optional provider-request timeout override |
 | `PORT` | Set by the host platform; passed to uvicorn `--port` |
 
 Do not commit `.env` files or secrets to the repository.
@@ -74,11 +81,13 @@ After deploy, confirm the browser receives `Access-Control-Allow-Origin` for you
 
 ## Privacy
 
-The API analyzes pasted resume and job description text **in memory only**. It does not write raw resume or job text to disk, SQLite, Supabase, or external APIs.
+Rule-based analysis processes pasted résumé and job-description text in memory without OpenAI. When Smart AI is selected and enabled, the service sends the transient request text to OpenAI with `store=False`; the application does not intentionally persist raw résumé/job text to disk, SQLite, or Supabase. Provider/platform logging cannot be guaranteed absent, so avoid unusually sensitive content.
+
+Smart AI makes one OpenAI attempt (`max_retries=0`). Provider billing/quota, rate-limit, timeout, connection, authentication/configuration, server, or invalid-response failures return a safe error to the Next.js route, which uses the existing rule-based fallback. There is no application-level per-user Smart AI quota.
 
 ## Request validation (`/analyze`)
 
-When `ANALYSIS_API_SHARED_SECRET` is set on the server, `POST /analyze` requires a matching request header:
+When `ANALYSIS_API_SHARED_SECRET` is set on the server, analysis and extraction POST endpoints require a matching request header:
 
 ```http
 X-Analysis-Api-Key: <same value as ANALYSIS_API_SHARED_SECRET>

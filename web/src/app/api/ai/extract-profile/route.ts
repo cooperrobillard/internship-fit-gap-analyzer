@@ -5,21 +5,30 @@ import {
   REQUEST_ID_HEADER,
   generateRequestId,
 } from "@/lib/observability/safe-events";
-import { createClerkSupabaseClient, getSupabaseEnv } from "@/lib/supabase/client";
-import {
-  checkProfileExtractionQuota,
-  isAiFeaturesEnabled,
-  notifyQuotaExceededIfNeeded,
-  quotaExceededMessage,
-  reserveAiUsageEvent,
-  updateAiUsageEvent,
-} from "@/lib/supabase/ai-usage";
+import { isAiFeaturesEnabled } from "@/lib/ai/features";
 
 export const runtime = "nodejs";
 
 const DEFAULT_ANALYSIS_API_URL = "http://127.0.0.1:8000";
 const BACKEND_REQUEST_TIMEOUT_MS = 30_000;
 const MAX_REQUEST_BODY_BYTES = 1_000_000;
+
+export type AiExtractProfileRouteTestDeps = {
+  protect?: () => Promise<void>;
+  getUserId?: () => Promise<string | null>;
+  fetchImpl?: typeof fetch;
+  generateRequestIdImpl?: () => string;
+  isAiFeaturesEnabledImpl?: () => boolean;
+};
+
+let aiExtractProfileRouteTestDeps: AiExtractProfileRouteTestDeps | undefined;
+
+/** Test-only seam; production POST ignores this when unset. */
+export function __setAiExtractProfileRouteTestDeps(
+  deps: AiExtractProfileRouteTestDeps | undefined,
+): void {
+  aiExtractProfileRouteTestDeps = deps;
+}
 
 function withRequestId<T>(response: NextResponse<T>, requestId: string): NextResponse<T> {
   response.headers.set(REQUEST_ID_HEADER, requestId);
@@ -102,7 +111,8 @@ async function callBackendProfileExtraction(
   const timeoutId = setTimeout(() => controller.abort(), BACKEND_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${baseUrl}/ai/extract-profile`, {
+    const fetchImpl = aiExtractProfileRouteTestDeps?.fetchImpl ?? fetch;
+    const response = await fetchImpl(`${baseUrl}/ai/extract-profile`, {
       method: "POST",
       headers,
       body: JSON.stringify(input),
@@ -133,9 +143,15 @@ async function callBackendProfileExtraction(
 }
 
 export async function POST(request: Request) {
-  await auth.protect();
-  const requestId = generateRequestId();
-  const { userId, getToken } = await auth();
+  const protectSession =
+    aiExtractProfileRouteTestDeps?.protect ?? (async () => auth.protect());
+  await protectSession();
+  const requestId = (
+    aiExtractProfileRouteTestDeps?.generateRequestIdImpl ?? generateRequestId
+  )();
+  const userId = aiExtractProfileRouteTestDeps?.getUserId
+    ? await aiExtractProfileRouteTestDeps.getUserId()
+    : (await auth()).userId;
 
   if (!userId) {
     return withRequestId(
@@ -188,7 +204,10 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isAiFeaturesEnabled()) {
+  const aiEnabled = (
+    aiExtractProfileRouteTestDeps?.isAiFeaturesEnabledImpl ?? isAiFeaturesEnabled
+  )();
+  if (!aiEnabled) {
     return withRequestId(
       NextResponse.json({
         outcome: "rule_based_fallback",
@@ -198,75 +217,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!getSupabaseEnv()) {
-    return withRequestId(
-      NextResponse.json({
-        outcome: "rule_based_fallback",
-        fallbackReason: "Usage tracking is not configured. Use rule-based extraction instead.",
-      }),
-      requestId,
-    );
-  }
-
-  const supabase = createClerkSupabaseClient(() => getToken());
-
-  let quota;
-  try {
-    quota = await checkProfileExtractionQuota(supabase, userId);
-  } catch {
-    return withRequestId(
-      NextResponse.json({
-        outcome: "rule_based_fallback",
-        fallbackReason: "Smart AI quota could not be verified. Use rule-based extraction instead.",
-      }),
-      requestId,
-    );
-  }
-
-  if (!quota.allowed && quota.reason) {
-    try {
-      await notifyQuotaExceededIfNeeded(
-        supabase,
-        userId,
-        "profile_extraction",
-        quota,
-      );
-    } catch {
-      // Best effort only.
-    }
-    return withRequestId(
-      NextResponse.json({
-        outcome: "rule_based_fallback",
-        fallbackReason: quotaExceededMessage("profile_extraction", quota.reason),
-      }),
-      requestId,
-    );
-  }
-
-  let usageEventId: string;
-  try {
-    usageEventId = await reserveAiUsageEvent(supabase, userId, "profile_extraction");
-  } catch {
-    return withRequestId(
-      NextResponse.json({
-        outcome: "rule_based_fallback",
-        fallbackReason: "Smart AI quota could not be reserved. Use rule-based extraction instead.",
-      }),
-      requestId,
-    );
-  }
-
   const backendResult = await callBackendProfileExtraction(input, requestId);
 
   if (!backendResult.ok) {
-    try {
-      await updateAiUsageEvent(supabase, userId, usageEventId, {
-        status: "error",
-        errorClass: `backend_${backendResult.status}`,
-      });
-    } catch {
-      // Best effort only.
-    }
     return withRequestId(
       NextResponse.json({
         outcome: "rule_based_fallback",
@@ -278,18 +231,6 @@ export async function POST(request: Request) {
   }
 
   const payload = backendResult.payload;
-  try {
-    await updateAiUsageEvent(supabase, userId, usageEventId, {
-      status: "success",
-      model: payload.model ?? null,
-      promptTokens: payload.usage?.promptTokens ?? null,
-      completionTokens: payload.usage?.completionTokens ?? null,
-      totalTokens: payload.usage?.totalTokens ?? null,
-    });
-  } catch {
-    // Best effort only.
-  }
-
   return withRequestId(
     NextResponse.json({
       outcome: "ai_success",

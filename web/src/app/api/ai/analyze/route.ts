@@ -9,15 +9,7 @@ import {
   REQUEST_ID_HEADER,
   generateRequestId,
 } from "@/lib/observability/safe-events";
-import { createClerkSupabaseClient, getSupabaseEnv } from "@/lib/supabase/client";
-import {
-  checkSmartAnalysisQuota,
-  isAiFeaturesEnabled,
-  notifyQuotaExceededIfNeeded,
-  quotaExceededMessage,
-  reserveAiUsageEvent,
-  updateAiUsageEvent,
-} from "@/lib/supabase/ai-usage";
+import { isAiFeaturesEnabled } from "@/lib/ai/features";
 
 export const runtime = "nodejs";
 
@@ -27,6 +19,24 @@ const MAX_ANALYSIS_REQUEST_BODY_BYTES = 1_000_000;
 
 const REQUEST_TOO_LARGE_MESSAGE =
   "The analysis request is too large. Shorten the resume or job description and try again.";
+
+export type AiAnalyzeRouteTestDeps = {
+  protect?: () => Promise<void>;
+  getUserId?: () => Promise<string | null>;
+  fetchImpl?: typeof fetch;
+  fetchRuleBasedAnalysisImpl?: typeof fetchRuleBasedAnalysis;
+  generateRequestIdImpl?: () => string;
+  isAiFeaturesEnabledImpl?: () => boolean;
+};
+
+let aiAnalyzeRouteTestDeps: AiAnalyzeRouteTestDeps | undefined;
+
+/** Test-only seam; production POST ignores this when unset. */
+export function __setAiAnalyzeRouteTestDeps(
+  deps: AiAnalyzeRouteTestDeps | undefined,
+): void {
+  aiAnalyzeRouteTestDeps = deps;
+}
 
 function withRequestId<T>(response: NextResponse<T>, requestId: string): NextResponse<T> {
   response.headers.set(REQUEST_ID_HEADER, requestId);
@@ -93,7 +103,9 @@ async function tryRuleBasedFallback(
   requestId: string,
   fallbackReason: string,
 ): Promise<NextResponse> {
-  const fallback = await fetchRuleBasedAnalysis(input, requestId);
+  const fallback = await (
+    aiAnalyzeRouteTestDeps?.fetchRuleBasedAnalysisImpl ?? fetchRuleBasedAnalysis
+  )(input, requestId);
   if (!fallback) {
     return withRequestId(
       NextResponse.json(
@@ -165,7 +177,8 @@ async function callBackendSmartAnalysis(
   const timeoutId = setTimeout(() => controller.abort(), BACKEND_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${baseUrl}/ai/analyze`, {
+    const fetchImpl = aiAnalyzeRouteTestDeps?.fetchImpl ?? fetch;
+    const response = await fetchImpl(`${baseUrl}/ai/analyze`, {
       method: "POST",
       headers,
       body: JSON.stringify(input),
@@ -196,9 +209,14 @@ async function callBackendSmartAnalysis(
 }
 
 export async function POST(request: Request) {
-  await auth.protect();
-  const requestId = generateRequestId();
-  const { userId, getToken } = await auth();
+  const protectSession = aiAnalyzeRouteTestDeps?.protect ?? (async () => auth.protect());
+  await protectSession();
+  const requestId = (
+    aiAnalyzeRouteTestDeps?.generateRequestIdImpl ?? generateRequestId
+  )();
+  const userId = aiAnalyzeRouteTestDeps?.getUserId
+    ? await aiAnalyzeRouteTestDeps.getUserId()
+    : (await auth()).userId;
 
   if (!userId) {
     return withRequestId(
@@ -259,7 +277,10 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isAiFeaturesEnabled()) {
+  const aiEnabled = (
+    aiAnalyzeRouteTestDeps?.isAiFeaturesEnabledImpl ?? isAiFeaturesEnabled
+  )();
+  if (!aiEnabled) {
     return tryRuleBasedFallback(
       input,
       requestId,
@@ -267,62 +288,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!getSupabaseEnv()) {
-    return tryRuleBasedFallback(
-      input,
-      requestId,
-      "Usage tracking is not configured, so rule-based analysis was used instead.",
-    );
-  }
-
-  const supabase = createClerkSupabaseClient(() => getToken());
-
-  let quota;
-  try {
-    quota = await checkSmartAnalysisQuota(supabase, userId);
-  } catch {
-    return tryRuleBasedFallback(
-      input,
-      requestId,
-      "Smart AI quota could not be verified, so rule-based analysis was used instead.",
-    );
-  }
-
-  if (!quota.allowed && quota.reason) {
-    try {
-      await notifyQuotaExceededIfNeeded(supabase, userId, "smart_analysis", quota);
-    } catch {
-      // Best effort only.
-    }
-    return tryRuleBasedFallback(
-      input,
-      requestId,
-      quotaExceededMessage("smart_analysis", quota.reason),
-    );
-  }
-
-  let usageEventId: string;
-  try {
-    usageEventId = await reserveAiUsageEvent(supabase, userId, "smart_analysis");
-  } catch {
-    return tryRuleBasedFallback(
-      input,
-      requestId,
-      "Smart AI quota could not be reserved, so rule-based analysis was used instead.",
-    );
-  }
-
   const backendResult = await callBackendSmartAnalysis(input, requestId);
 
   if (!backendResult.ok) {
-    try {
-      await updateAiUsageEvent(supabase, userId, usageEventId, {
-        status: "error",
-        errorClass: `backend_${backendResult.status}`,
-      });
-    } catch {
-      // Best effort only.
-    }
     return tryRuleBasedFallback(
       input,
       requestId,
@@ -333,14 +301,6 @@ export async function POST(request: Request) {
   const payload = backendResult.payload;
   const guarded = applyDeterministicGuardrails(payload, input);
   if (!guarded.ok) {
-    try {
-      await updateAiUsageEvent(supabase, userId, usageEventId, {
-        status: "error",
-        errorClass: "ai_invalid_response",
-      });
-    } catch {
-      // Best effort only.
-    }
     return tryRuleBasedFallback(
       input,
       requestId,
@@ -350,17 +310,6 @@ export async function POST(request: Request) {
 
   const result = guarded.result;
   const jobMetadata = normalizeExtractedJobMetadata(payload.jobMetadata);
-  try {
-    await updateAiUsageEvent(supabase, userId, usageEventId, {
-      status: "success",
-      model: result.model ?? null,
-      promptTokens: result.usage?.promptTokens ?? null,
-      completionTokens: result.usage?.completionTokens ?? null,
-      totalTokens: result.usage?.totalTokens ?? null,
-    });
-  } catch {
-    // Best effort only — still return AI result.
-  }
 
   return withRequestId(
     NextResponse.json({

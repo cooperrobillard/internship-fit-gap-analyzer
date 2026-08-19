@@ -12,7 +12,7 @@ The current web app is an active limited-public-beta surface. Dev 19 privacy/RLS
 - Clerk sign-in and sign-up routes with product context.
 - Protected `/dashboard` workspace.
 - Dashboard `POST /api/analyze` proxy to Render FastAPI rule-based analysis.
-- Optional Smart AI analysis via `POST /api/ai/analyze` with quota tracking and automatic rule-based fallback.
+- Optional Smart AI analysis via `POST /api/ai/analyze` with automatic rule-based fallback and no application-level per-user quota.
 - Optional Smart AI résumé profile extraction via `POST /api/ai/extract-profile` with deterministic fallback.
 - Transient pasted text and transient PDF, DOCX, TXT, and MD upload support (deterministic extraction; not AI/OCR).
 - **Try sample inputs** and **Run analysis (does not save)** workflow labels, currently using a fictional Supply Chain Operations Analyst Intern sample for Northstar Distribution.
@@ -132,20 +132,9 @@ Local values go in `web/.env.local`; hosted values are configured in provider da
 | Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Public key is browser-visible; secret key is server-only. |
 | Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Use the publishable/browser-safe key only in client code. |
 | Analysis API | `ANALYSIS_API_URL`, `ANALYSIS_API_SHARED_SECRET` | Server-side Vercel/Render configuration. |
-| Smart AI (optional) | `AI_FEATURES_ENABLED`, `AI_DAILY_LIMIT`, `AI_MONTHLY_LIMIT`, `AI_PROFILE_MONTHLY_LIMIT` | Vercel server-side only. Render also needs `OPENAI_API_KEY` and related backend vars. |
-| Smart AI quota bypass (optional) | `AI_QUOTA_BYPASS_USER_IDS` | Server-only comma-separated Clerk user IDs for owner/admin testing. Bypasses daily/monthly Smart AI and profile-extraction quota enforcement and quota-exceeded alert emails for listed users only. Does not change limits for normal users. Never use `NEXT_PUBLIC_*`. |
+| Smart AI (optional) | `AI_FEATURES_ENABLED` | Global server-side kill switch; must be exactly `true` on Vercel and Render. Render also needs `OPENAI_API_KEY`, `OPENAI_ANALYSIS_MODEL`, and `OPENAI_REQUEST_TIMEOUT_SECONDS`. |
 
-Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY` or `NEXT_PUBLIC_RESEND_API_KEY`.
-
-### Quota alert email (optional)
-
-| Variable | Notes |
-|---|---|
-| `RESEND_API_KEY` | Server-only Resend API key for quota alert emails |
-| `AI_QUOTA_ALERT_EMAIL` | Recipient for quota-exceeded alerts (e.g. `cooper.robillard@gmail.com`) |
-| `ALERTS_FROM_EMAIL` | Verified Resend sender address |
-
-When configured, the app sends one safe metadata-only email per user/feature/quota window when Smart AI quota is exceeded. Alerts include feature, limit type, counts, Clerk user id, timestamp, and environment only — never résumé/job text.
+Do not put server secrets in `NEXT_PUBLIC_*` variables. Do not use Supabase service-role credentials in browser/client code. Do not add `NEXT_PUBLIC_OPENAI_API_KEY`.
 
 ### Tip jar nudge (optional)
 
@@ -154,7 +143,7 @@ When configured, the app sends one safe metadata-only email per user/feature/quo
 | `NEXT_PUBLIC_TIP_JAR_URL` | External support link (e.g. Ko-fi/Buy Me a Coffee). Hidden when unset. |
 | `NEXT_PUBLIC_TIP_PROMPT_ANALYSIS_THRESHOLD` | Successful analyses before the nudge appears (default `5`) |
 
-The tip jar is dismissible dashboard UI only. It does not affect analysis results, quotas, or payments inside the app.
+The tip jar is dismissible dashboard UI only. It does not affect analysis results or payments inside the app.
 
 ### Google Analytics (optional)
 
@@ -182,15 +171,17 @@ Before preview or production review, also run the tracked-file privacy checks do
 
 If the OpenAI dashboard shows zero usage after Smart AI runs:
 
+- Confirm `AI_FEATURES_ENABLED` is exactly `true` on Vercel and Render.
 - Confirm Render uses an `OPENAI_API_KEY` from the intended OpenAI project.
-- Check Supabase `ai_usage_events` for successful rows and token counts for the signed-in user.
+- Confirm `ANALYSIS_API_URL` and `ANALYSIS_API_SHARED_SECRET` connect Vercel to Render.
 - Very small spend may round to `$0.00`, but token counts should appear when calls reach OpenAI.
-- If quota rows show `error` status or the UI reports rule-based fallback, the app may not be making paid OpenAI calls.
+- Provider billing, rate-limit, timeout, connection, authentication/configuration, server, or invalid-response failures safely use rule-based fallback.
+- There is no application-level per-user Smart AI quota or Supabase usage prerequisite.
 
 ## Current limits
 
 - Limited public beta/portfolio software, not mature production SaaS.
-- Smart AI is optional and quota-limited; rule-based analysis remains available as fallback. PDF/DOCX support is deterministic text extraction only (not OCR). No application tracking, billing, or organization features.
+- Smart AI is optional and constrained by OpenAI project billing/provider limits; rule-based analysis remains available as fallback. PDF/DOCX support is deterministic text extraction only (not OCR). No application tracking, billing mutation, or organization features.
 - No account-wide select-all, account-wide export, account-wide delete-all, automated retention, restore/undo, or automatic Clerk-account-to-Supabase cleanup guarantee; selected deletion and exports are limited to records currently loaded in the browser.
 - Version 24 observability is complete for its bounded privacy-safe scope: sanitized server-side Sentry failure delivery, UptimeRobot canonical frontend, Vercel fallback, and backend health monitors, plus the production incident-response runbook. This is not a formal security audit, penetration test, legal review, compliance certification, or mature-SaaS claim.
 - Version 25 custom-domain configuration, Clerk Production migration, canonical metadata, provider reconciliation, and canonical-host Production verification are complete. Portfolio publication and broader promotion are intentionally deferred.

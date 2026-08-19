@@ -44,7 +44,7 @@ The current version does not:
 - detect skill level, such as beginner vs. intermediate vs. advanced,
 - understand whether a project actually proves a skill,
 - guarantee transferable-skill detection in rule-based mode without explicit keywords,
-- provide Smart AI analysis when it is disabled, over quota, or misconfigured,
+- provide Smart AI analysis when it is disabled, rejected by OpenAI, or misconfigured,
 - generate resume bullets or application materials,
 - provide hiring decisions, fit guarantees, or formal legal/security compliance,
 - provide account-wide export/delete, automated retention, restore/undo, or account deletion data cleanup in the hosted app.
@@ -62,7 +62,7 @@ Important current limits:
 
 - **Not mature production SaaS.** Dev 19 completed bounded RLS, abuse-control, privacy-copy, and readiness checks, and later work improved UI/routes and taxonomy validation, but there is no formal penetration test, comprehensive security audit, or legal/privacy compliance sign-off.
 - **Curated cross-domain but not exhaustive.** Version 22 validation exercises 23 categories with fictional role cases and negative controls, which is strong regression evidence but not proof of universal occupational coverage.
-- **Smart AI when configured** — transient OpenAI processing with quota limits and rule-based fallback; outputs may still miss niche skills or over-group variants.
+- **Smart AI when configured** — transient OpenAI processing with one provider attempt and rule-based fallback; there is no application-level per-user quota, and outputs may still miss niche skills or over-group variants.
 - **Rule-based fallback** — explicit taxonomy phrases and reviewed aliases; not semantic understanding, generated fit scores, or hiring judgment.
 - **Phrase detection is not proficiency evidence.** A detected phrase does not prove skill level, project depth, evidence strength, candidate quality, or hiring fit. Results require human interpretation.
 - **No PDF/DOCX parsing.** Hosted upload support is limited to transient `.txt` handling where available.

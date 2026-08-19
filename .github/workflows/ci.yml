@@ -66,10 +66,11 @@ jobs:
             src/lib/observability/safe-events.test.ts \
             src/lib/observability/sentry-server.test.ts \
             src/app/api/analyze/route.test.ts \
+            src/app/api/ai/analyze/route.test.ts \
+            src/app/api/ai/extract-profile/route.test.ts \
             src/lib/analysis/deterministic-skill-overlap.test.ts \
-            src/lib/ai/quota-bypass.test.ts \
+            src/lib/ai/features.test.ts \
             src/lib/site-config.test.ts \
-            src/lib/supabase/ai-usage.test.ts \
             src/lib/document-extraction.test.ts \
             src/lib/clerk-authorized-parties.test.ts
 

@@ -8,7 +8,7 @@ Related: [`VERSION_13_DEPLOYMENT_PATH.md`](VERSION_13_DEPLOYMENT_PATH.md), [`REN
 
 ## Purpose
 
-Host the Clerk + Supabase dashboard shell. The browser calls **`POST /api/analyze`** on Vercel; the Next.js route handler forwards to Render with a server-only shared secret. The local Streamlit app and CLI are **not** deployed by this step.
+Host the Clerk + Supabase dashboard shell. The browser calls same-origin Vercel routes: **`POST /api/analyze`** for explicit rule-based analysis and **`POST /api/ai/analyze`** or **`POST /api/ai/extract-profile`** for Smart AI. Next.js forwards to Render with a server-only shared secret. The local Streamlit app and CLI are **not** deployed by this step.
 
 ---
 
@@ -41,6 +41,7 @@ Set in Vercel → Project → **Settings** → **Environment Variables** (Produc
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key for the browser client |
 | `ANALYSIS_API_URL` | Hosted FastAPI base URL, e.g. `https://internship-fit-gap-analyzer.onrender.com` (server only, no trailing slash) |
 | `ANALYSIS_API_SHARED_SECRET` | Shared secret sent to Render as `X-Analysis-Api-Key` (server only; same value on Render) |
+| `AI_FEATURES_ENABLED` | Global Smart AI kill switch; set exactly `true` on both Vercel and Render to enable Smart AI |
 
 The code still accepts legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` locally as a fallback for the same Supabase key—prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` on Vercel.
 
@@ -99,6 +100,9 @@ Use **generic sample text** only for analysis smoke tests—not real private res
 - [ ] `/dashboard` is protected (redirects or blocks when signed out)
 - [ ] Signed-in dashboard loads
 - [ ] Analysis form calls `/api/analyze` and returns matched/missing skills with **no skill in both lists**
+- [ ] Smart AI calls `/api/ai/analyze` and returns AI results when OpenAI succeeds
+- [ ] Smart AI safely returns rule-based fallback when Render/OpenAI cannot complete the request
+- [ ] Rule-based mode works with Smart AI disabled
 - [ ] **Save this prototype analysis** works when Clerk + Supabase + RLS are configured
 - [ ] Saved analyses panel shows the saved row (metadata/counts only)
 
